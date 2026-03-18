@@ -1,0 +1,11 @@
+/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Infrastructure/bin/Debug/net8.0/VinhKhanhGuide.Infrastructure.deps.json
+/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Infrastructure/bin/Debug/net8.0/VinhKhanhGuide.Infrastructure.dll
+/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Infrastructure/bin/Debug/net8.0/VinhKhanhGuide.Infrastructure.pdb
+/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Infrastructure/obj/Debug/net8.0/VinhKhanhGuide.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Infrastructure/obj/Debug/net8.0/VinhKhanhGuide.Infrastructure.AssemblyInfoInputs.cache
+/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Infrastructure/obj/Debug/net8.0/VinhKhanhGuide.Infrastructure.AssemblyInfo.cs
+/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Infrastructure/obj/Debug/net8.0/VinhKhanhGuide.Infrastructure.csproj.CoreCompileInputs.cache
+/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Infrastructure/obj/Debug/net8.0/VinhKhanhGuide.Infrastructure.dll
+/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Infrastructure/obj/Debug/net8.0/refint/VinhKhanhGuide.Infrastructure.dll
+/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Infrastructure/obj/Debug/net8.0/VinhKhanhGuide.Infrastructure.pdb
+/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Infrastructure/obj/Debug/net8.0/ref/VinhKhanhGuide.Infrastructure.dll
