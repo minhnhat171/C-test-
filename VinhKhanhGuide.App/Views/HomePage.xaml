@@ -1,60 +1,68 @@
-<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
              x:Class="VinhKhanhGuide.App.Views.HomePage">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="10">
+        <ScrollView>
+                <VerticalStackLayout Padding="10"
+                                Spacing="20">
 
-            <Label Text="Your Location"
-                   FontSize="24"
-                   FontAttributes="Bold"/>
+                        <Label Text="Your Location"
+                               FontSize="22"
+                               FontAttributes="Bold"/>
 
-            <WebView x:Name="MyWebView"
-                     HeightRequest="400"/>
+                        <!-- MAP -->
+                        <WebView x:Name="MyWebView"
+                                 HeightRequest="250"/>
 
-            <Label Text="Món đặc trưng"
-                   FontSize="20"
-                   FontAttributes="Bold"/>
+                        <!-- FOOD -->
+                        <Label Text="Món đặc trưng"
+                               FontSize="20"
+                               FontAttributes="Bold"/>
 
-            <CollectionView ItemsSource="{Binding Foods}"
-                            ItemsLayout="HorizontalList">
+                        <CollectionView ItemsSource="{Binding Foods}"
+                                        SelectionMode="Multiple"
+                                        SelectionChanged="OnFoodSelected"
+                                        ItemsLayout="HorizontalList">
 
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <VerticalStackLayout WidthRequest="100">
-                            <Image Source="{Binding Image}"
-                                   HeightRequest="80"/>
-                            <Label Text="{Binding Name}"
-                                   HorizontalOptions="Center"/>
-                        </VerticalStackLayout>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                                <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                                <VerticalStackLayout WidthRequest="100">
+                                                        <Image Source="{Binding Image}"
+                                                               HeightRequest="80"
+                                                               WidthRequest="80"/>
+                                                        <Label Text="{Binding Name}"
+                                                               FontSize="12"
+                                                               HorizontalTextAlignment="Center"/>
+                                                </VerticalStackLayout>
+                                        </DataTemplate>
+                                </CollectionView.ItemTemplate>
 
-            <Label Text="Tên nhà hàng"
-                   FontSize="20"
-                   FontAttributes="Bold"/>
+                        </CollectionView>
 
-            <CollectionView ItemsSource="{Binding Restaurants}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Frame Margin="5">
-                            <VerticalStackLayout>
-                                <Image Source="{Binding Image}"
-                                       HeightRequest="120"/>
-                                <Label Text="{Binding Name}"
-                                       FontAttributes="Bold"/>
-                                <Label Text="{Binding Address}"
-                                       FontSize="12"/>
-                            </VerticalStackLayout>
-                        </Frame>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                        <!-- RESTAURANT -->
+                        <Label Text="Tên nhà hàng"
+                               FontSize="20"
+                               FontAttributes="Bold"/>
 
-        </VerticalStackLayout>
-    </ScrollView>
+                        <CollectionView ItemsSource="{Binding Places}">
+                                <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                                <Frame Margin="5"
+                                                                Padding="5">
+                                                        <VerticalStackLayout>
+                                                                <Image Source="{Binding Image}"
+                                                                                HeightRequest="150"/>
+                                                                <Label Text="{Binding Name}"
+                                                                                FontAttributes="Bold"/>
+                                                                <Label Text="{Binding Description}"
+                                                                                FontSize="12"/>
+                                                        </VerticalStackLayout>
+                                                </Frame>
+                                        </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                </VerticalStackLayout>
+        </ScrollView>
 
 </ContentPage>

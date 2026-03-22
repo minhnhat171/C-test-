@@ -131,6 +131,7 @@
 /Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.App/obj/Debug/net8.0-android/VinhKhanhGuide.App.AssemblyInfoInputs.cache
 /Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.App/obj/Debug/net8.0-android/VinhKhanhGuide.App.AssemblyInfo.cs
 /Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.App/obj/Debug/net8.0-android/VinhKhanhGuide.App.csproj.CoreCompileInputs.cache
+/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.App/obj/Debug/net8.0-android/VinhKhanhGuide.App.sourcelink.json
 /Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.App/obj/Debug/net8.0-android/XamlC.stamp
 /Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.App/obj/Debug/net8.0-android/VinhKhan.3D183515.Up2Date
 /Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.App/obj/Debug/net8.0-android/VinhKhanhGuide.App.dll

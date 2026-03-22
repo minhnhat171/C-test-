@@ -35,6 +35,11 @@
             .addTo(map)
             .bindPopup("Phố ẩm thực Vĩnh Khánh")
             .openPopup();
+            function addUserMarker(lat, lng) {
+    L.marker([lat, lng]).addTo(map)
+        .bindPopup("Bạn đang ở đây")
+        .openPopup();
+}
     </script>
 </body>
 </html>

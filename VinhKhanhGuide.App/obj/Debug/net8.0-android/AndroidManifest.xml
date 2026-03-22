@@ -7,13 +7,8 @@
     -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="1" package="VinhKhanhGuide.App" android:versionName="1.0.0">
   <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
-  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
   <uses-permission android:name="android.permission.INTERNET" />
-  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-  <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-  <application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true" android:name="crc649a39ab0c1526a4d0.MainApplication" android:label="VinhKhanhGuide.App" android:debuggable="true" android:extractNativeLibs="true">
+  <application android:allowBackup="true" android:usesCleartextTraffic="true" android:supportsRtl="true" android:name="crc649a39ab0c1526a4d0.MainApplication" android:label="VinhKhanhGuide.App" android:debuggable="true" android:extractNativeLibs="true">
     <uses-library android:name="org.apache.http.legacy" android:required="false" />
     <activity android:configChanges="density|orientation|smallestScreenSize|screenLayout|screenSize|uiMode" android:launchMode="singleTop" android:theme="@style/Maui.SplashTheme" android:name="crc649a39ab0c1526a4d0.MainActivity" android:exported="true">
       <intent-filter>

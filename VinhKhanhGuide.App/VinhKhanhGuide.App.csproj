@@ -29,7 +29,7 @@
 
     <MauiFont Include="Resources\Fonts\*" />
 
-     <MauiAsset Include="Resources\Raw\map.html" />
+     <MauiAsset Include="Resources\Raw\map.html" LogicalName="map.html" />
   </ItemGroup>
 
   <ItemGroup>
