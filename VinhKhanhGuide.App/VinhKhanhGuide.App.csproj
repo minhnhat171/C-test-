@@ -29,12 +29,16 @@
 
     <MauiFont Include="Resources\Fonts\*" />
 
-     <MauiAsset Include="Resources\Raw\map.html" LogicalName="map.html" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\Images\map_pin.png"
+                      LogicalName="VinhKhanhGuide.App.Resources.Images.map_pin.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mapsui.Maui8" Version="5.1.0-beta.3" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
-    <PackageReference Include="Microsoft.Maui.Controls.Maps" Version="8.0.3" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
   </ItemGroup>
 

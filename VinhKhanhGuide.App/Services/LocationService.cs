@@ -7,14 +7,17 @@ namespace VinhKhanhGuide.App.Services;
 
 public class LocationService : ILocationService
 {
-    private readonly TimeSpan _pollingInterval = TimeSpan.FromSeconds(5);
-    private CancellationTokenSource? _trackingCts;
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
 
     public event EventHandler<LocationDto>? LocationUpdated;
 
+    private CancellationTokenSource? _cts;
+    private Task? _listeningTask;
+
     public async Task StartListeningAsync()
     {
-        if (_trackingCts is not null)
+        if (_listeningTask is { IsCompleted: false })
         {
             return;
         }
@@ -27,55 +30,88 @@ public class LocationService : ILocationService
 
         if (permissionStatus != PermissionStatus.Granted)
         {
-            throw new InvalidOperationException("Ung dung chua duoc cap quyen truy cap vi tri.");
+            throw new InvalidOperationException("Chưa được cấp quyền truy cập vị trí.");
         }
 
-        _trackingCts = new CancellationTokenSource();
-        _ = Task.Run(() => TrackLoopAsync(_trackingCts.Token), _trackingCts.Token);
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+        _listeningTask = ListenLoopAsync(_cts.Token);
     }
 
-    public Task StopListeningAsync()
+    public async Task StopListeningAsync()
     {
-        _trackingCts?.Cancel();
-        _trackingCts?.Dispose();
-        _trackingCts = null;
-        return Task.CompletedTask;
+        if (_cts is null)
+        {
+            return;
+        }
+
+        _cts.Cancel();
+
+        if (_listeningTask is not null)
+        {
+            try
+            {
+                await _listeningTask;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        _cts.Dispose();
+        _cts = null;
+        _listeningTask = null;
     }
 
-    private async Task TrackLoopAsync(CancellationToken cancellationToken)
+    private async Task ListenLoopAsync(CancellationToken cancellationToken)
     {
+        var lastKnownLocation = await Geolocation.Default.GetLastKnownLocationAsync();
+        PublishLocation(lastKnownLocation);
+
         while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
-                var request = new GeolocationRequest(GeolocationAccuracy.Best, TimeSpan.FromSeconds(10));
-                var location = await Geolocation.GetLocationAsync(request, cancellationToken)
-                               ?? await Geolocation.GetLastKnownLocationAsync();
+                var request = new GeolocationRequest(GeolocationAccuracy.Best, RequestTimeout);
+                var location = await Geolocation.Default.GetLocationAsync(request, cancellationToken)
+                    ?? await Geolocation.Default.GetLastKnownLocationAsync();
 
-                if (location is not null)
-                {
-                    LocationUpdated?.Invoke(this, new LocationDto
-                    {
-                        Latitude = location.Latitude,
-                        Longitude = location.Longitude,
-                        AccuracyMeters = location.Accuracy,
-                        TimestampUtc = DateTimeOffset.UtcNow
-                    });
-                }
+                PublishLocation(location);
             }
-            catch (Exception)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                // Keep loop alive; UI handles stale status.
+                break;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GPS Error: {ex.Message}");
             }
 
             try
             {
-                await Task.Delay(_pollingInterval, cancellationToken);
+                await Task.Delay(PollInterval, cancellationToken);
             }
-            catch (TaskCanceledException)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 break;
             }
         }
+    }
+
+    private void PublishLocation(Location? location)
+    {
+        if (location is null)
+        {
+            return;
+        }
+
+        LocationUpdated?.Invoke(this, new LocationDto
+        {
+            Latitude = location.Latitude,
+            Longitude = location.Longitude,
+            AccuracyMeters = location.Accuracy,
+            TimestampUtc = DateTimeOffset.UtcNow
+        });
     }
 }

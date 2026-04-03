@@ -26,18 +26,17 @@ public partial class HomePage : ContentPage
         // PLACE
         Places = new ObservableCollection<Place>
         {
-            new Place { Name="Ốc Oanh", Description="Ốc nổi tiếng đông khách", Image="res1.png"},
-            new Place { Name="Ốc Thảo", Description="Hải sản tươi giá rẻ", Image="res2.png"},
-            new Place { Name="Ốc Vũ", Description="Mở khuya, ăn đêm", Image="res3.png"},
-            new Place { Name="Ốc Sáu Nở", Description="Nước chấm đậm đà", Image="res4.png"},
-            new Place { Name="Bê Ốc", Description="Vỉa hè thoải mái", Image="res5.png"},
-            new Place { Name="Ốc Sò Nò", Description="Menu đa dạng", Image="res6.png"},
-            new Place { Name="Thủy Seafood", Description="Giá rẻ 20k", Image="res7.png"},
-            new Place { Name="Ớt Xiêm", Description="Lẩu + nướng", Image="res8.png"},
-            new Place { Name="Chilli", Description="Lẩu Thái cay", Image="res9.png"},
-            new Place { Name="Thế Giới Bò", Description="Bò nướng + lẩu", Image="res10.png"},
+            new Place { Name="Ốc Oanh", Description="Ốc nổi tiếng đông khách", Image="ocoanh.png"},
+            new Place { Name="Ốc Thảo", Description="Hải sản tươi giá rẻ", Image="octhao.png"},
+            new Place { Name="Ốc Vũ", Description="Mở khuya, ăn đêm", Image="ocvu.png"},
+            new Place { Name="Ốc Sáu Nở", Description="Nước chấm đậm đà", Image="ocsauno.png"},
+            new Place { Name="Bê Ốc", Description="Vỉa hè thoải mái", Image="beoc.png"},
+            new Place { Name="Ốc Sò Nò", Description="Menu đa dạng", Image="ocsono.png"},
+            new Place { Name="Thủy Seafood", Description="Giá rẻ 20k", Image="thuyseafood.png"},
+            new Place { Name="Ớt Xiêm", Description="Lẩu + nướng", Image="otxiem.png"},
+            new Place { Name="Chilli", Description="Lẩu Thái cay", Image="chillilau.png"},
+            new Place { Name="Thế Giới Bò", Description="Bò nướng + lẩu", Image="thegioibo.png"},
         };
-
         BindingContext = this;
     }
 

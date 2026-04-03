@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Core/VinhKhanhGuide.Core.csproj": {}
+    "/Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.Core/VinhKhanhGuide.Core.csproj": {}
   },
   "projects": {
-    "/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Core/VinhKhanhGuide.Core.csproj": {
+    "/Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.Core/VinhKhanhGuide.Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Core/VinhKhanhGuide.Core.csproj",
+        "projectUniqueName": "/Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.Core/VinhKhanhGuide.Core.csproj",
         "projectName": "VinhKhanhGuide.Core",
-        "projectPath": "/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Core/VinhKhanhGuide.Core.csproj",
+        "projectPath": "/Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.Core/VinhKhanhGuide.Core.csproj",
         "packagesPath": "/Users/nhatminh/.nuget/packages/",
-        "outputPath": "/Users/nhatminh/Downloads/C-test--main/VinhKhanhGuide.Core/obj/",
+        "outputPath": "/Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.Core/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/nhatminh/.nuget/NuGet/NuGet.Config"

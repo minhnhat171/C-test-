@@ -1,13 +1,10 @@
-﻿using VinhKhanhGuide.App.Views;   // 👈 THÊM DÒNG NÀY
-
-namespace VinhKhanhGuide.App;
+﻿namespace VinhKhanhGuide.App;
 
 public partial class App : Application
 {
-	public App()
+	public App(AppShell shell)
 	{
 		InitializeComponent();
-
-		MainPage = new HomePage(); // 👈 dùng HomePage
+		MainPage = shell;
 	}
 }
