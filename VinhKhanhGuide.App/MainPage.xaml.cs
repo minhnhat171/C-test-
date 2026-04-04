@@ -13,11 +13,19 @@ namespace VinhKhanhGuide.App;
 
 public partial class MainPage : ContentPage
 {
-    private const string MapPinImageSource = "embedded://VinhKhanhGuide.App.Resources.Images.map_pin.png";
+    private static readonly TimeSpan PreviewMapDoubleTapThreshold = TimeSpan.FromMilliseconds(450);
+    private const double PreviewEntranceResolution = 10;
+    private const double FullScreenEntranceResolution = 8.5;
+
     private readonly MainViewModel _viewModel;
     private bool _isInitializing;
-    private bool _mapInitialized;
+    private bool _previewMapInitialized;
+    private bool _fullScreenMapInitialized;
+    private bool _isFullScreenMapVisible;
     private bool _initialViewportSet;
+    private bool _ignoreNextPreviewMapClick;
+    private bool _ignoreNextFullScreenMapClick;
+    private DateTimeOffset _lastPreviewMapTapAt;
 
     public MainPage(MainViewModel viewModel)
     {
@@ -42,6 +50,7 @@ public partial class MainPage : ContentPage
         try
         {
             await _viewModel.InitializeAsync();
+            await _viewModel.StartAsync();
             InitializeMapsui();
             RefreshMapPins(centerOnSelection: !_initialViewportSet);
         }
@@ -53,21 +62,15 @@ public partial class MainPage : ContentPage
 
     private void InitializeMapsui()
     {
-        if (_mapInitialized)
+        if (_previewMapInitialized)
         {
             return;
         }
 
-        RestaurantMap.Map = new MapBuilder()
-            .WithOpenStreetMapLayer((layer, map) =>
-            {
-                layer.Name = "VinhKhanh.BaseMap";
-            })
-            .Build();
-
-        RestaurantMap.PinClicked += OnRestaurantPinClicked;
-        RestaurantMap.MapClicked += OnRestaurantMapClicked;
-        _mapInitialized = true;
+        RestaurantMap.Map = CreateMap();
+        RestaurantMap.PinClicked += OnPreviewMapPinClicked;
+        RestaurantMap.MapClicked += OnPreviewMapClicked;
+        _previewMapInitialized = true;
     }
 
     private async void OnTopBellClicked(object sender, EventArgs e)
@@ -107,38 +110,113 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private void OnGoToEntranceClicked(object sender, EventArgs e)
+    private void OnZoomInClicked(object sender, EventArgs e)
     {
-        if (!_mapInitialized)
+        ZoomMap(GetActiveMapView(), zoomIn: true);
+    }
+
+    private void OnFullScreenZoomInClicked(object sender, EventArgs e)
+    {
+        ZoomMap(FullScreenRestaurantMap, zoomIn: true);
+    }
+
+    private void OnFullScreenZoomOutClicked(object sender, EventArgs e)
+    {
+        ZoomMap(FullScreenRestaurantMap, zoomIn: false);
+    }
+
+    private MapView GetActiveMapView()
+    {
+        if (_isFullScreenMapVisible && _fullScreenMapInitialized)
+        {
+            return FullScreenRestaurantMap;
+        }
+
+        return RestaurantMap;
+    }
+
+    private static void ZoomMap(MapView? mapView, bool zoomIn)
+    {
+        if (mapView?.Map is null)
         {
             return;
         }
 
-        CenterOnPosition(
-            new Position(MainViewModel.EntranceLatitude, MainViewModel.EntranceLongitude),
-            resolution: 8);
+        if (zoomIn)
+        {
+            mapView.Map.Navigator.ZoomIn(250);
+            return;
+        }
+
+        mapView.Map.Navigator.ZoomOut(250);
     }
 
-    private async void OnRestaurantPinClicked(object? sender, PinClickedEventArgs e)
+    private async void OnPreviewMapPinClicked(object? sender, PinClickedEventArgs e)
     {
         e.Handled = true;
+        _ignoreNextPreviewMapClick = true;
 
         if (e.Pin.Tag is not Guid poiId)
         {
-            CenterOnPosition(e.Pin.Position, resolution: 8);
             return;
         }
 
         _viewModel.SelectPoi(poiId);
-        RefreshMapPins(centerOnSelection: true);
-        await _viewModel.NarrateSelectedPoiAsync();
+        RefreshMapPins(centerOnSelection: false);
+        await ShowPoiInfoAsync(poiId);
     }
 
-    private async void OnRestaurantMapClicked(object? sender, MapClickedEventArgs e)
+    private void OnPreviewMapClicked(object? sender, MapClickedEventArgs e)
     {
         e.Handled = true;
+
+        if (_ignoreNextPreviewMapClick)
+        {
+            _ignoreNextPreviewMapClick = false;
+            return;
+        }
+
+        if (IsPreviewMapDoubleTap())
+        {
+            OpenFullScreenMap();
+        }
+    }
+
+    private async void OnFullScreenMapPinClicked(object? sender, PinClickedEventArgs e)
+    {
+        e.Handled = true;
+        _ignoreNextFullScreenMapClick = true;
+
+        if (e.Pin.Tag is not Guid poiId)
+        {
+            return;
+        }
+
+        _viewModel.SelectPoi(poiId);
+        RefreshMapPins(centerOnSelection: false);
+        await ShowPoiInfoAsync(poiId);
+    }
+
+    private async void OnFullScreenMapClicked(object? sender, MapClickedEventArgs e)
+    {
+        e.Handled = true;
+
+        if (_ignoreNextFullScreenMapClick)
+        {
+            _ignoreNextFullScreenMapClick = false;
+            return;
+        }
+
         await _viewModel.HandleMapTapAsync(e.Point.Latitude, e.Point.Longitude);
         RefreshMapPins(centerOnSelection: true);
+    }
+
+    private void OnCloseFullScreenMapClicked(object sender, EventArgs e)
+    {
+        _isFullScreenMapVisible = false;
+        FullScreenMapOverlay.IsVisible = false;
+        RefreshMapPins(centerOnSelection: false);
+        CenterMapOnEntrance(RestaurantMap, PreviewEntranceResolution);
     }
 
     private void OnMapStateChanged(object? sender, EventArgs e)
@@ -156,18 +234,31 @@ public partial class MainPage : ContentPage
 
     private void RefreshMapPins(bool centerOnSelection)
     {
-        if (!_mapInitialized || RestaurantMap.Map is null)
+        RefreshMapPins(RestaurantMap, centerOnSelection, isPreviewMap: true);
+
+        if (_fullScreenMapInitialized)
+        {
+            RefreshMapPins(
+                FullScreenRestaurantMap,
+                centerOnSelection && _isFullScreenMapVisible,
+                isPreviewMap: false);
+        }
+    }
+
+    private void RefreshMapPins(MapView mapView, bool centerOnSelection, bool isPreviewMap)
+    {
+        if (mapView.Map is null)
         {
             return;
         }
 
-        RestaurantMap.Pins.Clear();
+        mapView.Pins.Clear();
 
-        RestaurantMap.Pins.Add(CreateEntrancePin());
+        mapView.Pins.Add(CreateEntrancePin());
 
         if (_viewModel.LastLocation is not null)
         {
-            RestaurantMap.Pins.Add(CreateUserPin(_viewModel.LastLocation));
+            mapView.Pins.Add(CreateUserPin(_viewModel.LastLocation));
         }
 
         Pin? selectedPin = null;
@@ -175,7 +266,7 @@ public partial class MainPage : ContentPage
         foreach (var poi in _viewModel.PoiStatuses)
         {
             var pin = CreateRestaurantPin(poi);
-            RestaurantMap.Pins.Add(pin);
+            mapView.Pins.Add(pin);
 
             if (_viewModel.SelectedPoiId == poi.PoiId)
             {
@@ -183,35 +274,104 @@ public partial class MainPage : ContentPage
             }
         }
 
-        if (!_initialViewportSet)
+        if (isPreviewMap && !_initialViewportSet)
         {
-            CenterOnPosition(
-                new Position(MainViewModel.EntranceLatitude, MainViewModel.EntranceLongitude),
-                resolution: 8);
+            CenterMapOnEntrance(mapView, PreviewEntranceResolution);
             _initialViewportSet = true;
         }
         else if (centerOnSelection && selectedPin is not null)
         {
-            CenterOnPosition(selectedPin.Position, resolution: 6);
+            CenterOnPosition(mapView, selectedPin.Position, resolution: isPreviewMap ? 8 : 6.5);
         }
 
         if (selectedPin is not null)
         {
-            RestaurantMap.SelectedPin = selectedPin;
-            selectedPin.ShowCallout();
+            mapView.SelectedPin = selectedPin;
         }
+    }
+
+    private void EnsureFullScreenMapInitialized()
+    {
+        if (_fullScreenMapInitialized)
+        {
+            return;
+        }
+
+        FullScreenRestaurantMap.Map = CreateMap();
+        FullScreenRestaurantMap.PinClicked += OnFullScreenMapPinClicked;
+        FullScreenRestaurantMap.MapClicked += OnFullScreenMapClicked;
+        _fullScreenMapInitialized = true;
+    }
+
+    private void OpenFullScreenMap()
+    {
+        EnsureFullScreenMapInitialized();
+        _isFullScreenMapVisible = true;
+        FullScreenMapOverlay.IsVisible = true;
+        RefreshMapPins(centerOnSelection: false);
+
+        Dispatcher.Dispatch(() =>
+        {
+            CenterMapOnEntrance(FullScreenRestaurantMap, FullScreenEntranceResolution);
+        });
+    }
+
+    private async Task ShowPoiInfoAsync(Guid poiId)
+    {
+        var selectedPoi = _viewModel.PoiStatuses.FirstOrDefault(item => item.PoiId == poiId);
+        if (selectedPoi is null)
+        {
+            return;
+        }
+
+        var shouldNarrate = await DisplayAlert(
+            selectedPoi.Name,
+            $"{selectedPoi.Address}\n{selectedPoi.DistanceLabel}\n{selectedPoi.SpecialDishLabel}",
+            "Nghe",
+            "Đóng");
+
+        if (shouldNarrate)
+        {
+            await _viewModel.NarrateSelectedPoiAsync();
+        }
+    }
+
+    private static Mapsui.Map CreateMap()
+    {
+        return new MapBuilder()
+            .WithOpenStreetMapLayer((layer, map) =>
+            {
+                layer.Name = "VinhKhanh.BaseMap";
+            })
+            .Build();
+    }
+
+    private bool IsPreviewMapDoubleTap()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var isDoubleTap = now - _lastPreviewMapTapAt <= PreviewMapDoubleTapThreshold;
+        _lastPreviewMapTapAt = now;
+        return isDoubleTap;
+    }
+
+    private void CenterMapOnEntrance(MapView mapView, double resolution)
+    {
+        CenterOnPosition(
+            mapView,
+            new Position(MainViewModel.EntranceLatitude, MainViewModel.EntranceLongitude),
+            resolution);
     }
 
     private static Pin CreateEntrancePin()
     {
         return new Pin
         {
-            ImageSource = MapPinImageSource,
-            Type = PinType.ImageSource,
+            Type = PinType.Pin,
+            Color = Colors.Black,
             Position = new Position(MainViewModel.EntranceLatitude, MainViewModel.EntranceLongitude),
-            Label = MainViewModel.EntranceName,
-            Address = MainViewModel.EntranceAddress,
-            Scale = 0.16F
+            Label = string.Empty,
+            Address = string.Empty,
+            Scale = 0.42F
         };
     }
 
@@ -220,11 +380,11 @@ public partial class MainPage : ContentPage
         return new Pin
         {
             Type = PinType.Pin,
-            Color = Colors.Black,
+            Color = Color.FromArgb("#2563EB"),
             Position = new Position(location.Latitude, location.Longitude),
-            Label = "Bạn đang ở đây",
-            Address = $"Sai số khoảng {location.AccuracyMeters?.ToString("F0") ?? "?"}m",
-            Scale = 0.82F
+            Label = string.Empty,
+            Address = string.Empty,
+            Scale = 0.48F
         };
     }
 
@@ -232,20 +392,28 @@ public partial class MainPage : ContentPage
     {
         var pin = new Pin
         {
-            ImageSource = MapPinImageSource,
-            Type = PinType.ImageSource,
+            Type = PinType.Pin,
+            Color = poi.IsInsideRadius
+                ? Color.FromArgb("#EA580C")
+                : poi.IsNearest
+                    ? Color.FromArgb("#B91C1C")
+                    : Color.FromArgb("#6B7280"),
             Position = new Position(poi.Latitude, poi.Longitude),
-            Label = poi.Name,
-            Address = poi.Address,
-            Scale = poi.IsNearest ? 0.17F : 0.14F,
+            Label = string.Empty,
+            Address = string.Empty,
+            Scale = poi.IsInsideRadius
+                ? 0.44F
+                : poi.IsNearest
+                    ? 0.40F
+                    : 0.34F,
             Tag = poi.PoiId
         };
 
         return pin;
     }
 
-    private void CenterOnPosition(Position position, double resolution)
+    private void CenterOnPosition(MapView mapView, Position position, double resolution)
     {
-        RestaurantMap.Map?.Navigator.CenterOnAndZoomTo(position.ToMapsui(), resolution, 350);
+        mapView.Map?.Navigator.CenterOnAndZoomTo(position.ToMapsui(), resolution, 350);
     }
 }

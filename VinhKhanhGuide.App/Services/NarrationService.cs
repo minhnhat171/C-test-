@@ -57,6 +57,20 @@ public class NarrationService : INarrationService
         }
     }
 
+    public Task StopAsync()
+    {
+        CancellationTokenSource? activeSpeech;
+
+        lock (_speechSync)
+        {
+            activeSpeech = _activeSpeechCts;
+            _activeSpeechCts = null;
+        }
+
+        activeSpeech?.Cancel();
+        return Task.CompletedTask;
+    }
+
     private static async Task<SpeechOptions?> CreateSpeechOptionsAsync(string? languageCode)
     {
         if (string.IsNullOrWhiteSpace(languageCode))

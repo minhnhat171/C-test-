@@ -29,11 +29,13 @@ public class MainViewModel : INotifyPropertyChanged
     private IReadOnlyList<POI> _pois = Array.Empty<POI>();
     private bool _isInitialized;
     private bool _isTracking;
+    private bool _isNarrating;
+    private int _narrationSessionId;
     private Guid? _lastAutoNarratedPoiId;
     private LocationDto? _lastLocation;
     private POI? _selectedPoi;
     private bool _hasUserSelectedPoi;
-    private string _statusText = "Chưa bật GPS";
+    private string _statusText = "Đang chờ khởi động GPS";
     private string _locationText = "Bạn đang xem cổng phố ẩm thực Vĩnh Khánh";
     private string _nearestPoiText = "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
     private string _selectedPoiName = "Ốc Oanh";
@@ -66,6 +68,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         StartTrackingCommand = new Command(async () => await StartAsync(), () => !IsTracking);
         StopTrackingCommand = new Command(async () => await StopAsync(), () => IsTracking);
+        StopNarrationCommand = new Command(async () => await StopNarrationAsync(), () => IsNarrating);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -78,6 +81,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     public ICommand StartTrackingCommand { get; }
     public ICommand StopTrackingCommand { get; }
+    public ICommand StopNarrationCommand { get; }
 
     public IReadOnlyList<POI> Pois => _pois;
     public LocationDto? LastLocation => _lastLocation;
@@ -97,6 +101,22 @@ public class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             (StartTrackingCommand as Command)?.ChangeCanExecute();
             (StopTrackingCommand as Command)?.ChangeCanExecute();
+        }
+    }
+
+    public bool IsNarrating
+    {
+        get => _isNarrating;
+        private set
+        {
+            if (_isNarrating == value)
+            {
+                return;
+            }
+
+            _isNarrating = value;
+            OnPropertyChanged();
+            (StopNarrationCommand as Command)?.ChangeCanExecute();
         }
     }
 
@@ -208,6 +228,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         try
         {
+            StatusText = "Đang khởi động GPS...";
             await _locationService.StartListeningAsync();
             IsTracking = true;
             StatusText = "GPS đang hoạt động";
@@ -250,6 +271,26 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         await NarratePoiAsync(_selectedPoi, false, GetDistanceForPoi(_selectedPoi.Id));
+    }
+
+    public async Task StopNarrationAsync()
+    {
+        var hadActiveNarration = IsNarrating;
+
+        Interlocked.Increment(ref _narrationSessionId);
+        await _narrationService.StopAsync();
+
+        IsNarrating = false;
+        StatusText = hadActiveNarration
+            ? "Đã dừng thuyết minh"
+            : IsTracking
+                ? "GPS đang hoạt động"
+                : "Sẵn sàng phát thuyết minh";
+
+        if (hadActiveNarration)
+        {
+            AddLog($"{NowLabel()} Dừng thuyết minh");
+        }
     }
 
     public async Task HandleMapTapAsync(double latitude, double longitude)
@@ -384,6 +425,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     private async Task NarratePoiAsync(POI poi, bool autoTriggered, double? distanceMeters)
     {
+        var narrationSessionId = Interlocked.Increment(ref _narrationSessionId);
         _lastNarratedAt[poi.Id] = DateTimeOffset.UtcNow;
         if (autoTriggered)
         {
@@ -392,6 +434,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
+            IsNarrating = true;
             StatusText = autoTriggered
                 ? $"Tự động phát: {poi.Name}"
                 : $"Đang phát: {poi.Name}";
@@ -409,12 +452,30 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             await _narrationService.NarrateAsync(poi, SelectedLanguage);
-            StatusText = IsTracking ? "GPS đang hoạt động" : "Sẵn sàng phát thuyết minh";
         }
         catch (Exception ex)
         {
-            StatusText = $"Lỗi phát âm thanh: {ex.Message}";
             AddLog($"{NowLabel()} Lỗi âm thanh: {ex.Message}");
+
+            if (narrationSessionId == Volatile.Read(ref _narrationSessionId))
+            {
+                StatusText = $"Lỗi phát âm thanh: {ex.Message}";
+            }
+        }
+        finally
+        {
+            if (narrationSessionId == Volatile.Read(ref _narrationSessionId))
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    IsNarrating = false;
+
+                    if (!StatusText.StartsWith("Lỗi phát âm thanh:", StringComparison.Ordinal))
+                    {
+                        StatusText = IsTracking ? "GPS đang hoạt động" : "Sẵn sàng phát thuyết minh";
+                    }
+                });
+            }
         }
     }
 

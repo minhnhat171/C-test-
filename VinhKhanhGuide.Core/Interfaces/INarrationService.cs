@@ -8,4 +8,6 @@ public interface INarrationService
 
     // Giữ thêm hàm này để không vỡ code cũ nếu đang gọi SpeakAsync ở đâu đó
     Task SpeakAsync(string text, string? languageCode = null, CancellationToken cancellationToken = default);
+
+    Task StopAsync();
 }

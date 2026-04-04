@@ -6,7 +6,8 @@
     BackgroundColor="#FBF8F4"
     Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="*,Auto">
+    <Grid x:Name="RootLayout"
+          RowDefinitions="*,Auto">
 
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="20,28,20,18" Spacing="22">
@@ -37,7 +38,7 @@
                         Padding="0"
                         StrokeShape="RoundRectangle 28">
                     <mapsui:MapView x:Name="RestaurantMap"
-                                    HeightRequest="230"
+                                    HeightRequest="188"
                                     IsZoomButtonVisible="False"
                                     IsNorthingButtonVisible="False"
                                     IsMyLocationButtonVisible="False"
@@ -64,7 +65,7 @@
                                 CornerRadius="18"
                                 Padding="16,8" />
 
-                        <Button Text="Stop"
+                        <Button Text="Stop GPS"
                                 Command="{Binding StopTrackingCommand}"
                                 BackgroundColor="#EDE9E3"
                                 TextColor="#222222"
@@ -209,7 +210,7 @@
                                FontSize="13"
                                TextColor="#404040" />
 
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                             <Button Text="Nghe"
                                     Clicked="OnNarrateSelectedClicked"
                                     BackgroundColor="#111111"
@@ -218,6 +219,15 @@
                                     Padding="16,10" />
 
                             <Button Grid.Column="1"
+                                    Text="Dừng nghe"
+                                    Command="{Binding StopNarrationCommand}"
+                                    IsEnabled="{Binding IsNarrating}"
+                                    BackgroundColor="#EDE9E3"
+                                    TextColor="#222222"
+                                    CornerRadius="18"
+                                    Padding="16,10" />
+
+                            <Button Grid.Column="2"
                                     Text="Chỉ đường"
                                     Clicked="OnOpenMapClicked"
                                     BackgroundColor="#F2ECE4"
@@ -241,10 +251,11 @@
                         CornerRadius="27" />
 
                 <Button Grid.Column="1"
-                        Text="⌖"
-                        Clicked="OnGoToEntranceClicked"
+                        Text="+"
+                        Clicked="OnZoomInClicked"
                         BackgroundColor="#FFFFFF"
-                        TextColor="#6B6B6B"
+                        TextColor="#111111"
+                        FontSize="24"
                         WidthRequest="54"
                         HeightRequest="54"
                         CornerRadius="27" />
@@ -278,6 +289,83 @@
                         WidthRequest="54"
                         HeightRequest="54"
                         CornerRadius="27" />
+            </Grid>
+        </Grid>
+
+        <Grid x:Name="FullScreenMapOverlay"
+              Grid.RowSpan="2"
+              IsVisible="False"
+              BackgroundColor="#FBF8F4"
+              ZIndex="20">
+            <Grid RowDefinitions="Auto,*"
+                  Padding="16,48,16,20">
+                <Grid ColumnDefinitions="Auto,*,Auto"
+                      ColumnSpacing="12">
+                    <Button Text="←"
+                            Clicked="OnCloseFullScreenMapClicked"
+                            BackgroundColor="#FFFFFF"
+                            TextColor="#111111"
+                            WidthRequest="52"
+                            HeightRequest="52"
+                            CornerRadius="26" />
+
+                    <VerticalStackLayout Grid.Column="1"
+                                         Spacing="2"
+                                         VerticalOptions="Center">
+                        <Label Text="Bản đồ Vĩnh Khánh"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="#171717" />
+                        <Label Text="Chạm vào ghim để xem thông tin quán"
+                               FontSize="12"
+                               TextColor="#666666" />
+                    </VerticalStackLayout>
+
+                    <Button Grid.Column="2"
+                            Text="Dừng nghe"
+                            Command="{Binding StopNarrationCommand}"
+                            IsEnabled="{Binding IsNarrating}"
+                            BackgroundColor="#FFFFFF"
+                            TextColor="#111111"
+                            CornerRadius="22"
+                            Padding="14,10" />
+                </Grid>
+
+                <Border Grid.Row="1"
+                        Margin="0,18,0,0"
+                        BackgroundColor="#FFFFFF"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 30">
+                    <mapsui:MapView x:Name="FullScreenRestaurantMap"
+                                    IsZoomButtonVisible="False"
+                                    IsNorthingButtonVisible="False"
+                                    IsMyLocationButtonVisible="False"
+                                    RotationLock="True" />
+                </Border>
+
+                <VerticalStackLayout Grid.Row="1"
+                                     Spacing="12"
+                                     HorizontalOptions="End"
+                                     VerticalOptions="End"
+                                     Margin="0,0,18,18">
+                    <Button Text="+"
+                            Clicked="OnFullScreenZoomInClicked"
+                            BackgroundColor="#FFFFFF"
+                            TextColor="#111111"
+                            FontSize="26"
+                            WidthRequest="56"
+                            HeightRequest="56"
+                            CornerRadius="28" />
+
+                    <Button Text="-"
+                            Clicked="OnFullScreenZoomOutClicked"
+                            BackgroundColor="#FFFFFF"
+                            TextColor="#111111"
+                            FontSize="26"
+                            WidthRequest="56"
+                            HeightRequest="56"
+                            CornerRadius="28" />
+                </VerticalStackLayout>
             </Grid>
         </Grid>
 
