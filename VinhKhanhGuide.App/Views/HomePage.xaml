@@ -1,0 +1,89 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="VinhKhanhGuide.App.Views.HomePage">
+
+        <ScrollView>
+                <VerticalStackLayout Padding="10"
+                                Spacing="20">
+
+                        <!-- LOCATION -->
+                        <Label Text="Your Location"
+                               FontSize="22"
+                               FontAttributes="Bold"/>
+
+                        <!-- MAP -->
+                        <WebView x:Name="MyWebView"
+                                 HeightRequest="250"/>
+
+                        <!-- FOOD -->
+                        <Label Text="Món đặc trưng"
+                               FontSize="20"
+                               FontAttributes="Bold"/>
+
+                        <CollectionView ItemsSource="{Binding Foods}"
+                                        SelectionMode="Multiple"
+                                        SelectionChanged="OnFoodSelected"
+                                        ItemsLayout="HorizontalList">
+
+                                <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                                <VerticalStackLayout WidthRequest="100"
+                                                                Spacing="5">
+
+                                                        <Image Source="{Binding Image}"
+                                                               HeightRequest="80"
+                                                               WidthRequest="80"
+                                                               Aspect="AspectFill"/>
+
+                                                        <Label Text="{Binding Name}"
+                                                               FontSize="12"
+                                                               HorizontalTextAlignment="Center"/>
+                                                </VerticalStackLayout>
+                                        </DataTemplate>
+                                </CollectionView.ItemTemplate>
+
+                        </CollectionView>
+
+                        <!-- RESTAURANT -->
+                        <Label Text="Tên nhà hàng"
+                               FontSize="20"
+                               FontAttributes="Bold"/>
+
+                        <CollectionView ItemsSource="{Binding Places}">
+                                <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+
+                                                <Frame Margin="5"
+                                                       Padding="0"
+                                                       CornerRadius="12"
+                                                       HasShadow="True">
+
+                                                        <VerticalStackLayout>
+
+                                                                <!-- ✅ ẢNH ĐÃ FIX Ở ĐÂY -->
+                                                                <Image Source="{Binding Image}"
+                                                                       HeightRequest="180"
+                                                                       Aspect="AspectFill"/>
+
+                                                                <!-- TEXT -->
+                                                                <VerticalStackLayout Padding="10">
+                                                                        <Label Text="{Binding Name}"
+                                                                               FontAttributes="Bold"
+                                                                               FontSize="16"/>
+
+                                                                        <Label Text="{Binding Description}"
+                                                                               FontSize="12"/>
+                                                                </VerticalStackLayout>
+
+                                                        </VerticalStackLayout>
+
+                                                </Frame>
+
+                                        </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                </VerticalStackLayout>
+        </ScrollView>
+
+</ContentPage>

@@ -1,0 +1,374 @@
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:mapsui="clr-namespace:Mapsui.UI.Maui;assembly=Mapsui.UI.Maui8"
+    x:Class="VinhKhanhGuide.App.MainPage"
+    BackgroundColor="#FBF8F4"
+    Shell.NavBarIsVisible="False">
+
+    <Grid x:Name="RootLayout"
+          RowDefinitions="*,Auto">
+
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="20,28,20,18" Spacing="22">
+
+                <Label Text="VinhKhanh"
+                       HorizontalTextAlignment="Center"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="#191919" />
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <Label Text="Your location"
+                           FontSize="18"
+                           TextColor="#5D5D5D"
+                           VerticalTextAlignment="Center" />
+
+                    <Button Text="🔔"
+                            Clicked="OnTopBellClicked"
+                            BackgroundColor="#FFFFFF"
+                            TextColor="#101010"
+                            WidthRequest="46"
+                            HeightRequest="46"
+                            CornerRadius="23" />
+                </Grid>
+
+                <Border StrokeThickness="0"
+                        BackgroundColor="#FFFFFF"
+                        Padding="0"
+                        StrokeShape="RoundRectangle 28">
+                    <mapsui:MapView x:Name="RestaurantMap"
+                                    HeightRequest="188"
+                                    IsZoomButtonVisible="False"
+                                    IsNorthingButtonVisible="False"
+                                    IsMyLocationButtonVisible="False"
+                                    RotationLock="True" />
+                </Border>
+
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding StatusText}"
+                           FontSize="15"
+                           FontAttributes="Bold"
+                           TextColor="#1B1B1B" />
+                    <Label Text="{Binding LocationText}"
+                           FontSize="12"
+                           TextColor="#666666" />
+                    <Label Text="{Binding NearestPoiText}"
+                           FontSize="12"
+                           TextColor="#666666" />
+
+                    <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="10">
+                        <Button Text="Start GPS"
+                                Command="{Binding StartTrackingCommand}"
+                                BackgroundColor="#111111"
+                                TextColor="White"
+                                CornerRadius="18"
+                                Padding="16,8" />
+
+                        <Button Text="Stop GPS"
+                                Command="{Binding StopTrackingCommand}"
+                                BackgroundColor="#EDE9E3"
+                                TextColor="#222222"
+                                CornerRadius="18"
+                                Padding="16,8" />
+
+                        <Border Grid.Column="2"
+                                BackgroundColor="#FFFFFF"
+                                StrokeThickness="0"
+                                Padding="14,4"
+                                StrokeShape="RoundRectangle 18">
+                            <Picker Title="Language"
+                                    HorizontalOptions="Fill"
+                                    ItemsSource="{Binding SupportedLanguages}"
+                                    SelectedItem="{Binding SelectedLanguage}" />
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Featured dishes"
+                           FontSize="18"
+                           TextColor="#5D5D5D" />
+
+                    <CollectionView ItemsSource="{Binding FeaturedDishes}"
+                                    SelectionMode="None"
+                                    HeightRequest="110">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" ItemSpacing="18" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <VerticalStackLayout WidthRequest="80" Spacing="10">
+                                    <Border BackgroundColor="#FFF7EB"
+                                            StrokeThickness="0"
+                                            WidthRequest="72"
+                                            HeightRequest="72"
+                                            Padding="0"
+                                            StrokeShape="RoundRectangle 36">
+                                        <Label Text="{Binding Icon}"
+                                               FontSize="32"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center" />
+                                    </Border>
+                                    <Label Text="{Binding Name}"
+                                           HorizontalTextAlignment="Center"
+                                           FontSize="14"
+                                           TextColor="#2A2A2A" />
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+                <Label Text="Restaurant name"
+                       FontSize="18"
+                       TextColor="#5D5D5D" />
+
+                <CollectionView ItemsSource="{Binding PoiStatuses}"
+                                SelectionMode="Single"
+                                SelectionChanged="OnPoiSelectionChanged">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical"
+                                         Span="2"
+                                         HorizontalItemSpacing="16"
+                                         VerticalItemSpacing="18" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <VerticalStackLayout Spacing="8">
+                                <Border BackgroundColor="#FFFFFF"
+                                        StrokeThickness="0"
+                                        HeightRequest="132"
+                                        StrokeShape="RoundRectangle 18">
+                                    <Grid>
+                                        <Image Source="{Binding ImageSource}"
+                                               Aspect="AspectFill" />
+
+                                        <Border BackgroundColor="#111111"
+                                                StrokeThickness="0"
+                                                Padding="8,4"
+                                                HorizontalOptions="Start"
+                                                VerticalOptions="Start"
+                                                Margin="10"
+                                                StrokeShape="RoundRectangle 12"
+                                                IsVisible="{Binding IsInsideRadius}">
+                                            <Label Text="{Binding InRadiusBadge}"
+                                                   FontSize="10"
+                                                   TextColor="White" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+
+                                <Label Text="{Binding Name}"
+                                       HorizontalTextAlignment="Center"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="#242424" />
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Border BackgroundColor="#FFFFFF"
+                        StrokeThickness="0"
+                        Padding="16"
+                        Margin="0,6,0,0"
+                        StrokeShape="RoundRectangle 24">
+                    <VerticalStackLayout Spacing="12">
+                        <Image Source="{Binding SelectedPoiImageSource}"
+                               HeightRequest="180"
+                               Aspect="AspectFill" />
+
+                        <Label Text="{Binding SelectedPoiName}"
+                               FontSize="22"
+                               FontAttributes="Bold"
+                               TextColor="#161616" />
+
+                        <Label Text="{Binding SelectedPoiAddress}"
+                               FontSize="13"
+                               TextColor="#666666" />
+
+                        <Label Text="{Binding SelectedPoiStatusText}"
+                               FontSize="12"
+                               TextColor="#666666" />
+
+                        <Label Text="{Binding SelectedPoiDescription}"
+                               FontSize="14"
+                               TextColor="#303030"
+                               LineBreakMode="WordWrap" />
+
+                        <Label Text="{Binding SelectedPoiDishText}"
+                               FontSize="13"
+                               TextColor="#9A3412" />
+
+                        <Label Text="Nội dung phát hiện tại"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               TextColor="#111111" />
+
+                        <Label Text="{Binding SelectedPoiNarrationPreview}"
+                               FontSize="13"
+                               TextColor="#404040" />
+
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                            <Button Text="Nghe"
+                                    Clicked="OnNarrateSelectedClicked"
+                                    BackgroundColor="#111111"
+                                    TextColor="White"
+                                    CornerRadius="18"
+                                    Padding="16,10" />
+
+                            <Button Grid.Column="1"
+                                    Text="Dừng nghe"
+                                    Command="{Binding StopNarrationCommand}"
+                                    IsEnabled="{Binding IsNarrating}"
+                                    BackgroundColor="#EDE9E3"
+                                    TextColor="#222222"
+                                    CornerRadius="18"
+                                    Padding="16,10" />
+
+                            <Button Grid.Column="2"
+                                    Text="Chỉ đường"
+                                    Clicked="OnOpenMapClicked"
+                                    BackgroundColor="#F2ECE4"
+                                    TextColor="#202020"
+                                    CornerRadius="18"
+                                    Padding="16,10" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" Padding="16,8,16,18">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="12">
+                <Button Text="⌂"
+                        BackgroundColor="#FFFFFF"
+                        TextColor="#111111"
+                        WidthRequest="54"
+                        HeightRequest="54"
+                        CornerRadius="27" />
+
+                <Button Grid.Column="1"
+                        Text="+"
+                        Clicked="OnZoomInClicked"
+                        BackgroundColor="#FFFFFF"
+                        TextColor="#111111"
+                        FontSize="24"
+                        WidthRequest="54"
+                        HeightRequest="54"
+                        CornerRadius="27" />
+
+                <Border Grid.Column="2"
+                        BackgroundColor="#FFFFFF"
+                        StrokeThickness="0"
+                        Padding="18,14"
+                        StrokeShape="RoundRectangle 28">
+                    <HorizontalStackLayout Spacing="10">
+                        <Label Text="⌕" FontSize="22" TextColor="#707070" />
+                        <Label Text="Search"
+                               VerticalTextAlignment="Center"
+                               FontSize="16"
+                               TextColor="#808080" />
+                    </HorizontalStackLayout>
+                </Border>
+
+                <Button Grid.Column="3"
+                        Text="🛒"
+                        BackgroundColor="#FFFFFF"
+                        TextColor="#6B6B6B"
+                        WidthRequest="54"
+                        HeightRequest="54"
+                        CornerRadius="27" />
+
+                <Button Grid.Column="4"
+                        Text="👤"
+                        BackgroundColor="#FFFFFF"
+                        TextColor="#6B6B6B"
+                        WidthRequest="54"
+                        HeightRequest="54"
+                        CornerRadius="27" />
+            </Grid>
+        </Grid>
+
+        <Grid x:Name="FullScreenMapOverlay"
+              Grid.RowSpan="2"
+              IsVisible="False"
+              BackgroundColor="#FBF8F4"
+              ZIndex="20">
+            <Grid RowDefinitions="Auto,*"
+                  Padding="16,48,16,20">
+                <Grid ColumnDefinitions="Auto,*,Auto"
+                      ColumnSpacing="12">
+                    <Button Text="←"
+                            Clicked="OnCloseFullScreenMapClicked"
+                            BackgroundColor="#FFFFFF"
+                            TextColor="#111111"
+                            WidthRequest="52"
+                            HeightRequest="52"
+                            CornerRadius="26" />
+
+                    <VerticalStackLayout Grid.Column="1"
+                                         Spacing="2"
+                                         VerticalOptions="Center">
+                        <Label Text="Bản đồ Vĩnh Khánh"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="#171717" />
+                        <Label Text="Chạm vào ghim để xem thông tin quán"
+                               FontSize="12"
+                               TextColor="#666666" />
+                    </VerticalStackLayout>
+
+                    <Button Grid.Column="2"
+                            Text="Dừng nghe"
+                            Command="{Binding StopNarrationCommand}"
+                            IsEnabled="{Binding IsNarrating}"
+                            BackgroundColor="#FFFFFF"
+                            TextColor="#111111"
+                            CornerRadius="22"
+                            Padding="14,10" />
+                </Grid>
+
+                <Border Grid.Row="1"
+                        Margin="0,18,0,0"
+                        BackgroundColor="#FFFFFF"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 30">
+                    <mapsui:MapView x:Name="FullScreenRestaurantMap"
+                                    IsZoomButtonVisible="False"
+                                    IsNorthingButtonVisible="False"
+                                    IsMyLocationButtonVisible="False"
+                                    RotationLock="True" />
+                </Border>
+
+                <VerticalStackLayout Grid.Row="1"
+                                     Spacing="12"
+                                     HorizontalOptions="End"
+                                     VerticalOptions="End"
+                                     Margin="0,0,18,18">
+                    <Button Text="+"
+                            Clicked="OnFullScreenZoomInClicked"
+                            BackgroundColor="#FFFFFF"
+                            TextColor="#111111"
+                            FontSize="26"
+                            WidthRequest="56"
+                            HeightRequest="56"
+                            CornerRadius="28" />
+
+                    <Button Text="-"
+                            Clicked="OnFullScreenZoomOutClicked"
+                            BackgroundColor="#FFFFFF"
+                            TextColor="#111111"
+                            FontSize="26"
+                            WidthRequest="56"
+                            HeightRequest="56"
+                            CornerRadius="28" />
+                </VerticalStackLayout>
+            </Grid>
+        </Grid>
+
+    </Grid>
+
+</ContentPage>
