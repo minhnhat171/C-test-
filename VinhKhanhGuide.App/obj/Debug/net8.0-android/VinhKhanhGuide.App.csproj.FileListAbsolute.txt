@@ -2286,11 +2286,6 @@
 /Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.App/obj/Debug/net8.0-android/mauifont.stamp
 /Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.App/obj/Debug/net8.0-android/resizetizer/f/OpenSans-Regular.ttf
 /Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.App/obj/Debug/net8.0-android/resizetizer/f/OpenSans-Semibold.ttf
-/Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.App/obj/Debug/net8.0-android/resizetizer/r/drawable-xxxhdpi/dotnet_bot.png
-/Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.App/obj/Debug/net8.0-android/resizetizer/r/drawable-xxhdpi/dotnet_bot.png
-/Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.App/obj/Debug/net8.0-android/resizetizer/r/drawable-xhdpi/dotnet_bot.png
-/Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.App/obj/Debug/net8.0-android/resizetizer/r/drawable-hdpi/dotnet_bot.png
-/Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.App/obj/Debug/net8.0-android/resizetizer/r/drawable-mdpi/dotnet_bot.png
 /Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.App/obj/Debug/net8.0-android/resizetizer/r/drawable/ocsauno.png
 /Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.App/obj/Debug/net8.0-android/resizetizer/r/mipmap-xxxhdpi/appicon_round.png
 /Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.App/obj/Debug/net8.0-android/resizetizer/r/mipmap-xxhdpi/appicon_round.png
