@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Mapsui.UI.Maui;
+using Microsoft.Extensions.Logging;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 using VinhKhanhGuide.App.Services;
 using VinhKhanhGuide.App.ViewModels;
@@ -11,6 +12,11 @@ public static class MauiProgram
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
+
+#if ANDROID
+        // Avoid GLTextureView/EGL rendering failures that can leave the base map blank on Android.
+        MapControl.UseGPU = false;
+#endif
 
         builder
             .UseMauiApp<App>()

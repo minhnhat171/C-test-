@@ -37,12 +37,46 @@
                         BackgroundColor="#FFFFFF"
                         Padding="0"
                         StrokeShape="RoundRectangle 28">
-                    <mapsui:MapView x:Name="RestaurantMap"
-                                    HeightRequest="188"
-                                    IsZoomButtonVisible="False"
-                                    IsNorthingButtonVisible="False"
-                                    IsMyLocationButtonVisible="False"
-                                    RotationLock="True" />
+                    <Grid>
+                        <mapsui:MapView x:Name="RestaurantMap"
+                                        HeightRequest="188"
+                                        IsZoomButtonVisible="False"
+                                        IsNorthingButtonVisible="False"
+                                        IsMyLocationButtonVisible="False"
+                                        RotationLock="True" />
+
+                        <VerticalStackLayout Spacing="8"
+                                             HorizontalOptions="End"
+                                             VerticalOptions="End"
+                                             Margin="0,0,14,14">
+                            <Button Text="+"
+                                    Clicked="OnZoomInClicked"
+                                    BackgroundColor="#FFFFFF"
+                                    TextColor="#111111"
+                                    FontSize="22"
+                                    WidthRequest="42"
+                                    HeightRequest="42"
+                                    CornerRadius="21" />
+
+                            <Button Text="-"
+                                    Clicked="OnZoomOutClicked"
+                                    BackgroundColor="#FFFFFF"
+                                    TextColor="#111111"
+                                    FontSize="22"
+                                    WidthRequest="42"
+                                    HeightRequest="42"
+                                    CornerRadius="21" />
+
+                            <Button Text="."
+                                    Clicked="OnCenterCurrentLocationClicked"
+                                    BackgroundColor="#FFFFFF"
+                                    TextColor="#111111"
+                                    FontSize="26"
+                                    WidthRequest="42"
+                                    HeightRequest="42"
+                                    CornerRadius="21" />
+                        </VerticalStackLayout>
+                    </Grid>
                 </Border>
 
                 <VerticalStackLayout Spacing="10">
@@ -362,6 +396,15 @@
                             BackgroundColor="#FFFFFF"
                             TextColor="#111111"
                             FontSize="26"
+                            WidthRequest="56"
+                            HeightRequest="56"
+                            CornerRadius="28" />
+
+                    <Button Text="."
+                            Clicked="OnFullScreenCenterCurrentLocationClicked"
+                            BackgroundColor="#FFFFFF"
+                            TextColor="#111111"
+                            FontSize="30"
                             WidthRequest="56"
                             HeightRequest="56"
                             CornerRadius="28" />

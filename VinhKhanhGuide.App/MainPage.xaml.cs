@@ -1,11 +1,14 @@
 using System.ComponentModel;
+using BruTile.Predefined;
 using Mapsui;
-using Mapsui.Tiling.Extensions;
+using Mapsui.Tiling;
+using Mapsui.Tiling.Layers;
 using Mapsui.UI.Maui;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using VinhKhanhGuide.App.Models;
+using VinhKhanhGuide.App.Services;
 using VinhKhanhGuide.App.ViewModels;
 using VinhKhanhGuide.Core.Models;
 
@@ -15,7 +18,9 @@ public partial class MainPage : ContentPage
 {
     private static readonly TimeSpan PreviewMapDoubleTapThreshold = TimeSpan.FromMilliseconds(450);
     private const double PreviewEntranceResolution = 10;
+    private const double PreviewCurrentLocationResolution = 8.5;
     private const double FullScreenEntranceResolution = 8.5;
+    private const double FullScreenCurrentLocationResolution = 6.5;
 
     private readonly MainViewModel _viewModel;
     private bool _isInitializing;
@@ -49,10 +54,10 @@ public partial class MainPage : ContentPage
 
         try
         {
-            await _viewModel.InitializeAsync();
-            await _viewModel.StartAsync();
             InitializeMapsui();
+            await _viewModel.InitializeAsync();
             RefreshMapPins(centerOnSelection: !_initialViewportSet);
+            await _viewModel.StartAsync();
         }
         finally
         {
@@ -115,6 +120,16 @@ public partial class MainPage : ContentPage
         ZoomMap(GetActiveMapView(), zoomIn: true);
     }
 
+    private void OnZoomOutClicked(object sender, EventArgs e)
+    {
+        ZoomMap(GetActiveMapView(), zoomIn: false);
+    }
+
+    private void OnCenterCurrentLocationClicked(object sender, EventArgs e)
+    {
+        CenterMapOnCurrentLocation(RestaurantMap, PreviewCurrentLocationResolution, PreviewEntranceResolution);
+    }
+
     private void OnFullScreenZoomInClicked(object sender, EventArgs e)
     {
         ZoomMap(FullScreenRestaurantMap, zoomIn: true);
@@ -123,6 +138,14 @@ public partial class MainPage : ContentPage
     private void OnFullScreenZoomOutClicked(object sender, EventArgs e)
     {
         ZoomMap(FullScreenRestaurantMap, zoomIn: false);
+    }
+
+    private void OnFullScreenCenterCurrentLocationClicked(object sender, EventArgs e)
+    {
+        CenterMapOnCurrentLocation(
+            FullScreenRestaurantMap,
+            FullScreenCurrentLocationResolution,
+            FullScreenEntranceResolution);
     }
 
     private MapView GetActiveMapView()
@@ -338,12 +361,25 @@ public partial class MainPage : ContentPage
 
     private static Mapsui.Map CreateMap()
     {
-        return new MapBuilder()
-            .WithOpenStreetMapLayer((layer, map) =>
-            {
-                layer.Name = "VinhKhanh.BaseMap";
-            })
-            .Build();
+        var map = new Mapsui.Map();
+        var tileLayer = CreateBaseTileLayer();
+        tileLayer.Name = "VinhKhanh.BaseMap";
+        map.Layers.Add(tileLayer);
+        return map;
+    }
+
+    private static TileLayer CreateBaseTileLayer()
+    {
+#if ANDROID
+        var tileSource = KnownTileSources.Create(
+            KnownTileSource.OpenStreetMap,
+            persistentCache: OpenStreetMap.DefaultCache,
+            configureHttpRequestMessage: MapTileHttpClientFactory.ConfigureRequest);
+
+        return new TileLayer(tileSource, httpClient: MapTileHttpClientFactory.SharedClient);
+#else
+        return OpenStreetMap.CreateTileLayer(MapTileHttpClientFactory.UserAgent);
+#endif
     }
 
     private bool IsPreviewMapDoubleTap()
@@ -360,6 +396,23 @@ public partial class MainPage : ContentPage
             mapView,
             new Position(MainViewModel.EntranceLatitude, MainViewModel.EntranceLongitude),
             resolution);
+    }
+
+    private void CenterMapOnCurrentLocation(
+        MapView mapView,
+        double currentLocationResolution,
+        double fallbackResolution)
+    {
+        if (_viewModel.LastLocation is not null)
+        {
+            CenterOnPosition(
+                mapView,
+                new Position(_viewModel.LastLocation.Latitude, _viewModel.LastLocation.Longitude),
+                currentLocationResolution);
+            return;
+        }
+
+        CenterMapOnEntrance(mapView, fallbackResolution);
     }
 
     private static Pin CreateEntrancePin()
