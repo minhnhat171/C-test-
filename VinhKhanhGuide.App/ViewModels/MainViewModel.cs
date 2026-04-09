@@ -1,9 +1,12 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Windows.Input;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Storage;
 using VinhKhanhGuide.App.Models;
 using VinhKhanhGuide.App.Services;
 using VinhKhanhGuide.Core.Interfaces;
@@ -13,6 +16,11 @@ namespace VinhKhanhGuide.App.ViewModels;
 
 public class MainViewModel : INotifyPropertyChanged
 {
+    private const int MaxRecentSearches = 6;
+    private const int MaxSearchSuggestions = 6;
+    private const int MaxPinnedRecentSuggestions = 3;
+    private const string UserPreferenceKeyPrefix = "vinhkhanh.user.preferences.v1";
+
     public const double EntranceLatitude = 10.7614500;
     public const double EntranceLongitude = 106.7028200;
     public const string EntranceName = "Cổng phố ẩm thực Vĩnh Khánh";
@@ -21,15 +29,23 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly ILocationService _locationService;
     private readonly IPoiProvider _poiProvider;
     private readonly INarrationService _narrationService;
+    private readonly IAuthService _authService;
+    private readonly IUsageHistoryService _usageHistoryService;
     private readonly GeofenceEngine _geofenceEngine;
     private readonly SemaphoreSlim _locationUpdateGate = new(1, 1);
     private readonly Dictionary<Guid, DateTimeOffset> _lastNarratedAt = new();
     private readonly HashSet<Guid> _insidePoiIds = [];
+    private readonly List<string> _recentSearches = [];
 
     private IReadOnlyList<POI> _pois = Array.Empty<POI>();
     private bool _isInitialized;
     private bool _isTracking;
     private bool _isNarrating;
+    private bool _isSearchFocused;
+    private bool _isSearchSuggestionsVisible;
+    private bool _isSearchResultEmpty;
+    private bool _isAutoNarrationEnabled = true;
+    private bool _isRestoringUserPreferences;
     private int _narrationSessionId;
     private Guid? _lastAutoNarratedPoiId;
     private LocationDto? _lastLocation;
@@ -47,19 +63,30 @@ public class MainViewModel : INotifyPropertyChanged
     private string _selectedPoiMapLink = string.Empty;
     private string _selectedPoiImageSource = string.Empty;
     private string _selectedLanguage = "vi";
+    private string _searchQuery = string.Empty;
+    private string _currentUserDisplayName = "Khách";
+    private string _currentUserStatusLine = "Khách khám phá";
+    private string _currentUserInitials = "VK";
+    private string _currentUserAccountLabel = "guest";
+    private string _currentUserPasswordLabel = "••••••••";
 
     public MainViewModel(
         ILocationService locationService,
         IPoiProvider poiProvider,
         INarrationService narrationService,
+        IAuthService authService,
+        IUsageHistoryService usageHistoryService,
         GeofenceEngine geofenceEngine)
     {
         _locationService = locationService;
         _poiProvider = poiProvider;
         _narrationService = narrationService;
+        _authService = authService;
+        _usageHistoryService = usageHistoryService;
         _geofenceEngine = geofenceEngine;
 
         _locationService.LocationUpdated += OnLocationUpdated;
+        _authService.SessionChanged += OnAuthSessionChanged;
 
         FeaturedDishes.Add(new FoodCategoryItem { Icon = "🐚", Name = "Ốc" });
         FeaturedDishes.Add(new FoodCategoryItem { Icon = "🥩", Name = "Bò nướng" });
@@ -69,6 +96,13 @@ public class MainViewModel : INotifyPropertyChanged
         StartTrackingCommand = new Command(async () => await StartAsync(), () => !IsTracking);
         StopTrackingCommand = new Command(async () => await StopAsync(), () => IsTracking);
         StopNarrationCommand = new Command(async () => await StopNarrationAsync(), () => IsNarrating);
+        SignOutCommand = new Command(async () => await SignOutAsync());
+        ClearEventLogsCommand = new Command(ClearEventLogs, () => HasEventLogs);
+        ClearListeningHistoryCommand = new Command(ClearListeningHistory, () => HasListeningHistory);
+        ClearViewHistoryCommand = new Command(ClearViewHistory, () => HasViewHistory);
+
+        SyncCurrentUser();
+        LoadPersistedState();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -76,12 +110,20 @@ public class MainViewModel : INotifyPropertyChanged
 
     public ObservableCollection<FoodCategoryItem> FeaturedDishes { get; } = new();
     public ObservableCollection<PoiStatusItem> PoiStatuses { get; } = new();
+    public ObservableCollection<PoiStatusItem> FilteredPoiStatuses { get; } = new();
+    public ObservableCollection<SearchSuggestionItem> SearchSuggestions { get; } = new();
     public ObservableCollection<string> EventLogs { get; } = new();
+    public ObservableCollection<string> ListeningHistory { get; } = new();
+    public ObservableCollection<string> ViewHistory { get; } = new();
     public IReadOnlyList<string> SupportedLanguages { get; } = ["vi", "en", "zh", "ko", "fr"];
 
     public ICommand StartTrackingCommand { get; }
     public ICommand StopTrackingCommand { get; }
     public ICommand StopNarrationCommand { get; }
+    public ICommand SignOutCommand { get; }
+    public ICommand ClearEventLogsCommand { get; }
+    public ICommand ClearListeningHistoryCommand { get; }
+    public ICommand ClearViewHistoryCommand { get; }
 
     public IReadOnlyList<POI> Pois => _pois;
     public LocationDto? LastLocation => _lastLocation;
@@ -196,9 +238,126 @@ public class MainViewModel : INotifyPropertyChanged
                 return;
             }
 
+            PersistUserPreferences();
             UpdateSelectedPoiDetails();
+            OnPropertyChanged(nameof(SelectedLanguageDisplayName));
+            OnPropertyChanged(nameof(AudioSettingsSummary));
+
+            if (!_isRestoringUserPreferences)
+            {
+                AddLog($"{NowLabel()} Chuyển ngôn ngữ sang {SelectedLanguageDisplayName}");
+            }
         }
     }
+
+    public bool IsAutoNarrationEnabled
+    {
+        get => _isAutoNarrationEnabled;
+        set
+        {
+            if (!SetProperty(ref _isAutoNarrationEnabled, value))
+            {
+                return;
+            }
+
+            PersistUserPreferences();
+            OnPropertyChanged(nameof(AudioSettingsSummary));
+
+            if (!_isRestoringUserPreferences)
+            {
+                AddLog($"{NowLabel()} {(value ? "Bật" : "Tắt")} tự động phát khi vào vùng");
+            }
+        }
+    }
+
+    public string SearchQuery
+    {
+        get => _searchQuery;
+        set
+        {
+            if (!SetProperty(ref _searchQuery, value ?? string.Empty))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasSearchQuery));
+            UpdateFilteredPoiStatuses();
+            RefreshSearchSuggestions();
+        }
+    }
+
+    public bool HasSearchQuery => !string.IsNullOrWhiteSpace(SearchQuery);
+
+    public bool IsSearchSuggestionsVisible
+    {
+        get => _isSearchSuggestionsVisible;
+        private set => SetProperty(ref _isSearchSuggestionsVisible, value);
+    }
+
+    public bool IsSearchResultEmpty
+    {
+        get => _isSearchResultEmpty;
+        private set => SetProperty(ref _isSearchResultEmpty, value);
+    }
+
+    public string CurrentUserDisplayName
+    {
+        get => _currentUserDisplayName;
+        private set => SetProperty(ref _currentUserDisplayName, value);
+    }
+
+    public string CurrentUserStatusLine
+    {
+        get => _currentUserStatusLine;
+        private set => SetProperty(ref _currentUserStatusLine, value);
+    }
+
+    public string CurrentUserInitials
+    {
+        get => _currentUserInitials;
+        private set => SetProperty(ref _currentUserInitials, value);
+    }
+
+    public string CurrentUserAccountLabel
+    {
+        get => _currentUserAccountLabel;
+        private set => SetProperty(ref _currentUserAccountLabel, value);
+    }
+
+    public string CurrentUserPasswordLabel
+    {
+        get => _currentUserPasswordLabel;
+        private set => SetProperty(ref _currentUserPasswordLabel, value);
+    }
+
+    public bool HasEventLogs => EventLogs.Count > 0;
+
+    public bool IsEventLogEmpty => EventLogs.Count == 0;
+
+    public bool HasListeningHistory => ListeningHistory.Count > 0;
+
+    public bool IsListeningHistoryEmpty => ListeningHistory.Count == 0;
+
+    public bool HasViewHistory => ViewHistory.Count > 0;
+
+    public bool IsViewHistoryEmpty => ViewHistory.Count == 0;
+
+    public string EventLogSummary => HasEventLogs
+        ? $"{EventLogs.Count} hoạt động gần nhất của tài khoản hiện tại"
+        : "Chưa có hoạt động nào được ghi lại";
+
+    public string ListeningHistorySummary => HasListeningHistory
+        ? $"{ListeningHistory.Count} lượt nghe gần nhất"
+        : "Chưa có lượt nghe nào";
+
+    public string ViewHistorySummary => HasViewHistory
+        ? $"{ViewHistory.Count} lượt xem gần nhất"
+        : "Chưa có lượt xem nào";
+
+    public string SelectedLanguageDisplayName => GetLanguageDisplayName(SelectedLanguage);
+
+    public string AudioSettingsSummary =>
+        $"{(IsAutoNarrationEnabled ? "Tự động phát khi vào vùng" : "Chỉ phát thủ công")} • {SelectedLanguageDisplayName}";
 
     public async Task InitializeAsync()
     {
@@ -251,6 +410,89 @@ public class MainViewModel : INotifyPropertyChanged
         AddLog($"{NowLabel()} Dừng tracking GPS");
     }
 
+    public void ShowSearchSuggestions()
+    {
+        _isSearchFocused = true;
+        RefreshSearchSuggestions();
+    }
+
+    public void HideSearchSuggestions()
+    {
+        _isSearchFocused = false;
+        IsSearchSuggestionsVisible = false;
+    }
+
+    public void ClearSearch()
+    {
+        SearchQuery = string.Empty;
+    }
+
+    public async Task ResetHomeViewAsync()
+    {
+        if (IsNarrating)
+        {
+            await StopNarrationAsync();
+        }
+
+        _hasUserSelectedPoi = false;
+        HideSearchSuggestions();
+        ClearSearch();
+
+        if (_pois.Count == 0)
+        {
+            LocationText = "Bạn đang xem cổng phố ẩm thực Vĩnh Khánh";
+            NearestPoiText = "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
+            StatusText = IsTracking ? "GPS đang hoạt động" : "GPS đã dừng";
+            RaiseMapStateChanged();
+            return;
+        }
+
+        RefreshPoiList(Array.Empty<(POI Poi, double DistanceMeters, bool IsInside)>(), null);
+        SetSelectedPoi(_pois.First(), false, null);
+
+        LocationText = "Bạn đang xem cổng phố ẩm thực Vĩnh Khánh";
+        NearestPoiText = "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
+        StatusText = IsTracking ? "GPS đang hoạt động" : "GPS đã dừng";
+
+        RaiseMapStateChanged();
+    }
+
+    public bool ExecuteSearch(string? query = null)
+    {
+        if (query is not null)
+        {
+            SearchQuery = query.Trim();
+        }
+        else
+        {
+            SearchQuery = SearchQuery.Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            return false;
+        }
+
+        AddRecentSearch(SearchQuery);
+
+        var matchedPoi = GetSearchMatches(SearchQuery)
+            .Select(item => _pois.FirstOrDefault(poi => poi.Id == item.PoiId))
+            .FirstOrDefault(poi => poi is not null);
+
+        if (matchedPoi is null)
+        {
+            return false;
+        }
+
+        SetSelectedPoi(matchedPoi, true, null);
+        return true;
+    }
+
+    public bool ApplySearchSuggestion(SearchSuggestionItem suggestion)
+    {
+        return ExecuteSearch(suggestion.Text);
+    }
+
     public void SelectPoi(Guid poiId, bool userInitiated = true)
     {
         var poi = _pois.FirstOrDefault(item => item.Id == poiId);
@@ -291,6 +533,27 @@ public class MainViewModel : INotifyPropertyChanged
         {
             AddLog($"{NowLabel()} Dừng thuyết minh");
         }
+    }
+
+    public async Task SignOutAsync()
+    {
+        if (IsNarrating)
+        {
+            await StopNarrationAsync();
+        }
+
+        if (IsTracking)
+        {
+            await StopAsync();
+        }
+
+        _hasUserSelectedPoi = false;
+        _insidePoiIds.Clear();
+        _lastAutoNarratedPoiId = null;
+        HideSearchSuggestions();
+        ClearSearch();
+
+        await _authService.SignOutAsync();
     }
 
     public async Task HandleMapTapAsync(double latitude, double longitude)
@@ -348,6 +611,15 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    private void OnAuthSessionChanged(object? sender, EventArgs e)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            SyncCurrentUser();
+            LoadPersistedState();
+        });
+    }
+
     private async Task HandleLocationUpdatedAsync(LocationDto location)
     {
         if (_pois.Count == 0)
@@ -391,7 +663,7 @@ public class MainViewModel : INotifyPropertyChanged
             .ThenBy(item => item.DistanceMeters)
             .FirstOrDefault();
 
-        if (candidate.Poi is not null && ShouldAutoNarrate(candidate.Poi))
+        if (IsAutoNarrationEnabled && candidate.Poi is not null && ShouldAutoNarrate(candidate.Poi))
         {
             await NarratePoiAsync(candidate.Poi, true, candidate.DistanceMeters);
         }
@@ -447,6 +719,9 @@ public class MainViewModel : INotifyPropertyChanged
 
         AddLog(
             $"{NowLabel()} {(autoTriggered ? "Auto" : "Manual")} trigger {poi.Name}" +
+            (distanceMeters.HasValue ? $" ({distanceMeters.Value:F0}m)" : string.Empty));
+        AddListeningHistory(
+            $"{NowLabel()} {(autoTriggered ? "Tự động nghe" : "Nghe thủ công")} {poi.Name}" +
             (distanceMeters.HasValue ? $" ({distanceMeters.Value:F0}m)" : string.Empty));
 
         try
@@ -511,6 +786,9 @@ public class MainViewModel : INotifyPropertyChanged
                 Priority = poi.Priority
             });
         }
+
+        UpdateFilteredPoiStatuses();
+        RefreshSearchSuggestions();
     }
 
     private void SetSelectedPoi(
@@ -526,6 +804,12 @@ public class MainViewModel : INotifyPropertyChanged
         _selectedPoi = poi;
         _hasUserSelectedPoi = userInitiated || _hasUserSelectedPoi;
         UpdateSelectedPoiDetails(evaluated);
+
+        if (userInitiated)
+        {
+            AddViewHistory($"{NowLabel()} Xem thông tin quán {poi.Name}");
+        }
+
         RaiseMapStateChanged();
     }
 
@@ -594,17 +878,388 @@ public class MainViewModel : INotifyPropertyChanged
         MainThread.BeginInvokeOnMainThread(() =>
         {
             EventLogs.Insert(0, message);
+            _usageHistoryService.AppendEntry(UsageHistoryCategory.Activity, message);
 
             while (EventLogs.Count > 15)
             {
                 EventLogs.RemoveAt(EventLogs.Count - 1);
             }
+
+            RaiseEventLogStateChanged();
         });
     }
 
     private void RaiseMapStateChanged()
     {
         MainThread.BeginInvokeOnMainThread(() => MapStateChanged?.Invoke(this, EventArgs.Empty));
+    }
+
+    private void UpdateFilteredPoiStatuses()
+    {
+        var visibleItems = string.IsNullOrWhiteSpace(SearchQuery)
+            ? PoiStatuses.ToList()
+            : GetSearchMatches(SearchQuery);
+
+        FilteredPoiStatuses.Clear();
+
+        foreach (var item in visibleItems)
+        {
+            FilteredPoiStatuses.Add(item);
+        }
+
+        IsSearchResultEmpty = HasSearchQuery && FilteredPoiStatuses.Count == 0;
+    }
+
+    private List<PoiStatusItem> GetSearchMatches(string query)
+    {
+        var normalizedQuery = NormalizeForSearch(query);
+
+        if (string.IsNullOrWhiteSpace(normalizedQuery))
+        {
+            return PoiStatuses.ToList();
+        }
+
+        return PoiStatuses
+            .Where(item => ContainsNormalized(item.Name, normalizedQuery))
+            .OrderBy(item => !NormalizeForSearch(item.Name).StartsWith(normalizedQuery, StringComparison.Ordinal))
+            .ThenBy(item => item.DistanceMeters)
+            .ThenBy(item => item.Name)
+            .ToList();
+    }
+
+    private void RefreshSearchSuggestions()
+    {
+        SearchSuggestions.Clear();
+
+        if (!_isSearchFocused || PoiStatuses.Count == 0)
+        {
+            IsSearchSuggestionsVisible = false;
+            return;
+        }
+
+        var query = SearchQuery.Trim();
+        var suggestions = new List<SearchSuggestionItem>();
+        var seenTexts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        void AddSuggestion(string text, string supportingText, bool isRecent)
+        {
+            if (string.IsNullOrWhiteSpace(text) || !seenTexts.Add(text))
+            {
+                return;
+            }
+
+            suggestions.Add(new SearchSuggestionItem
+            {
+                Text = text,
+                SupportingText = supportingText,
+                IsRecent = isRecent
+            });
+        }
+
+        if (_recentSearches.Count > 0)
+        {
+            IEnumerable<string> recentItems;
+
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                recentItems = _recentSearches.Take(MaxPinnedRecentSuggestions);
+            }
+            else
+            {
+                var normalizedQuery = NormalizeForSearch(query);
+                var matchedRecentItems = _recentSearches
+                    .Where(item => ContainsNormalized(item, normalizedQuery))
+                    .Take(MaxPinnedRecentSuggestions)
+                    .ToList();
+
+                recentItems = matchedRecentItems.Count > 0
+                    ? matchedRecentItems
+                    : _recentSearches.Take(MaxPinnedRecentSuggestions);
+            }
+
+            foreach (var recent in recentItems)
+            {
+                AddSuggestion(recent, "Tìm gần đây", true);
+
+                if (suggestions.Count >= MaxSearchSuggestions)
+                {
+                    break;
+                }
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            foreach (var poi in PoiStatuses)
+            {
+                AddSuggestion(poi.Name, poi.Address, false);
+
+                if (suggestions.Count >= MaxSearchSuggestions)
+                {
+                    break;
+                }
+            }
+        }
+        else
+        {
+            foreach (var poi in GetSearchMatches(query))
+            {
+                AddSuggestion(poi.Name, poi.Address, false);
+
+                if (suggestions.Count >= MaxSearchSuggestions)
+                {
+                    break;
+                }
+            }
+        }
+
+        foreach (var suggestion in suggestions.Take(MaxSearchSuggestions))
+        {
+            SearchSuggestions.Add(suggestion);
+        }
+
+        IsSearchSuggestionsVisible = SearchSuggestions.Count > 0;
+    }
+
+    private void AddRecentSearch(string query)
+    {
+        var trimmedQuery = query.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedQuery))
+        {
+            return;
+        }
+
+        var existingIndex = _recentSearches.FindIndex(item =>
+            string.Equals(item, trimmedQuery, StringComparison.OrdinalIgnoreCase));
+
+        if (existingIndex >= 0)
+        {
+            _recentSearches.RemoveAt(existingIndex);
+        }
+
+        _recentSearches.Insert(0, trimmedQuery);
+
+        while (_recentSearches.Count > MaxRecentSearches)
+        {
+            _recentSearches.RemoveAt(_recentSearches.Count - 1);
+        }
+
+        RefreshSearchSuggestions();
+    }
+
+    private static bool ContainsNormalized(string source, string query)
+    {
+        var normalizedSource = NormalizeForSearch(source);
+        return normalizedSource.Contains(query, StringComparison.Ordinal);
+    }
+
+    private void SyncCurrentUser()
+    {
+        var session = _authService.CurrentSession;
+
+        CurrentUserDisplayName = session?.FullName ?? "Khách";
+        CurrentUserInitials = session?.Initials ?? "VK";
+        CurrentUserAccountLabel = session?.Email ?? "guest";
+        CurrentUserPasswordLabel = session is null
+            ? "Chưa đăng nhập"
+            : string.Equals(session.Email, "user", StringComparison.OrdinalIgnoreCase)
+                ? "12345 (mặc định)"
+                : "•••••••• (đã ẩn)";
+        CurrentUserStatusLine = session is null
+            ? "Khách khám phá"
+            : $"{session.RoleLabel} • {session.Email}";
+    }
+
+    private void LoadPersistedState()
+    {
+        LoadUserPreferences();
+        LoadPersistedHistory(EventLogs, UsageHistoryCategory.Activity);
+        LoadPersistedHistory(ListeningHistory, UsageHistoryCategory.Listening);
+        LoadPersistedHistory(ViewHistory, UsageHistoryCategory.Viewing);
+        RaiseEventLogStateChanged();
+        RaiseListeningHistoryStateChanged();
+        RaiseViewHistoryStateChanged();
+    }
+
+    private void ClearEventLogs()
+    {
+        EventLogs.Clear();
+        _usageHistoryService.ClearEntries(UsageHistoryCategory.Activity);
+        RaiseEventLogStateChanged();
+    }
+
+    private void ClearListeningHistory()
+    {
+        ListeningHistory.Clear();
+        _usageHistoryService.ClearEntries(UsageHistoryCategory.Listening);
+        RaiseListeningHistoryStateChanged();
+    }
+
+    private void ClearViewHistory()
+    {
+        ViewHistory.Clear();
+        _usageHistoryService.ClearEntries(UsageHistoryCategory.Viewing);
+        RaiseViewHistoryStateChanged();
+    }
+
+    private void RaiseEventLogStateChanged()
+    {
+        OnPropertyChanged(nameof(HasEventLogs));
+        OnPropertyChanged(nameof(IsEventLogEmpty));
+        OnPropertyChanged(nameof(EventLogSummary));
+        (ClearEventLogsCommand as Command)?.ChangeCanExecute();
+    }
+
+    private void RaiseListeningHistoryStateChanged()
+    {
+        OnPropertyChanged(nameof(HasListeningHistory));
+        OnPropertyChanged(nameof(IsListeningHistoryEmpty));
+        OnPropertyChanged(nameof(ListeningHistorySummary));
+        (ClearListeningHistoryCommand as Command)?.ChangeCanExecute();
+    }
+
+    private void RaiseViewHistoryStateChanged()
+    {
+        OnPropertyChanged(nameof(HasViewHistory));
+        OnPropertyChanged(nameof(IsViewHistoryEmpty));
+        OnPropertyChanged(nameof(ViewHistorySummary));
+        (ClearViewHistoryCommand as Command)?.ChangeCanExecute();
+    }
+
+    private void AddListeningHistory(string message)
+    {
+        AddHistoryEntry(ListeningHistory, UsageHistoryCategory.Listening, message, RaiseListeningHistoryStateChanged);
+    }
+
+    private void AddViewHistory(string message)
+    {
+        AddHistoryEntry(ViewHistory, UsageHistoryCategory.Viewing, message, RaiseViewHistoryStateChanged);
+    }
+
+    private void AddHistoryEntry(
+        ObservableCollection<string> targetCollection,
+        UsageHistoryCategory category,
+        string message,
+        Action stateChangedCallback)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            targetCollection.Insert(0, message);
+            _usageHistoryService.AppendEntry(category, message);
+
+            while (targetCollection.Count > 15)
+            {
+                targetCollection.RemoveAt(targetCollection.Count - 1);
+            }
+
+            stateChangedCallback();
+        });
+    }
+
+    private void LoadPersistedHistory(
+        ObservableCollection<string> targetCollection,
+        UsageHistoryCategory category)
+    {
+        targetCollection.Clear();
+
+        foreach (var entry in _usageHistoryService.LoadEntries(category).Take(15))
+        {
+            targetCollection.Add(entry);
+        }
+    }
+
+    private void LoadUserPreferences()
+    {
+        _isRestoringUserPreferences = true;
+
+        try
+        {
+            var languageKey = $"{GetCurrentUserPreferencePrefix()}.language";
+            var savedLanguage = Preferences.Default.Get(languageKey, "vi");
+
+            if (!SupportedLanguages.Contains(savedLanguage, StringComparer.OrdinalIgnoreCase))
+            {
+                savedLanguage = "vi";
+            }
+
+            if (!string.Equals(_selectedLanguage, savedLanguage, StringComparison.OrdinalIgnoreCase))
+            {
+                _selectedLanguage = savedLanguage;
+                OnPropertyChanged(nameof(SelectedLanguage));
+            }
+
+            var autoNarrationKey = $"{GetCurrentUserPreferencePrefix()}.autoNarration";
+            var savedAutoNarration = Preferences.Default.Get(autoNarrationKey, true);
+
+            if (_isAutoNarrationEnabled != savedAutoNarration)
+            {
+                _isAutoNarrationEnabled = savedAutoNarration;
+                OnPropertyChanged(nameof(IsAutoNarrationEnabled));
+            }
+        }
+        finally
+        {
+            _isRestoringUserPreferences = false;
+        }
+
+        UpdateSelectedPoiDetails();
+        OnPropertyChanged(nameof(SelectedLanguageDisplayName));
+        OnPropertyChanged(nameof(AudioSettingsSummary));
+    }
+
+    private void PersistUserPreferences()
+    {
+        if (_isRestoringUserPreferences)
+        {
+            return;
+        }
+
+        var preferencePrefix = GetCurrentUserPreferencePrefix();
+        Preferences.Default.Set($"{preferencePrefix}.language", SelectedLanguage);
+        Preferences.Default.Set($"{preferencePrefix}.autoNarration", IsAutoNarrationEnabled);
+    }
+
+    private string GetCurrentUserPreferencePrefix()
+    {
+        var scope = _authService.CurrentSession?.Email?.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(scope))
+        {
+            scope = "guest";
+        }
+
+        return $"{UserPreferenceKeyPrefix}.{scope}";
+    }
+
+    private static string GetLanguageDisplayName(string? languageCode) => languageCode?.ToLowerInvariant() switch
+    {
+        "vi" => "Tiếng Việt",
+        "en" => "English",
+        "zh" => "中文",
+        "ko" => "한국어",
+        "fr" => "Français",
+        _ => "Tiếng Việt"
+    };
+
+    private static string NormalizeForSearch(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var builder = new StringBuilder();
+
+        foreach (var character in value.Normalize(NormalizationForm.FormD))
+        {
+            var category = CharUnicodeInfo.GetUnicodeCategory(character);
+
+            if (category != UnicodeCategory.NonSpacingMark)
+            {
+                builder.Append(char.ToLowerInvariant(character));
+            }
+        }
+
+        return builder.ToString().Normalize(NormalizationForm.FormC);
     }
 
     private static string NowLabel() => DateTime.Now.ToString("HH:mm:ss");

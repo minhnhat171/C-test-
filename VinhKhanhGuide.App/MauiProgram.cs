@@ -31,6 +31,14 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
+        builder.Services.AddSingleton(_ => new HttpClient
+        {
+            BaseAddress = PoiApiEndpoint.CreateBaseUri(),
+            Timeout = TimeSpan.FromSeconds(8)
+        });
+
+        builder.Services.AddSingleton<IAuthService, AuthService>();
+        builder.Services.AddSingleton<IUsageHistoryService, UsageHistoryService>();
         builder.Services.AddSingleton<ILocationService, LocationService>();
         builder.Services.AddSingleton<IPoiProvider, PoiProvider>();
         builder.Services.AddSingleton<INarrationService, NarrationService>();
@@ -39,6 +47,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<MainViewModel>();
         builder.Services.AddSingleton<MainPage>();
         builder.Services.AddSingleton<AppShell>();
+        builder.Services.AddTransient<AuthPageViewModel>();
+        builder.Services.AddTransient<Views.AuthPage>();
 
         return builder.Build();
     }

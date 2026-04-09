@@ -11,6 +11,7 @@
 
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <NullabilityInfoContextSupport>true</NullabilityInfoContextSupport>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,6 +30,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <MauiXaml Update="App.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="AppShell.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="MainPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Views\AuthPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Resources\Styles\Colors.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Resources\Styles\Styles.xaml" Generator="MSBuild:Compile" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="Resources\Images\map_pin.png"
                       LogicalName="VinhKhanhGuide.App.Resources.Images.map_pin.png" />
   </ItemGroup>
@@ -41,7 +51,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VinhKhanhGuide.Core\VinhKhanhGuide.Core.csproj" />
-    <ProjectReference Include="..\VinhKhanhGuide.Infrastructure\VinhKhanhGuide.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
