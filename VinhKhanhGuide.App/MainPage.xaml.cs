@@ -78,17 +78,57 @@ public partial class MainPage : ContentPage
         _previewMapInitialized = true;
     }
 
-    private async void OnTopBellClicked(object sender, EventArgs e)
+    private async void OnTopBellClicked(object? sender, EventArgs e)
     {
         await _viewModel.NarrateSelectedPoiAsync();
     }
 
-    private async void OnNarrateSelectedClicked(object sender, EventArgs e)
+    private async void OnNarrateSelectedClicked(object? sender, EventArgs e)
     {
         await _viewModel.NarrateSelectedPoiAsync();
     }
 
-    private async void OnOpenMapClicked(object sender, EventArgs e)
+    private async void OnHomeClicked(object? sender, EventArgs e)
+    {
+        RestaurantSearchEntry.Unfocus();
+        HideSecondaryOverlays();
+        await _viewModel.ResetHomeViewAsync();
+
+        if (_isFullScreenMapVisible)
+        {
+            _isFullScreenMapVisible = false;
+            FullScreenMapOverlay.IsVisible = false;
+        }
+
+        RefreshMapPins(centerOnSelection: false);
+        CenterMapOnEntrance(RestaurantMap, PreviewEntranceResolution);
+    }
+
+    private void OnOpenListeningHistoryClicked(object? sender, EventArgs e)
+    {
+        RestaurantSearchEntry.Unfocus();
+        ListeningHistoryOverlay.IsVisible = true;
+        UserProfileOverlay.IsVisible = false;
+    }
+
+    private void OnCloseListeningHistoryClicked(object? sender, EventArgs e)
+    {
+        ListeningHistoryOverlay.IsVisible = false;
+    }
+
+    private void OnOpenUserProfileClicked(object? sender, EventArgs e)
+    {
+        RestaurantSearchEntry.Unfocus();
+        UserProfileOverlay.IsVisible = true;
+        ListeningHistoryOverlay.IsVisible = false;
+    }
+
+    private void OnCloseUserProfileClicked(object? sender, EventArgs e)
+    {
+        UserProfileOverlay.IsVisible = false;
+    }
+
+    private async void OnOpenMapClicked(object? sender, EventArgs e)
     {
         if (string.IsNullOrWhiteSpace(_viewModel.SelectedPoiMapLink))
         {
@@ -115,32 +155,96 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private void OnZoomInClicked(object sender, EventArgs e)
+    private void OnSearchFocused(object? sender, FocusEventArgs e)
+    {
+        _viewModel.ShowSearchSuggestions();
+    }
+
+    private async void OnSearchUnfocused(object? sender, FocusEventArgs e)
+    {
+        await Task.Delay(150);
+
+        if (!RestaurantSearchEntry.IsFocused)
+        {
+            _viewModel.HideSearchSuggestions();
+        }
+    }
+
+    private void OnSearchCompleted(object? sender, EventArgs e)
+    {
+        var foundMatch = _viewModel.ExecuteSearch();
+
+        if (foundMatch)
+        {
+            _viewModel.HideSearchSuggestions();
+            RefreshMapPins(centerOnSelection: true);
+            RestaurantSearchEntry.Unfocus();
+            return;
+        }
+
+        _viewModel.ShowSearchSuggestions();
+        RefreshMapPins(centerOnSelection: false);
+    }
+
+    private void OnSearchSuggestionTapped(object? sender, TappedEventArgs e)
+    {
+        try
+        {
+            if (sender is not BindableObject bindable ||
+                bindable.BindingContext is not SearchSuggestionItem suggestion)
+            {
+                return;
+            }
+
+            var foundMatch = _viewModel.ApplySearchSuggestion(suggestion);
+            _viewModel.HideSearchSuggestions();
+
+            if (foundMatch)
+            {
+                RefreshMapPins(centerOnSelection: true);
+            }
+
+            RestaurantSearchEntry.Unfocus();
+        }
+        catch
+        {
+            // tránh crash UI khi binding chưa sẵn sàng
+        }
+    }
+
+    private void OnClearSearchClicked(object? sender, EventArgs e)
+    {
+        _viewModel.ClearSearch();
+        _viewModel.ShowSearchSuggestions();
+        RestaurantSearchEntry.Focus();
+    }
+
+    private void OnZoomInClicked(object? sender, EventArgs e)
     {
         ZoomMap(GetActiveMapView(), zoomIn: true);
     }
 
-    private void OnZoomOutClicked(object sender, EventArgs e)
+    private void OnZoomOutClicked(object? sender, EventArgs e)
     {
         ZoomMap(GetActiveMapView(), zoomIn: false);
     }
 
-    private void OnCenterCurrentLocationClicked(object sender, EventArgs e)
+    private void OnCenterCurrentLocationClicked(object? sender, EventArgs e)
     {
         CenterMapOnCurrentLocation(RestaurantMap, PreviewCurrentLocationResolution, PreviewEntranceResolution);
     }
 
-    private void OnFullScreenZoomInClicked(object sender, EventArgs e)
+    private void OnFullScreenZoomInClicked(object? sender, EventArgs e)
     {
         ZoomMap(FullScreenRestaurantMap, zoomIn: true);
     }
 
-    private void OnFullScreenZoomOutClicked(object sender, EventArgs e)
+    private void OnFullScreenZoomOutClicked(object? sender, EventArgs e)
     {
         ZoomMap(FullScreenRestaurantMap, zoomIn: false);
     }
 
-    private void OnFullScreenCenterCurrentLocationClicked(object sender, EventArgs e)
+    private void OnFullScreenCenterCurrentLocationClicked(object? sender, EventArgs e)
     {
         CenterMapOnCurrentLocation(
             FullScreenRestaurantMap,
@@ -234,7 +338,7 @@ public partial class MainPage : ContentPage
         RefreshMapPins(centerOnSelection: true);
     }
 
-    private void OnCloseFullScreenMapClicked(object sender, EventArgs e)
+    private void OnCloseFullScreenMapClicked(object? sender, EventArgs e)
     {
         _isFullScreenMapVisible = false;
         FullScreenMapOverlay.IsVisible = false;
@@ -328,6 +432,7 @@ public partial class MainPage : ContentPage
 
     private void OpenFullScreenMap()
     {
+        HideSecondaryOverlays();
         EnsureFullScreenMapInitialized();
         _isFullScreenMapVisible = true;
         FullScreenMapOverlay.IsVisible = true;
@@ -439,6 +544,19 @@ public partial class MainPage : ContentPage
             Address = string.Empty,
             Scale = 0.48F
         };
+    }
+
+    private void HideSecondaryOverlays()
+    {
+        if (ListeningHistoryOverlay is not null)
+        {
+            ListeningHistoryOverlay.IsVisible = false;
+        }
+
+        if (UserProfileOverlay is not null)
+        {
+            UserProfileOverlay.IsVisible = false;
+        }
     }
 
     private static Pin CreateRestaurantPin(PoiStatusItem poi)
