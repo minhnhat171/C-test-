@@ -61,3 +61,4 @@ D:\App\CTest.WebAdmin\obj\Debug\net8.0\refint\CTest.WebAdmin.dll
 D:\App\CTest.WebAdmin\obj\Debug\net8.0\CTest.WebAdmin.pdb
 D:\App\CTest.WebAdmin\obj\Debug\net8.0\CTest.WebAdmin.genruntimeconfig.cache
 D:\App\CTest.WebAdmin\obj\Debug\net8.0\ref\CTest.WebAdmin.dll
+D:\App\CTest.WebAdmin\obj\Debug\net8.0\CTest.WebAdmin.sourcelink.json

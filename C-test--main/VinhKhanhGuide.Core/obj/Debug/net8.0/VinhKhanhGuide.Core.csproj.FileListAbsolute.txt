@@ -67,3 +67,4 @@ D:\App\C-test--main\VinhKhanhGuide.Core\obj\Debug\net8.0\VinhKhanhGuide.Core.dll
 D:\App\C-test--main\VinhKhanhGuide.Core\obj\Debug\net8.0\refint\VinhKhanhGuide.Core.dll
 D:\App\C-test--main\VinhKhanhGuide.Core\obj\Debug\net8.0\VinhKhanhGuide.Core.pdb
 D:\App\C-test--main\VinhKhanhGuide.Core\obj\Debug\net8.0\ref\VinhKhanhGuide.Core.dll
+D:\App\C-test--main\VinhKhanhGuide.Core\obj\Debug\net8.0\VinhKhanhGuide.Core.sourcelink.json
