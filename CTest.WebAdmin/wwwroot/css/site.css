@@ -1,0 +1,9 @@
+html, body { height: 100%; }
+body { background: #f4f7fb; }
+.sidebar { width: 250px; min-height: 100vh; }
+.content-area { min-height: 100vh; }
+.nav-link { border-radius: 10px; padding: 10px 12px; }
+.nav-link:hover { background: rgba(255,255,255,0.12); }
+.stat-card { border: none; border-radius: 16px; }
+.card { border: none; border-radius: 18px; }
+.table { background: white; }

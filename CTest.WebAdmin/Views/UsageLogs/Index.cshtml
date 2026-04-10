@@ -1,0 +1,19 @@
+@model List<UsageLog>
+@{ ViewData["Title"] = "Lịch sử sử dụng"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1">Lịch sử sử dụng</h2>
+        <div class="text-muted">Theo dõi dữ liệu GPS/QR, thời lượng nghe và mức độ hoàn tất.</div>
+    </div>
+    <button class="btn btn-outline-secondary">Xuất báo cáo</button>
+</div>
+<table class="table table-striped align-middle">
+    <thead><tr><th>ID</th><th>User</th><th>POI</th><th>Kích hoạt</th><th>Ngôn ngữ</th><th>Bắt đầu</th><th>Nghe</th><th>Hoàn tất</th></tr></thead>
+    <tbody>
+    @foreach (var item in Model) {
+        <tr>
+            <td>@item.Id</td><td>@item.UserCode</td><td>@item.PoiName</td><td>@item.TriggerType</td><td>@item.Language</td><td>@item.StartedAt.ToString("dd/MM/yyyy HH:mm")</td><td>@item.ListenSeconds giây</td><td>@(item.Completed ? "Có" : "Không")</td>
+        </tr>
+    }
+    </tbody>
+</table>

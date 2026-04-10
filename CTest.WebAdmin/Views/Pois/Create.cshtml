@@ -1,0 +1,70 @@
+@model CTest.WebAdmin.Models.Poi
+
+@{
+    ViewData["Title"] = "Thêm POI";
+}
+
+<h2 class="mb-4">Thêm POI mới</h2>
+
+<div class="card shadow-sm p-4">
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label">Tên địa điểm</label>
+            <input asp-for="Name" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Address" class="form-label">Địa chỉ</label>
+            <input asp-for="Address" class="form-control" />
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="Latitude" class="form-label">Vĩ độ</label>
+                <input asp-for="Latitude" class="form-control" />
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label asp-for="Longitude" class="form-label">Kinh độ</label>
+                <input asp-for="Longitude" class="form-control" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="RadiusInMeters" class="form-label">Bán kính kích hoạt</label>
+                <input asp-for="RadiusInMeters" class="form-control" />
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label asp-for="Priority" class="form-label">Mức ưu tiên</label>
+                <input asp-for="Priority" class="form-control" />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label">Mô tả</label>
+            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="MapLink" class="form-label">Link bản đồ</label>
+            <input asp-for="MapLink" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="NarrationScript" class="form-label">Nội dung thuyết minh</label>
+            <textarea asp-for="NarrationScript" class="form-control" rows="5"></textarea>
+        </div>
+
+        <div class="form-check form-switch mb-3">
+            <input asp-for="IsActive" class="form-check-input" />
+            <label asp-for="IsActive" class="form-check-label">Hoạt động</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Lưu POI</button>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    </form>
+</div>

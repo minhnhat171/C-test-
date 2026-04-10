@@ -1,0 +1,54 @@
+@model List<Poi>
+@{
+    ViewData["Title"] = "Quản lý POI";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1">Quản lý POI</h2>
+        <div class="text-muted">Danh sách điểm thuyết minh với tọa độ, bán kính kích hoạt và mức ưu tiên.</div>
+    </div>
+
+    <a asp-controller="Pois" asp-action="Create" class="btn btn-primary">
+        + Thêm POI
+    </a>
+</div>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Tên điểm</th>
+            <th>Địa chỉ</th>
+            <th>Tọa độ</th>
+            <th>Bán kính</th>
+            <th>Ưu tiên</th>
+            <th>Trạng thái</th>
+            <th class="text-end">Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.Id</td>
+            <td>@item.Name</td>
+            <td>@item.Address</td>
+            <td>@item.Latitude, @item.Longitude</td>
+            <td>@item.RadiusInMeters m</td>
+            <td>@item.Priority</td>
+            <td>@(item.IsActive ? "Hoạt động" : "Tạm khóa")</td>
+            <td class="text-end">
+                <div class="d-inline-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Sửa</a>
+                <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa POI này không?');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@item.Id" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                </form>
+                </div>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

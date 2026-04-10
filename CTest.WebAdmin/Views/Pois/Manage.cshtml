@@ -1,0 +1,265 @@
+﻿@model PoiManagementViewModel
+@{
+    ViewData["Title"] = "Quáº£n lÃ½ POI";
+}
+
+<style>
+    .poi-page {
+        --poi-ink: #0f172a;
+        --poi-muted: #64748b;
+        --poi-line: rgba(148, 163, 184, 0.2);
+        --poi-panel: rgba(255, 255, 255, 0.96);
+        --poi-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+        color: var(--poi-ink);
+    }
+
+    .poi-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .poi-hero h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 1.2rem + 2vw, 2.6rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .poi-hero p {
+        margin: 0.45rem 0 0;
+        color: var(--poi-muted);
+        max-width: 760px;
+    }
+
+    .poi-panel {
+        background: var(--poi-panel);
+        border: 1px solid rgba(255,255,255,0.84);
+        border-radius: 26px;
+        box-shadow: var(--poi-shadow);
+    }
+
+    .poi-toolbar {
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .poi-toolbar-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) 220px auto;
+        gap: 0.9rem;
+    }
+
+    .poi-toolbar .form-control,
+    .poi-toolbar .form-select {
+        min-height: 48px;
+        border-radius: 16px;
+        border-color: rgba(148, 163, 184, 0.26);
+    }
+
+    .poi-table-wrap {
+        overflow: hidden;
+    }
+
+    .poi-table {
+        margin-bottom: 0;
+        --bs-table-bg: transparent;
+    }
+
+    .poi-table thead th {
+        background: rgba(248, 250, 252, 0.98);
+        color: var(--poi-muted);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom-width: 0;
+        padding: 1rem 1.1rem;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .poi-table tbody td {
+        padding: 1rem 1.1rem;
+        border-color: rgba(148, 163, 184, 0.12);
+        vertical-align: middle;
+    }
+
+    .poi-id {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 44px;
+        height: 32px;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-weight: 800;
+    }
+
+    .poi-name {
+        font-weight: 800;
+    }
+
+    .poi-address {
+        color: var(--poi-muted);
+        font-size: 0.92rem;
+        margin-top: 0.2rem;
+    }
+
+    .poi-coordinates {
+        font-family: Consolas, monospace;
+        font-size: 0.9rem;
+    }
+
+    .poi-status {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.38rem 0.8rem;
+        font-size: 0.84rem;
+        font-weight: 700;
+    }
+
+    .poi-status.active {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .poi-status.inactive {
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .poi-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        justify-content: flex-end;
+    }
+
+    .poi-action-btn {
+        border-radius: 999px;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.84rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .poi-empty {
+        padding: 2rem;
+        text-align: center;
+        color: var(--poi-muted);
+    }
+
+    @@media (max-width: 991.98px) {
+        .poi-toolbar-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .poi-hero {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="poi-page">
+    <div class="poi-hero">
+        <div>
+            <h1>Quáº£n lÃ½ POI</h1>
+        </div>
+        <a asp-action="Create" class="btn btn-primary btn-lg rounded-pill px-4">+ ThÃªm POI</a>
+    </div>
+
+    @if (TempData["PoiMessage"] is string poiMessage)
+    {
+        <div class="alert alert-success border-0 shadow-sm">@poiMessage</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.LoadErrorMessage))
+    {
+        <div class="alert alert-warning border-0 shadow-sm">@Model.LoadErrorMessage</div>
+    }
+
+    <div class="poi-panel poi-toolbar">
+        <form method="get" asp-action="Index">
+            <div class="poi-toolbar-grid">
+                <input class="form-control" type="search" name="searchTerm" value="@Model.SearchTerm" placeholder="TÃ¬m kiáº¿m theo tÃªn Ä‘iá»ƒm..." />
+
+                <select class="form-select" name="statusFilter">
+                    <option value="all" selected="@(Model.StatusFilter == "all" ? "selected" : null)">Táº¥t cáº£ tráº¡ng thÃ¡i</option>
+                    <option value="active" selected="@(Model.StatusFilter == "active" ? "selected" : null)">Äang hoáº¡t Ä‘á»™ng</option>
+                    <option value="inactive" selected="@(Model.StatusFilter == "inactive" ? "selected" : null)">Táº¡m khÃ³a</option>
+                </select>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-dark rounded-pill px-4 flex-grow-1">Lá»c dá»¯ liá»‡u</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Äáº·t láº¡i</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="poi-panel poi-table-wrap">
+        <div class="table-responsive">
+            <table class="table poi-table align-middle">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>TÃªn Ä‘iá»ƒm</th>
+                        <th>Äá»‹a chá»‰</th>
+                        <th>Tá»a Ä‘á»™</th>
+                        <th>BÃ¡n kÃ­nh</th>
+                        <th>Æ¯u tiÃªn</th>
+                        <th>Tráº¡ng thÃ¡i</th>
+                        <th class="text-end">Thao tÃ¡c</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Items.Any())
+                {
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td><span class="poi-id">@item.DisplayId</span></td>
+                            <td>
+                                <div class="poi-name">@item.Name</div>
+                                <div class="poi-address">@item.Code</div>
+                            </td>
+                            <td>@item.Address</td>
+                            <td class="poi-coordinates">@item.Latitude, @item.Longitude</td>
+                            <td>@item.RadiusInMeters m</td>
+                            <td>@item.Priority</td>
+                            <td>
+                                <span class="poi-status @(item.IsActive ? "active" : "inactive")">
+                                    @(item.IsActive ? "Hoáº¡t Ä‘á»™ng" : "Táº¡m khÃ³a")
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="poi-actions">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark poi-action-btn">Xem</a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary poi-action-btn">Sá»­a</a>
+                                    <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedPoiId="@item.Id" class="btn btn-outline-success poi-action-btn">Táº¡o QR</a>
+                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Báº¡n cÃ³ cháº¯c muá»‘n xÃ³a POI nÃ y khÃ´ng?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-outline-danger poi-action-btn">XÃ³a</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="poi-empty">KhÃ´ng tÃ¬m tháº¥y POI phÃ¹ há»£p vá»›i bá»™ lá»c hiá»‡n táº¡i.</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

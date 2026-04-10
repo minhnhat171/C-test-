@@ -1,0 +1,278 @@
+@model TranslationManagementViewModel
+@{
+    ViewData["Title"] = "Quản lý bản dịch";
+}
+
+<style>
+    .translation-page {
+        --tr-ink: #0f172a;
+        --tr-muted: #64748b;
+        --tr-panel: rgba(255,255,255,0.96);
+        --tr-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+        color: var(--tr-ink);
+    }
+
+    .translation-head {
+        margin-bottom: 1.2rem;
+    }
+
+    .translation-head h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 1.2rem + 2vw, 2.5rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .translation-head p {
+        margin: 0.45rem 0 0;
+        color: var(--tr-muted);
+        max-width: 760px;
+    }
+
+    .translation-layout {
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1fr);
+        gap: 1.2rem;
+    }
+
+    .translation-panel {
+        background: var(--tr-panel);
+        border-radius: 28px;
+        box-shadow: var(--tr-shadow);
+        overflow: hidden;
+    }
+
+    .translation-sidebar {
+        padding: 1.2rem;
+    }
+
+    .translation-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+    }
+
+    .translation-poi-link {
+        display: block;
+        padding: 0.95rem 1rem;
+        border-radius: 20px;
+        text-decoration: none;
+        color: inherit;
+        background: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        transition: 0.2s ease;
+    }
+
+    .translation-poi-link.active {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-color: rgba(37, 99, 235, 0.2);
+    }
+
+    .translation-poi-name {
+        font-weight: 800;
+    }
+
+    .translation-poi-note {
+        margin-top: 0.3rem;
+        color: var(--tr-muted);
+        font-size: 0.9rem;
+    }
+
+    .translation-content {
+        padding: 1.3rem;
+    }
+
+    .translation-nav {
+        gap: 0.6rem;
+        border-bottom: none;
+        margin-bottom: 1rem;
+    }
+
+    .translation-nav .nav-link {
+        border: none;
+        border-radius: 999px;
+        background: #f8fafc;
+        color: var(--tr-muted);
+        font-weight: 700;
+        padding: 0.7rem 1rem;
+    }
+
+    .translation-nav .nav-link.active {
+        background: #1d4ed8;
+        color: white;
+    }
+
+    .translation-card {
+        border-radius: 24px;
+        padding: 1.2rem;
+        background: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+    }
+
+    .translation-card .form-control,
+    .translation-card textarea {
+        min-height: 48px;
+        border-radius: 16px;
+        border-color: rgba(148, 163, 184, 0.24);
+    }
+
+    .translation-card textarea {
+        min-height: 120px;
+    }
+
+    .translation-state {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.38rem 0.8rem;
+        font-size: 0.84rem;
+        font-weight: 700;
+    }
+
+    .translation-state.done {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .translation-state.empty {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    @@media (max-width: 1199.98px) {
+        .translation-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="translation-page">
+    <div class="translation-head">
+        <h1>Quản lý bản dịch</h1>
+        <p>Chọn một POI ở cột trái, sau đó chỉnh sửa nội dung theo từng ngôn ngữ ở cột phải. Màn này giúp đồ án nhìn học thuật và rất rõ phần đa ngôn ngữ.</p>
+    </div>
+
+    @if (TempData["TranslationMessage"] is string translationMessage)
+    {
+        <div class="alert alert-success border-0 shadow-sm">@translationMessage</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.LoadErrorMessage))
+    {
+        <div class="alert alert-warning border-0 shadow-sm">@Model.LoadErrorMessage</div>
+    }
+
+    <div class="translation-layout">
+        <div class="translation-panel">
+            <div class="translation-sidebar">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="fw-bold">Danh sách POI</div>
+                    <span class="text-muted small">@Model.Pois.Count điểm</span>
+                </div>
+
+                <div class="translation-list">
+                    @foreach (var poi in Model.Pois)
+                    {
+                        <a asp-action="Index"
+                           asp-route-poiId="@poi.Id"
+                           class="translation-poi-link @(poi.Id == Model.SelectedPoiId ? "active" : null)">
+                            <div class="translation-poi-name">@poi.Name</div>
+                            <div class="translation-poi-note">@poi.Address</div>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="translation-panel">
+            <div class="translation-content">
+                @if (Model.SelectedPoiId == Guid.Empty)
+                {
+                    <div class="text-muted">Chưa có POI để quản lý bản dịch.</div>
+                }
+                else
+                {
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                        <div>
+                            <div class="text-muted text-uppercase small fw-bold">POI đang chọn</div>
+                            <h2 class="mb-1">@Model.SelectedPoiName</h2>
+                            <div class="text-muted">Chỉnh sửa nội dung theo từng ngôn ngữ bằng tab phía dưới.</div>
+                        </div>
+                    </div>
+
+                    <ul class="nav nav-pills translation-nav" id="translationTabs" role="tablist">
+                        @for (var i = 0; i < Model.Languages.Count; i++)
+                        {
+                            var item = Model.Languages[i];
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link @(i == 0 ? "active" : null)"
+                                        id="tab-@item.LanguageCode"
+                                        data-bs-toggle="pill"
+                                        data-bs-target="#pane-@item.LanguageCode"
+                                        type="button"
+                                        role="tab">
+                                    @item.LanguageLabel
+                                </button>
+                            </li>
+                        }
+                    </ul>
+
+                    <div class="tab-content">
+                        @for (var i = 0; i < Model.Languages.Count; i++)
+                        {
+                            var item = Model.Languages[i];
+                            <div class="tab-pane fade @(i == 0 ? "show active" : null)" id="pane-@item.LanguageCode" role="tabpanel">
+                                <div class="translation-card">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="fw-bold">@item.LanguageLabel</div>
+                                        <span class="translation-state @(item.IsTranslated ? "done" : "empty")">
+                                            @(item.IsTranslated ? "Đã dịch" : "Chưa dịch")
+                                        </span>
+                                    </div>
+
+                                    <form asp-action="Save" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="TranslationId" value="@item.TranslationId" />
+                                        <input type="hidden" name="PoiId" value="@item.PoiId" />
+                                        <input type="hidden" name="LanguageCode" value="@item.LanguageCode" />
+                                        <input type="hidden" name="LanguageLabel" value="@item.LanguageLabel" />
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Tiêu đề</label>
+                                            <input class="form-control" name="Title" value="@item.Title" />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Mô tả</label>
+                                            <textarea class="form-control" name="Description" rows="4">@item.Description</textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Script thuyết minh</label>
+                                            <textarea class="form-control" name="NarrationScript" rows="6">@item.NarrationScript</textarea>
+                                        </div>
+
+                                        <div class="form-check form-switch mb-3">
+                                            <input type="hidden" name="IsTranslated" value="false" />
+                                            @if (item.IsTranslated)
+                                            {
+                                                <input class="form-check-input" type="checkbox" name="IsTranslated" value="true" checked="checked" />
+                                            }
+                                            else
+                                            {
+                                                <input class="form-check-input" type="checkbox" name="IsTranslated" value="true" />
+                                            }
+                                            <label class="form-check-label">Trạng thái đã dịch</label>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary rounded-pill px-4">Lưu nội dung</button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

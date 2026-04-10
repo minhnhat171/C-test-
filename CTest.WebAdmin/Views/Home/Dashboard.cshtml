@@ -1,0 +1,744 @@
+@using System.Linq
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Trang chủ";
+
+    var maxDailyCount = Math.Max(1, Model.DailyListenPoints.Select(x => x.Count).DefaultIfEmpty(0).Max());
+    var maxTopPoiCount = Math.Max(1, Model.TopPois.Select(x => x.Count).DefaultIfEmpty(0).Max());
+    var syncLabel = Model.IsSyncOnline ? "Online" : "Offline";
+    var syncSummary = Model.IsSyncOnline
+        ? "Kênh đồng bộ đang hoạt động ổn định."
+        : "Đồng bộ tạm ngưng, cần kiểm tra kết nối.";
+    var insightSummary = Model.TodayListenCount > 0
+        ? $"Hôm nay ghi nhận {Model.TodayListenCount} lượt nghe. {Model.MostPlayedPoi} đang dẫn đầu về tần suất phát."
+        : "Hôm nay chưa có lượt nghe mới. Dashboard sẽ tự động cập nhật khi dữ liệu phát sinh.";
+}
+
+<style>
+    .dashboard-shell {
+        --dash-ink: #0f172a;
+        --dash-muted: #64748b;
+        --dash-line: rgba(148, 163, 184, 0.22);
+        --dash-panel: rgba(255, 255, 255, 0.94);
+        --dash-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+        position: relative;
+        color: var(--dash-ink);
+    }
+
+    .dashboard-shell::before {
+        content: "";
+        position: absolute;
+        inset: -24px -8px auto auto;
+        width: 220px;
+        height: 220px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(14, 165, 233, 0.18), rgba(14, 165, 233, 0));
+        pointer-events: none;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .dashboard-title {
+        margin: 0;
+        font-size: clamp(1.9rem, 1.2rem + 2vw, 2.8rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .dashboard-subtitle {
+        max-width: 760px;
+        margin: 0.5rem 0 0;
+        color: var(--dash-muted);
+        font-size: 1rem;
+    }
+
+    .sync-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 0.9rem 1rem;
+        border-radius: 18px;
+        border: 1px solid var(--dash-line);
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: var(--dash-shadow);
+        white-space: nowrap;
+    }
+
+    .sync-pill-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #94a3b8;
+        box-shadow: 0 0 0 6px rgba(148, 163, 184, 0.18);
+    }
+
+    .sync-pill.online .sync-pill-dot {
+        background: #10b981;
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.16);
+    }
+
+    .sync-pill.offline .sync-pill-dot {
+        background: #ef4444;
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.14);
+    }
+
+    .sync-pill-label {
+        display: block;
+        font-size: 0.76rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--dash-muted);
+    }
+
+    .sync-pill-value {
+        display: block;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--dash-ink);
+    }
+
+    .metric-card {
+        position: relative;
+        min-height: 172px;
+        padding: 1.2rem;
+        border-radius: 24px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: var(--dash-shadow);
+    }
+
+    .metric-card::after {
+        content: "";
+        position: absolute;
+        right: -26px;
+        top: -26px;
+        width: 110px;
+        height: 110px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.24);
+    }
+
+    .metric-card.metric-poi { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); }
+    .metric-card.metric-audio { background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); }
+    .metric-card.metric-translation { background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); }
+    .metric-card.metric-qr { background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); }
+    .metric-card.metric-today { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); }
+    .metric-card.metric-top { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
+
+    .metric-mark {
+        position: relative;
+        z-index: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 48px;
+        height: 30px;
+        padding: 0 0.75rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.08);
+        color: rgba(15, 23, 42, 0.7);
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .metric-label,
+    .metric-note,
+    .metric-value,
+    .metric-value-text {
+        position: relative;
+        z-index: 1;
+    }
+
+    .metric-label {
+        margin-top: 1rem;
+        color: rgba(15, 23, 42, 0.68);
+        font-size: 0.92rem;
+        font-weight: 600;
+    }
+
+    .metric-value {
+        margin-top: 0.5rem;
+        font-size: clamp(2rem, 1.4rem + 1vw, 2.5rem);
+        line-height: 1;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+    }
+
+    .metric-value-text {
+        margin-top: 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.25;
+        font-weight: 800;
+    }
+
+    .metric-note {
+        margin-top: 0.75rem;
+        color: rgba(15, 23, 42, 0.64);
+        font-size: 0.86rem;
+    }
+
+    .dashboard-panel {
+        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.84);
+        background: var(--dash-panel);
+        box-shadow: var(--dash-shadow);
+        padding: 1.4rem;
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .panel-title {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+
+    .panel-subtitle {
+        margin-top: 0.35rem;
+        color: var(--dash-muted);
+        font-size: 0.92rem;
+    }
+
+    .panel-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 0.45rem 0.8rem;
+    }
+
+    .listen-chart {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 0.9rem;
+        align-items: end;
+        min-height: 300px;
+        padding: 1.2rem;
+        border-radius: 24px;
+        background:
+            linear-gradient(180deg, rgba(255,255,255,0.9), rgba(241,245,249,0.85)),
+            repeating-linear-gradient(
+                to top,
+                rgba(148, 163, 184, 0.12) 0,
+                rgba(148, 163, 184, 0.12) 1px,
+                transparent 1px,
+                transparent 56px
+            );
+        border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .listen-column {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.7rem;
+        min-width: 0;
+    }
+
+    .listen-bar-stage {
+        width: 100%;
+        max-width: 66px;
+        height: 190px;
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .listen-bar {
+        width: 100%;
+        min-height: 10px;
+        border-radius: 18px 18px 10px 10px;
+        background: linear-gradient(180deg, #1d4ed8 0%, #0ea5e9 100%);
+        box-shadow: 0 18px 24px rgba(37, 99, 235, 0.16);
+    }
+
+    .listen-bar.is-empty {
+        background: linear-gradient(180deg, rgba(203, 213, 225, 0.7), rgba(226, 232, 240, 0.55));
+        box-shadow: none;
+    }
+
+    .listen-count {
+        font-size: 1.15rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .listen-label {
+        color: var(--dash-muted);
+        font-size: 0.84rem;
+        font-weight: 600;
+    }
+
+    .analysis-copy {
+        margin-bottom: 1rem;
+        color: var(--dash-muted);
+        line-height: 1.6;
+    }
+
+    .insight-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .insight-tile {
+        padding: 1rem;
+        border-radius: 20px;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.9));
+    }
+
+    .insight-label {
+        color: var(--dash-muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .insight-value {
+        margin-top: 0.45rem;
+        font-size: 1.3rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .status-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.1rem;
+        border-radius: 22px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        margin-bottom: 1.1rem;
+    }
+
+    .status-card.online {
+        background: linear-gradient(135deg, rgba(220, 252, 231, 0.9), rgba(236, 253, 245, 0.96));
+    }
+
+    .status-card.offline {
+        background: linear-gradient(135deg, rgba(254, 242, 242, 0.94), rgba(255, 247, 237, 0.98));
+    }
+
+    .status-title {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--dash-muted);
+    }
+
+    .status-value {
+        display: block;
+        margin-top: 0.3rem;
+        font-size: 1.1rem;
+        font-weight: 800;
+    }
+
+    .status-note {
+        color: var(--dash-muted);
+        font-size: 0.88rem;
+    }
+
+    .top-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.95rem;
+    }
+
+    .top-item-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: baseline;
+        margin-bottom: 0.35rem;
+    }
+
+    .top-item-name {
+        font-weight: 700;
+        min-width: 0;
+    }
+
+    .top-item-count {
+        color: var(--dash-muted);
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .top-item-track {
+        height: 10px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(148, 163, 184, 0.16);
+    }
+
+    .top-item-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #2563eb 0%, #14b8a6 100%);
+    }
+
+    .history-panel {
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .history-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.4rem 1.4rem 0;
+    }
+
+    .history-table {
+        margin-bottom: 0;
+        --bs-table-bg: transparent;
+    }
+
+    .history-table thead th {
+        background: rgba(248, 250, 252, 0.96);
+        color: var(--dash-muted);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom-width: 0;
+        padding: 1rem 1.4rem;
+    }
+
+    .history-table tbody td {
+        padding: 1rem 1.4rem;
+        border-color: rgba(148, 163, 184, 0.12);
+        vertical-align: middle;
+    }
+
+    .user-pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.38rem 0.8rem;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    .trigger-pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.36rem 0.72rem;
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .trigger-pill.gps {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .trigger-pill.qr {
+        background: #ede9fe;
+        color: #6d28d9;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.38rem 0.78rem;
+        font-size: 0.83rem;
+        font-weight: 700;
+    }
+
+    .status-badge.done {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-badge.pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .empty-state {
+        color: var(--dash-muted);
+        padding: 1rem 0;
+    }
+
+    @@media (max-width: 1199.98px) {
+        .dashboard-header {
+            flex-direction: column;
+        }
+
+        .sync-pill {
+            white-space: normal;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .listen-chart {
+            gap: 0.5rem;
+            padding: 1rem 0.7rem;
+        }
+
+        .listen-bar-stage {
+            max-width: 44px;
+            height: 160px;
+        }
+
+        .insight-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .history-head {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="dashboard-shell">
+    <div class="dashboard-header">
+        <div>
+            <h1 class="dashboard-title">Bảng điều khiển vận hành</h1>
+        </div>
+
+        <div class="sync-pill @(Model.IsSyncOnline ? "online" : "offline")">
+            <span class="sync-pill-dot"></span>
+            <div>
+                <span class="sync-pill-label">Đồng bộ hệ thống</span>
+                <span class="sync-pill-value">@syncLabel</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-sm-6 col-xl-4 col-xxl-2">
+            <div class="metric-card metric-poi">
+                <span class="metric-mark">POI</span>
+                <div class="metric-label">Tổng số POI</div>
+                <div class="metric-value">@Model.TotalPois</div>
+                <div class="metric-note">@Model.ActivePoiCount điểm đang hoạt động</div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-4 col-xxl-2">
+            <div class="metric-card metric-audio">
+                <span class="metric-mark">Audio</span>
+                <div class="metric-label">Tổng audio</div>
+                <div class="metric-value">@Model.TotalAudioGuides</div>
+                <div class="metric-note">@Model.PublishedAudioCount audio đã xuất bản</div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-4 col-xxl-2">
+            <div class="metric-card metric-translation">
+                <span class="metric-mark">Lang</span>
+                <div class="metric-label">Tổng bản dịch</div>
+                <div class="metric-value">@Model.TotalTranslations</div>
+                <div class="metric-note">Nội dung đa ngôn ngữ đang quản lý</div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-4 col-xxl-2">
+            <div class="metric-card metric-qr">
+                <span class="metric-mark">QR</span>
+                <div class="metric-label">Tổng QR code</div>
+                <div class="metric-value">@Model.TotalQrCodes</div>
+                <div class="metric-note">Điểm dừng đang hỗ trợ kích hoạt QR</div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-4 col-xxl-2">
+            <div class="metric-card metric-today">
+                <span class="metric-mark">Today</span>
+                <div class="metric-label">Số lượt nghe hôm nay</div>
+                <div class="metric-value">@Model.TodayListenCount</div>
+                <div class="metric-note">@DateTime.Today.ToString("dd/MM/yyyy")</div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-4 col-xxl-2">
+            <div class="metric-card metric-top">
+                <span class="metric-mark">Top</span>
+                <div class="metric-label">POI được nghe nhiều nhất</div>
+                <div class="metric-value-text">@Model.MostPlayedPoi</div>
+                <div class="metric-note">Tính theo toàn bộ lịch sử nghe</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-8">
+            <div class="dashboard-panel h-100">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Biểu đồ lượt nghe theo ngày</h2>
+                        <div class="panel-subtitle">7 ngày gần nhất, giúp thầy nhìn nhanh nhịp hoạt động của hệ thống.</div>
+                    </div>
+                    <span class="panel-chip">@Model.DailyListenPoints.Count ngày</span>
+                </div>
+
+                <div class="listen-chart">
+                    @foreach (var point in Model.DailyListenPoints)
+                    {
+                        var barHeight = point.Count == 0 ? 8 : Math.Max(14, (int)Math.Round(point.Count * 100.0 / maxDailyCount));
+
+                        <div class="listen-column">
+                            <div class="listen-bar-stage">
+                                <div class="listen-bar @(point.Count == 0 ? "is-empty" : null)" style="height:@barHeight%;"></div>
+                            </div>
+                            <div class="listen-count">@point.Count</div>
+                            <div class="listen-label">@point.Label</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="dashboard-panel h-100">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Phân tích nhanh</h2>
+                        <div class="panel-subtitle">Top địa điểm, tỷ lệ hoàn tất và trạng thái đồng bộ.</div>
+                    </div>
+                </div>
+
+                <p class="analysis-copy">@insightSummary</p>
+
+                <div class="insight-grid">
+                    <div class="insight-tile">
+                        <div class="insight-label">Nghe trung bình</div>
+                        <div class="insight-value">@Model.AverageListenSeconds.ToString("0") giây</div>
+                    </div>
+                    <div class="insight-tile">
+                        <div class="insight-label">Hoàn tất</div>
+                        <div class="insight-value">@Model.CompletionRate%</div>
+                    </div>
+                    <div class="insight-tile">
+                        <div class="insight-label">Trigger QR</div>
+                        <div class="insight-value">@Model.QrListenRate%</div>
+                    </div>
+                    <div class="insight-tile">
+                        <div class="insight-label">POI active</div>
+                        <div class="insight-value">@Model.ActivePoiCount/@Model.TotalPois</div>
+                    </div>
+                </div>
+
+                <div class="status-card @(Model.IsSyncOnline ? "online" : "offline")">
+                    <div>
+                        <div class="status-title">Trạng thái đồng bộ</div>
+                        <span class="status-value">@syncLabel</span>
+                        <div class="status-note">@syncSummary</div>
+                    </div>
+                    <div class="status-note text-end">
+                        Lần cập nhật gần nhất<br />
+                        <strong>@(Model.LastSyncedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có dữ liệu")</strong>
+                    </div>
+                </div>
+
+                <div class="panel-title mb-3">Top 5 địa điểm được nghe nhiều</div>
+                @if (Model.TopPois.Any())
+                {
+                    <div class="top-list">
+                        @foreach (var item in Model.TopPois)
+                        {
+                            var width = Math.Max(12, (int)Math.Round(item.Count * 100.0 / maxTopPoiCount));
+
+                            <div>
+                                <div class="top-item-row">
+                                    <div class="top-item-name">@item.Name</div>
+                                    <div class="top-item-count">@item.Count lượt</div>
+                                </div>
+                                <div class="top-item-track">
+                                    <div class="top-item-fill" style="width:@width%;"></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">Chưa có dữ liệu nghe để xếp hạng top địa điểm.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-panel history-panel">
+        <div class="history-head">
+            <div>
+                <h2 class="panel-title">Lịch sử nghe gần đây</h2>
+                <div class="panel-subtitle">Các phiên nghe mới nhất để thầy quan sát tình hình vận hành.</div>
+            </div>
+            <span class="panel-chip">@Model.RecentLogs.Count phiên gần nhất</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table history-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Người dùng</th>
+                        <th>POI</th>
+                        <th>Kích hoạt</th>
+                        <th>Ngôn ngữ</th>
+                        <th>Thời điểm</th>
+                        <th>Thời lượng</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.RecentLogs.Any())
+                {
+                    @foreach (var item in Model.RecentLogs)
+                    {
+                        <tr>
+                            <td><span class="user-pill">@item.UserCode</span></td>
+                            <td class="fw-semibold">@item.PoiName</td>
+                            <td>
+                                <span class="trigger-pill @(item.TriggerType == "QR" ? "qr" : "gps")">@item.TriggerType</span>
+                            </td>
+                            <td>@item.Language</td>
+                            <td>@item.StartedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@item.ListenSeconds giây</td>
+                            <td>
+                                <span class="status-badge @(item.Completed ? "done" : "pending")">
+                                    @(item.Completed ? "Hoàn tất" : "Đang nghe")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">Chưa có lịch sử nghe để hiển thị.</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

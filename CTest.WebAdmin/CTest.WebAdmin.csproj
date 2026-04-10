@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\PoisController.cs" />
+    <Compile Remove="Controllers\QrCodesController.cs" />
+    <Compile Remove="Controllers\TranslationsController.cs" />
+    <ProjectReference Include="..\C-test--main\VinhKhanhGuide.Core\VinhKhanhGuide.Core.csproj" />
+  </ItemGroup>
+</Project>

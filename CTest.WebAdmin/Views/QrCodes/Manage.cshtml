@@ -1,0 +1,272 @@
+﻿@model QrManagementViewModel
+@{
+    ViewData["Title"] = "Quáº£n lÃ½ QR";
+
+    bool ShouldFillCell(string seed, int row, int col)
+    {
+        if ((row < 5 && col < 5) || (row < 5 && col > 15) || (row > 15 && col < 5))
+        {
+            return row == 0 || row == 4 || col == 0 || col == 4 || (row >= 1 && row <= 3 && col >= 1 && col <= 3);
+        }
+
+        var hash = Math.Abs(HashCode.Combine(seed, row, col));
+        return hash % 3 != 0;
+    }
+}
+
+<style>
+    .qr-page {
+        --qr-ink: #0f172a;
+        --qr-muted: #64748b;
+        --qr-panel: rgba(255,255,255,0.96);
+        --qr-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+        color: var(--qr-ink);
+    }
+
+    .qr-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .qr-head h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 1.2rem + 2vw, 2.5rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .qr-head p {
+        margin: 0.45rem 0 0;
+        color: var(--qr-muted);
+        max-width: 760px;
+    }
+
+    .qr-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) 420px;
+        gap: 1.2rem;
+    }
+
+    .qr-panel {
+        background: var(--qr-panel);
+        border-radius: 28px;
+        box-shadow: var(--qr-shadow);
+        overflow: hidden;
+    }
+
+    .qr-table {
+        margin-bottom: 0;
+        --bs-table-bg: transparent;
+    }
+
+    .qr-table thead th {
+        background: rgba(248, 250, 252, 0.98);
+        color: var(--qr-muted);
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 1rem 1.1rem;
+        border-bottom-width: 0;
+    }
+
+    .qr-table tbody td {
+        padding: 1rem 1.1rem;
+        border-color: rgba(148, 163, 184, 0.12);
+        vertical-align: middle;
+    }
+
+    .qr-status {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.38rem 0.8rem;
+        font-size: 0.84rem;
+        font-weight: 700;
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .qr-preview-panel {
+        padding: 1.4rem;
+    }
+
+    .qr-preview-card {
+        border-radius: 28px;
+        padding: 1.3rem;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    }
+
+    .qr-preview-kicker {
+        color: var(--qr-muted);
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .qr-preview-title {
+        margin-top: 0.5rem;
+        font-size: 1.4rem;
+        font-weight: 800;
+    }
+
+    .qr-svg-wrap {
+        margin: 1.1rem auto;
+        width: min(100%, 280px);
+        aspect-ratio: 1;
+        background: white;
+        border-radius: 24px;
+        padding: 1rem;
+        box-shadow: 0 20px 40px rgba(37, 99, 235, 0.14);
+    }
+
+    .qr-meta {
+        color: var(--qr-muted);
+        line-height: 1.6;
+    }
+
+    @@media (max-width: 1199.98px) {
+        .qr-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .qr-head {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="qr-page">
+    <div class="qr-head">
+        <div>
+            <h1>Quáº£n lÃ½ QR code</h1>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.LoadErrorMessage))
+    {
+        <div class="alert alert-warning border-0 shadow-sm">@Model.LoadErrorMessage</div>
+    }
+
+    <div class="qr-layout">
+        <div class="qr-panel">
+            <div class="table-responsive">
+                <table class="table qr-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>POI</th>
+                            <th>MÃ£ QR</th>
+                            <th>Loáº¡i kÃ­ch hoáº¡t</th>
+                            <th>Tráº¡ng thÃ¡i</th>
+                            <th>Thao tÃ¡c</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@item.PoiName</td>
+                            <td><code>@item.PoiCode</code></td>
+                            <td>@item.ActivationType</td>
+                            <td><span class="qr-status">@item.Status</span></td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a asp-action="Index" asp-route-selectedPoiId="@item.PoiId" class="btn btn-outline-primary btn-sm rounded-pill">Táº¡o QR</a>
+                                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill js-download-qr" data-target="qr-svg-@item.PoiId">Táº£i QR PNG</button>
+                                    <button type="button" class="btn btn-outline-dark btn-sm rounded-pill" onclick="window.print()">In QR</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="qr-panel">
+            <div class="qr-preview-panel">
+                @if (Model.SelectedItem is not null)
+                {
+                    <div class="qr-preview-card">
+                        <div class="qr-preview-kicker">Preview</div>
+                        <div class="qr-preview-title">@Model.SelectedItem.PoiName</div>
+                        <div class="qr-meta mt-2">QuÃ©t Ä‘á»ƒ nghe ngay. Payload demo: <code>@Model.SelectedItem.Payload</code></div>
+
+                        <div class="qr-svg-wrap">
+                            <svg id="qr-svg-@Model.SelectedItem.PoiId" viewBox="0 0 210 210" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="210" height="210" fill="#ffffff"></rect>
+                                @for (var row = 0; row < 21; row++)
+                                {
+                                    for (var col = 0; col < 21; col++)
+                                    {
+                                        if (ShouldFillCell(Model.SelectedItem.Payload, row, col))
+                                        {
+                                            <rect x="@(col * 10)" y="@(row * 10)" width="10" height="10" fill="#0f172a"></rect>
+                                        }
+                                    }
+                                }
+                            </svg>
+                        </div>
+
+                        <div class="qr-meta">@Model.SelectedItem.Description</div>
+
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            <a asp-controller="Pois" asp-action="Details" asp-route-id="@Model.SelectedItem.PoiId" class="btn btn-outline-primary rounded-pill px-4">Xem POI</a>
+                            <button type="button" class="btn btn-success rounded-pill px-4 js-download-qr" data-target="qr-svg-@Model.SelectedItem.PoiId">Táº£i PNG</button>
+                            <button type="button" class="btn btn-dark rounded-pill px-4" onclick="window.print()">In QR</button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted">ChÆ°a cÃ³ POI Ä‘á»ƒ táº¡o QR.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const downloadSvgAsPng = (svgId) => {
+                const svg = document.getElementById(svgId);
+                if (!svg) return;
+
+                const serializer = new XMLSerializer();
+                const source = serializer.serializeToString(svg);
+                const image = new Image();
+                const svgBlob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+                const url = URL.createObjectURL(svgBlob);
+
+                image.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = 840;
+                    canvas.height = 840;
+                    const ctx = canvas.getContext("2d");
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+                    const link = document.createElement("a");
+                    link.href = canvas.toDataURL("image/png");
+                    link.download = `${svgId}.png`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                };
+
+                image.src = url;
+            };
+
+            document.querySelectorAll(".js-download-qr").forEach((button) => {
+                button.addEventListener("click", () => {
+                    downloadSvgAsPng(button.dataset.target);
+                });
+            });
+        })();
+    </script>
+}

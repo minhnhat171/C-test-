@@ -1,0 +1,19 @@
+@model List<AudioGuide>
+@{ ViewData["Title"] = "Audio / TTS"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1">Quản lý Audio / TTS</h2>
+        <div class="text-muted">Theo dõi nội dung phát tự động bằng TTS hoặc file audio thu sẵn.</div>
+    </div>
+    <button class="btn btn-primary">+ Thêm audio</button>
+</div>
+<table class="table table-striped align-middle">
+    <thead><tr><th>ID</th><th>POI</th><th>Ngôn ngữ</th><th>Giọng</th><th>Nguồn</th><th>Thời lượng</th><th>Xuất bản</th></tr></thead>
+    <tbody>
+    @foreach (var item in Model) {
+        <tr>
+            <td>@item.Id</td><td>@item.PoiName</td><td>@item.Language</td><td>@item.VoiceType</td><td>@item.SourceType</td><td>@item.EstimatedSeconds giây</td><td>@(item.IsPublished ? "Có" : "Chưa")</td>
+        </tr>
+    }
+    </tbody>
+</table>

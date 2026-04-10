@@ -1,0 +1,386 @@
+@model PoiEditorViewModel
+@{
+    ViewData["Title"] = Model.IsEditMode ? "Sửa POI" : "Thêm POI";
+}
+
+<style>
+    .poi-editor {
+        --poi-ink: #0f172a;
+        --poi-muted: #64748b;
+        --poi-line: rgba(148, 163, 184, 0.2);
+        --poi-panel: rgba(255,255,255,0.96);
+        --poi-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+        color: var(--poi-ink);
+    }
+
+    .poi-editor-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .poi-editor-title {
+        margin: 0;
+        font-size: clamp(1.7rem, 1.15rem + 2vw, 2.4rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .poi-editor-subtitle {
+        margin-top: 0.45rem;
+        color: var(--poi-muted);
+        max-width: 760px;
+    }
+
+    .poi-editor-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+        gap: 1.2rem;
+    }
+
+    .poi-editor-panel {
+        background: var(--poi-panel);
+        border: 1px solid rgba(255,255,255,0.84);
+        border-radius: 28px;
+        box-shadow: var(--poi-shadow);
+        overflow: hidden;
+    }
+
+    .poi-editor-body {
+        padding: 1.4rem;
+    }
+
+    .poi-editor-section + .poi-editor-section {
+        margin-top: 1.1rem;
+        padding-top: 1.1rem;
+        border-top: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .poi-section-kicker {
+        margin-bottom: 0.85rem;
+        color: var(--poi-muted);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .poi-editor .form-control,
+    .poi-editor .form-check-input,
+    .poi-editor textarea {
+        border-radius: 16px;
+    }
+
+    .poi-editor .form-control,
+    .poi-editor textarea {
+        border-color: rgba(148, 163, 184, 0.24);
+        min-height: 48px;
+    }
+
+    .poi-editor textarea {
+        min-height: 120px;
+    }
+
+    .poi-side-block {
+        padding: 1.4rem;
+    }
+
+    .poi-preview-card {
+        padding: 1.1rem;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        margin-bottom: 1rem;
+    }
+
+    .poi-preview-label {
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--poi-muted);
+    }
+
+    .poi-preview-name {
+        margin-top: 0.55rem;
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .poi-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.8rem;
+        margin-bottom: 1rem;
+    }
+
+    .poi-meta-tile {
+        padding: 1rem;
+        border-radius: 20px;
+        background: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+    }
+
+    .poi-meta-tile strong {
+        display: block;
+        margin-top: 0.35rem;
+        font-size: 1.1rem;
+    }
+
+    .poi-map-card {
+        border-radius: 24px;
+        padding: 1.2rem;
+        background:
+            linear-gradient(135deg, rgba(14, 165, 233, 0.10), rgba(37, 99, 235, 0.16)),
+            repeating-linear-gradient(0deg, rgba(255,255,255,0.45) 0, rgba(255,255,255,0.45) 1px, transparent 1px, transparent 34px),
+            repeating-linear-gradient(90deg, rgba(255,255,255,0.45) 0, rgba(255,255,255,0.45) 1px, transparent 1px, transparent 34px);
+        min-height: 220px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .poi-map-pin {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #ef4444;
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0.14);
+    }
+
+    .poi-map-details {
+        position: absolute;
+        left: 1rem;
+        right: 1rem;
+        bottom: 1rem;
+        border-radius: 18px;
+        padding: 0.9rem 1rem;
+        background: rgba(255,255,255,0.92);
+        backdrop-filter: blur(8px);
+    }
+
+    .poi-summary-copy {
+        color: var(--poi-muted);
+        line-height: 1.6;
+    }
+
+    @@media (max-width: 1199.98px) {
+        .poi-editor-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="poi-editor">
+    <div class="poi-editor-header">
+        <div>
+            <h1 class="poi-editor-title">@(Model.IsEditMode ? "Sửa POI" : "Thêm POI mới")</h1>
+            <div class="poi-editor-subtitle">Chia form theo nhóm thông tin để dễ thao tác: cơ bản, vị trí, geofence và nội dung thuyết minh.</div>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Quay lại danh sách</a>
+    </div>
+
+    <div class="poi-editor-layout">
+        <div class="poi-editor-panel">
+            <div class="poi-editor-body">
+                <form asp-action="@(Model.IsEditMode ? "Edit" : "Create")" method="post">
+                    @Html.AntiForgeryToken()
+                    <input asp-for="Id" type="hidden" />
+                    <input asp-for="IsEditMode" type="hidden" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="poi-editor-section">
+                        <div class="poi-section-kicker">Thông tin cơ bản</div>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="Name" class="form-label">Tên điểm</label>
+                                <input asp-for="Name" class="form-control" id="poiName" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Code" class="form-label">Mã app</label>
+                                <input asp-for="Code" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Category" class="form-label">Danh mục</label>
+                                <input asp-for="Category" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="CooldownMinutes" class="form-label">Cooldown</label>
+                                <input asp-for="CooldownMinutes" class="form-control" />
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Address" class="form-label">Địa chỉ</label>
+                                <input asp-for="Address" class="form-control" id="poiAddress" />
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Description" class="form-label">Mô tả</label>
+                                <textarea asp-for="Description" class="form-control" rows="4" id="poiDescription"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="SpecialDish" class="form-label">Món nổi bật</label>
+                                <input asp-for="SpecialDish" class="form-control" />
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="ImageSource" class="form-label">Ảnh minh họa</label>
+                                <input asp-for="ImageSource" class="form-control" placeholder="vd: ocoanh.png" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="poi-editor-section">
+                        <div class="poi-section-kicker">Vị trí</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Latitude" class="form-label">Latitude</label>
+                                <input asp-for="Latitude" class="form-control" id="poiLatitude" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Longitude" class="form-label">Longitude</label>
+                                <input asp-for="Longitude" class="form-control" id="poiLongitude" />
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="MapLink" class="form-label">Map link</label>
+                                <input asp-for="MapLink" class="form-control" id="poiMapLink" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="poi-editor-section">
+                        <div class="poi-section-kicker">Geofence</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="RadiusInMeters" class="form-label">Bán kính kích hoạt</label>
+                                <input asp-for="RadiusInMeters" class="form-control" id="poiRadius" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Priority" class="form-label">Mức ưu tiên</label>
+                                <input asp-for="Priority" class="form-control" id="poiPriority" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="poi-editor-section">
+                        <div class="poi-section-kicker">Nội dung</div>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="NarrationScript" class="form-label">Narration script</label>
+                                <textarea asp-for="NarrationScript" class="form-control" rows="6" id="poiNarration"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch mt-2">
+                                    <input asp-for="IsActive" class="form-check-input" id="poiIsActive" />
+                                    <label asp-for="IsActive" class="form-check-label">Trạng thái hoạt động</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">@(Model.IsEditMode ? "Lưu thay đổi" : "Tạo POI")</button>
+                        @if (Model.IsEditMode)
+                        {
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-dark rounded-pill px-4">Xem chi tiết</a>
+                            <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedPoiId="@Model.Id" class="btn btn-outline-success rounded-pill px-4">Tạo QR</a>
+                        }
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="poi-editor-panel">
+            <div class="poi-side-block">
+                <div class="poi-preview-card">
+                    <div class="poi-preview-label">Preview</div>
+                    <div class="poi-preview-name" id="previewName">@(string.IsNullOrWhiteSpace(Model.Name) ? "Tên điểm sẽ hiển thị ở đây" : Model.Name)</div>
+                    <div class="poi-summary-copy mt-2" id="previewAddress">@(string.IsNullOrWhiteSpace(Model.Address) ? "Địa chỉ sẽ tự cập nhật khi bạn nhập form." : Model.Address)</div>
+                </div>
+
+                <div class="poi-meta-grid">
+                    <div class="poi-meta-tile">
+                        <span class="poi-preview-label">Audio liên quan</span>
+                        <strong>@Model.RelatedAudioCount</strong>
+                    </div>
+                    <div class="poi-meta-tile">
+                        <span class="poi-preview-label">Bản dịch</span>
+                        <strong>@Model.RelatedTranslationCount</strong>
+                    </div>
+                    <div class="poi-meta-tile">
+                        <span class="poi-preview-label">Bán kính</span>
+                        <strong><span id="previewRadius">@Model.RadiusInMeters</span> m</strong>
+                    </div>
+                    <div class="poi-meta-tile">
+                        <span class="poi-preview-label">Ưu tiên</span>
+                        <strong>#<span id="previewPriority">@Model.Priority</span></strong>
+                    </div>
+                </div>
+
+                <div class="poi-map-card mb-3">
+                    <div class="poi-map-pin"></div>
+                    <div class="poi-map-details">
+                        <div class="poi-preview-label">Tọa độ hiện tại</div>
+                        <div class="fw-semibold" id="previewCoordinates">@Model.Latitude, @Model.Longitude</div>
+                        <div class="poi-summary-copy mt-2">Box preview này mô phỏng vị trí và giúp bạn kiểm tra nhanh geofence trước khi lưu.</div>
+                    </div>
+                </div>
+
+                <div class="poi-summary-copy mb-3" id="previewDescription">@(string.IsNullOrWhiteSpace(Model.Description) ? "Mô tả và nội dung tóm tắt của địa điểm sẽ xuất hiện ở đây." : Model.Description)</div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.MapLink))
+                {
+                    <a href="@Model.MapLink" target="_blank" class="btn btn-outline-primary rounded-pill px-4">Mở map link</a>
+                }
+
+                <div class="mt-3 text-muted small">
+                    QR hỗ trợ: <strong id="previewQr">@(Model.IsQrEnabled ? "Có" : "Chưa rõ")</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const map = [
+                ["poiName", "previewName", "Tên điểm sẽ hiển thị ở đây"],
+                ["poiAddress", "previewAddress", "Địa chỉ sẽ tự cập nhật khi bạn nhập form."],
+                ["poiDescription", "previewDescription", "Mô tả và nội dung tóm tắt của địa điểm sẽ xuất hiện ở đây."],
+                ["poiRadius", "previewRadius", "0"],
+                ["poiPriority", "previewPriority", "0"]
+            ];
+
+            map.forEach(([sourceId, targetId, fallback]) => {
+                const source = document.getElementById(sourceId);
+                const target = document.getElementById(targetId);
+                if (!source || !target) return;
+
+                source.addEventListener("input", () => {
+                    target.textContent = source.value.trim() || fallback;
+                });
+            });
+
+            const latitude = document.getElementById("poiLatitude");
+            const longitude = document.getElementById("poiLongitude");
+            const coordinates = document.getElementById("previewCoordinates");
+            const narration = document.getElementById("poiNarration");
+            const qrPreview = document.getElementById("previewQr");
+
+            const syncCoordinates = () => {
+                coordinates.textContent = `${latitude?.value || 0}, ${longitude?.value || 0}`;
+            };
+
+            const syncQr = () => {
+                qrPreview.textContent = narration && narration.value.toUpperCase().includes("QR") ? "Có" : "Chưa rõ";
+            };
+
+            latitude?.addEventListener("input", syncCoordinates);
+            longitude?.addEventListener("input", syncCoordinates);
+            narration?.addEventListener("input", syncQr);
+        })();
+    </script>
+}
