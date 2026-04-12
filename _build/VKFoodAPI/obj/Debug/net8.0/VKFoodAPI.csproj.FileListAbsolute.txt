@@ -1,7 +1,0 @@
-D:\App\_build\VKFoodAPI\obj\Debug\net8.0\VKFoodAPI.csproj.AssemblyReference.cache
-D:\App\_build\VKFoodAPI\obj\Debug\net8.0\rpswa.dswa.cache.json
-D:\App\_build\VKFoodAPI\obj\Debug\net8.0\VKFoodAPI.GeneratedMSBuildEditorConfig.editorconfig
-D:\App\_build\VKFoodAPI\obj\Debug\net8.0\VKFoodAPI.AssemblyInfoInputs.cache
-D:\App\_build\VKFoodAPI\obj\Debug\net8.0\VKFoodAPI.AssemblyInfo.cs
-D:\App\_build\VKFoodAPI\obj\Debug\net8.0\VKFoodAPI.csproj.CoreCompileInputs.cache
-D:\App\_build\VKFoodAPI\obj\Debug\net8.0\VKFoodAPI.MvcApplicationPartsAssemblyInfo.cache

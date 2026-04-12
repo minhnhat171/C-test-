@@ -1,5 +1,0 @@
-D:\App\_build\VKFoodAPI\obj\Debug\net8.0\VinhKhanhGuide.Core.csproj.AssemblyReference.cache
-D:\App\_build\VKFoodAPI\obj\Debug\net8.0\VinhKhanhGuide.Core.GeneratedMSBuildEditorConfig.editorconfig
-D:\App\_build\VKFoodAPI\obj\Debug\net8.0\VinhKhanhGuide.Core.AssemblyInfoInputs.cache
-D:\App\_build\VKFoodAPI\obj\Debug\net8.0\VinhKhanhGuide.Core.AssemblyInfo.cs
-D:\App\_build\VKFoodAPI\obj\Debug\net8.0\VinhKhanhGuide.Core.csproj.CoreCompileInputs.cache

@@ -20,6 +20,7 @@ public class MainViewModel : INotifyPropertyChanged
     private const int MaxSearchSuggestions = 6;
     private const int MaxPinnedRecentSuggestions = 3;
     private const string UserPreferenceKeyPrefix = "vinhkhanh.user.preferences.v1";
+    private static readonly TimeSpan PoiRefreshInterval = TimeSpan.FromSeconds(8);
 
     public const double EntranceLatitude = 10.7614500;
     public const double EntranceLongitude = 106.7028200;
@@ -38,6 +39,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly List<string> _recentSearches = [];
 
     private IReadOnlyList<POI> _pois = Array.Empty<POI>();
+    private Task? _poiRefreshLoopTask;
     private bool _isInitialized;
     private bool _isTracking;
     private bool _isNarrating;
@@ -51,6 +53,7 @@ public class MainViewModel : INotifyPropertyChanged
     private LocationDto? _lastLocation;
     private POI? _selectedPoi;
     private bool _hasUserSelectedPoi;
+    private string _poiDataSnapshot = string.Empty;
     private string _statusText = "Đang chờ khởi động GPS";
     private string _locationText = "Bạn đang xem cổng phố ẩm thực Vĩnh Khánh";
     private string _nearestPoiText = "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
@@ -361,16 +364,16 @@ public class MainViewModel : INotifyPropertyChanged
 
     public async Task InitializeAsync()
     {
+        EnsurePoiRefreshLoopStarted();
+
         if (_isInitialized)
         {
+            await RefreshPoisIfChangedAsync();
             return;
         }
 
-        _pois = await _poiProvider.GetPoisAsync();
-        RefreshPoiList(Array.Empty<(POI Poi, double DistanceMeters, bool IsInside)>(), null);
-        SetSelectedPoi(_pois.FirstOrDefault(), false, null);
+        await RefreshPoisIfChangedAsync(forceRefresh: true);
         _isInitialized = true;
-        RaiseMapStateChanged();
     }
 
     public async Task StartAsync()
@@ -556,6 +559,89 @@ public class MainViewModel : INotifyPropertyChanged
         await _authService.SignOutAsync();
     }
 
+    private void EnsurePoiRefreshLoopStarted()
+    {
+        if (_poiRefreshLoopTask is not null)
+        {
+            return;
+        }
+
+        _poiRefreshLoopTask = Task.Run(RunPoiRefreshLoopAsync);
+    }
+
+    private async Task RunPoiRefreshLoopAsync()
+    {
+        using var timer = new PeriodicTimer(PoiRefreshInterval);
+
+        while (await timer.WaitForNextTickAsync())
+        {
+            await RefreshPoisIfChangedAsync();
+        }
+    }
+
+    private async Task RefreshPoisIfChangedAsync(
+        bool forceRefresh = false,
+        CancellationToken cancellationToken = default)
+    {
+        var latestPois = await _poiProvider.GetPoisAsync(cancellationToken);
+        var snapshot = CreatePoiSnapshot(latestPois);
+
+        if (!forceRefresh && string.Equals(_poiDataSnapshot, snapshot, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        await _locationUpdateGate.WaitAsync(cancellationToken);
+
+        try
+        {
+            var previousSelectedPoiId = _selectedPoi?.Id;
+            var previousSnapshot = _poiDataSnapshot;
+
+            _pois = latestPois.ToList();
+            _poiDataSnapshot = snapshot;
+            CleanupPoiState();
+
+            var nearestPoi = default(POI);
+            IReadOnlyList<(POI Poi, double DistanceMeters, bool IsInside)> evaluated =
+                Array.Empty<(POI Poi, double DistanceMeters, bool IsInside)>();
+
+            if (_lastLocation is not null && _pois.Count > 0)
+            {
+                evaluated = _geofenceEngine.Evaluate(_lastLocation, _pois);
+                nearestPoi = evaluated.FirstOrDefault().Poi;
+            }
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                RefreshPoiList(evaluated, nearestPoi?.Id);
+
+                if (_lastLocation is not null)
+                {
+                    UpdateLocationSummary(
+                        _lastLocation,
+                        nearestPoi,
+                        nearestPoi is null ? null : GetDistanceForPoi(nearestPoi.Id));
+                }
+                else if (_pois.Count == 0)
+                {
+                    NearestPoiText = "Chua co POI dang hoat dong tu WebAdmin";
+                }
+
+                ApplySelectedPoiAfterRefresh(previousSelectedPoiId, nearestPoi, evaluated);
+            });
+
+            if (_isInitialized && !string.IsNullOrWhiteSpace(previousSnapshot))
+            {
+                AddLog($"{NowLabel()} Dong bo du lieu moi tu WebAdmin ({_pois.Count} POI)");
+            }
+        }
+        finally
+        {
+            _locationUpdateGate.Release();
+        }
+    }
+
     public async Task HandleMapTapAsync(double latitude, double longitude)
     {
         if (_pois.Count == 0)
@@ -646,6 +732,7 @@ public class MainViewModel : INotifyPropertyChanged
                 : $"Quán gần nhất: {nearest.Poi.Name} ({nearest.DistanceMeters:F0}m)";
 
             RefreshPoiList(results, nearest.Poi?.Id);
+            UpdateLocationSummary(location, nearest.Poi, nearest.Poi is null ? null : nearest.DistanceMeters);
 
             if (!_hasUserSelectedPoi)
             {
@@ -680,6 +767,65 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         RaiseMapStateChanged();
+    }
+
+    private void CleanupPoiState()
+    {
+        var activePoiIds = _pois
+            .Select(poi => poi.Id)
+            .ToHashSet();
+
+        _insidePoiIds.RemoveWhere(poiId => !activePoiIds.Contains(poiId));
+
+        if (_lastAutoNarratedPoiId.HasValue && !activePoiIds.Contains(_lastAutoNarratedPoiId.Value))
+        {
+            _lastAutoNarratedPoiId = null;
+        }
+
+        foreach (var stalePoiId in _lastNarratedAt.Keys.Where(poiId => !activePoiIds.Contains(poiId)).ToList())
+        {
+            _lastNarratedAt.Remove(stalePoiId);
+        }
+    }
+
+    private void ApplySelectedPoiAfterRefresh(
+        Guid? previousSelectedPoiId,
+        POI? nearestPoi,
+        IReadOnlyList<(POI Poi, double DistanceMeters, bool IsInside)> evaluated)
+    {
+        if (_pois.Count == 0)
+        {
+            _selectedPoi = null;
+            _hasUserSelectedPoi = false;
+            ClearSelectedPoiDetails();
+            RaiseMapStateChanged();
+            return;
+        }
+
+        var preservedSelection = previousSelectedPoiId.HasValue
+            ? _pois.FirstOrDefault(item => item.Id == previousSelectedPoiId.Value)
+            : null;
+
+        if (preservedSelection is null && previousSelectedPoiId.HasValue)
+        {
+            _hasUserSelectedPoi = false;
+        }
+
+        var nextSelectedPoi = preservedSelection
+            ?? (!_hasUserSelectedPoi ? nearestPoi : null)
+            ?? _pois.FirstOrDefault();
+
+        SetSelectedPoi(nextSelectedPoi, false, evaluated.Count > 0 ? evaluated : null);
+    }
+
+    private void UpdateLocationSummary(LocationDto location, POI? nearestPoi, double? nearestDistanceMeters)
+    {
+        LocationText =
+            $"Lat {location.Latitude:F6} | Lng {location.Longitude:F6} | Sai so {location.AccuracyMeters?.ToString("F0") ?? "?"}m";
+
+        NearestPoiText = nearestPoi is null
+            ? "Chua xac dinh quan gan nhat"
+            : $"Quan gan nhat: {nearestPoi.Name} ({nearestDistanceMeters?.ToString("F0") ?? "?"}m)";
     }
 
     private bool ShouldAutoNarrate(POI poi)
@@ -853,6 +999,18 @@ public class MainViewModel : INotifyPropertyChanged
         SelectedPoiNarrationPreview = _selectedPoi.GetNarrationText(SelectedLanguage);
         SelectedPoiMapLink = _selectedPoi.MapLink;
         SelectedPoiImageSource = _selectedPoi.ImageSource;
+    }
+
+    private void ClearSelectedPoiDetails()
+    {
+        SelectedPoiName = "Chua co POI dang hoat dong";
+        SelectedPoiAddress = "Cap nhat POI trong WebAdmin de app hien thi lai.";
+        SelectedPoiDescription = string.Empty;
+        SelectedPoiDishText = string.Empty;
+        SelectedPoiStatusText = string.Empty;
+        SelectedPoiNarrationPreview = string.Empty;
+        SelectedPoiMapLink = string.Empty;
+        SelectedPoiImageSource = string.Empty;
     }
 
     private double? GetDistanceForPoi(Guid poiId)
@@ -1260,6 +1418,46 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         return builder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private static string CreatePoiSnapshot(IEnumerable<POI> pois)
+    {
+        var builder = new StringBuilder();
+
+        foreach (var poi in pois.OrderBy(item => item.Id))
+        {
+            builder
+                .Append(poi.Id).Append('|')
+                .Append(poi.Code).Append('|')
+                .Append(poi.Name).Append('|')
+                .Append(poi.Category).Append('|')
+                .Append(poi.ImageSource).Append('|')
+                .Append(poi.Address).Append('|')
+                .Append(poi.Description).Append('|')
+                .Append(poi.SpecialDish).Append('|')
+                .Append(poi.NarrationText).Append('|')
+                .Append(poi.MapLink).Append('|')
+                .Append(poi.AudioAssetPath).Append('|')
+                .Append(poi.Priority).Append('|')
+                .Append(poi.Latitude).Append('|')
+                .Append(poi.Longitude).Append('|')
+                .Append(poi.TriggerRadiusMeters).Append('|')
+                .Append(poi.CooldownMinutes).Append('|')
+                .Append(poi.IsActive);
+
+            foreach (var translation in poi.NarrationTranslations.OrderBy(item => item.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                builder
+                    .Append('|')
+                    .Append(translation.Key)
+                    .Append('=')
+                    .Append(translation.Value);
+            }
+
+            builder.AppendLine();
+        }
+
+        return builder.ToString();
     }
 
     private static string NowLabel() => DateTime.Now.ToString("HH:mm:ss");
