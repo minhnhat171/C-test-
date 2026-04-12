@@ -13,10 +13,12 @@ public class AuthPageViewModel : INotifyPropertyChanged
     private bool _isBusy;
     private bool _isLoginMode = true;
     private string _fullName = string.Empty;
-    private string _email = string.Empty;
+    private string _username = string.Empty;
     private string _password = string.Empty;
     private string _confirmPassword = string.Empty;
+    private string _selectedAccountType = "Khách khám phá";
     private string _errorMessage = string.Empty;
+    private string _successMessage = string.Empty;
 
     public AuthPageViewModel(IAuthService authService)
     {
@@ -32,6 +34,12 @@ public class AuthPageViewModel : INotifyPropertyChanged
     public ICommand SwitchToLoginCommand { get; }
     public ICommand SwitchToRegisterCommand { get; }
     public ICommand SubmitCommand { get; }
+
+    public IReadOnlyList<string> AccountTypeOptions { get; } =
+    [
+        "Khách khám phá",
+        "Chủ quán"
+    ];
 
     public bool IsBusy
     {
@@ -71,17 +79,21 @@ public class AuthPageViewModel : INotifyPropertyChanged
 
     public bool IsRegisterMode => !IsLoginMode;
 
-    public string FormTitle => IsLoginMode ? "Đăng nhập để vào app" : "Tạo tài khoản mới";
+    public string FormTitle => IsLoginMode ? "Đăng nhập để tiếp tục" : "Tạo tài khoản mới";
 
     public string FormSubtitle => IsLoginMode
-        ? "Tiếp tục hành trình khám phá ẩm thực Vĩnh Khánh bằng tên đăng nhập hoặc email."
-        : "Tạo tài khoản cục bộ để khóa luồng truy cập trước khi vào app.";
+        ? "Xác thực nhanh để vào bản đồ, GPS và phần thuyết minh tự động."
+        : "Làm theo đúng sequence: kiểm tra dữ liệu, lưu tài khoản rồi quay lại đăng nhập.";
 
     public string FormHint => IsLoginMode
-        ? "Tài khoản quản trị mặc định hiện có sẵn: user / 12345."
-        : "Tài khoản hiện được lưu nội bộ trên máy và có thể thay bằng auth server sau này.";
+        ? "Tài khoản mẫu đang có sẵn: user / 12345678."
+        : "Đăng ký xong app sẽ quay lại tab đăng nhập. Tên đăng nhập nên viết liền, không dấu.";
 
     public string SubmitButtonText => IsLoginMode ? "Đăng nhập" : "Tạo tài khoản";
+
+    public string SelectedAccountTypeHint => SelectedAccountType == "Chủ quán"
+        ? "Phù hợp cho quán muốn quản lý nội dung và dữ liệu tại điểm."
+        : "Dành cho người dùng khám phá, nghe thuyết minh và theo dõi hành trình.";
 
     public string FullName
     {
@@ -95,12 +107,12 @@ public class AuthPageViewModel : INotifyPropertyChanged
         }
     }
 
-    public string Email
+    public string Username
     {
-        get => _email;
+        get => _username;
         set
         {
-            if (SetProperty(ref _email, value))
+            if (SetProperty(ref _username, value))
             {
                 ClearFeedback();
             }
@@ -131,6 +143,21 @@ public class AuthPageViewModel : INotifyPropertyChanged
         }
     }
 
+    public string SelectedAccountType
+    {
+        get => _selectedAccountType;
+        set
+        {
+            if (!SetProperty(ref _selectedAccountType, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(SelectedAccountTypeHint));
+            ClearFeedback();
+        }
+    }
+
     public string ErrorMessage
     {
         get => _errorMessage;
@@ -147,11 +174,29 @@ public class AuthPageViewModel : INotifyPropertyChanged
 
     public bool HasErrorMessage => !string.IsNullOrWhiteSpace(ErrorMessage);
 
+    public string SuccessMessage
+    {
+        get => _successMessage;
+        private set
+        {
+            if (!SetProperty(ref _successMessage, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasSuccessMessage));
+        }
+    }
+
+    public bool HasSuccessMessage => !string.IsNullOrWhiteSpace(SuccessMessage);
+
     private void SwitchToLoginMode()
     {
         IsLoginMode = true;
+        FullName = string.Empty;
         Password = string.Empty;
         ConfirmPassword = string.Empty;
+        SelectedAccountType = AccountTypeOptions[0];
     }
 
     private void SwitchToRegisterMode()
@@ -174,8 +219,13 @@ public class AuthPageViewModel : INotifyPropertyChanged
         try
         {
             var result = IsLoginMode
-                ? await _authService.SignInAsync(Email, Password)
-                : await _authService.RegisterAsync(FullName, Email, Password, ConfirmPassword);
+                ? await _authService.SignInAsync(Username, Password)
+                : await _authService.RegisterAsync(
+                    FullName,
+                    Username,
+                    Password,
+                    ConfirmPassword,
+                    GetSelectedRole());
 
             if (!result.Succeeded)
             {
@@ -185,6 +235,15 @@ public class AuthPageViewModel : INotifyPropertyChanged
 
             Password = string.Empty;
             ConfirmPassword = string.Empty;
+
+            if (IsRegisterMode)
+            {
+                FullName = string.Empty;
+                SelectedAccountType = AccountTypeOptions[0];
+                IsLoginMode = true;
+            }
+
+            SuccessMessage = result.Message;
         }
         finally
         {
@@ -192,9 +251,15 @@ public class AuthPageViewModel : INotifyPropertyChanged
         }
     }
 
+    private string GetSelectedRole()
+    {
+        return SelectedAccountType == "Chủ quán" ? "poi_owner" : "user";
+    }
+
     private void ClearFeedback()
     {
         ErrorMessage = string.Empty;
+        SuccessMessage = string.Empty;
     }
 
     private bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)

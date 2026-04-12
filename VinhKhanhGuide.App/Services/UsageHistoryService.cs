@@ -64,7 +64,7 @@ public class UsageHistoryService : IUsageHistoryService
 
     private string GetCurrentPreferenceKey(UsageHistoryCategory category)
     {
-        var scope = _authService.CurrentSession?.Email?.Trim().ToLowerInvariant();
+        var scope = _authService.CurrentSession?.ScopeKey;
         if (string.IsNullOrWhiteSpace(scope))
         {
             scope = "guest";

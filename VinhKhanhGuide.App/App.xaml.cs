@@ -36,7 +36,7 @@ public partial class App : Application
     {
         return new NavigationPage(_serviceProvider.GetRequiredService<AuthPage>())
         {
-            BarBackgroundColor = Color.FromArgb("#C2410C"),
+            BarBackgroundColor = Color.FromArgb("#215C57"),
             BarTextColor = Colors.White
         };
     }

@@ -714,7 +714,7 @@
                                 <VerticalStackLayout Spacing="12">
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="14">
-                                        <Label Text="Tài khoản"
+                                        <Label Text="Tên đăng nhập"
                                                FontSize="13"
                                                FontAttributes="Bold"
                                                TextColor="#374151" />
