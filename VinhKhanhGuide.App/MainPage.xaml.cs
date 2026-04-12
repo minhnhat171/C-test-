@@ -104,7 +104,7 @@ public partial class MainPage : ContentPage
         CenterMapOnEntrance(RestaurantMap, PreviewEntranceResolution);
     }
 
-    private void OnOpenListeningHistoryClicked(object? sender, EventArgs e)
+    private void OnOpenListeningHistoryClicked(object? sender, TappedEventArgs e)
     {
         RestaurantSearchEntry.Unfocus();
         ListeningHistoryOverlay.IsVisible = true;
@@ -116,7 +116,7 @@ public partial class MainPage : ContentPage
         ListeningHistoryOverlay.IsVisible = false;
     }
 
-    private void OnOpenUserProfileClicked(object? sender, EventArgs e)
+    private void OnOpenUserProfileClicked(object? sender, TappedEventArgs e)
     {
         RestaurantSearchEntry.Unfocus();
         UserProfileOverlay.IsVisible = true;

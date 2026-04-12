@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VKFoodAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+674dc7a7a493ab75f10efd864691f4f9b2d9107b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+263313506952e6e47886ed5da776b0d96a5ddb45")]
 [assembly: System.Reflection.AssemblyProductAttribute("VKFoodAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VKFoodAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

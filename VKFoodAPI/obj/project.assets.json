@@ -107,6 +107,16 @@
         "frameworkReferences": [
           "Microsoft.AspNetCore.App"
         ]
+      },
+      "VinhKhanhGuide.Core/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "compile": {
+          "bin/placeholder/VinhKhanhGuide.Core.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/VinhKhanhGuide.Core.dll": {}
+        }
       }
     }
   },
@@ -473,12 +483,18 @@
         "swashbuckle.aspnetcore.swaggerui.6.6.2.nupkg.sha512",
         "swashbuckle.aspnetcore.swaggerui.nuspec"
       ]
+    },
+    "VinhKhanhGuide.Core/1.0.0": {
+      "type": "project",
+      "path": "../VinhKhanhGuide.Core/VinhKhanhGuide.Core.csproj",
+      "msbuildProject": "../VinhKhanhGuide.Core/VinhKhanhGuide.Core.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net8.0": [
       "Microsoft.AspNetCore.OpenApi >= 8.0.23",
-      "Swashbuckle.AspNetCore >= 6.6.2"
+      "Swashbuckle.AspNetCore >= 6.6.2",
+      "VinhKhanhGuide.Core >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -506,7 +522,11 @@
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "/Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.Core/VinhKhanhGuide.Core.csproj": {
+              "projectPath": "/Users/nhatminh/Documents/VinhKhanhFoodStress/VinhKhanhGuide.Core/VinhKhanhGuide.Core.csproj"
+            }
+          }
         }
       },
       "warningProperties": {

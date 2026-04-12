@@ -511,31 +511,41 @@
                         </Border>
                     </Grid>
 
-                    <ImageButton Grid.Column="3"
-                                 Source="listening_history_icon.png"
-                                 Clicked="OnOpenListeningHistoryClicked"
-                                 BackgroundColor="#FFFFFF"
-                                 BorderColor="Transparent"
-                                 Padding="0"
-                                 Aspect="AspectFit"
-                                 SemanticProperties.Description="Lịch sử nghe"
-                                 VerticalOptions="Center"
-                                 WidthRequest="54"
-                                 HeightRequest="54"
-                                 CornerRadius="27" />
+                    <Border Grid.Column="3"
+                            BackgroundColor="#FFFFFF"
+                            StrokeThickness="0"
+                            Padding="11"
+                            VerticalOptions="Center"
+                            WidthRequest="54"
+                            HeightRequest="54"
+                            StrokeShape="RoundRectangle 27"
+                            SemanticProperties.Description="Lịch sử nghe">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnOpenListeningHistoryClicked" />
+                        </Border.GestureRecognizers>
 
-                    <ImageButton Grid.Column="4"
-                                 Source="user_profile_icon.png"
-                                 Clicked="OnOpenUserProfileClicked"
-                                 BackgroundColor="#FFFFFF"
-                                 BorderColor="Transparent"
-                                 Padding="0"
-                                 Aspect="AspectFit"
-                                 SemanticProperties.Description="Thông tin người dùng"
-                                 VerticalOptions="Center"
-                                 WidthRequest="54"
-                                 HeightRequest="54"
-                                 CornerRadius="27" />
+                        <Image Source="listening_history_icon.png"
+                               Aspect="AspectFit"
+                               InputTransparent="True" />
+                    </Border>
+
+                    <Border Grid.Column="4"
+                            BackgroundColor="#FFFFFF"
+                            StrokeThickness="0"
+                            Padding="11"
+                            VerticalOptions="Center"
+                            WidthRequest="54"
+                            HeightRequest="54"
+                            StrokeShape="RoundRectangle 27"
+                            SemanticProperties.Description="Thông tin người dùng">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnOpenUserProfileClicked" />
+                        </Border.GestureRecognizers>
+
+                        <Image Source="user_profile_icon.png"
+                               Aspect="AspectFit"
+                               InputTransparent="True" />
+                    </Border>
                 </Grid>
             </Border>
         </Grid>
