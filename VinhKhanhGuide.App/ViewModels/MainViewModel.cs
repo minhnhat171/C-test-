@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -32,6 +33,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly INarrationService _narrationService;
     private readonly IAuthService _authService;
     private readonly IUsageHistoryService _usageHistoryService;
+    private readonly IListeningHistorySyncService _listeningHistorySyncService;
     private readonly GeofenceEngine _geofenceEngine;
     private readonly SemaphoreSlim _locationUpdateGate = new(1, 1);
     private readonly Dictionary<Guid, DateTimeOffset> _lastNarratedAt = new();
@@ -79,6 +81,7 @@ public class MainViewModel : INotifyPropertyChanged
         INarrationService narrationService,
         IAuthService authService,
         IUsageHistoryService usageHistoryService,
+        IListeningHistorySyncService listeningHistorySyncService,
         GeofenceEngine geofenceEngine)
     {
         _locationService = locationService;
@@ -86,6 +89,7 @@ public class MainViewModel : INotifyPropertyChanged
         _narrationService = narrationService;
         _authService = authService;
         _usageHistoryService = usageHistoryService;
+        _listeningHistorySyncService = listeningHistorySyncService;
         _geofenceEngine = geofenceEngine;
 
         _locationService.LocationUpdated += OnLocationUpdated;
@@ -843,7 +847,10 @@ public class MainViewModel : INotifyPropertyChanged
 
     private async Task NarratePoiAsync(POI poi, bool autoTriggered, double? distanceMeters)
     {
+        var listenStopwatch = Stopwatch.StartNew();
         var narrationSessionId = Interlocked.Increment(ref _narrationSessionId);
+        var historyTask = Task.FromResult<Guid?>(null);
+        string errorMessage = string.Empty;
         _lastNarratedAt[poi.Id] = DateTimeOffset.UtcNow;
         if (autoTriggered)
         {
@@ -870,12 +877,15 @@ public class MainViewModel : INotifyPropertyChanged
             $"{NowLabel()} {(autoTriggered ? "Tự động nghe" : "Nghe thủ công")} {poi.Name}" +
             (distanceMeters.HasValue ? $" ({distanceMeters.Value:F0}m)" : string.Empty));
 
+        historyTask = _listeningHistorySyncService.BeginAsync(poi, SelectedLanguage, autoTriggered);
+
         try
         {
             await _narrationService.NarrateAsync(poi, SelectedLanguage);
         }
         catch (Exception ex)
         {
+            errorMessage = ex.Message;
             AddLog($"{NowLabel()} Lỗi âm thanh: {ex.Message}");
 
             if (narrationSessionId == Volatile.Read(ref _narrationSessionId))
@@ -885,6 +895,21 @@ public class MainViewModel : INotifyPropertyChanged
         }
         finally
         {
+            listenStopwatch.Stop();
+
+            var historyId = await historyTask;
+            if (historyId.HasValue)
+            {
+                var completed = string.IsNullOrWhiteSpace(errorMessage)
+                    && narrationSessionId == Volatile.Read(ref _narrationSessionId);
+
+                await _listeningHistorySyncService.CompleteAsync(
+                    historyId.Value,
+                    (int)Math.Round(listenStopwatch.Elapsed.TotalSeconds),
+                    completed,
+                    completed ? string.Empty : errorMessage);
+            }
+
             if (narrationSessionId == Volatile.Read(ref _narrationSessionId))
             {
                 await MainThread.InvokeOnMainThreadAsync(() =>
