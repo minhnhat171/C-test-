@@ -1,1 +1,11 @@
-{"Version":1,"Hash":"BhWNEGuEfyM5cp4C5trrb5rE4kVkP4pZf2e5zSeayoU=","Source":"VKFoodAPI","BasePath":"/","Mode":"Root","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}
+{
+  "Version": 1,
+  "Hash": "sbGzu/uvnVgCWavyrg+guEFdiCch+RVGB1d7Km8nIBU=",
+  "Source": "VKFoodAPI",
+  "BasePath": "_content/VKFoodAPI",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

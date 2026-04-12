@@ -10,6 +10,8 @@ builder.Services.AddHttpClient<PoiApiClient>(client =>
     client.BaseAddress = new Uri(poiApiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
 });
+builder.Services.AddScoped<PoiAdminService>();
+builder.Services.AddScoped<PoiValidationService>();
 
 var app = builder.Build();
 

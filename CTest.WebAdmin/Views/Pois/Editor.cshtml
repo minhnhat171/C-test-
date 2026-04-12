@@ -200,10 +200,12 @@
                             <div class="col-12">
                                 <label asp-for="Name" class="form-label">Tên điểm</label>
                                 <input asp-for="Name" class="form-control" id="poiName" />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
                             </div>
                             <div class="col-md-4">
                                 <label asp-for="Code" class="form-label">Mã app</label>
                                 <input asp-for="Code" class="form-control" />
+                                <span asp-validation-for="Code" class="text-danger small"></span>
                             </div>
                             <div class="col-md-4">
                                 <label asp-for="Category" class="form-label">Danh mục</label>
@@ -212,14 +214,17 @@
                             <div class="col-md-4">
                                 <label asp-for="CooldownMinutes" class="form-label">Cooldown</label>
                                 <input asp-for="CooldownMinutes" class="form-control" />
+                                <span asp-validation-for="CooldownMinutes" class="text-danger small"></span>
                             </div>
                             <div class="col-12">
                                 <label asp-for="Address" class="form-label">Địa chỉ</label>
                                 <input asp-for="Address" class="form-control" id="poiAddress" />
+                                <span asp-validation-for="Address" class="text-danger small"></span>
                             </div>
                             <div class="col-12">
                                 <label asp-for="Description" class="form-label">Mô tả</label>
                                 <textarea asp-for="Description" class="form-control" rows="4" id="poiDescription"></textarea>
+                                <span asp-validation-for="Description" class="text-danger small"></span>
                             </div>
                             <div class="col-12">
                                 <label asp-for="SpecialDish" class="form-label">Món nổi bật</label>
@@ -238,14 +243,17 @@
                             <div class="col-md-6">
                                 <label asp-for="Latitude" class="form-label">Latitude</label>
                                 <input asp-for="Latitude" class="form-control" id="poiLatitude" />
+                                <span asp-validation-for="Latitude" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="Longitude" class="form-label">Longitude</label>
                                 <input asp-for="Longitude" class="form-control" id="poiLongitude" />
+                                <span asp-validation-for="Longitude" class="text-danger small"></span>
                             </div>
                             <div class="col-12">
                                 <label asp-for="MapLink" class="form-label">Map link</label>
                                 <input asp-for="MapLink" class="form-control" id="poiMapLink" />
+                                <span asp-validation-for="MapLink" class="text-danger small"></span>
                             </div>
                         </div>
                     </div>
@@ -256,10 +264,12 @@
                             <div class="col-md-6">
                                 <label asp-for="RadiusInMeters" class="form-label">Bán kính kích hoạt</label>
                                 <input asp-for="RadiusInMeters" class="form-control" id="poiRadius" />
+                                <span asp-validation-for="RadiusInMeters" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="Priority" class="form-label">Mức ưu tiên</label>
                                 <input asp-for="Priority" class="form-control" id="poiPriority" />
+                                <span asp-validation-for="Priority" class="text-danger small"></span>
                             </div>
                         </div>
                     </div>
@@ -270,6 +280,7 @@
                             <div class="col-12">
                                 <label asp-for="NarrationScript" class="form-label">Narration script</label>
                                 <textarea asp-for="NarrationScript" class="form-control" rows="6" id="poiNarration"></textarea>
+                                <span asp-validation-for="NarrationScript" class="text-danger small"></span>
                             </div>
                             <div class="col-12">
                                 <div class="form-check form-switch mt-2">

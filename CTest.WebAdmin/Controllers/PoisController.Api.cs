@@ -7,13 +7,13 @@ namespace CTest.WebAdmin.Controllers;
 
 public class PoisController : Controller
 {
-    private readonly PoiApiClient _poiApiClient;
-    private readonly AppDataService _data;
+    private readonly PoiAdminService _poiService;
+    private readonly PoiValidationService _validationService;
 
-    public PoisController(PoiApiClient poiApiClient, AppDataService data)
+    public PoisController(PoiAdminService poiService, PoiValidationService validationService)
     {
-        _poiApiClient = poiApiClient;
-        _data = data;
+        _poiService = poiService;
+        _validationService = validationService;
     }
 
     public async Task<IActionResult> Index(
@@ -21,53 +21,29 @@ public class PoisController : Controller
         string statusFilter = "all",
         CancellationToken cancellationToken = default)
     {
-        var vm = new PoiManagementViewModel
-        {
-            SearchTerm = searchTerm ?? string.Empty,
-            StatusFilter = statusFilter
-        };
-
         try
         {
-            var query = (await _poiApiClient.GetPoisAsync(cancellationToken))
-                .Select(x => x.ToListItem())
-                .AsEnumerable();
-
-            if (!string.IsNullOrWhiteSpace(searchTerm))
-            {
-                query = query.Where(x =>
-                    x.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                    x.Code.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                    x.Address.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
-            }
-
-            query = statusFilter switch
-            {
-                "active" => query.Where(x => x.IsActive),
-                "inactive" => query.Where(x => !x.IsActive),
-                _ => query
-            };
-
-            vm.Items = query
-                .OrderByDescending(x => x.Priority)
-                .ThenBy(x => x.Name)
-                .ToList();
+            var vm = await _poiService.LoadManagementPageAsync(searchTerm, statusFilter, cancellationToken);
+            return View("Manage", vm);
         }
         catch (HttpRequestException)
         {
-            vm.LoadErrorMessage = "Khong the ket noi VKFoodAPI. Hay chay API truoc de WebAdmin va app MAUI dung chung du lieu.";
+            return View("Manage", new PoiManagementViewModel
+            {
+                SearchTerm = searchTerm ?? string.Empty,
+                StatusFilter = statusFilter,
+                LoadErrorMessage = "Không thể kết nối VKFoodAPI. Hãy chạy API trước để WebAdmin và app MAUI dùng chung dữ liệu."
+            });
         }
-
-        return View("Manage", vm);
     }
 
     [HttpGet]
     public async Task<IActionResult> Details(Guid id, CancellationToken cancellationToken = default)
     {
-        var model = await LoadEditorViewModelAsync(id, cancellationToken);
+        var model = await _poiService.LoadEditorAsync(id, cancellationToken);
         if (model is null)
         {
-            TempData["PoiMessage"] = "Khong tim thay POI can xem.";
+            TempData["PoiMessage"] = "Không tìm thấy POI cần xem.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -83,10 +59,10 @@ public class PoisController : Controller
     [HttpGet]
     public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken = default)
     {
-        var model = await LoadEditorViewModelAsync(id, cancellationToken);
+        var model = await _poiService.LoadEditorAsync(id, cancellationToken);
         if (model is null)
         {
-            TempData["PoiMessage"] = "Khong tim thay POI can sua.";
+            TempData["PoiMessage"] = "Không tìm thấy POI cần sửa.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -97,24 +73,24 @@ public class PoisController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(PoiEditorViewModel model, CancellationToken cancellationToken = default)
     {
-        if (!ValidateEditor(model))
-        {
-            return View("Editor", model);
-        }
-
         try
         {
-            var dto = new PoiDto { Id = Guid.NewGuid() };
-            dto.ApplyEditorValues(model);
+            var existingPois = await _poiService.LoadValidationSnapshotAsync(cancellationToken);
+            var validation = _validationService.ValidateCreate(model, existingPois);
 
-            await _poiApiClient.CreatePoiAsync(dto, cancellationToken);
-            TempData["PoiMessage"] = "Da them POI moi va dong bo sang app MAUI.";
+            if (!ApplyValidationResult(validation))
+            {
+                return View("Editor", model);
+            }
+
+            var result = await _poiService.CreateAsync(model, cancellationToken);
+            TempData["PoiMessage"] = result.Message;
 
             return RedirectToAction(nameof(Index));
         }
         catch (HttpRequestException)
         {
-            ModelState.AddModelError(string.Empty, "Khong the ket noi VKFoodAPI. Hay mo API truoc roi luu lai.");
+            ModelState.AddModelError(string.Empty, "Không thể kết nối VKFoodAPI. Hãy mở API trước rồi lưu lại.");
             return View("Editor", model);
         }
     }
@@ -123,30 +99,25 @@ public class PoisController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(PoiEditorViewModel model, CancellationToken cancellationToken = default)
     {
-        if (!ValidateEditor(model))
-        {
-            model.IsEditMode = true;
-            return View("Editor", model);
-        }
-
         try
         {
-            var poi = await _poiApiClient.GetPoiAsync(model.Id, cancellationToken);
-            if (poi is null)
+            var existingPois = await _poiService.LoadValidationSnapshotAsync(cancellationToken);
+            var validation = _validationService.ValidateUpdate(model, existingPois);
+
+            if (!ApplyValidationResult(validation))
             {
-                TempData["PoiMessage"] = "POI khong con ton tai tren API.";
-                return RedirectToAction(nameof(Index));
+                model.IsEditMode = true;
+                return View("Editor", model);
             }
 
-            poi.ApplyEditorValues(model);
-            await _poiApiClient.UpdatePoiAsync(poi.Id, poi, cancellationToken);
+            var result = await _poiService.UpdateAsync(model, cancellationToken);
+            TempData["PoiMessage"] = result.Message;
 
-            TempData["PoiMessage"] = "Da cap nhat POI. App MAUI se doc du lieu moi tu API.";
             return RedirectToAction(nameof(Index));
         }
         catch (HttpRequestException)
         {
-            ModelState.AddModelError(string.Empty, "Khong the ket noi VKFoodAPI. Hay mo API truoc roi luu lai.");
+            ModelState.AddModelError(string.Empty, "Không thể kết nối VKFoodAPI. Hãy mở API trước rồi lưu lại.");
             model.IsEditMode = true;
             return View("Editor", model);
         }
@@ -158,50 +129,24 @@ public class PoisController : Controller
     {
         try
         {
-            var deleted = await _poiApiClient.DeletePoiAsync(id, cancellationToken);
-            TempData["PoiMessage"] = deleted
-                ? "Da xoa POI khoi nguon du lieu dung chung."
-                : "Khong tim thay POI de xoa.";
+            var result = await _poiService.DeleteAsync(id, cancellationToken);
+            TempData["PoiMessage"] = result.Message;
         }
         catch (HttpRequestException)
         {
-            TempData["PoiMessage"] = "Khong the ket noi VKFoodAPI nen chua xoa duoc POI.";
+            TempData["PoiMessage"] = "Không thể kết nối VKFoodAPI nên chưa xóa được POI.";
         }
 
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task<PoiEditorViewModel?> LoadEditorViewModelAsync(Guid id, CancellationToken cancellationToken)
+    private bool ApplyValidationResult(PoiValidationResult validation)
     {
-        var poi = await _poiApiClient.GetPoiAsync(id, cancellationToken);
-        if (poi is null)
+        foreach (var error in validation.Errors)
         {
-            return null;
+            ModelState.AddModelError(error.FieldName, error.Message);
         }
 
-        var relatedAudioCount = _data.AudioGuides.Count(x =>
-            string.Equals(x.PoiName, poi.Name, StringComparison.OrdinalIgnoreCase));
-
-        return poi.ToEditorViewModel(relatedAudioCount);
-    }
-
-    private bool ValidateEditor(PoiEditorViewModel model)
-    {
-        if (string.IsNullOrWhiteSpace(model.Name))
-        {
-            ModelState.AddModelError(nameof(model.Name), "Ten diem khong duoc de trong.");
-        }
-
-        if (string.IsNullOrWhiteSpace(model.Address))
-        {
-            ModelState.AddModelError(nameof(model.Address), "Dia chi khong duoc de trong.");
-        }
-
-        if (string.IsNullOrWhiteSpace(model.NarrationScript))
-        {
-            ModelState.AddModelError(nameof(model.NarrationScript), "Script thuyet minh khong duoc de trong.");
-        }
-
-        return ModelState.IsValid;
+        return validation.IsValid;
     }
 }

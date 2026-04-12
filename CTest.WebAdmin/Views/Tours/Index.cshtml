@@ -1,17 +1,17 @@
-﻿@model List<TourPlan>
+@model List<TourPlan>
 @{ ViewData["Title"] = "Tour"; }
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h2 class="mb-1">Quáº£n lÃ½ tour</h2>
+        <h2 class="mb-1">Quản lý tour</h2>
     </div>
-    <button class="btn btn-primary">+ ThÃªm tour</button>
+    <button class="btn btn-primary">+ Thêm tour</button>
 </div>
 <table class="table table-striped align-middle">
-    <thead><tr><th>ID</th><th>TÃªn tour</th><th>Thá»i lÆ°á»£ng</th><th>Chuá»—i POI</th><th>QR</th></tr></thead>
+    <thead><tr><th>ID</th><th>Tên tour</th><th>Thời lượng</th><th>Chuỗi POI</th><th>QR</th></tr></thead>
     <tbody>
     @foreach (var item in Model) {
         <tr>
-            <td>@item.Id</td><td>@item.Name</td><td>@item.EstimatedMinutes phÃºt</td><td>@item.PoiSequence</td><td>@(item.IsQrEnabled ? "Báº­t" : "Táº¯t")</td>
+            <td>@item.Id</td><td>@item.Name</td><td>@item.EstimatedMinutes phút</td><td>@item.PoiSequence</td><td>@(item.IsQrEnabled ? "Bật" : "Tắt")</td>
         </tr>
     }
     </tbody>

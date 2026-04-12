@@ -1,6 +1,6 @@
-﻿@model QrManagementViewModel
+@model QrManagementViewModel
 @{
-    ViewData["Title"] = "Quáº£n lÃ½ QR";
+    ViewData["Title"] = "Quản lý QR";
 
     bool ShouldFillCell(string seed, int row, int col)
     {
@@ -143,7 +143,7 @@
 <div class="qr-page">
     <div class="qr-head">
         <div>
-            <h1>Quáº£n lÃ½ QR code</h1>
+            <h1>Quản lý QR code</h1>
         </div>
     </div>
 
@@ -159,10 +159,10 @@
                     <thead>
                         <tr>
                             <th>POI</th>
-                            <th>MÃ£ QR</th>
-                            <th>Loáº¡i kÃ­ch hoáº¡t</th>
-                            <th>Tráº¡ng thÃ¡i</th>
-                            <th>Thao tÃ¡c</th>
+                            <th>Mã QR</th>
+                            <th>Loại kích hoạt</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -175,8 +175,8 @@
                             <td><span class="qr-status">@item.Status</span></td>
                             <td>
                                 <div class="d-flex flex-wrap gap-2">
-                                    <a asp-action="Index" asp-route-selectedPoiId="@item.PoiId" class="btn btn-outline-primary btn-sm rounded-pill">Táº¡o QR</a>
-                                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill js-download-qr" data-target="qr-svg-@item.PoiId">Táº£i QR PNG</button>
+                                    <a asp-action="Index" asp-route-selectedPoiId="@item.PoiId" class="btn btn-outline-primary btn-sm rounded-pill">Tạo QR</a>
+                                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill js-download-qr" data-target="qr-svg-@item.PoiId">Tải QR PNG</button>
                                     <button type="button" class="btn btn-outline-dark btn-sm rounded-pill" onclick="window.print()">In QR</button>
                                 </div>
                             </td>
@@ -194,7 +194,7 @@
                     <div class="qr-preview-card">
                         <div class="qr-preview-kicker">Preview</div>
                         <div class="qr-preview-title">@Model.SelectedItem.PoiName</div>
-                        <div class="qr-meta mt-2">QuÃ©t Ä‘á»ƒ nghe ngay. Payload demo: <code>@Model.SelectedItem.Payload</code></div>
+                        <div class="qr-meta mt-2">Quét để nghe ngay. Payload demo: <code>@Model.SelectedItem.Payload</code></div>
 
                         <div class="qr-svg-wrap">
                             <svg id="qr-svg-@Model.SelectedItem.PoiId" viewBox="0 0 210 210" xmlns="http://www.w3.org/2000/svg">
@@ -216,14 +216,14 @@
 
                         <div class="d-flex flex-wrap gap-2 mt-3">
                             <a asp-controller="Pois" asp-action="Details" asp-route-id="@Model.SelectedItem.PoiId" class="btn btn-outline-primary rounded-pill px-4">Xem POI</a>
-                            <button type="button" class="btn btn-success rounded-pill px-4 js-download-qr" data-target="qr-svg-@Model.SelectedItem.PoiId">Táº£i PNG</button>
+                            <button type="button" class="btn btn-success rounded-pill px-4 js-download-qr" data-target="qr-svg-@Model.SelectedItem.PoiId">Tải PNG</button>
                             <button type="button" class="btn btn-dark rounded-pill px-4" onclick="window.print()">In QR</button>
                         </div>
                     </div>
                 }
                 else
                 {
-                    <div class="text-muted">ChÆ°a cÃ³ POI Ä‘á»ƒ táº¡o QR.</div>
+                    <div class="text-muted">Chưa có POI để tạo QR.</div>
                 }
             </div>
         </div>

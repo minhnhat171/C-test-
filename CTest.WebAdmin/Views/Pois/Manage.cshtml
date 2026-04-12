@@ -1,6 +1,6 @@
-﻿@model PoiManagementViewModel
+@model PoiManagementViewModel
 @{
-    ViewData["Title"] = "Quáº£n lÃ½ POI";
+    ViewData["Title"] = "Quản lý POI";
 }
 
 <style>
@@ -168,9 +168,9 @@
 <div class="poi-page">
     <div class="poi-hero">
         <div>
-            <h1>Quáº£n lÃ½ POI</h1>
+            <h1>Quản lý POI</h1>
         </div>
-        <a asp-action="Create" class="btn btn-primary btn-lg rounded-pill px-4">+ ThÃªm POI</a>
+        <a asp-action="Create" class="btn btn-primary btn-lg rounded-pill px-4">+ Thêm POI</a>
     </div>
 
     @if (TempData["PoiMessage"] is string poiMessage)
@@ -186,17 +186,17 @@
     <div class="poi-panel poi-toolbar">
         <form method="get" asp-action="Index">
             <div class="poi-toolbar-grid">
-                <input class="form-control" type="search" name="searchTerm" value="@Model.SearchTerm" placeholder="TÃ¬m kiáº¿m theo tÃªn Ä‘iá»ƒm..." />
+                <input class="form-control" type="search" name="searchTerm" value="@Model.SearchTerm" placeholder="Tìm kiếm theo tên điểm..." />
 
                 <select class="form-select" name="statusFilter">
-                    <option value="all" selected="@(Model.StatusFilter == "all" ? "selected" : null)">Táº¥t cáº£ tráº¡ng thÃ¡i</option>
-                    <option value="active" selected="@(Model.StatusFilter == "active" ? "selected" : null)">Äang hoáº¡t Ä‘á»™ng</option>
-                    <option value="inactive" selected="@(Model.StatusFilter == "inactive" ? "selected" : null)">Táº¡m khÃ³a</option>
+                    <option value="all" selected="@(Model.StatusFilter == "all" ? "selected" : null)">Tất cả trạng thái</option>
+                    <option value="active" selected="@(Model.StatusFilter == "active" ? "selected" : null)">Đang hoạt động</option>
+                    <option value="inactive" selected="@(Model.StatusFilter == "inactive" ? "selected" : null)">Tạm khóa</option>
                 </select>
 
                 <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-dark rounded-pill px-4 flex-grow-1">Lá»c dá»¯ liá»‡u</button>
-                    <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Äáº·t láº¡i</a>
+                    <button type="submit" class="btn btn-dark rounded-pill px-4 flex-grow-1">Lọc dữ liệu</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Đặt lại</a>
                 </div>
             </div>
         </form>
@@ -208,13 +208,13 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>TÃªn Ä‘iá»ƒm</th>
-                        <th>Äá»‹a chá»‰</th>
-                        <th>Tá»a Ä‘á»™</th>
-                        <th>BÃ¡n kÃ­nh</th>
-                        <th>Æ¯u tiÃªn</th>
-                        <th>Tráº¡ng thÃ¡i</th>
-                        <th class="text-end">Thao tÃ¡c</th>
+                        <th>Tên điểm</th>
+                        <th>Địa chỉ</th>
+                        <th>Tọa độ</th>
+                        <th>Bán kính</th>
+                        <th>Ưu tiên</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -234,18 +234,18 @@
                             <td>@item.Priority</td>
                             <td>
                                 <span class="poi-status @(item.IsActive ? "active" : "inactive")">
-                                    @(item.IsActive ? "Hoáº¡t Ä‘á»™ng" : "Táº¡m khÃ³a")
+                                    @(item.IsActive ? "Hoạt động" : "Tạm khóa")
                                 </span>
                             </td>
                             <td class="text-end">
                                 <div class="poi-actions">
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark poi-action-btn">Xem</a>
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary poi-action-btn">Sá»­a</a>
-                                    <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedPoiId="@item.Id" class="btn btn-outline-success poi-action-btn">Táº¡o QR</a>
-                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Báº¡n cÃ³ cháº¯c muá»‘n xÃ³a POI nÃ y khÃ´ng?');">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary poi-action-btn">Sửa</a>
+                                    <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedPoiId="@item.Id" class="btn btn-outline-success poi-action-btn">Tạo QR</a>
+                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa POI này không?');">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@item.Id" />
-                                        <button type="submit" class="btn btn-outline-danger poi-action-btn">XÃ³a</button>
+                                        <button type="submit" class="btn btn-outline-danger poi-action-btn">Xóa</button>
                                     </form>
                                 </div>
                             </td>
@@ -255,7 +255,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="8" class="poi-empty">KhÃ´ng tÃ¬m tháº¥y POI phÃ¹ há»£p vá»›i bá»™ lá»c hiá»‡n táº¡i.</td>
+                        <td colspan="8" class="poi-empty">Không tìm thấy POI phù hợp với bộ lọc hiện tại.</td>
                     </tr>
                 }
                 </tbody>
