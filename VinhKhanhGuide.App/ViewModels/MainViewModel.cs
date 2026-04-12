@@ -1239,18 +1239,19 @@ public class MainViewModel : INotifyPropertyChanged
     private void SyncCurrentUser()
     {
         var session = _authService.CurrentSession;
+        var loginId = session?.LoginId ?? "guest";
 
         CurrentUserDisplayName = session?.FullName ?? "Khách";
         CurrentUserInitials = session?.Initials ?? "VK";
-        CurrentUserAccountLabel = session?.Email ?? "guest";
+        CurrentUserAccountLabel = loginId;
         CurrentUserPasswordLabel = session is null
             ? "Chưa đăng nhập"
-            : string.Equals(session.Email, "user", StringComparison.OrdinalIgnoreCase)
-                ? "12345 (mặc định)"
+            : string.Equals(loginId, "user", StringComparison.OrdinalIgnoreCase)
+                ? "12345678 (mặc định)"
                 : "•••••••• (đã ẩn)";
         CurrentUserStatusLine = session is null
             ? "Khách khám phá"
-            : $"{session.RoleLabel} • {session.Email}";
+            : $"{session.RoleLabel} • @{loginId}";
     }
 
     private void LoadPersistedState()
@@ -1404,7 +1405,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     private string GetCurrentUserPreferencePrefix()
     {
-        var scope = _authService.CurrentSession?.Email?.Trim().ToLowerInvariant();
+        var scope = _authService.CurrentSession?.ScopeKey;
         if (string.IsNullOrWhiteSpace(scope))
         {
             scope = "guest";

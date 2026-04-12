@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.Maui.Storage;
 using VinhKhanhGuide.App.Models;
 
@@ -8,16 +9,23 @@ namespace VinhKhanhGuide.App.Services;
 
 public class AuthService : IAuthService
 {
-    private const string UsersPreferenceKey = "vinhkhanh.auth.users.v1";
-    private const string SessionPreferenceKey = "vinhkhanh.auth.session.email.v1";
+    private const string UsersPreferenceKey = "vinhkhanh.auth.users.v2";
+    private const string LegacyUsersPreferenceKey = "vinhkhanh.auth.users.v1";
+    private const string SessionPreferenceKey = "vinhkhanh.auth.session.login.v2";
+    private const string LegacySessionPreferenceKey = "vinhkhanh.auth.session.email.v1";
     private const string DefaultAdminLogin = "user";
-    private const string DefaultAdminPassword = "12345";
-    private const string DefaultAdminDisplayName = "Quản trị viên";
+    private const string DefaultAdminPassword = "12345678";
+    private const string DefaultAdminDisplayName = "Quản trị viên Vĩnh Khánh";
+    private const string DefaultAdminEmail = "user@local.vinhkhanh";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
+
+    private static readonly Regex UsernamePattern = new(
+        "^[a-z0-9._-]{4,24}$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public event EventHandler? SessionChanged;
 
@@ -30,22 +38,26 @@ public class AuthService : IAuthService
         RestoreSession();
     }
 
-    public Task<AuthResult> SignInAsync(string email, string password)
+    public Task<AuthResult> SignInAsync(string username, string password)
     {
-        var normalizedEmail = NormalizeEmail(email);
+        var normalizedLogin = NormalizeUsername(username);
 
-        if (string.IsNullOrWhiteSpace(normalizedEmail) || string.IsNullOrWhiteSpace(password))
+        if (string.IsNullOrWhiteSpace(normalizedLogin) || string.IsNullOrWhiteSpace(password))
         {
-            return Task.FromResult(AuthResult.Failure("Vui lòng nhập đầy đủ email và mật khẩu."));
+            return Task.FromResult(AuthResult.Failure("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu."));
         }
 
         var users = LoadUsers();
-        var matchedUser = users.FirstOrDefault(user =>
-            string.Equals(user.Email, normalizedEmail, StringComparison.OrdinalIgnoreCase));
+        var matchedUser = FindUserByLogin(users, normalizedLogin);
 
-        if (matchedUser is null || !VerifyPassword(password, matchedUser.PasswordSalt, matchedUser.PasswordHash))
+        if (matchedUser is null)
         {
-            return Task.FromResult(AuthResult.Failure("Email hoặc mật khẩu chưa đúng."));
+            return Task.FromResult(AuthResult.Failure("Tài khoản không tồn tại."));
+        }
+
+        if (!VerifyPassword(password, matchedUser.PasswordSalt, matchedUser.PasswordHash))
+        {
+            return Task.FromResult(AuthResult.Failure("Sai mật khẩu."));
         }
 
         matchedUser.LastSignedInAtUtc = DateTimeOffset.UtcNow;
@@ -54,17 +66,19 @@ public class AuthService : IAuthService
 
         return Task.FromResult(AuthResult.Success(
             CurrentSession!,
-            $"Chào mừng bạn quay lại, {matchedUser.FullName}."));
+            $"Đăng nhập thành công. Xin chào, {matchedUser.FullName}."));
     }
 
     public Task<AuthResult> RegisterAsync(
         string fullName,
-        string email,
+        string username,
         string password,
-        string confirmPassword)
+        string confirmPassword,
+        string role)
     {
         fullName = fullName.Trim();
-        var normalizedEmail = NormalizeEmail(email);
+        var normalizedUsername = NormalizeUsername(username);
+        var normalizedRole = NormalizeRole(role);
 
         if (string.IsNullOrWhiteSpace(fullName))
         {
@@ -76,9 +90,15 @@ public class AuthService : IAuthService
             return Task.FromResult(AuthResult.Failure("Họ tên cần có ít nhất 2 ký tự."));
         }
 
-        if (!LooksLikeEmail(normalizedEmail))
+        if (string.IsNullOrWhiteSpace(normalizedUsername))
         {
-            return Task.FromResult(AuthResult.Failure("Email chưa đúng định dạng."));
+            return Task.FromResult(AuthResult.Failure("Vui lòng nhập tên đăng nhập."));
+        }
+
+        if (!UsernamePattern.IsMatch(normalizedUsername))
+        {
+            return Task.FromResult(AuthResult.Failure(
+                "Tên đăng nhập chỉ gồm chữ thường, số, dấu chấm, gạch ngang hoặc gạch dưới và dài 4-24 ký tự."));
         }
 
         if (password.Length < 8)
@@ -92,12 +112,12 @@ public class AuthService : IAuthService
         }
 
         var users = LoadUsers();
-        var emailExists = users.Any(user =>
-            string.Equals(user.Email, normalizedEmail, StringComparison.OrdinalIgnoreCase));
+        var accountExists = users.Any(user =>
+            string.Equals(user.Username, normalizedUsername, StringComparison.OrdinalIgnoreCase));
 
-        if (emailExists)
+        if (accountExists)
         {
-            return Task.FromResult(AuthResult.Failure("Email này đã được đăng ký."));
+            return Task.FromResult(AuthResult.Failure("Tài khoản đã tồn tại."));
         }
 
         var passwordSalt = Convert.ToBase64String(RandomNumberGenerator.GetBytes(16));
@@ -106,45 +126,50 @@ public class AuthService : IAuthService
         var newUser = new AuthUser
         {
             FullName = fullName,
-            Email = normalizedEmail,
+            Username = normalizedUsername,
+            Email = string.Empty,
             PasswordSalt = passwordSalt,
             PasswordHash = passwordHash,
-            Role = "user",
-            CreatedAtUtc = DateTimeOffset.UtcNow,
-            LastSignedInAtUtc = DateTimeOffset.UtcNow
+            Role = normalizedRole,
+            CreatedAtUtc = DateTimeOffset.UtcNow
         };
 
         users.Add(newUser);
         SaveUsers(users);
-        SetCurrentSession(newUser);
 
         return Task.FromResult(AuthResult.Success(
-            CurrentSession!,
-            $"Tạo tài khoản thành công. Chào mừng {newUser.FullName}."));
+            "Đăng ký thành công. Hãy đăng nhập bằng tên đăng nhập vừa tạo."));
     }
 
     public Task SignOutAsync()
     {
         CurrentSession = null;
         Preferences.Default.Remove(SessionPreferenceKey);
+        Preferences.Default.Remove(LegacySessionPreferenceKey);
         SessionChanged?.Invoke(this, EventArgs.Empty);
         return Task.CompletedTask;
     }
 
     private void RestoreSession()
     {
-        var sessionEmail = Preferences.Default.Get(SessionPreferenceKey, string.Empty);
-        if (string.IsNullOrWhiteSpace(sessionEmail))
+        var sessionLogin = Preferences.Default.Get(SessionPreferenceKey, string.Empty);
+        if (string.IsNullOrWhiteSpace(sessionLogin))
+        {
+            sessionLogin = Preferences.Default.Get(LegacySessionPreferenceKey, string.Empty);
+        }
+
+        var normalizedLogin = NormalizeUsername(sessionLogin);
+        if (string.IsNullOrWhiteSpace(normalizedLogin))
         {
             return;
         }
 
-        var user = LoadUsers().FirstOrDefault(item =>
-            string.Equals(item.Email, sessionEmail, StringComparison.OrdinalIgnoreCase));
+        var user = FindUserByLogin(LoadUsers(), normalizedLogin);
 
         if (user is null)
         {
             Preferences.Default.Remove(SessionPreferenceKey);
+            Preferences.Default.Remove(LegacySessionPreferenceKey);
             return;
         }
 
@@ -154,7 +179,8 @@ public class AuthService : IAuthService
     private void SetCurrentSession(AuthUser user)
     {
         CurrentSession = ToSession(user);
-        Preferences.Default.Set(SessionPreferenceKey, user.Email);
+        Preferences.Default.Set(SessionPreferenceKey, user.Username);
+        Preferences.Default.Remove(LegacySessionPreferenceKey);
         SessionChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -164,8 +190,29 @@ public class AuthService : IAuthService
         {
             UserId = user.Id,
             FullName = user.FullName,
+            Username = user.Username,
             Email = user.Email,
             Role = user.Role
+        };
+    }
+
+    private static string NormalizeEmail(string email)
+    {
+        return email.Trim().ToLowerInvariant();
+    }
+
+    private static string NormalizeUsername(string username)
+    {
+        return username.Trim().ToLowerInvariant();
+    }
+
+    private static string NormalizeRole(string? role)
+    {
+        return role?.Trim().ToLowerInvariant() switch
+        {
+            "admin" => "admin",
+            "poi_owner" => "poi_owner",
+            _ => "user"
         };
     }
 
@@ -176,9 +223,17 @@ public class AuthService : IAuthService
                email.Contains('.', StringComparison.Ordinal);
     }
 
-    private static string NormalizeEmail(string email)
+    private static AuthUser? FindUserByLogin(IEnumerable<AuthUser> users, string login)
     {
-        return email.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(login))
+        {
+            return null;
+        }
+
+        return users.FirstOrDefault(user =>
+            string.Equals(user.Username, login, StringComparison.OrdinalIgnoreCase) ||
+            (!string.IsNullOrWhiteSpace(user.Email) &&
+             string.Equals(user.Email, login, StringComparison.OrdinalIgnoreCase)));
     }
 
     private List<AuthUser> LoadUsers()
@@ -186,31 +241,90 @@ public class AuthService : IAuthService
         var json = Preferences.Default.Get(UsersPreferenceKey, string.Empty);
         if (string.IsNullOrWhiteSpace(json))
         {
+            json = Preferences.Default.Get(LegacyUsersPreferenceKey, string.Empty);
+        }
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
             return [];
         }
 
         try
         {
-            return JsonSerializer.Deserialize<List<AuthUser>>(json, JsonOptions) ?? [];
+            var users = JsonSerializer.Deserialize<List<AuthUser>>(json, JsonOptions) ?? [];
+            var normalizedUsers = NormalizeUsers(users);
+            SaveUsers(normalizedUsers);
+            return normalizedUsers;
         }
         catch
         {
             Preferences.Default.Remove(UsersPreferenceKey);
+            Preferences.Default.Remove(LegacyUsersPreferenceKey);
             return [];
         }
     }
 
     private void SaveUsers(List<AuthUser> users)
     {
-        var json = JsonSerializer.Serialize(users, JsonOptions);
+        var normalizedUsers = NormalizeUsers(users);
+        var json = JsonSerializer.Serialize(normalizedUsers, JsonOptions);
         Preferences.Default.Set(UsersPreferenceKey, json);
+        Preferences.Default.Remove(LegacyUsersPreferenceKey);
+    }
+
+    private static List<AuthUser> NormalizeUsers(IEnumerable<AuthUser> users)
+    {
+        var normalizedUsers = new List<AuthUser>();
+        var seenLogins = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var user in users)
+        {
+            if (user is null)
+            {
+                continue;
+            }
+
+            var normalizedEmail = LooksLikeEmail(user.Email) ? NormalizeEmail(user.Email) : string.Empty;
+            var normalizedUsername = NormalizeUsername(user.Username);
+
+            if (string.IsNullOrWhiteSpace(normalizedUsername))
+            {
+                normalizedUsername = NormalizeUsername(user.Email);
+            }
+
+            if (string.IsNullOrWhiteSpace(normalizedUsername))
+            {
+                normalizedUsername = $"user-{Guid.NewGuid():N}"[..13];
+            }
+
+            var uniqueUsername = normalizedUsername;
+            var suffix = 1;
+            while (!seenLogins.Add(uniqueUsername))
+            {
+                uniqueUsername = $"{normalizedUsername}{suffix}";
+                suffix++;
+            }
+
+            user.Id = user.Id == Guid.Empty ? Guid.NewGuid() : user.Id;
+            user.FullName = string.IsNullOrWhiteSpace(user.FullName) ? uniqueUsername : user.FullName.Trim();
+            user.Username = uniqueUsername;
+            user.Email = normalizedEmail;
+            user.Role = NormalizeRole(user.Role);
+            user.CreatedAtUtc = user.CreatedAtUtc == default ? DateTimeOffset.UtcNow : user.CreatedAtUtc;
+
+            normalizedUsers.Add(user);
+        }
+
+        return normalizedUsers;
     }
 
     private void EnsureDefaultAdminAccount()
     {
         var users = LoadUsers();
         var adminUser = users.FirstOrDefault(user =>
-            string.Equals(user.Email, DefaultAdminLogin, StringComparison.OrdinalIgnoreCase));
+            string.Equals(user.Username, DefaultAdminLogin, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(user.Email, DefaultAdminLogin, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(user.Email, DefaultAdminEmail, StringComparison.OrdinalIgnoreCase));
 
         var passwordSalt = Convert.ToBase64String(RandomNumberGenerator.GetBytes(16));
         var passwordHash = ComputePasswordHash(DefaultAdminPassword, passwordSalt);
@@ -220,7 +334,8 @@ public class AuthService : IAuthService
             users.Add(new AuthUser
             {
                 FullName = DefaultAdminDisplayName,
-                Email = DefaultAdminLogin,
+                Username = DefaultAdminLogin,
+                Email = DefaultAdminEmail,
                 PasswordSalt = passwordSalt,
                 PasswordHash = passwordHash,
                 Role = "admin",
@@ -230,7 +345,8 @@ public class AuthService : IAuthService
         else
         {
             adminUser.FullName = DefaultAdminDisplayName;
-            adminUser.Email = DefaultAdminLogin;
+            adminUser.Username = DefaultAdminLogin;
+            adminUser.Email = DefaultAdminEmail;
             adminUser.PasswordSalt = passwordSalt;
             adminUser.PasswordHash = passwordHash;
             adminUser.Role = "admin";

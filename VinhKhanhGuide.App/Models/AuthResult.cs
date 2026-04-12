@@ -16,6 +16,15 @@ public class AuthResult
         };
     }
 
+    public static AuthResult Success(string message)
+    {
+        return new AuthResult
+        {
+            Succeeded = true,
+            Message = message
+        };
+    }
+
     public static AuthResult Failure(string message)
     {
         return new AuthResult

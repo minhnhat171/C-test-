@@ -4,9 +4,12 @@ public class AuthSession
 {
     public Guid UserId { get; init; }
     public string FullName { get; init; } = string.Empty;
+    public string Username { get; init; } = string.Empty;
     public string Email { get; init; } = string.Empty;
     public string Role { get; init; } = "user";
 
+    public string LoginId => string.IsNullOrWhiteSpace(Username) ? Email : Username;
+    public string ScopeKey => LoginId.Trim().ToLowerInvariant();
     public string Initials => BuildInitials();
 
     public string RoleLabel => Role switch
@@ -25,8 +28,8 @@ public class AuthSession
 
         if (parts.Length == 0)
         {
-            return Email.Length >= 2
-                ? Email[..2].ToUpperInvariant()
+            return LoginId.Length >= 2
+                ? LoginId[..2].ToUpperInvariant()
                 : "VK";
         }
 
