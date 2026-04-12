@@ -1,0 +1,25 @@
+{
+  "Files": [
+    {
+      "Id": "/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/wwwroot/css/site.css",
+      "PackagePath": "staticwebassets/css/site.css"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.CTest.WebAdmin.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.build.CTest.WebAdmin.props",
+      "PackagePath": "build\\CTest.WebAdmin.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.CTest.WebAdmin.props",
+      "PackagePath": "buildMultiTargeting\\CTest.WebAdmin.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.CTest.WebAdmin.props",
+      "PackagePath": "buildTransitive\\CTest.WebAdmin.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

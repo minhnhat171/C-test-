@@ -1,0 +1,91 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = CTest.WebAdmin
+build_property.RootNamespace = CTest.WebAdmin
+build_property.ProjectDir = /Users/nhatminh/Documents/C-test-/CTest.WebAdmin/
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = /Users/nhatminh/Documents/C-test-/CTest.WebAdmin
+build_property._RazorSourceGeneratorDebug = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/AudioGuides/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQXVkaW9HdWlkZXMvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/AudioGuides/Manage.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQXVkaW9HdWlkZXMvTWFuYWdlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/Home/Dashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9EYXNoYm9hcmQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9JbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/Pois/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUG9pcy9DcmVhdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/Pois/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUG9pcy9EZXRhaWxzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/Pois/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUG9pcy9FZGl0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/Pois/Editor.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUG9pcy9FZGl0b3IuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/Pois/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUG9pcy9JbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/Pois/Manage.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUG9pcy9NYW5hZ2UuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/QrCodes/Manage.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUXJDb2Rlcy9NYW5hZ2UuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/Tours/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVG91cnMvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/Translations/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVHJhbnNsYXRpb25zL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/Translations/Manage.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVHJhbnNsYXRpb25zL01hbmFnZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/UsageLogs/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVXNhZ2VMb2dzL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/nhatminh/Documents/C-test-/CTest.WebAdmin/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 

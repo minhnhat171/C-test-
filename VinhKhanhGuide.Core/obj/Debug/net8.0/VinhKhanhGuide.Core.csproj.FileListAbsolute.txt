@@ -1,0 +1,12 @@
+/Users/nhatminh/Documents/C-test-/VinhKhanhGuide.Core/bin/Debug/net8.0/VinhKhanhGuide.Core.deps.json
+/Users/nhatminh/Documents/C-test-/VinhKhanhGuide.Core/bin/Debug/net8.0/VinhKhanhGuide.Core.dll
+/Users/nhatminh/Documents/C-test-/VinhKhanhGuide.Core/bin/Debug/net8.0/VinhKhanhGuide.Core.pdb
+/Users/nhatminh/Documents/C-test-/VinhKhanhGuide.Core/obj/Debug/net8.0/VinhKhanhGuide.Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/nhatminh/Documents/C-test-/VinhKhanhGuide.Core/obj/Debug/net8.0/VinhKhanhGuide.Core.AssemblyInfoInputs.cache
+/Users/nhatminh/Documents/C-test-/VinhKhanhGuide.Core/obj/Debug/net8.0/VinhKhanhGuide.Core.AssemblyInfo.cs
+/Users/nhatminh/Documents/C-test-/VinhKhanhGuide.Core/obj/Debug/net8.0/VinhKhanhGuide.Core.csproj.CoreCompileInputs.cache
+/Users/nhatminh/Documents/C-test-/VinhKhanhGuide.Core/obj/Debug/net8.0/VinhKhanhGuide.Core.sourcelink.json
+/Users/nhatminh/Documents/C-test-/VinhKhanhGuide.Core/obj/Debug/net8.0/VinhKhanhGuide.Core.dll
+/Users/nhatminh/Documents/C-test-/VinhKhanhGuide.Core/obj/Debug/net8.0/refint/VinhKhanhGuide.Core.dll
+/Users/nhatminh/Documents/C-test-/VinhKhanhGuide.Core/obj/Debug/net8.0/VinhKhanhGuide.Core.pdb
+/Users/nhatminh/Documents/C-test-/VinhKhanhGuide.Core/obj/Debug/net8.0/ref/VinhKhanhGuide.Core.dll
