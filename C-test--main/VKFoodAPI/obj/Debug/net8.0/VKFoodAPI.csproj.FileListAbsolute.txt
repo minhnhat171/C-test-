@@ -34,3 +34,4 @@ D:\App\C-test--main\VKFoodAPI\obj\Debug\net8.0\staticwebassets\msbuild.build.VKF
 D:\App\C-test--main\VKFoodAPI\obj\Debug\net8.0\staticwebassets\msbuild.buildMultiTargeting.VKFoodAPI.props
 D:\App\C-test--main\VKFoodAPI\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.VKFoodAPI.props
 D:\App\C-test--main\VKFoodAPI\obj\Debug\net8.0\staticwebassets.pack.json
+D:\App\C-test--main\VKFoodAPI\bin\Debug\net8.0\App_Data\pois.json
