@@ -15,8 +15,14 @@ builder.Services.AddHttpClient<ListeningHistoryApiClient>(client =>
     client.BaseAddress = new Uri(poiApiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
 });
+builder.Services.AddHttpClient<UserManagementApiClient>(client =>
+{
+    client.BaseAddress = new Uri(poiApiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 builder.Services.AddScoped<PoiAdminService>();
 builder.Services.AddScoped<ListeningHistoryService>();
+builder.Services.AddScoped<UserManagementService>();
 builder.Services.AddScoped<PoiValidationService>();
 
 var app = builder.Build();

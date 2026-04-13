@@ -1,0 +1,110 @@
+@model UserManagementPageViewModel
+@{
+    ViewData["Title"] = "Quan ly nguoi dung";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h2 class="mb-1">Quan ly nguoi dung</h2>
+        <div class="text-muted">
+            Theo doi danh sach nguoi dung, xem chi tiet hoat dong nghe, loc online/offline,
+            tim kiem nhanh va mo vi tri gan nhat tren ban do.
+        </div>
+    </div>
+    <div class="small text-muted" id="refresh-status">Tu dong cap nhat moi 10 giay</div>
+</div>
+
+<form id="user-filter-form" asp-controller="Users" asp-action="Index" method="get" class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-4">
+                <label class="form-label fw-semibold" for="keyword">Tim nguoi dung</label>
+                <input class="form-control" id="keyword" name="keyword" value="@Model.SearchTerm" placeholder="Nhap ma, ten, email..." />
+            </div>
+            <div class="col-lg-3">
+                <label class="form-label fw-semibold" for="status">Trang thai</label>
+                <select class="form-select" id="status" name="status">
+                    @if (Model.SelectedStatus == "all")
+                    {
+                        <option value="all" selected>Tat ca</option>
+                    }
+                    else
+                    {
+                        <option value="all">Tat ca</option>
+                    }
+
+                    @if (Model.SelectedStatus == "online")
+                    {
+                        <option value="online" selected>Online</option>
+                    }
+                    else
+                    {
+                        <option value="online">Online</option>
+                    }
+
+                    @if (Model.SelectedStatus == "offline")
+                    {
+                        <option value="offline" selected>Offline</option>
+                    }
+                    else
+                    {
+                        <option value="offline">Offline</option>
+                    }
+                </select>
+            </div>
+            <div class="col-lg-3">
+                <input type="hidden" name="selectedUserId" value="@(Model.SelectedUserId?.ToString() ?? string.Empty)" />
+                <div class="small text-muted">Chi tiet va ban do se tu dong doi theo user dang chon.</div>
+            </div>
+            <div class="col-lg-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">Cap nhat</button>
+                <a class="btn btn-outline-secondary" asp-controller="Users" asp-action="Index">Dat lai</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div id="user-management-content">
+    <partial name="_UserManagementContent" model="Model" />
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const container = document.getElementById("user-management-content");
+            const refreshStatus = document.getElementById("refresh-status");
+
+            if (!container) {
+                return;
+            }
+
+            async function refreshSnapshot() {
+                const url = new URL(window.location.href);
+                url.searchParams.set("partial", "true");
+
+                try {
+                    const response = await fetch(url.toString(), {
+                        headers: { "X-Requested-With": "XMLHttpRequest" }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    container.innerHTML = await response.text();
+
+                    if (refreshStatus) {
+                        refreshStatus.textContent = `Tu dong cap nhat luc ${new Date().toLocaleTimeString("vi-VN")}`;
+                    }
+                } catch {
+                    if (refreshStatus) {
+                        refreshStatus.textContent = "Dang cho API cap nhat nguoi dung moi...";
+                    }
+                }
+            }
+
+            const timerId = window.setInterval(refreshSnapshot, 10000);
+            window.addEventListener("beforeunload", () => window.clearInterval(timerId), { once: true });
+        })();
+    </script>
+}

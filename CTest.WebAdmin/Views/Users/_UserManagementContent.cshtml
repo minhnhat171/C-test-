@@ -1,0 +1,213 @@
+@model UserManagementPageViewModel
+
+@if (!string.IsNullOrWhiteSpace(Model.LoadErrorMessage))
+{
+    <div class="alert alert-warning mb-4">
+        @Model.LoadErrorMessage
+    </div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Tong nguoi dung</div>
+                <div class="display-6">@Model.TotalUsers</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Dang online</div>
+                <div class="display-6 text-success">@Model.OnlineUsers</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Dang offline</div>
+                <div class="display-6 text-secondary">@Model.OfflineUsers</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Ket qua hien tai</div>
+                <div class="display-6">@Model.FilteredUsers</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 align-items-start">
+    <div class="col-xl-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Danh sach nguoi dung</span>
+                @if (Model.HasFilters)
+                {
+                    <span class="badge text-bg-light">@Model.FilteredUsers / @Model.TotalUsers</span>
+                }
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nguoi dung</th>
+                            <th style="width: 110px;">Trang thai</th>
+                            <th style="width: 130px;">Lan cuoi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">Khong tim thay nguoi dung phu hop.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            var rowClass = Model.SelectedUserId == item.Id ? "table-primary" : string.Empty;
+
+                            <tr class="@rowClass">
+                                <td>
+                                    <div class="fw-semibold">
+                                        <a class="text-decoration-none"
+                                           asp-controller="Users"
+                                           asp-action="Index"
+                                           asp-route-status="@Model.SelectedStatus"
+                                           asp-route-keyword="@Model.SearchTerm"
+                                           asp-route-selectedUserId="@item.Id">
+                                            @item.DisplayName
+                                        </a>
+                                    </div>
+                                    <div class="small text-muted">@item.UserCode | @item.Email</div>
+                                    <div class="small text-muted">@item.Role | @(string.IsNullOrWhiteSpace(item.DevicePlatform) ? "--" : item.DevicePlatform)</div>
+                                    <div class="small text-muted">POI gan nhat: @(string.IsNullOrWhiteSpace(item.LastPoiName) ? "--" : item.LastPoiName)</div>
+                                </td>
+                                <td>
+                                    <span class="badge @item.StatusBadgeClass">@item.StatusLabel</span>
+                                    <div class="small text-muted mt-2">@item.TotalSessions phien</div>
+                                </td>
+                                <td>
+                                    <div>@item.LastActiveDisplay</div>
+                                    <div class="small text-muted">@item.ListenDurationLabel</div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-7">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white fw-semibold">Ho so chi tiet nguoi dung</div>
+            @if (Model.SelectedUser is null)
+            {
+                <div class="card-body text-muted">Chon mot nguoi dung trong danh sach de xem chi tiet.</div>
+            }
+            else
+            {
+                var detail = Model.SelectedUser;
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+                        <div>
+                            <h4 class="mb-1">@detail.DisplayName</h4>
+                            <div class="text-muted">@detail.UserCode | @detail.Email</div>
+                        </div>
+                        <span class="badge @detail.StatusBadgeClass fs-6">@detail.StatusLabel</span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="border rounded-4 p-3 h-100">
+                                <div class="small text-muted mb-2">Thong tin chung</div>
+                                <div><span class="fw-semibold">Vai tro:</span> @detail.Role</div>
+                                <div><span class="fw-semibold">Ngon ngu uu tien:</span> @detail.PreferredLanguage</div>
+                                <div><span class="fw-semibold">So dien thoai:</span> @(string.IsNullOrWhiteSpace(detail.PhoneNumber) ? "--" : detail.PhoneNumber)</div>
+                                <div><span class="fw-semibold">Tao luc:</span> @detail.CreatedAtDisplay</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded-4 p-3 h-100">
+                                <div class="small text-muted mb-2">Hoat dong gan nhat</div>
+                                <div><span class="fw-semibold">Lan hoat dong cuoi:</span> @detail.LastActiveDisplay</div>
+                                <div><span class="fw-semibold">Lan nghe hoan tat:</span> @detail.LastCompletedDisplay</div>
+                                <div><span class="fw-semibold">Nen tang:</span> @(string.IsNullOrWhiteSpace(detail.DevicePlatform) ? "--" : detail.DevicePlatform)</div>
+                                <div><span class="fw-semibold">Nguon kich hoat:</span> @((string.IsNullOrWhiteSpace(detail.LastTriggerType) ? "--" : detail.LastTriggerType) + " / " + (string.IsNullOrWhiteSpace(detail.LastSource) ? "--" : detail.LastSource))</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-4 p-3 h-100">
+                                <div class="small text-muted mb-1">Tong phien nghe</div>
+                                <div class="display-6">@detail.TotalSessions</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-4 p-3 h-100">
+                                <div class="small text-muted mb-1">Phien hoan tat</div>
+                                <div class="display-6">@detail.CompletedSessions</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-4 p-3 h-100">
+                                <div class="small text-muted mb-1">Tong thoi gian nghe</div>
+                                <div class="display-6">@detail.TotalListenSeconds</div>
+                                <div class="small text-muted">giay</div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="border rounded-4 p-3">
+                                <div class="small text-muted mb-2">POI gan nhat</div>
+                                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(detail.LastPoiName) ? "--" : detail.LastPoiName)</div>
+                                <div class="small text-muted">@(string.IsNullOrWhiteSpace(detail.LastPoiCode) ? "--" : detail.LastPoiCode)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white fw-semibold">Vi tri nguoi dung tren ban do</div>
+            @if (Model.SelectedLocation is null)
+            {
+                <div class="card-body text-muted">
+                    Chua co vi tri gan nhat de hien thi. Vi tri se duoc suy ra tu POI vua nghe tren app.
+                </div>
+            }
+            else
+            {
+                var location = Model.SelectedLocation;
+                <div class="ratio ratio-16x9 border-bottom">
+                    <iframe src="@location.MapEmbedUrl"
+                            title="Ban do vi tri nguoi dung"
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@location.PoiName</div>
+                            <div class="text-muted">@location.Address</div>
+                            <div class="small text-muted mt-1">@location.PoiCode | @location.Latitude, @location.Longitude</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted">Cap nhat luc</div>
+                            <div class="fw-semibold">@location.UpdatedAtDisplay</div>
+                            <a class="btn btn-outline-primary btn-sm mt-2" href="@location.MapLink" target="_blank" rel="noreferrer">Mo Google Maps</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
