@@ -1,0 +1,171 @@
+@model ListeningHistoryPageViewModel
+
+@if (!string.IsNullOrWhiteSpace(Model.LoadErrorMessage))
+{
+    <div class="alert alert-warning mb-4">
+        @Model.LoadErrorMessage
+    </div>
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    @if (Model.HasSearch)
+    {
+        <span class="badge rounded-pill text-bg-light px-3 py-2">Từ khóa: @Model.SearchTerm</span>
+    }
+    <div class="small text-muted">@Model.TotalSessions lượt khớp bộ lọc hiện tại</div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Tổng lượt sử dụng</div>
+                <div class="display-6">@Model.TotalSessions</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Địa điểm được nghe nhiều nhất</div>
+                <div class="fw-bold fs-5">@Model.MostPlayedPoi</div>
+                <div class="small text-muted mt-2">
+                    @(Model.MostPlayedPoiListenCount == 0 ? "Chưa có dữ liệu" : $"{Model.MostPlayedPoiListenCount} lượt nghe")
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Thời gian trung bình nghe</div>
+                <div class="display-6 fs-3">@Model.AverageListenLabel</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Tổng thời lượng nghe</div>
+                <div class="display-6 fs-3">@Model.TotalListenLabel</div>
+                <div class="small text-muted mt-2">@Model.DistinctPoiCount địa điểm đã được nghe</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Địa điểm được nghe nhiều nhất</span>
+        <span class="badge text-bg-light">@Model.RankingItems.Count địa điểm</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">Hạng</th>
+                    <th>Địa điểm</th>
+                    <th style="width: 130px;">Lượt nghe</th>
+                    <th style="width: 130px;">Hoàn tất</th>
+                    <th style="width: 160px;">Thời gian TB</th>
+                    <th style="width: 160px;">Tổng thời lượng</th>
+                    <th style="width: 180px;">Lần cuối</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.RankingItems.Count == 0)
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">Chưa có dữ liệu sử dụng khớp bộ lọc hiện tại.</td>
+                </tr>
+            }
+            else
+            {
+                @for (var index = 0; index < Model.RankingItems.Count; index++)
+                {
+                    var item = Model.RankingItems[index];
+                    <tr>
+                        <td><span class="badge text-bg-primary">#@(index + 1)</span></td>
+                        <td>
+                            <div class="fw-semibold">@item.PoiName</div>
+                            <div class="small text-muted">@item.PoiCode</div>
+                        </td>
+                        <td>@item.ListenCount</td>
+                        <td>
+                            <div>@item.CompletedCount / @item.ListenCount</div>
+                            <div class="small text-muted">@item.CompletionRateLabel</div>
+                        </td>
+                        <td>@item.AverageListenLabel</td>
+                        <td>@item.TotalListenLabel</td>
+                        <td>@item.LastStartedAtDisplay</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Tra cứu lịch sử đã nghe</span>
+        <span class="badge text-bg-light">@Model.TimelineItems.Count phiên</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 180px;">Thời điểm</th>
+                    <th>Địa điểm</th>
+                    <th style="width: 150px;">Kích hoạt</th>
+                    <th style="width: 120px;">Ngôn ngữ</th>
+                    <th style="width: 140px;">Thời lượng</th>
+                    <th style="width: 150px;">Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.TimelineItems.Count == 0)
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">Không tìm thấy lịch sử sử dụng phù hợp.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model.TimelineItems)
+                {
+                    var badgeClass = item.Completed
+                        ? "text-bg-success"
+                        : string.IsNullOrWhiteSpace(item.ErrorMessage)
+                            ? "text-bg-warning"
+                            : "text-bg-danger";
+
+                    <tr>
+                        <td>
+                            <div>@item.StartedAtDisplay</div>
+                            <div class="small text-muted">Kết thúc: @item.CompletedAtDisplay</div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">@item.PoiName</div>
+                            <div class="small text-muted">@item.PoiCode</div>
+                        </td>
+                        <td>
+                            <div>@item.TriggerType</div>
+                            <div class="small text-muted">@item.Source / @(string.IsNullOrWhiteSpace(item.DevicePlatform) ? "--" : item.DevicePlatform)</div>
+                        </td>
+                        <td>@item.Language</td>
+                        <td>@item.DurationLabel</td>
+                        <td>
+                            <span class="badge @badgeClass">@item.StatusLabel</span>
+                            @if (!string.IsNullOrWhiteSpace(item.ErrorMessage))
+                            {
+                                <div class="small text-danger mt-1">@item.ErrorMessage</div>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

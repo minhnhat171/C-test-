@@ -15,38 +15,43 @@ public class ListeningHistoryService
     public async Task<ListeningHistoryPageViewModel> LoadPageAsync(
         string? sortBy,
         string? period,
-        string? view,
+        string? keyword,
         CancellationToken cancellationToken = default)
     {
         var normalizedSortBy = NormalizeSortBy(sortBy);
         var normalizedPeriod = NormalizePeriod(period);
-        var normalizedView = NormalizeView(view);
+        var normalizedKeyword = keyword?.Trim() ?? string.Empty;
 
         try
         {
-            var timelineTask = _apiClient.GetListeningHistoryAsync(normalizedSortBy, normalizedPeriod, cancellationToken);
-            var rankingTask = _apiClient.GetPoiRankingAsync(normalizedPeriod, cancellationToken);
+            var historyEntries = await _apiClient.GetListeningHistoryAsync(normalizedSortBy, normalizedPeriod, cancellationToken);
 
-            await Task.WhenAll(timelineTask, rankingTask);
-
-            var timelineItems = timelineTask.Result
-                .Select(ToTimelineItem)
+            var filteredEntries = ApplyKeywordFilter(historyEntries, normalizedKeyword)
                 .ToList();
-            var rankingItems = rankingTask.Result
-                .Select(ToRankingItem)
+
+            filteredEntries = normalizedSortBy == "time_asc"
+                ? filteredEntries.OrderBy(item => item.StartedAtUtc).ToList()
+                : filteredEntries.OrderByDescending(item => item.StartedAtUtc).ToList();
+
+            var rankingItems = BuildRanking(filteredEntries);
+            var timelineItems = filteredEntries
+                .Select(ToTimelineItem)
                 .ToList();
 
             return new ListeningHistoryPageViewModel
             {
                 SelectedSortBy = normalizedSortBy,
                 SelectedPeriod = normalizedPeriod,
-                SelectedView = normalizedView,
+                SearchTerm = normalizedKeyword,
                 TimelineItems = timelineItems,
                 RankingItems = rankingItems,
-                TotalSessions = timelineItems.Count,
-                CompletedSessions = timelineItems.Count(item => item.Completed),
-                TotalListenSeconds = timelineItems.Sum(item => item.ListenSeconds),
-                MostPlayedPoi = rankingItems.FirstOrDefault()?.PoiName ?? "Chưa có dữ liệu"
+                TotalSessions = filteredEntries.Count,
+                CompletedSessions = filteredEntries.Count(item => item.Completed),
+                TotalListenSeconds = filteredEntries.Sum(item => item.ListenSeconds),
+                AverageListenSeconds = filteredEntries.Count == 0 ? 0 : filteredEntries.Average(item => item.ListenSeconds),
+                DistinctPoiCount = rankingItems.Count,
+                MostPlayedPoi = rankingItems.FirstOrDefault()?.PoiName ?? "Chưa có dữ liệu",
+                MostPlayedPoiListenCount = rankingItems.FirstOrDefault()?.ListenCount ?? 0
             };
         }
         catch (Exception ex) when (
@@ -58,10 +63,50 @@ public class ListeningHistoryService
             {
                 SelectedSortBy = normalizedSortBy,
                 SelectedPeriod = normalizedPeriod,
-                SelectedView = normalizedView,
-                LoadErrorMessage = $"Không tải được lịch sử nghe từ API: {ex.Message}"
+                SearchTerm = normalizedKeyword,
+                LoadErrorMessage = $"Không tải được lịch sử sử dụng từ API: {ex.Message}"
             };
         }
+    }
+
+    private static IEnumerable<ListeningHistoryEntryDto> ApplyKeywordFilter(
+        IEnumerable<ListeningHistoryEntryDto> items,
+        string keyword)
+    {
+        if (string.IsNullOrWhiteSpace(keyword))
+        {
+            return items;
+        }
+
+        return items.Where(item =>
+            ContainsKeyword(item.PoiName, keyword) ||
+            ContainsKeyword(item.PoiCode, keyword) ||
+            ContainsKeyword(item.UserCode, keyword) ||
+            ContainsKeyword(item.UserDisplayName, keyword) ||
+            ContainsKeyword(item.TriggerType, keyword) ||
+            ContainsKeyword(item.Language, keyword) ||
+            ContainsKeyword(item.Source, keyword) ||
+            ContainsKeyword(item.DevicePlatform, keyword));
+    }
+
+    private static List<PoiListeningRankingItemViewModel> BuildRanking(IEnumerable<ListeningHistoryEntryDto> entries)
+    {
+        return entries
+            .GroupBy(item => new { item.PoiId, item.PoiCode, item.PoiName })
+            .Select(group => new PoiListeningRankingItemViewModel
+            {
+                PoiId = group.Key.PoiId,
+                PoiCode = group.Key.PoiCode,
+                PoiName = group.Key.PoiName,
+                ListenCount = group.Count(),
+                CompletedCount = group.Count(item => item.Completed),
+                TotalListenSeconds = group.Sum(item => item.ListenSeconds),
+                LastStartedAtUtc = group.Max(item => (DateTimeOffset?)item.StartedAtUtc)
+            })
+            .OrderByDescending(item => item.ListenCount)
+            .ThenByDescending(item => item.TotalListenSeconds)
+            .ThenBy(item => item.PoiName)
+            .ToList();
     }
 
     private static ListeningHistoryItemViewModel ToTimelineItem(ListeningHistoryEntryDto item)
@@ -87,18 +132,10 @@ public class ListeningHistoryService
         };
     }
 
-    private static PoiListeningRankingItemViewModel ToRankingItem(PoiListeningCountDto item)
+    private static bool ContainsKeyword(string? source, string keyword)
     {
-        return new PoiListeningRankingItemViewModel
-        {
-            PoiId = item.PoiId,
-            PoiCode = item.PoiCode,
-            PoiName = item.PoiName,
-            ListenCount = item.ListenCount,
-            CompletedCount = item.CompletedCount,
-            TotalListenSeconds = item.TotalListenSeconds,
-            LastStartedAtUtc = item.LastStartedAtUtc
-        };
+        return !string.IsNullOrWhiteSpace(source) &&
+               source.Contains(keyword, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string NormalizeSortBy(string? sortBy)
@@ -118,15 +155,6 @@ public class ListeningHistoryService
             "week" => "week",
             "month" => "month",
             _ => "all"
-        };
-    }
-
-    private static string NormalizeView(string? view)
-    {
-        return view?.Trim().ToLowerInvariant() switch
-        {
-            "ranking" => "ranking",
-            _ => "timeline"
         };
     }
 }

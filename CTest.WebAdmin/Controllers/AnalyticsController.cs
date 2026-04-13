@@ -1,40 +1,39 @@
 using Microsoft.AspNetCore.Mvc;
-using CTest.WebAdmin.Services;
+using Microsoft.AspNetCore.Routing;
 
 namespace CTest.WebAdmin.Controllers;
 
 public class AnalyticsController : Controller
 {
-    private readonly ListeningHistoryService _listeningHistoryService;
-
-    public AnalyticsController(ListeningHistoryService listeningHistoryService)
-    {
-        _listeningHistoryService = listeningHistoryService;
-    }
-
     [HttpGet]
-    public async Task<IActionResult> ListeningHistory(
+    public IActionResult ListeningHistory(
         string? sortBy = null,
         string? period = null,
-        string? view = null,
-        bool partial = false,
-        CancellationToken cancellationToken = default)
+        string? keyword = null,
+        bool partial = false)
     {
-        var model = await _listeningHistoryService.LoadPageAsync(sortBy, period, view, cancellationToken);
+        var routeValues = new RouteValueDictionary();
 
-        if (partial || IsAjaxRequest())
+        if (!string.IsNullOrWhiteSpace(sortBy))
         {
-            return PartialView("_ListeningHistoryContent", model);
+            routeValues[nameof(sortBy)] = sortBy;
         }
 
-        return View(model);
-    }
+        if (!string.IsNullOrWhiteSpace(period))
+        {
+            routeValues[nameof(period)] = period;
+        }
 
-    private bool IsAjaxRequest()
-    {
-        return string.Equals(
-            Request.Headers["X-Requested-With"],
-            "XMLHttpRequest",
-            StringComparison.OrdinalIgnoreCase);
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            routeValues[nameof(keyword)] = keyword;
+        }
+
+        if (partial)
+        {
+            routeValues[nameof(partial)] = true;
+        }
+
+        return RedirectToActionPermanent(nameof(UsageLogsController.Index), "UsageLogs", routeValues);
     }
 }

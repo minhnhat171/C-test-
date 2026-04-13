@@ -4,18 +4,29 @@ public class ListeningHistoryPageViewModel
 {
     public string SelectedSortBy { get; set; } = "time_desc";
     public string SelectedPeriod { get; set; } = "all";
-    public string SelectedView { get; set; } = "timeline";
+    public string SearchTerm { get; set; } = string.Empty;
     public string LoadErrorMessage { get; set; } = string.Empty;
     public int TotalSessions { get; set; }
     public int CompletedSessions { get; set; }
     public int TotalListenSeconds { get; set; }
+    public double AverageListenSeconds { get; set; }
+    public int DistinctPoiCount { get; set; }
     public string MostPlayedPoi { get; set; } = "Chưa có dữ liệu";
+    public int MostPlayedPoiListenCount { get; set; }
     public List<ListeningHistoryItemViewModel> TimelineItems { get; set; } = new();
     public List<PoiListeningRankingItemViewModel> RankingItems { get; set; } = new();
 
     public int CompletionRate => TotalSessions == 0
         ? 0
         : (int)Math.Round(CompletedSessions * 100.0 / TotalSessions);
+
+    public bool HasSearch => !string.IsNullOrWhiteSpace(SearchTerm);
+
+    public string AverageListenLabel => TotalSessions == 0
+        ? "0 giây"
+        : $"{AverageListenSeconds:0.#} giây";
+
+    public string TotalListenLabel => $"{TotalListenSeconds} giây";
 }
 
 public class ListeningHistoryItemViewModel
@@ -71,11 +82,17 @@ public class PoiListeningRankingItemViewModel
     public int TotalListenSeconds { get; set; }
     public DateTimeOffset? LastStartedAtUtc { get; set; }
 
+    public double AverageListenSeconds => ListenCount == 0 ? 0 : TotalListenSeconds / (double)ListenCount;
+
     public string CompletionRateLabel => ListenCount == 0
         ? "0%"
         : $"{Math.Round(CompletedCount * 100.0 / ListenCount):0}%";
 
     public string TotalListenLabel => $"{TotalListenSeconds} giây";
+
+    public string AverageListenLabel => ListenCount == 0
+        ? "0 giây"
+        : $"{AverageListenSeconds:0.#} giây";
 
     public string LastStartedAtDisplay => LastStartedAtUtc.HasValue
         ? LastStartedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")

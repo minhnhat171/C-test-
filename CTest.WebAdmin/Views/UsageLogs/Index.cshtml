@@ -1,19 +1,137 @@
-@model List<UsageLog>
-@{ ViewData["Title"] = "Lịch sử sử dụng"; }
-<div class="d-flex justify-content-between align-items-center mb-3">
+@model ListeningHistoryPageViewModel
+@{
+    ViewData["Title"] = "Lịch sử sử dụng";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
     <div>
         <h2 class="mb-1">Lịch sử sử dụng</h2>
-        <div class="text-muted">Theo dõi dữ liệu GPS/QR, thời lượng nghe và mức độ hoàn tất.</div>
+        <div class="text-muted">
+            Tra cứu lịch sử đã nghe, theo dõi địa điểm được nghe nhiều nhất
+            và thời gian trung bình nghe theo bộ lọc hiện tại.
+        </div>
     </div>
-    <button class="btn btn-outline-secondary">Xuất báo cáo</button>
+    <div class="small text-muted" id="refresh-status">Tự động cập nhật mỗi 8 giây</div>
 </div>
-<table class="table table-striped align-middle">
-    <thead><tr><th>ID</th><th>User</th><th>POI</th><th>Kích hoạt</th><th>Ngôn ngữ</th><th>Bắt đầu</th><th>Nghe</th><th>Hoàn tất</th></tr></thead>
-    <tbody>
-    @foreach (var item in Model) {
-        <tr>
-            <td>@item.Id</td><td>@item.UserCode</td><td>@item.PoiName</td><td>@item.TriggerType</td><td>@item.Language</td><td>@item.StartedAt.ToString("dd/MM/yyyy HH:mm")</td><td>@item.ListenSeconds giây</td><td>@(item.Completed ? "Có" : "Không")</td>
-        </tr>
-    }
-    </tbody>
-</table>
+
+<form id="usage-history-filter-form" asp-controller="UsageLogs" asp-action="Index" method="get" class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-4">
+                <label class="form-label fw-semibold" for="keyword">Tìm lịch sử đã nghe</label>
+                <input class="form-control" id="keyword" name="keyword" value="@Model.SearchTerm" placeholder="Nhập địa điểm, mã POI, kiểu kích hoạt, ngôn ngữ..." />
+            </div>
+            <div class="col-md-3 col-lg-3">
+                <label class="form-label fw-semibold" for="period">Mốc thời gian</label>
+                <select class="form-select" id="period" name="period">
+                    @if (Model.SelectedPeriod == "all")
+                    {
+                        <option value="all" selected>Tất cả</option>
+                    }
+                    else
+                    {
+                        <option value="all">Tất cả</option>
+                    }
+
+                    @if (Model.SelectedPeriod == "day")
+                    {
+                        <option value="day" selected>24 giờ qua</option>
+                    }
+                    else
+                    {
+                        <option value="day">24 giờ qua</option>
+                    }
+
+                    @if (Model.SelectedPeriod == "week")
+                    {
+                        <option value="week" selected>7 ngày qua</option>
+                    }
+                    else
+                    {
+                        <option value="week">7 ngày qua</option>
+                    }
+
+                    @if (Model.SelectedPeriod == "month")
+                    {
+                        <option value="month" selected>30 ngày qua</option>
+                    }
+                    else
+                    {
+                        <option value="month">30 ngày qua</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 col-lg-3">
+                <label class="form-label fw-semibold" for="sortBy">Sắp xếp</label>
+                <select class="form-select" id="sortBy" name="sortBy">
+                    @if (Model.SelectedSortBy == "time_desc")
+                    {
+                        <option value="time_desc" selected>Mới nhất trước</option>
+                    }
+                    else
+                    {
+                        <option value="time_desc">Mới nhất trước</option>
+                    }
+
+                    @if (Model.SelectedSortBy == "time_asc")
+                    {
+                        <option value="time_asc" selected>Cũ nhất trước</option>
+                    }
+                    else
+                    {
+                        <option value="time_asc">Cũ nhất trước</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2 col-lg-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">Cập nhật</button>
+                <a class="btn btn-outline-secondary" asp-controller="UsageLogs" asp-action="Index">Đặt lại</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div id="usage-history-content">
+    <partial name="_UsageHistoryContent" model="Model" />
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const container = document.getElementById("usage-history-content");
+            const refreshStatus = document.getElementById("refresh-status");
+
+            if (!container) {
+                return;
+            }
+
+            async function refreshSnapshot() {
+                const url = new URL(window.location.href);
+                url.searchParams.set("partial", "true");
+
+                try {
+                    const response = await fetch(url.toString(), {
+                        headers: { "X-Requested-With": "XMLHttpRequest" }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    container.innerHTML = await response.text();
+
+                    if (refreshStatus) {
+                        refreshStatus.textContent = `Tự động cập nhật lúc ${new Date().toLocaleTimeString("vi-VN")}`;
+                    }
+                } catch {
+                    if (refreshStatus) {
+                        refreshStatus.textContent = "Đang chờ app hoặc API gửi dữ liệu sử dụng mới...";
+                    }
+                }
+            }
+
+            const timerId = window.setInterval(refreshSnapshot, 8000);
+            window.addEventListener("beforeunload", () => window.clearInterval(timerId), { once: true });
+        })();
+    </script>
+}

@@ -10,8 +10,8 @@
         ? "Kênh đồng bộ đang hoạt động ổn định."
         : "Đồng bộ tạm ngưng, cần kiểm tra kết nối.";
     var insightSummary = Model.TodayListenCount > 0
-        ? $"Hôm nay ghi nhận {Model.TodayListenCount} lượt nghe. {Model.MostPlayedPoi} đang dẫn đầu về tần suất phát."
-        : "Hôm nay chưa có lượt nghe mới. Dashboard sẽ tự động cập nhật khi dữ liệu phát sinh.";
+        ? $"Hôm nay ghi nhận {Model.TodayListenCount} lượt sử dụng. {Model.MostPlayedPoi} đang dẫn đầu về tần suất nghe."
+        : "Hôm nay chưa có lượt sử dụng mới. Dashboard sẽ tự động cập nhật khi dữ liệu phát sinh.";
 }
 
 <style>
@@ -573,7 +573,7 @@
         <div class="col-sm-6 col-xl-4 col-xxl-2">
             <div class="metric-card metric-today">
                 <span class="metric-mark">Today</span>
-                <div class="metric-label">Số lượt nghe hôm nay</div>
+                <div class="metric-label">Số lượt sử dụng hôm nay</div>
                 <div class="metric-value">@Model.TodayListenCount</div>
                 <div class="metric-note">@DateTime.Today.ToString("dd/MM/yyyy")</div>
             </div>
@@ -584,7 +584,7 @@
                 <span class="metric-mark">Top</span>
                 <div class="metric-label">POI được nghe nhiều nhất</div>
                 <div class="metric-value-text">@Model.MostPlayedPoi</div>
-                <div class="metric-note">Tính theo toàn bộ lịch sử nghe</div>
+                <div class="metric-note">Tính theo toàn bộ lịch sử sử dụng</div>
             </div>
         </div>
     </div>
@@ -594,8 +594,8 @@
             <div class="dashboard-panel h-100">
                 <div class="panel-header">
                     <div>
-                        <h2 class="panel-title">Biểu đồ lượt nghe theo ngày</h2>
-                        <div class="panel-subtitle">7 ngày gần nhất, giúp thầy nhìn nhanh nhịp hoạt động của hệ thống.</div>
+                        <h2 class="panel-title">Biểu đồ lượt sử dụng theo ngày</h2>
+                        <div class="panel-subtitle">7 ngày gần nhất, giúp nhìn nhanh nhịp sử dụng của hệ thống.</div>
                     </div>
                     <span class="panel-chip">@Model.DailyListenPoints.Count ngày</span>
                 </div>
@@ -622,7 +622,7 @@
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">Phân tích nhanh</h2>
-                        <div class="panel-subtitle">Top địa điểm, tỷ lệ hoàn tất và trạng thái đồng bộ.</div>
+                        <div class="panel-subtitle">Top địa điểm, thời gian nghe trung bình và trạng thái đồng bộ.</div>
                     </div>
                 </div>
 
@@ -638,11 +638,11 @@
                         <div class="insight-value">@Model.CompletionRate%</div>
                     </div>
                     <div class="insight-tile">
-                        <div class="insight-label">Trigger QR</div>
+                        <div class="insight-label">Kích hoạt QR</div>
                         <div class="insight-value">@Model.QrListenRate%</div>
                     </div>
                     <div class="insight-tile">
-                        <div class="insight-label">POI active</div>
+                        <div class="insight-label">POI hoạt động</div>
                         <div class="insight-value">@Model.ActivePoiCount/@Model.TotalPois</div>
                     </div>
                 </div>
@@ -681,7 +681,7 @@
                 }
                 else
                 {
-                    <div class="empty-state">Chưa có dữ liệu nghe để xếp hạng top địa điểm.</div>
+                    <div class="empty-state">Chưa có dữ liệu sử dụng để xếp hạng top địa điểm.</div>
                 }
             </div>
         </div>
@@ -690,8 +690,8 @@
     <div class="dashboard-panel history-panel">
         <div class="history-head">
             <div>
-                <h2 class="panel-title">Lịch sử nghe gần đây</h2>
-                <div class="panel-subtitle">Các phiên nghe mới nhất để thầy quan sát tình hình vận hành.</div>
+                <h2 class="panel-title">Lịch sử sử dụng gần đây</h2>
+                <div class="panel-subtitle">Các phiên sử dụng mới nhất để theo dõi tình hình vận hành.</div>
             </div>
             <span class="panel-chip">@Model.RecentLogs.Count phiên gần nhất</span>
         </div>
@@ -734,7 +734,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="7" class="text-center py-4 text-muted">Chưa có lịch sử nghe để hiển thị.</td>
+                        <td colspan="7" class="text-center py-4 text-muted">Chưa có lịch sử sử dụng để hiển thị.</td>
                     </tr>
                 }
                 </tbody>
