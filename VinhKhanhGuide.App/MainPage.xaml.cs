@@ -109,6 +109,7 @@ public partial class MainPage : ContentPage
         RestaurantSearchEntry.Unfocus();
         ListeningHistoryOverlay.IsVisible = true;
         UserProfileOverlay.IsVisible = false;
+        _viewModel.RefreshListeningHistoryCommand.Execute(null);
     }
 
     private void OnCloseListeningHistoryClicked(object? sender, EventArgs e)
@@ -121,6 +122,7 @@ public partial class MainPage : ContentPage
         RestaurantSearchEntry.Unfocus();
         UserProfileOverlay.IsVisible = true;
         ListeningHistoryOverlay.IsVisible = false;
+        _viewModel.RefreshListeningHistoryCommand.Execute(null);
     }
 
     private void OnCloseUserProfileClicked(object? sender, EventArgs e)

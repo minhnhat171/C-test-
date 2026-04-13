@@ -10,6 +10,7 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
 using VinhKhanhGuide.App.Models;
 using VinhKhanhGuide.App.Services;
+using VinhKhanhGuide.Core.Contracts;
 using VinhKhanhGuide.Core.Interfaces;
 using VinhKhanhGuide.Core.Models;
 
@@ -36,6 +37,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly IListeningHistorySyncService _listeningHistorySyncService;
     private readonly GeofenceEngine _geofenceEngine;
     private readonly SemaphoreSlim _locationUpdateGate = new(1, 1);
+    private readonly SemaphoreSlim _listeningHistoryRefreshGate = new(1, 1);
     private readonly Dictionary<Guid, DateTimeOffset> _lastNarratedAt = new();
     private readonly HashSet<Guid> _insidePoiIds = [];
     private readonly List<string> _recentSearches = [];
@@ -75,6 +77,13 @@ public class MainViewModel : INotifyPropertyChanged
     private string _currentUserAccountLabel = "guest";
     private string _currentUserPasswordLabel = "••••••••";
 
+    private bool _isListeningHistoryLoading;
+    private string _listeningHistoryLoadError = string.Empty;
+    private DateTimeOffset? _lastListeningHistorySyncAt;
+    private string _selectedListeningHistoryPeriod = "Tat ca";
+    private string _selectedListeningHistorySort = "Moi nhat truoc";
+    private string _selectedListeningHistoryView = "Dong thoi gian";
+
     public MainViewModel(
         ILocationService locationService,
         IPoiProvider poiProvider,
@@ -107,6 +116,7 @@ public class MainViewModel : INotifyPropertyChanged
         ClearEventLogsCommand = new Command(ClearEventLogs, () => HasEventLogs);
         ClearListeningHistoryCommand = new Command(ClearListeningHistory, () => HasListeningHistory);
         ClearViewHistoryCommand = new Command(ClearViewHistory, () => HasViewHistory);
+        RefreshListeningHistoryCommand = new Command(async () => await RefreshListeningHistoryAsync());
 
         SyncCurrentUser();
         LoadPersistedState();
@@ -120,9 +130,13 @@ public class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<PoiStatusItem> FilteredPoiStatuses { get; } = new();
     public ObservableCollection<SearchSuggestionItem> SearchSuggestions { get; } = new();
     public ObservableCollection<string> EventLogs { get; } = new();
-    public ObservableCollection<string> ListeningHistory { get; } = new();
+    public ObservableCollection<ListeningHistoryDisplayItem> ListeningHistory { get; } = new();
+    public ObservableCollection<ListeningHistoryRankingDisplayItem> ListeningHistoryRanking { get; } = new();
     public ObservableCollection<string> ViewHistory { get; } = new();
     public IReadOnlyList<string> SupportedLanguages { get; } = ["vi", "en", "zh", "ko", "fr"];
+    public IReadOnlyList<string> ListeningHistoryPeriodOptions { get; } = ["Tat ca", "24 gio qua", "7 ngay qua", "30 ngay qua"];
+    public IReadOnlyList<string> ListeningHistorySortOptions { get; } = ["Moi nhat truoc", "Cu nhat truoc"];
+    public IReadOnlyList<string> ListeningHistoryViewOptions { get; } = ["Dong thoi gian", "Xep hang POI"];
 
     public ICommand StartTrackingCommand { get; }
     public ICommand StopTrackingCommand { get; }
@@ -131,6 +145,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ClearEventLogsCommand { get; }
     public ICommand ClearListeningHistoryCommand { get; }
     public ICommand ClearViewHistoryCommand { get; }
+    public ICommand RefreshListeningHistoryCommand { get; }
 
     public IReadOnlyList<POI> Pois => _pois;
     public LocationDto? LastLocation => _lastLocation;
@@ -345,6 +360,8 @@ public class MainViewModel : INotifyPropertyChanged
 
     public bool IsListeningHistoryEmpty => ListeningHistory.Count == 0;
 
+    public bool HasListeningHistoryRanking => ListeningHistoryRanking.Count > 0;
+
     public bool HasViewHistory => ViewHistory.Count > 0;
 
     public bool IsViewHistoryEmpty => ViewHistory.Count == 0;
@@ -365,6 +382,72 @@ public class MainViewModel : INotifyPropertyChanged
 
     public string AudioSettingsSummary =>
         $"{(IsAutoNarrationEnabled ? "Tự động phát khi vào vùng" : "Chỉ phát thủ công")} • {SelectedLanguageDisplayName}";
+
+    public bool IsListeningHistoryLoading
+    {
+        get => _isListeningHistoryLoading;
+        private set => SetProperty(ref _isListeningHistoryLoading, value);
+    }
+
+    public string ListeningHistoryLoadError
+    {
+        get => _listeningHistoryLoadError;
+        private set => SetProperty(ref _listeningHistoryLoadError, value);
+    }
+
+    public string ListeningHistorySyncStatus => _lastListeningHistorySyncAt.HasValue
+        ? $"Dong bo luc {_lastListeningHistorySyncAt.Value.ToLocalTime():HH:mm:ss}"
+        : "Chua dong bo lich su nghe";
+
+    public string SelectedListeningHistoryPeriod
+    {
+        get => _selectedListeningHistoryPeriod;
+        set
+        {
+            if (!SetProperty(ref _selectedListeningHistoryPeriod, value))
+            {
+                return;
+            }
+
+            TriggerListeningHistoryRefresh();
+        }
+    }
+
+    public string SelectedListeningHistorySort
+    {
+        get => _selectedListeningHistorySort;
+        set
+        {
+            if (!SetProperty(ref _selectedListeningHistorySort, value))
+            {
+                return;
+            }
+
+            TriggerListeningHistoryRefresh();
+        }
+    }
+
+    public string SelectedListeningHistoryView
+    {
+        get => _selectedListeningHistoryView;
+        set
+        {
+            if (!SetProperty(ref _selectedListeningHistoryView, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(IsListeningHistoryTimelineVisible));
+            OnPropertyChanged(nameof(IsListeningHistoryRankingVisible));
+        }
+    }
+
+    public bool IsListeningHistoryTimelineVisible => string.Equals(
+        SelectedListeningHistoryView,
+        "Dong thoi gian",
+        StringComparison.Ordinal);
+
+    public bool IsListeningHistoryRankingVisible => !IsListeningHistoryTimelineVisible;
 
     public async Task InitializeAsync()
     {
@@ -707,6 +790,7 @@ public class MainViewModel : INotifyPropertyChanged
         {
             SyncCurrentUser();
             LoadPersistedState();
+            TriggerListeningHistoryRefresh();
         });
     }
 
@@ -878,6 +962,7 @@ public class MainViewModel : INotifyPropertyChanged
             (distanceMeters.HasValue ? $" ({distanceMeters.Value:F0}m)" : string.Empty));
 
         historyTask = _listeningHistorySyncService.BeginAsync(poi, SelectedLanguage, autoTriggered);
+        _ = RefreshListeningHistoryAfterCreateAsync(historyTask);
 
         try
         {
@@ -908,6 +993,8 @@ public class MainViewModel : INotifyPropertyChanged
                     (int)Math.Round(listenStopwatch.Elapsed.TotalSeconds),
                     completed,
                     completed ? string.Empty : errorMessage);
+
+                await RefreshListeningHistoryAsync();
             }
 
             if (narrationSessionId == Volatile.Read(ref _narrationSessionId))
@@ -1236,6 +1323,176 @@ public class MainViewModel : INotifyPropertyChanged
         return normalizedSource.Contains(query, StringComparison.Ordinal);
     }
 
+    private void TriggerListeningHistoryRefresh()
+    {
+        _ = RefreshListeningHistoryAsync();
+    }
+
+    private async Task RefreshListeningHistoryAsync(CancellationToken cancellationToken = default)
+    {
+        await _listeningHistoryRefreshGate.WaitAsync(cancellationToken);
+
+        try
+        {
+            IsListeningHistoryLoading = true;
+            ListeningHistoryLoadError = string.Empty;
+            OnPropertyChanged(nameof(ListeningHistorySummary));
+
+            var sortBy = MapListeningHistorySortToApi(SelectedListeningHistorySort);
+            var period = MapListeningHistoryPeriodToApi(SelectedListeningHistoryPeriod);
+
+            var timelineTask = _listeningHistorySyncService.GetCurrentUserHistoryAsync(
+                sortBy,
+                period,
+                15,
+                cancellationToken);
+            var rankingTask = _listeningHistorySyncService.GetCurrentUserRankingAsync(period, cancellationToken);
+
+            await Task.WhenAll(timelineTask, rankingTask);
+
+            var timelineItems = timelineTask.Result
+                .Select(ToListeningHistoryDisplayItem)
+                .ToList();
+            var rankingItems = rankingTask.Result
+                .Select((item, index) => ToListeningHistoryRankingDisplayItem(item, index))
+                .ToList();
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                ReplaceCollection(ListeningHistory, timelineItems);
+                ReplaceCollection(ListeningHistoryRanking, rankingItems);
+                _lastListeningHistorySyncAt = DateTimeOffset.Now;
+
+                RaiseListeningHistoryStateChanged();
+                OnPropertyChanged(nameof(HasListeningHistoryRanking));
+                OnPropertyChanged(nameof(ListeningHistorySyncStatus));
+            });
+        }
+        catch (Exception ex)
+        {
+            ListeningHistoryLoadError = $"Khong tai duoc lich su nghe: {ex.Message}";
+        }
+        finally
+        {
+            IsListeningHistoryLoading = false;
+            OnPropertyChanged(nameof(ListeningHistorySummary));
+            _listeningHistoryRefreshGate.Release();
+        }
+    }
+
+    private async Task RefreshListeningHistoryAfterCreateAsync(Task<Guid?> historyTask)
+    {
+        try
+        {
+            var historyId = await historyTask;
+            if (historyId.HasValue)
+            {
+                await RefreshListeningHistoryAsync();
+            }
+        }
+        catch
+        {
+            // Ignore background refresh failures and keep narration flow responsive.
+        }
+    }
+
+    private static ListeningHistoryDisplayItem ToListeningHistoryDisplayItem(ListeningHistoryEntryDto item)
+    {
+        var startedAtLocal = item.StartedAtUtc.ToLocalTime();
+        var triggerLabel = item.AutoTriggered || string.Equals(item.TriggerType, "GPS", StringComparison.OrdinalIgnoreCase)
+            ? "Tu dong"
+            : "Thu cong";
+        var durationLabel = item.ListenSeconds > 0
+            ? $"{item.ListenSeconds} giay"
+            : "Dang ghi nhan";
+
+        var statusLabel = item.Completed
+            ? "Hoan tat"
+            : string.IsNullOrWhiteSpace(item.ErrorMessage)
+                ? "Dang nghe / dung som"
+                : "Dung vi loi";
+
+        var statusAccentColor = item.Completed
+            ? "#15803D"
+            : string.IsNullOrWhiteSpace(item.ErrorMessage)
+                ? "#C2410C"
+                : "#B91C1C";
+
+        var detailParts = new List<string>
+        {
+            triggerLabel,
+            item.Language,
+            durationLabel
+        };
+
+        if (!string.IsNullOrWhiteSpace(item.DevicePlatform))
+        {
+            detailParts.Add(item.DevicePlatform);
+        }
+
+        return new ListeningHistoryDisplayItem
+        {
+            Id = item.Id,
+            PoiCode = item.PoiCode,
+            PoiName = item.PoiName,
+            StartedAtLabel = startedAtLocal.ToString("dd/MM/yyyy HH:mm:ss"),
+            DetailLabel = string.Join(" • ", detailParts.Where(part => !string.IsNullOrWhiteSpace(part))),
+            StatusLabel = statusLabel,
+            StatusAccentColor = statusAccentColor,
+            ErrorMessage = item.ErrorMessage
+        };
+    }
+
+    private static ListeningHistoryRankingDisplayItem ToListeningHistoryRankingDisplayItem(
+        PoiListeningCountDto item,
+        int index)
+    {
+        var completionRate = item.ListenCount == 0
+            ? 0
+            : (int)Math.Round(item.CompletedCount * 100.0 / item.ListenCount);
+
+        return new ListeningHistoryRankingDisplayItem
+        {
+            Rank = index + 1,
+            PoiCode = item.PoiCode,
+            PoiName = item.PoiName,
+            SummaryLabel = $"{item.ListenCount} luot nghe • {item.TotalListenSeconds} giay • {completionRate}% hoan tat",
+            LastStartedAtLabel = item.LastStartedAtUtc.HasValue
+                ? item.LastStartedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                : "--"
+        };
+    }
+
+    private static string MapListeningHistorySortToApi(string? selectedSort)
+    {
+        return string.Equals(selectedSort, "Cu nhat truoc", StringComparison.Ordinal)
+            ? "time_asc"
+            : "time_desc";
+    }
+
+    private static string MapListeningHistoryPeriodToApi(string? selectedPeriod)
+    {
+        return selectedPeriod switch
+        {
+            "24 gio qua" => "day",
+            "7 ngay qua" => "week",
+            "30 ngay qua" => "month",
+            _ => "all"
+        };
+    }
+
+    private static void ReplaceCollection<T>(
+        ObservableCollection<T> collection,
+        IReadOnlyList<T> items)
+    {
+        collection.Clear();
+
+        foreach (var item in items)
+        {
+            collection.Add(item);
+        }
+    }
+
     private void SyncCurrentUser()
     {
         var session = _authService.CurrentSession;
@@ -1258,11 +1515,11 @@ public class MainViewModel : INotifyPropertyChanged
     {
         LoadUserPreferences();
         LoadPersistedHistory(EventLogs, UsageHistoryCategory.Activity);
-        LoadPersistedHistory(ListeningHistory, UsageHistoryCategory.Listening);
         LoadPersistedHistory(ViewHistory, UsageHistoryCategory.Viewing);
         RaiseEventLogStateChanged();
         RaiseListeningHistoryStateChanged();
         RaiseViewHistoryStateChanged();
+        TriggerListeningHistoryRefresh();
     }
 
     private void ClearEventLogs()
@@ -1275,8 +1532,12 @@ public class MainViewModel : INotifyPropertyChanged
     private void ClearListeningHistory()
     {
         ListeningHistory.Clear();
-        _usageHistoryService.ClearEntries(UsageHistoryCategory.Listening);
+        ListeningHistoryRanking.Clear();
+        ListeningHistoryLoadError = string.Empty;
+        _lastListeningHistorySyncAt = null;
         RaiseListeningHistoryStateChanged();
+        OnPropertyChanged(nameof(HasListeningHistoryRanking));
+        OnPropertyChanged(nameof(ListeningHistorySyncStatus));
     }
 
     private void ClearViewHistory()
@@ -1298,8 +1559,10 @@ public class MainViewModel : INotifyPropertyChanged
     {
         OnPropertyChanged(nameof(HasListeningHistory));
         OnPropertyChanged(nameof(IsListeningHistoryEmpty));
+        OnPropertyChanged(nameof(HasListeningHistoryRanking));
         OnPropertyChanged(nameof(ListeningHistorySummary));
         (ClearListeningHistoryCommand as Command)?.ChangeCanExecute();
+        (RefreshListeningHistoryCommand as Command)?.ChangeCanExecute();
     }
 
     private void RaiseViewHistoryStateChanged()
@@ -1312,7 +1575,12 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void AddListeningHistory(string message)
     {
-        AddHistoryEntry(ListeningHistory, UsageHistoryCategory.Listening, message, RaiseListeningHistoryStateChanged);
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        TriggerListeningHistoryRefresh();
     }
 
     private void AddViewHistory(string message)

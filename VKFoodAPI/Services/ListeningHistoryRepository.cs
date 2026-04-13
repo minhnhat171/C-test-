@@ -24,20 +24,38 @@ public class ListeningHistoryRepository
         _items = LoadItems();
     }
 
-    public IReadOnlyList<ListeningHistoryEntryDto> GetListeningHistory(string? period = null, string? sortBy = null)
+    public IReadOnlyList<ListeningHistoryEntryDto> GetListeningHistory(
+        string? period = null,
+        string? sortBy = null,
+        string? userCode = null,
+        string? userEmail = null,
+        int? limit = null)
     {
         lock (_syncRoot)
         {
-            var query = ApplyPeriod(_items.Select(item => item.Clone()), period);
-            return ApplySorting(query, sortBy).ToList();
+            var query = ApplyUserScope(_items.Select(item => item.Clone()), userCode, userEmail);
+            query = ApplyPeriod(query, period);
+            query = ApplySorting(query, sortBy);
+
+            if (limit.HasValue && limit.Value > 0)
+            {
+                query = query.Take(limit.Value);
+            }
+
+            return query.ToList();
         }
     }
 
-    public IReadOnlyList<PoiListeningCountDto> CountListeningByPoi(string? period = null)
+    public IReadOnlyList<PoiListeningCountDto> CountListeningByPoi(
+        string? period = null,
+        string? userCode = null,
+        string? userEmail = null)
     {
         lock (_syncRoot)
         {
-            return ApplyPeriod(_items, period)
+            var scopedItems = ApplyUserScope(_items, userCode, userEmail);
+
+            return ApplyPeriod(scopedItems, period)
                 .GroupBy(item => new { item.PoiId, item.PoiCode, item.PoiName })
                 .Select(group => new PoiListeningCountDto
                 {
@@ -128,6 +146,38 @@ public class ListeningHistoryRepository
         };
     }
 
+    private static IEnumerable<ListeningHistoryEntryDto> ApplyUserScope(
+        IEnumerable<ListeningHistoryEntryDto> items,
+        string? userCode,
+        string? userEmail)
+    {
+        var normalizedUserCode = NormalizeLookupValue(userCode);
+        var normalizedUserEmail = NormalizeLookupValue(userEmail);
+
+        if (string.IsNullOrWhiteSpace(normalizedUserCode) && string.IsNullOrWhiteSpace(normalizedUserEmail))
+        {
+            return items;
+        }
+
+        return items.Where(item =>
+        {
+            var entryUserCode = NormalizeLookupValue(item.UserCode);
+            var entryUserEmail = NormalizeLookupValue(item.UserEmail);
+
+            var matchesUserCode =
+                !string.IsNullOrWhiteSpace(normalizedUserCode) &&
+                (string.Equals(entryUserCode, normalizedUserCode, StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(entryUserEmail, normalizedUserCode, StringComparison.OrdinalIgnoreCase));
+
+            var matchesUserEmail =
+                !string.IsNullOrWhiteSpace(normalizedUserEmail) &&
+                (string.Equals(entryUserEmail, normalizedUserEmail, StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(entryUserCode, normalizedUserEmail, StringComparison.OrdinalIgnoreCase));
+
+            return matchesUserCode || matchesUserEmail;
+        });
+    }
+
     private static IEnumerable<ListeningHistoryEntryDto> ApplySorting(
         IEnumerable<ListeningHistoryEntryDto> items,
         string? sortBy)
@@ -201,5 +251,10 @@ public class ListeningHistoryRepository
             "oldest" => "time_asc",
             _ => "time_desc"
         };
+    }
+
+    private static string NormalizeLookupValue(string? value)
+    {
+        return value?.Trim().ToLowerInvariant() ?? string.Empty;
     }
 }
