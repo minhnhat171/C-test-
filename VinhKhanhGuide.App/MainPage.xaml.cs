@@ -4,6 +4,7 @@ using Mapsui;
 using Mapsui.Tiling;
 using Mapsui.Tiling.Layers;
 using Mapsui.UI.Maui;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
@@ -23,19 +24,23 @@ public partial class MainPage : ContentPage
     private const double FullScreenCurrentLocationResolution = 6.5;
 
     private readonly MainViewModel _viewModel;
+    private readonly IServiceProvider _serviceProvider;
     private bool _isInitializing;
+    private bool _isNavigatingToPoiDetail;
     private bool _previewMapInitialized;
     private bool _fullScreenMapInitialized;
     private bool _isFullScreenMapVisible;
     private bool _initialViewportSet;
+    private bool _hasCenteredOnFirstLiveLocation;
     private bool _ignoreNextPreviewMapClick;
     private bool _ignoreNextFullScreenMapClick;
     private DateTimeOffset _lastPreviewMapTapAt;
 
-    public MainPage(MainViewModel viewModel)
+    public MainPage(MainViewModel viewModel, IServiceProvider serviceProvider)
     {
         InitializeComponent();
         _viewModel = viewModel;
+        _serviceProvider = serviceProvider;
         BindingContext = _viewModel;
         _viewModel.MapStateChanged += OnMapStateChanged;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
@@ -57,7 +62,6 @@ public partial class MainPage : ContentPage
             InitializeMapsui();
             await _viewModel.InitializeAsync();
             RefreshMapPins(centerOnSelection: !_initialViewportSet);
-            await _viewModel.StartAsync();
         }
         finally
         {
@@ -292,7 +296,7 @@ public partial class MainPage : ContentPage
 
         _viewModel.SelectPoi(poiId);
         RefreshMapPins(centerOnSelection: false);
-        await ShowPoiInfoAsync(poiId);
+        await OpenPoiDetailAsync(poiId);
     }
 
     private void OnPreviewMapClicked(object? sender, MapClickedEventArgs e)
@@ -323,7 +327,7 @@ public partial class MainPage : ContentPage
 
         _viewModel.SelectPoi(poiId);
         RefreshMapPins(centerOnSelection: false);
-        await ShowPoiInfoAsync(poiId);
+        await OpenPoiDetailAsync(poiId);
     }
 
     private async void OnFullScreenMapClicked(object? sender, MapClickedEventArgs e)
@@ -405,8 +409,13 @@ public partial class MainPage : ContentPage
 
         if (isPreviewMap && !_initialViewportSet)
         {
-            CenterMapOnEntrance(mapView, PreviewEntranceResolution);
+            CenterMapOnCurrentLocation(mapView, PreviewCurrentLocationResolution, PreviewEntranceResolution);
             _initialViewportSet = true;
+        }
+        else if (isPreviewMap && !_hasCenteredOnFirstLiveLocation && _viewModel.LastLocation is not null)
+        {
+            CenterMapOnCurrentLocation(mapView, PreviewCurrentLocationResolution, PreviewEntranceResolution);
+            _hasCenteredOnFirstLiveLocation = true;
         }
         else if (centerOnSelection && selectedPin is not null)
         {
@@ -442,11 +451,14 @@ public partial class MainPage : ContentPage
 
         Dispatcher.Dispatch(() =>
         {
-            CenterMapOnEntrance(FullScreenRestaurantMap, FullScreenEntranceResolution);
+            CenterMapOnCurrentLocation(
+                FullScreenRestaurantMap,
+                FullScreenCurrentLocationResolution,
+                FullScreenEntranceResolution);
         });
     }
 
-    private async Task ShowPoiInfoAsync(Guid poiId)
+    private async Task OpenPoiDetailAsync(Guid poiId)
     {
         var selectedPoi = _viewModel.PoiStatuses.FirstOrDefault(item => item.PoiId == poiId);
         if (selectedPoi is null)
@@ -454,15 +466,27 @@ public partial class MainPage : ContentPage
             return;
         }
 
-        var shouldNarrate = await DisplayAlert(
-            selectedPoi.Name,
-            $"{selectedPoi.Address}\n{selectedPoi.DistanceLabel}\n{selectedPoi.SpecialDishLabel}",
-            "Nghe",
-            "Đóng");
-
-        if (shouldNarrate)
+        if (_isNavigatingToPoiDetail)
         {
-            await _viewModel.NarrateSelectedPoiAsync();
+            return;
+        }
+
+        _isNavigatingToPoiDetail = true;
+
+        try
+        {
+            if (_isFullScreenMapVisible)
+            {
+                _isFullScreenMapVisible = false;
+                FullScreenMapOverlay.IsVisible = false;
+            }
+
+            var detailPage = _serviceProvider.GetRequiredService<Views.PoiDetailPage>();
+            await Navigation.PushAsync(detailPage);
+        }
+        finally
+        {
+            _isNavigatingToPoiDetail = false;
         }
     }
 
@@ -561,12 +585,15 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private static Pin CreateRestaurantPin(PoiStatusItem poi)
+    private Pin CreateRestaurantPin(PoiStatusItem poi)
     {
+        var isSelected = _viewModel.SelectedPoiId == poi.PoiId;
         var pin = new Pin
         {
             Type = PinType.Pin,
-            Color = poi.IsInsideRadius
+            Color = isSelected
+                ? Color.FromArgb("#173A43")
+                : poi.IsInsideRadius
                 ? Color.FromArgb("#EA580C")
                 : poi.IsNearest
                     ? Color.FromArgb("#B91C1C")
@@ -574,7 +601,9 @@ public partial class MainPage : ContentPage
             Position = new Position(poi.Latitude, poi.Longitude),
             Label = string.Empty,
             Address = string.Empty,
-            Scale = poi.IsInsideRadius
+            Scale = isSelected
+                ? 0.52F
+                : poi.IsInsideRadius
                 ? 0.44F
                 : poi.IsNearest
                     ? 0.40F

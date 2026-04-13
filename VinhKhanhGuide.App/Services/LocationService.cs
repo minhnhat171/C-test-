@@ -15,6 +15,38 @@ public class LocationService : ILocationService
     private CancellationTokenSource? _cts;
     private Task? _listeningTask;
 
+    public async Task<bool> EnsurePermissionAsync(bool requestIfNeeded = true)
+    {
+        var permissionStatus = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+        if (permissionStatus != PermissionStatus.Granted && requestIfNeeded)
+        {
+            permissionStatus = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+        }
+
+        return permissionStatus == PermissionStatus.Granted;
+    }
+
+    public async Task<LocationDto?> GetCurrentLocationAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var request = new GeolocationRequest(GeolocationAccuracy.Best, RequestTimeout);
+            var location = await Geolocation.Default.GetLocationAsync(request, cancellationToken)
+                ?? await Geolocation.Default.GetLastKnownLocationAsync();
+
+            return ToDto(location);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"GPS Snapshot Error: {ex.Message}");
+            return null;
+        }
+    }
+
     public async Task StartListeningAsync()
     {
         if (_listeningTask is { IsCompleted: false })
@@ -22,13 +54,8 @@ public class LocationService : ILocationService
             return;
         }
 
-        var permissionStatus = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
-        if (permissionStatus != PermissionStatus.Granted)
-        {
-            permissionStatus = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
-        }
-
-        if (permissionStatus != PermissionStatus.Granted)
+        var hasPermission = await EnsurePermissionAsync();
+        if (!hasPermission)
         {
             throw new InvalidOperationException("Chưa được cấp quyền truy cập vị trí.");
         }
@@ -66,17 +93,14 @@ public class LocationService : ILocationService
 
     private async Task ListenLoopAsync(CancellationToken cancellationToken)
     {
-        var lastKnownLocation = await Geolocation.Default.GetLastKnownLocationAsync();
-        PublishLocation(lastKnownLocation);
+        var firstLocation = await GetCurrentLocationAsync(cancellationToken);
+        PublishLocation(firstLocation);
 
         while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
-                var request = new GeolocationRequest(GeolocationAccuracy.Best, RequestTimeout);
-                var location = await Geolocation.Default.GetLocationAsync(request, cancellationToken)
-                    ?? await Geolocation.Default.GetLastKnownLocationAsync();
-
+                var location = await GetCurrentLocationAsync(cancellationToken);
                 PublishLocation(location);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -101,17 +125,38 @@ public class LocationService : ILocationService
 
     private void PublishLocation(Location? location)
     {
+        var dto = ToDto(location);
+        if (dto is null)
+        {
+            return;
+        }
+
+        LocationUpdated?.Invoke(this, dto);
+    }
+
+    private void PublishLocation(LocationDto? location)
+    {
         if (location is null)
         {
             return;
         }
 
-        LocationUpdated?.Invoke(this, new LocationDto
+        LocationUpdated?.Invoke(this, location);
+    }
+
+    private static LocationDto? ToDto(Location? location)
+    {
+        if (location is null)
+        {
+            return null;
+        }
+
+        return new LocationDto
         {
             Latitude = location.Latitude,
             Longitude = location.Longitude,
             AccuracyMeters = location.Accuracy,
             TimestampUtc = DateTimeOffset.UtcNow
-        });
+        };
     }
 }

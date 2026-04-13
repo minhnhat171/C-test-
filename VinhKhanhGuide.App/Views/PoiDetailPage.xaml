@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="VinhKhanhGuide.App.Views.PoiDetailPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Chi tiết quán"
+    BackgroundColor="#FBF8F4"
+    Shell.NavBarIsVisible="True">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,24,20,28" Spacing="18">
+            <Border BackgroundColor="#FFF2E7"
+                    StrokeThickness="0"
+                    Padding="18"
+                    StrokeShape="RoundRectangle 26">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding SelectedPoiName}"
+                           FontSize="26"
+                           FontAttributes="Bold"
+                           TextColor="#111827" />
+
+                    <Label Text="{Binding SelectedPoiAddress}"
+                           FontSize="13"
+                           TextColor="#6B7280" />
+
+                    <Label Text="{Binding SelectedPoiStatusText}"
+                           FontSize="12"
+                           TextColor="#9A3412" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="#FFFFFF"
+                    StrokeThickness="0"
+                    Padding="16"
+                    StrokeShape="RoundRectangle 24">
+                <VerticalStackLayout Spacing="14">
+                    <Image Source="{Binding SelectedPoiImageSource}"
+                           HeightRequest="220"
+                           Aspect="AspectFill" />
+
+                    <Label Text="Giới thiệu"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="#111827" />
+
+                    <Label Text="{Binding SelectedPoiDescription}"
+                           FontSize="14"
+                           TextColor="#374151"
+                           LineBreakMode="WordWrap" />
+
+                    <Border BackgroundColor="#FFF8F1"
+                            StrokeThickness="0"
+                            Padding="14,12"
+                            StrokeShape="RoundRectangle 18">
+                        <Label Text="{Binding SelectedPoiDishText}"
+                               FontSize="13"
+                               TextColor="#7C2D12" />
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="#FFFFFF"
+                    StrokeThickness="0"
+                    Padding="16"
+                    StrokeShape="RoundRectangle 24">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Thuyết minh hiện tại"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="#111827" />
+
+                    <Label Text="{Binding SelectedPoiNarrationPreview}"
+                           FontSize="13"
+                           TextColor="#374151"
+                           LineBreakMode="WordWrap" />
+
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
+                        <Button Text="Nghe ngay"
+                                Clicked="OnNarrateSelectedClicked"
+                                BackgroundColor="#173A43"
+                                TextColor="White"
+                                CornerRadius="18"
+                                HeightRequest="48" />
+
+                        <Button Grid.Column="1"
+                                Text="Chỉ đường"
+                                Clicked="OnOpenMapClicked"
+                                BackgroundColor="#F1E7D9"
+                                TextColor="#1B2A2F"
+                                CornerRadius="18"
+                                HeightRequest="48" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

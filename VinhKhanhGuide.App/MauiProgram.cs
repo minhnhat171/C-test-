@@ -50,6 +50,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<AppShell>();
         builder.Services.AddTransient<AuthPageViewModel>();
         builder.Services.AddTransient<Views.AuthPage>();
+        builder.Services.AddTransient<Views.PoiDetailPage>();
 
         return builder.Build();
     }

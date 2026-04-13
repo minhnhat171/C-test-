@@ -55,12 +55,16 @@ public class MainViewModel : INotifyPropertyChanged
     private int _narrationSessionId;
     private Guid? _lastAutoNarratedPoiId;
     private LocationDto? _lastLocation;
+    private bool _hasLocationPermission;
+    private bool _hasCheckedLocationPermission;
     private POI? _selectedPoi;
     private bool _hasUserSelectedPoi;
     private string _poiDataSnapshot = string.Empty;
     private string _statusText = "Đang chờ khởi động GPS";
     private string _locationText = "Bạn đang xem cổng phố ẩm thực Vĩnh Khánh";
     private string _nearestPoiText = "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
+    private string _mapModeBadgeText = "Đang tải bản đồ";
+    private string _mapPoiBadgeText = "0 POI";
     private string _selectedPoiName = "Ốc Oanh";
     private string _selectedPoiAddress = string.Empty;
     private string _selectedPoiDescription = string.Empty;
@@ -352,6 +356,18 @@ public class MainViewModel : INotifyPropertyChanged
         private set => SetProperty(ref _currentUserPasswordLabel, value);
     }
 
+    public string MapModeBadgeText
+    {
+        get => _mapModeBadgeText;
+        private set => SetProperty(ref _mapModeBadgeText, value);
+    }
+
+    public string MapPoiBadgeText
+    {
+        get => _mapPoiBadgeText;
+        private set => SetProperty(ref _mapPoiBadgeText, value);
+    }
+
     public bool HasEventLogs => EventLogs.Count > 0;
 
     public bool IsEventLogEmpty => EventLogs.Count == 0;
@@ -459,11 +475,13 @@ public class MainViewModel : INotifyPropertyChanged
             return;
         }
 
+        StatusText = "Đang tải danh sách quán...";
         await RefreshPoisIfChangedAsync(forceRefresh: true);
+        await InitializeMapFlowAsync();
         _isInitialized = true;
     }
 
-    public async Task StartAsync()
+    public async Task StartAsync(bool autoStart = false)
     {
         if (IsTracking)
         {
@@ -475,19 +493,12 @@ public class MainViewModel : INotifyPropertyChanged
             await InitializeAsync();
         }
 
-        try
+        if (IsTracking)
         {
-            StatusText = "Đang khởi động GPS...";
-            await _locationService.StartListeningAsync();
-            IsTracking = true;
-            StatusText = "GPS đang hoạt động";
-            AddLog($"{NowLabel()} Bật tracking GPS");
+            return;
         }
-        catch (Exception ex)
-        {
-            StatusText = $"Không thể bật GPS: {ex.Message}";
-            AddLog($"{NowLabel()} Lỗi GPS: {ex.Message}");
-        }
+
+        await StartTrackingCoreAsync(autoStart, requestPermissionIfNeeded: !autoStart);
     }
 
     public async Task StopAsync()
@@ -496,8 +507,114 @@ public class MainViewModel : INotifyPropertyChanged
         IsTracking = false;
         _insidePoiIds.Clear();
         _lastAutoNarratedPoiId = null;
-        StatusText = "GPS đã dừng";
+        UpdateMapBadges();
+
+        if (_hasLocationPermission && _lastLocation is not null)
+        {
+            StatusText = "Đã dừng GPS, vẫn giữ vị trí cuối cùng";
+        }
+        else
+        {
+            StatusText = "Bản đồ đang dùng vị trí mặc định";
+        }
+
         AddLog($"{NowLabel()} Dừng tracking GPS");
+    }
+
+    private async Task InitializeMapFlowAsync()
+    {
+        var hasPermission = await EnsureLocationPermissionAsync(requestIfNeeded: false);
+        if (!hasPermission)
+        {
+            await ApplyFallbackMapStateAsync(
+                "Bản đồ đang dùng vị trí mặc định",
+                "Chưa cấp quyền truy cập vị trí. App vẫn hiển thị bản đồ và các POI đang hoạt động.");
+            return;
+        }
+
+        var currentLocation = await _locationService.GetCurrentLocationAsync();
+        if (currentLocation is null)
+        {
+            await ApplyFallbackMapStateAsync(
+                "Đã cấp quyền vị trí, đang chờ GPS",
+                "App đã có quyền vị trí nhưng chưa lấy được tọa độ hiện tại.");
+            await StartTrackingCoreAsync(autoStart: true, requestPermissionIfNeeded: false);
+            return;
+        }
+
+        await ApplyLocationSnapshotAsync(currentLocation, allowAutoNarrate: false);
+        await StartTrackingCoreAsync(autoStart: true, requestPermissionIfNeeded: false);
+    }
+
+    private async Task<bool> EnsureLocationPermissionAsync(bool requestIfNeeded)
+    {
+        var hasPermission = await _locationService.EnsurePermissionAsync(requestIfNeeded);
+        _hasCheckedLocationPermission = true;
+        _hasLocationPermission = hasPermission;
+
+        if (!hasPermission)
+        {
+            _lastLocation = null;
+        }
+
+        await MainThread.InvokeOnMainThreadAsync(UpdateMapBadges);
+        return hasPermission;
+    }
+
+    private async Task StartTrackingCoreAsync(bool autoStart, bool requestPermissionIfNeeded)
+    {
+        var hasPermission = _hasLocationPermission;
+        if (!hasPermission)
+        {
+            hasPermission = await EnsureLocationPermissionAsync(requestPermissionIfNeeded);
+        }
+
+        if (!hasPermission)
+        {
+            await ApplyFallbackMapStateAsync(
+                "Bản đồ đang dùng vị trí mặc định",
+                requestPermissionIfNeeded
+                    ? "Chưa cấp quyền truy cập vị trí. App vẫn hiển thị các POI đang hoạt động."
+                    : "Chưa cấp quyền truy cập vị trí. App vẫn hiển thị bản đồ và các POI đang hoạt động.");
+            return;
+        }
+
+        try
+        {
+            StatusText = "Đang khởi động GPS...";
+
+            if (_lastLocation is null)
+            {
+                var currentLocation = await _locationService.GetCurrentLocationAsync();
+                if (currentLocation is not null)
+                {
+                    await ApplyLocationSnapshotAsync(currentLocation, allowAutoNarrate: false);
+                }
+            }
+
+            await _locationService.StartListeningAsync();
+            IsTracking = true;
+            UpdateMapBadges();
+            StatusText = _lastLocation is null
+                ? "GPS đang hoạt động, chờ vị trí đầu tiên"
+                : "GPS đang hoạt động";
+            AddLog($"{NowLabel()} {(autoStart ? "Khởi động" : "Bật")} tracking GPS");
+        }
+        catch (Exception ex)
+        {
+            if (!await EnsureLocationPermissionAsync(requestIfNeeded: false))
+            {
+                await ApplyFallbackMapStateAsync(
+                    "Bản đồ đang dùng vị trí mặc định",
+                    "Không thể theo dõi GPS vì quyền vị trí hiện chưa sẵn sàng.");
+                AddLog($"{NowLabel()} Lỗi GPS: {ex.Message}");
+                return;
+            }
+
+            StatusText = $"Không thể bật GPS: {ex.Message}";
+            UpdateMapBadges();
+            AddLog($"{NowLabel()} Lỗi GPS: {ex.Message}");
+        }
     }
 
     public void ShowSearchSuggestions()
@@ -532,7 +649,12 @@ public class MainViewModel : INotifyPropertyChanged
         {
             LocationText = "Bạn đang xem cổng phố ẩm thực Vĩnh Khánh";
             NearestPoiText = "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
-            StatusText = IsTracking ? "GPS đang hoạt động" : "GPS đã dừng";
+            StatusText = IsTracking
+                ? "GPS đang hoạt động"
+                : _hasLocationPermission
+                    ? "GPS đã dừng"
+                    : "Bản đồ đang dùng vị trí mặc định";
+            UpdateMapBadges();
             RaiseMapStateChanged();
             return;
         }
@@ -542,8 +664,13 @@ public class MainViewModel : INotifyPropertyChanged
 
         LocationText = "Bạn đang xem cổng phố ẩm thực Vĩnh Khánh";
         NearestPoiText = "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
-        StatusText = IsTracking ? "GPS đang hoạt động" : "GPS đã dừng";
+        StatusText = IsTracking
+            ? "GPS đang hoạt động"
+            : _hasLocationPermission
+                ? "GPS đã dừng"
+                : "Bản đồ đang dùng vị trí mặc định";
 
+        UpdateMapBadges();
         RaiseMapStateChanged();
     }
 
@@ -712,10 +839,15 @@ public class MainViewModel : INotifyPropertyChanged
                 }
                 else if (_pois.Count == 0)
                 {
-                    NearestPoiText = "Chua co POI dang hoat dong tu WebAdmin";
+                    NearestPoiText = "Chưa có POI đang hoạt động từ WebAdmin";
+                }
+                else
+                {
+                    NearestPoiText = "Chạm marker để xem chi tiết quán";
                 }
 
                 ApplySelectedPoiAfterRefresh(previousSelectedPoiId, nearestPoi, evaluated);
+                UpdateMapBadges();
             });
 
             if (_isInitialized && !string.IsNullOrWhiteSpace(previousSnapshot))
@@ -796,33 +928,34 @@ public class MainViewModel : INotifyPropertyChanged
 
     private async Task HandleLocationUpdatedAsync(LocationDto location)
     {
-        if (_pois.Count == 0)
-        {
-            return;
-        }
+        await ApplyLocationSnapshotAsync(location, allowAutoNarrate: true);
+    }
 
-        var results = _geofenceEngine.Evaluate(location, _pois);
+    private async Task ApplyLocationSnapshotAsync(LocationDto location, bool allowAutoNarrate)
+    {
+        _lastLocation = location;
+        _hasCheckedLocationPermission = true;
+        _hasLocationPermission = true;
+
+        var results = _pois.Count == 0
+            ? Array.Empty<(POI Poi, double DistanceMeters, bool IsInside)>()
+            : _geofenceEngine.Evaluate(location, _pois);
         var nearest = results.FirstOrDefault();
         var insideNow = results
             .Where(item => item.IsInside)
             .Select(item => item.Poi.Id)
             .ToHashSet();
 
-        _lastLocation = location;
-
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
-            LocationText =
-                $"Lat {location.Latitude:F6} | Lng {location.Longitude:F6} | Sai số {location.AccuracyMeters?.ToString("F0") ?? "?"}m";
-
-            NearestPoiText = nearest.Poi is null
-                ? "Chưa xác định quán gần nhất"
-                : $"Quán gần nhất: {nearest.Poi.Name} ({nearest.DistanceMeters:F0}m)";
-
             RefreshPoiList(results, nearest.Poi?.Id);
             UpdateLocationSummary(location, nearest.Poi, nearest.Poi is null ? null : nearest.DistanceMeters);
 
-            if (!_hasUserSelectedPoi)
+            if (_pois.Count == 0)
+            {
+                NearestPoiText = "Chưa có POI đang hoạt động từ WebAdmin";
+            }
+            else if (!_hasUserSelectedPoi)
             {
                 SetSelectedPoi(nearest.Poi ?? _selectedPoi ?? _pois.FirstOrDefault(), false, results);
             }
@@ -830,17 +963,22 @@ public class MainViewModel : INotifyPropertyChanged
             {
                 UpdateSelectedPoiDetails(results);
             }
+
+            UpdateMapBadges();
         });
 
-        var candidate = results
-            .Where(item => item.IsInside)
-            .OrderByDescending(item => item.Poi.Priority)
-            .ThenBy(item => item.DistanceMeters)
-            .FirstOrDefault();
-
-        if (IsAutoNarrationEnabled && candidate.Poi is not null && ShouldAutoNarrate(candidate.Poi))
+        if (allowAutoNarrate)
         {
-            await NarratePoiAsync(candidate.Poi, true, candidate.DistanceMeters);
+            var candidate = results
+                .Where(item => item.IsInside)
+                .OrderByDescending(item => item.Poi.Priority)
+                .ThenBy(item => item.DistanceMeters)
+                .FirstOrDefault();
+
+            if (IsAutoNarrationEnabled && candidate.Poi is not null && ShouldAutoNarrate(candidate.Poi))
+            {
+                await NarratePoiAsync(candidate.Poi, true, candidate.DistanceMeters);
+            }
         }
 
         _insidePoiIds.Clear();
@@ -855,6 +993,44 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         RaiseMapStateChanged();
+    }
+
+    private async Task ApplyFallbackMapStateAsync(string statusText, string locationText)
+    {
+        _lastLocation = null;
+        _insidePoiIds.Clear();
+        _lastAutoNarratedPoiId = null;
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            RefreshPoiList(Array.Empty<(POI Poi, double DistanceMeters, bool IsInside)>(), null);
+
+            if (_pois.Count == 0)
+            {
+                _selectedPoi = null;
+                _hasUserSelectedPoi = false;
+                ClearSelectedPoiDetails();
+                NearestPoiText = "Chưa có POI đang hoạt động từ WebAdmin";
+            }
+            else
+            {
+                NearestPoiText = "Chạm marker để xem chi tiết quán";
+
+                if (_selectedPoi is null)
+                {
+                    SetSelectedPoi(_pois.FirstOrDefault(), false, null);
+                }
+                else
+                {
+                    UpdateSelectedPoiDetails();
+                }
+            }
+
+            StatusText = statusText;
+            LocationText = locationText;
+            UpdateMapBadges();
+            RaiseMapStateChanged();
+        });
     }
 
     private void CleanupPoiState()
@@ -914,6 +1090,21 @@ public class MainViewModel : INotifyPropertyChanged
         NearestPoiText = nearestPoi is null
             ? "Chua xac dinh quan gan nhat"
             : $"Quan gan nhat: {nearestPoi.Name} ({nearestDistanceMeters?.ToString("F0") ?? "?"}m)";
+    }
+
+    private void UpdateMapBadges()
+    {
+        MapPoiBadgeText = _pois.Count == 0
+            ? "0 POI"
+            : $"{_pois.Count} POI hoạt động";
+
+        MapModeBadgeText = IsTracking
+            ? "GPS trực tiếp"
+            : _lastLocation is not null
+                ? "Đã có vị trí"
+                : _hasCheckedLocationPermission
+                    ? (_hasLocationPermission ? "Chờ GPS" : "Vị trí mặc định")
+                    : "Đang kiểm tra GPS";
     }
 
     private bool ShouldAutoNarrate(POI poi)
@@ -1115,8 +1306,8 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void ClearSelectedPoiDetails()
     {
-        SelectedPoiName = "Chua co POI dang hoat dong";
-        SelectedPoiAddress = "Cap nhat POI trong WebAdmin de app hien thi lai.";
+        SelectedPoiName = "Chưa có POI đang hoạt động";
+        SelectedPoiAddress = "Cập nhật POI trong WebAdmin để app hiển thị lại.";
         SelectedPoiDescription = string.Empty;
         SelectedPoiDishText = string.Empty;
         SelectedPoiStatusText = string.Empty;
