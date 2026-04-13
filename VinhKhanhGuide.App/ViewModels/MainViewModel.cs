@@ -18,6 +18,7 @@ namespace VinhKhanhGuide.App.ViewModels;
 
 public class MainViewModel : INotifyPropertyChanged
 {
+    private const string DefaultNarrationMode = "TTS";
     private const int MaxRecentSearches = 6;
     private const int MaxSearchSuggestions = 6;
     private const int MaxPinnedRecentSuggestions = 3;
@@ -33,6 +34,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly IPoiProvider _poiProvider;
     private readonly INarrationService _narrationService;
     private readonly IAuthService _authService;
+    private readonly IAccountProfileValidationService _accountProfileValidationService;
     private readonly IUsageHistoryService _usageHistoryService;
     private readonly IListeningHistorySyncService _listeningHistorySyncService;
     private readonly GeofenceEngine _geofenceEngine;
@@ -76,24 +78,31 @@ public class MainViewModel : INotifyPropertyChanged
     private string _selectedPoiImageSource = string.Empty;
     private string _selectedLanguage = "vi";
     private string _searchQuery = string.Empty;
-    private string _currentUserDisplayName = "Khách";
-    private string _currentUserStatusLine = "Khách khám phá";
+    private string _currentUserDisplayName = "Khách tham quan";
+    private string _currentUserStatusLine = "Chế độ tham quan nhanh";
     private string _currentUserInitials = "VK";
-    private string _currentUserAccountLabel = "guest";
-    private string _currentUserPasswordLabel = "••••••••";
+    private string _currentUserAccountLabel = "Khách tham quan";
+    private string _currentUserPasswordLabel = "Vào nhanh bằng nút truy cập";
+    private string _accountProfileFullName = string.Empty;
+    private string _accountProfileEmail = string.Empty;
+    private string _accountProfilePhoneNumber = string.Empty;
+    private bool _isSavingAccountProfile;
+    private string _accountSettingsErrorMessage = string.Empty;
+    private string _accountSettingsSuccessMessage = string.Empty;
 
     private bool _isListeningHistoryLoading;
     private string _listeningHistoryLoadError = string.Empty;
     private DateTimeOffset? _lastListeningHistorySyncAt;
-    private string _selectedListeningHistoryPeriod = "Tat ca";
-    private string _selectedListeningHistorySort = "Moi nhat truoc";
-    private string _selectedListeningHistoryView = "Dong thoi gian";
+    private string _selectedListeningHistoryPeriod = "Tất cả";
+    private string _selectedListeningHistorySort = "Mới nhất trước";
+    private string _selectedListeningHistoryView = "Dòng thời gian";
 
     public MainViewModel(
         ILocationService locationService,
         IPoiProvider poiProvider,
         INarrationService narrationService,
         IAuthService authService,
+        IAccountProfileValidationService accountProfileValidationService,
         IUsageHistoryService usageHistoryService,
         IListeningHistorySyncService listeningHistorySyncService,
         GeofenceEngine geofenceEngine)
@@ -102,6 +111,7 @@ public class MainViewModel : INotifyPropertyChanged
         _poiProvider = poiProvider;
         _narrationService = narrationService;
         _authService = authService;
+        _accountProfileValidationService = accountProfileValidationService;
         _usageHistoryService = usageHistoryService;
         _listeningHistorySyncService = listeningHistorySyncService;
         _geofenceEngine = geofenceEngine;
@@ -122,6 +132,8 @@ public class MainViewModel : INotifyPropertyChanged
         ClearListeningHistoryCommand = new Command(ClearListeningHistory, () => HasListeningHistory);
         ClearViewHistoryCommand = new Command(ClearViewHistory, () => HasViewHistory);
         RefreshListeningHistoryCommand = new Command(async () => await RefreshListeningHistoryAsync());
+        SaveAccountProfileCommand = new Command(async () => await SaveAccountProfileAsync(), () => CanSaveAccountProfile);
+        ResetAccountProfileCommand = new Command(ResetAccountProfileEditor, () => CanManageAccountProfile && !IsSavingAccountProfile);
 
         SyncCurrentUser();
         LoadPersistedState();
@@ -136,12 +148,13 @@ public class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<SearchSuggestionItem> SearchSuggestions { get; } = new();
     public ObservableCollection<string> EventLogs { get; } = new();
     public ObservableCollection<ListeningHistoryDisplayItem> ListeningHistory { get; } = new();
+    public ObservableCollection<string> ListeningHistoryLocalEntries { get; } = new();
     public ObservableCollection<ListeningHistoryRankingDisplayItem> ListeningHistoryRanking { get; } = new();
     public ObservableCollection<string> ViewHistory { get; } = new();
     public IReadOnlyList<string> SupportedLanguages { get; } = ["vi", "en", "zh", "ko", "fr"];
-    public IReadOnlyList<string> ListeningHistoryPeriodOptions { get; } = ["Tat ca", "24 gio qua", "7 ngay qua", "30 ngay qua"];
-    public IReadOnlyList<string> ListeningHistorySortOptions { get; } = ["Moi nhat truoc", "Cu nhat truoc"];
-    public IReadOnlyList<string> ListeningHistoryViewOptions { get; } = ["Dong thoi gian", "Xep hang POI"];
+    public IReadOnlyList<string> ListeningHistoryPeriodOptions { get; } = ["Tất cả", "24 giờ qua", "7 ngày qua", "30 ngày qua"];
+    public IReadOnlyList<string> ListeningHistorySortOptions { get; } = ["Mới nhất trước", "Cũ nhất trước"];
+    public IReadOnlyList<string> ListeningHistoryViewOptions { get; } = ["Dòng thời gian", "Xếp hạng POI"];
 
     public ICommand StartTrackingCommand { get; }
     public ICommand StopTrackingCommand { get; }
@@ -151,6 +164,8 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ClearListeningHistoryCommand { get; }
     public ICommand ClearViewHistoryCommand { get; }
     public ICommand RefreshListeningHistoryCommand { get; }
+    public ICommand SaveAccountProfileCommand { get; }
+    public ICommand ResetAccountProfileCommand { get; }
 
     public IReadOnlyList<POI> Pois => _pois;
     public LocationDto? LastLocation => _lastLocation;
@@ -389,6 +404,103 @@ public class MainViewModel : INotifyPropertyChanged
         private set => SetProperty(ref _currentUserPasswordLabel, value);
     }
 
+    public string AccountProfileFullName
+    {
+        get => _accountProfileFullName;
+        set
+        {
+            if (SetProperty(ref _accountProfileFullName, value ?? string.Empty))
+            {
+                ClearAccountSettingsFeedback();
+            }
+        }
+    }
+
+    public string AccountProfileEmail
+    {
+        get => _accountProfileEmail;
+        set
+        {
+            if (SetProperty(ref _accountProfileEmail, value ?? string.Empty))
+            {
+                ClearAccountSettingsFeedback();
+            }
+        }
+    }
+
+    public string AccountProfilePhoneNumber
+    {
+        get => _accountProfilePhoneNumber;
+        set
+        {
+            if (SetProperty(ref _accountProfilePhoneNumber, value ?? string.Empty))
+            {
+                ClearAccountSettingsFeedback();
+            }
+        }
+    }
+
+    public bool IsSavingAccountProfile
+    {
+        get => _isSavingAccountProfile;
+        private set
+        {
+            if (!SetProperty(ref _isSavingAccountProfile, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(CanSaveAccountProfile));
+            (SaveAccountProfileCommand as Command)?.ChangeCanExecute();
+            (ResetAccountProfileCommand as Command)?.ChangeCanExecute();
+        }
+    }
+
+    public bool CanManageAccountProfile => !IsGuestAccess();
+
+    public bool CanSaveAccountProfile => CanManageAccountProfile && !IsSavingAccountProfile;
+
+    public string AccountSettingsErrorMessage
+    {
+        get => _accountSettingsErrorMessage;
+        private set
+        {
+            if (!SetProperty(ref _accountSettingsErrorMessage, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasAccountSettingsError));
+        }
+    }
+
+    public bool HasAccountSettingsError => !string.IsNullOrWhiteSpace(AccountSettingsErrorMessage);
+
+    public string AccountSettingsSuccessMessage
+    {
+        get => _accountSettingsSuccessMessage;
+        private set
+        {
+            if (!SetProperty(ref _accountSettingsSuccessMessage, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasAccountSettingsSuccess));
+        }
+    }
+
+    public bool HasAccountSettingsSuccess => !string.IsNullOrWhiteSpace(AccountSettingsSuccessMessage);
+
+    public string AccountSettingsAccessMessage => CanManageAccountProfile
+        ? "Bạn có thể cập nhật hồ sơ cá nhân ngay trên thiết bị này. Hệ thống sẽ kiểm tra dữ liệu trước khi lưu."
+        : "Bản hiện tại đang vào app ở chế độ khách tham quan. Luồng QR và tài khoản sẽ được nối lại ở bước sau.";
+
+    public string NarrationModeDisplay => DefaultNarrationMode;
+
+    public string NarrationModeDescription =>
+        "Ứng dụng hiện đang dùng Talk to Speech làm chế độ phát mặc định cho phần thuyết minh.";
+
     public string MapModeBadgeText
     {
         get => _mapModeBadgeText;
@@ -409,6 +521,12 @@ public class MainViewModel : INotifyPropertyChanged
 
     public bool IsListeningHistoryEmpty => ListeningHistory.Count == 0;
 
+    public bool HasListeningHistoryLocalEntries => ListeningHistoryLocalEntries.Count > 0;
+
+    public bool IsListeningHistoryFallbackVisible => !HasListeningHistory && HasListeningHistoryLocalEntries;
+
+    public bool IsListeningHistoryDisplayEmpty => !HasListeningHistory && !HasListeningHistoryLocalEntries;
+
     public bool HasListeningHistoryRanking => ListeningHistoryRanking.Count > 0;
 
     public bool HasViewHistory => ViewHistory.Count > 0;
@@ -420,8 +538,14 @@ public class MainViewModel : INotifyPropertyChanged
         : "Chưa có hoạt động nào được ghi lại";
 
     public string ListeningHistorySummary => HasListeningHistory
-        ? $"{ListeningHistory.Count} lượt nghe gần nhất"
-        : "Chưa có lượt nghe nào";
+        ? $"{ListeningHistory.Count} bản ghi nghe gần nhất"
+        : HasListeningHistoryLocalEntries
+            ? $"{ListeningHistoryLocalEntries.Count} lượt nghe vừa ghi nhận"
+            : "Chưa có bản ghi nghe nào";
+
+    public string ListeningHistoryFallbackSummary => HasListeningHistoryLocalEntries
+        ? $"{ListeningHistoryLocalEntries.Count} lượt nghe đã được lưu cục bộ trên thiết bị này."
+        : "Các lượt nghe mới sẽ được lưu cục bộ trên thiết bị này.";
 
     public string ViewHistorySummary => HasViewHistory
         ? $"{ViewHistory.Count} lượt xem gần nhất"
@@ -441,12 +565,22 @@ public class MainViewModel : INotifyPropertyChanged
     public string ListeningHistoryLoadError
     {
         get => _listeningHistoryLoadError;
-        private set => SetProperty(ref _listeningHistoryLoadError, value);
+        private set
+        {
+            if (!SetProperty(ref _listeningHistoryLoadError, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasListeningHistoryLoadError));
+        }
     }
 
+    public bool HasListeningHistoryLoadError => !string.IsNullOrWhiteSpace(ListeningHistoryLoadError);
+
     public string ListeningHistorySyncStatus => _lastListeningHistorySyncAt.HasValue
-        ? $"Dong bo luc {_lastListeningHistorySyncAt.Value.ToLocalTime():HH:mm:ss}"
-        : "Chua dong bo lich su nghe";
+        ? $"Đồng bộ lúc {_lastListeningHistorySyncAt.Value.ToLocalTime():HH:mm:ss}"
+        : "Chưa đồng bộ lịch sử nghe";
 
     public string SelectedListeningHistoryPeriod
     {
@@ -493,7 +627,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     public bool IsListeningHistoryTimelineVisible => string.Equals(
         SelectedListeningHistoryView,
-        "Dong thoi gian",
+        "Dòng thời gian",
         StringComparison.Ordinal);
 
     public bool IsListeningHistoryRankingVisible => !IsListeningHistoryTimelineVisible;
@@ -830,6 +964,100 @@ public class MainViewModel : INotifyPropertyChanged
         {
             AddLog($"{NowLabel()} Dừng thuyết minh");
         }
+    }
+
+    public async Task<bool> OpenListeningHistoryDetailAsync(Guid historyId)
+    {
+        var item = FindListeningHistoryItem(historyId);
+        if (item is null)
+        {
+            StatusText = "Không tìm thấy bản ghi lịch sử nghe";
+            return false;
+        }
+
+        var poi = await ResolvePoiForListeningHistoryAsync(item);
+        if (poi is null)
+        {
+            StatusText = "Không thể mở chi tiết quán từ bản ghi này";
+            return false;
+        }
+
+        SetSelectedPoi(poi, true, null);
+        StatusText = $"Đang xem lại lịch sử nghe của {item.PoiName}";
+        return true;
+    }
+
+    public async Task ReplayListeningHistoryAsync(Guid historyId)
+    {
+        var item = FindListeningHistoryItem(historyId);
+        if (item is null)
+        {
+            StatusText = "Không tìm thấy bản ghi lịch sử nghe";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(item.NarrationSnapshot))
+        {
+            StatusText = "Bản ghi này chưa có nội dung để phát lại";
+            return;
+        }
+
+        var narrationSessionId = Interlocked.Increment(ref _narrationSessionId);
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            SetActiveNarrationPoiId(item.PoiId == Guid.Empty ? null : item.PoiId);
+            IsNarrating = true;
+            StatusText = $"Phát lại lịch sử: {item.PoiName}";
+            RefreshNarrationPresentation();
+        });
+
+        AddLog($"{NowLabel()} Phát lại lịch sử nghe {item.PoiName} [{item.PlaybackModeLabel}]");
+
+        try
+        {
+            await _narrationService.SpeakAsync(item.NarrationSnapshot, item.Language);
+        }
+        catch (Exception ex)
+        {
+            AddLog($"{NowLabel()} Lỗi phát lại lịch sử: {ex.Message}");
+
+            if (narrationSessionId == Volatile.Read(ref _narrationSessionId))
+            {
+                StatusText = $"Lỗi phát lại lịch sử: {ex.Message}";
+            }
+        }
+        finally
+        {
+            if (narrationSessionId == Volatile.Read(ref _narrationSessionId))
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    SetActiveNarrationPoiId(null);
+                    IsNarrating = false;
+                    RefreshNarrationPresentation();
+
+                    if (!StatusText.StartsWith("Lỗi phát lại lịch sử:", StringComparison.Ordinal))
+                    {
+                        StatusText = IsTracking ? "GPS đang hoạt động" : "Sẵn sàng phát thuyết minh";
+                    }
+                });
+            }
+        }
+    }
+
+    public async Task<bool> DeleteListeningHistoryEntryAsync(Guid historyId)
+    {
+        var deleted = await _listeningHistorySyncService.DeleteAsync(historyId);
+        if (!deleted)
+        {
+            ListeningHistoryLoadError = "Không xóa được bản ghi lịch sử nghe này.";
+            return false;
+        }
+
+        await RefreshListeningHistoryAsync();
+        StatusText = "Đã cập nhật danh sách lịch sử nghe";
+        return true;
     }
 
     public async Task SignOutAsync()
@@ -1684,9 +1912,9 @@ public class MainViewModel : INotifyPropertyChanged
 
             await Task.WhenAll(timelineTask, rankingTask);
 
-            var timelineItems = timelineTask.Result
-                .Select(ToListeningHistoryDisplayItem)
-                .ToList();
+            var timelineItems = await BuildListeningHistoryDisplayItemsAsync(
+                timelineTask.Result,
+                cancellationToken);
             var rankingItems = rankingTask.Result
                 .Select((item, index) => ToListeningHistoryRankingDisplayItem(item, index))
                 .ToList();
@@ -1704,7 +1932,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            ListeningHistoryLoadError = $"Khong tai duoc lich su nghe: {ex.Message}";
+            ListeningHistoryLoadError = $"Không tải được lịch sử nghe: {ex.Message}";
         }
         finally
         {
@@ -1730,21 +1958,68 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private static ListeningHistoryDisplayItem ToListeningHistoryDisplayItem(ListeningHistoryEntryDto item)
+    private async Task<List<ListeningHistoryDisplayItem>> BuildListeningHistoryDisplayItemsAsync(
+        IReadOnlyList<ListeningHistoryEntryDto> entries,
+        CancellationToken cancellationToken)
+    {
+        if (entries.Count == 0)
+        {
+            return [];
+        }
+
+        var poiLookup = _pois.ToDictionary(item => item.Id);
+        var missingPoiIds = entries
+            .Select(item => item.PoiId)
+            .Where(poiId => poiId != Guid.Empty && !poiLookup.ContainsKey(poiId))
+            .Distinct()
+            .ToList();
+
+        if (missingPoiIds.Count > 0)
+        {
+            var lookupTasks = missingPoiIds
+                .Select(async poiId => new
+                {
+                    PoiId = poiId,
+                    Poi = await _poiProvider.GetPoiByIdAsync(poiId, cancellationToken)
+                })
+                .ToList();
+
+            var results = await Task.WhenAll(lookupTasks);
+            foreach (var result in results)
+            {
+                if (result.Poi is not null)
+                {
+                    poiLookup[result.PoiId] = result.Poi;
+                }
+            }
+        }
+
+        return entries
+            .Select(item => ToListeningHistoryDisplayItem(
+                item,
+                poiLookup.TryGetValue(item.PoiId, out var poi) ? poi : null))
+            .ToList();
+    }
+
+    private static ListeningHistoryDisplayItem ToListeningHistoryDisplayItem(
+        ListeningHistoryEntryDto item,
+        POI? poi)
     {
         var startedAtLocal = item.StartedAtUtc.ToLocalTime();
         var triggerLabel = item.AutoTriggered || string.Equals(item.TriggerType, "GPS", StringComparison.OrdinalIgnoreCase)
-            ? "Tu dong"
-            : "Thu cong";
+            ? "Tự động"
+            : "Thủ công";
         var durationLabel = item.ListenSeconds > 0
-            ? $"{item.ListenSeconds} giay"
-            : "Dang ghi nhan";
+            ? $"{item.ListenSeconds} giây"
+            : "Đang ghi nhận";
+        var languageLabel = GetLanguageDisplayName(item.Language);
+        var playbackModeLabel = GetPlaybackModeLabel(item.PlaybackMode);
 
         var statusLabel = item.Completed
-            ? "Hoan tat"
+            ? "Hoàn tất"
             : string.IsNullOrWhiteSpace(item.ErrorMessage)
-                ? "Dang nghe / dung som"
-                : "Dung vi loi";
+                ? "Đang nghe / dừng sớm"
+                : "Dừng vì lỗi";
 
         var statusAccentColor = item.Completed
             ? "#15803D"
@@ -1752,11 +2027,16 @@ public class MainViewModel : INotifyPropertyChanged
                 ? "#C2410C"
                 : "#B91C1C";
 
+        var summaryParts = new List<string>
+        {
+            languageLabel,
+            playbackModeLabel,
+            durationLabel
+        };
+
         var detailParts = new List<string>
         {
-            triggerLabel,
-            item.Language,
-            durationLabel
+            triggerLabel
         };
 
         if (!string.IsNullOrWhiteSpace(item.DevicePlatform))
@@ -1764,12 +2044,48 @@ public class MainViewModel : INotifyPropertyChanged
             detailParts.Add(item.DevicePlatform);
         }
 
+        var address = string.IsNullOrWhiteSpace(item.PoiAddress)
+            ? poi?.Address ?? string.Empty
+            : item.PoiAddress;
+        var description = string.IsNullOrWhiteSpace(item.PoiDescription)
+            ? poi?.Description ?? string.Empty
+            : item.PoiDescription;
+        var specialDish = string.IsNullOrWhiteSpace(item.PoiSpecialDish)
+            ? poi?.SpecialDish ?? string.Empty
+            : item.PoiSpecialDish;
+        var imageSource = string.IsNullOrWhiteSpace(item.PoiImageSource)
+            ? poi?.ImageSource ?? string.Empty
+            : item.PoiImageSource;
+        var mapLink = string.IsNullOrWhiteSpace(item.PoiMapLink)
+            ? poi?.MapLink ?? string.Empty
+            : item.PoiMapLink;
+        var narrationSnapshot = string.IsNullOrWhiteSpace(item.NarrationSnapshot)
+            ? poi?.GetNarrationText(item.Language) ?? string.Empty
+            : item.NarrationSnapshot;
+
         return new ListeningHistoryDisplayItem
         {
             Id = item.Id,
+            PoiId = item.PoiId,
             PoiCode = item.PoiCode,
             PoiName = item.PoiName,
+            Address = address,
+            Description = string.IsNullOrWhiteSpace(description)
+                ? "Bản ghi này chưa có mô tả ngắn từ quán."
+                : description,
+            SpecialDish = specialDish,
+            ImageSource = imageSource,
+            MapLink = mapLink,
+            Language = item.Language,
+            LanguageLabel = languageLabel,
+            PlaybackMode = item.PlaybackMode,
+            PlaybackModeLabel = playbackModeLabel,
+            NarrationSnapshot = narrationSnapshot,
+            AudioAssetPath = item.AudioAssetPath,
+            NarrationPreview = BuildNarrationPreview(narrationSnapshot),
             StartedAtLabel = startedAtLocal.ToString("dd/MM/yyyy HH:mm:ss"),
+            StartedAtShortLabel = startedAtLocal.ToString("HH:mm"),
+            DetailSummaryLabel = string.Join(" • ", summaryParts.Where(part => !string.IsNullOrWhiteSpace(part))),
             DetailLabel = string.Join(" • ", detailParts.Where(part => !string.IsNullOrWhiteSpace(part))),
             StatusLabel = statusLabel,
             StatusAccentColor = statusAccentColor,
@@ -1790,7 +2106,7 @@ public class MainViewModel : INotifyPropertyChanged
             Rank = index + 1,
             PoiCode = item.PoiCode,
             PoiName = item.PoiName,
-            SummaryLabel = $"{item.ListenCount} luot nghe • {item.TotalListenSeconds} giay • {completionRate}% hoan tat",
+            SummaryLabel = $"{item.ListenCount} lượt nghe • {item.TotalListenSeconds} giây • {completionRate}% hoàn tất",
             LastStartedAtLabel = item.LastStartedAtUtc.HasValue
                 ? item.LastStartedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                 : "--"
@@ -1799,7 +2115,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     private static string MapListeningHistorySortToApi(string? selectedSort)
     {
-        return string.Equals(selectedSort, "Cu nhat truoc", StringComparison.Ordinal)
+        return string.Equals(selectedSort, "Cũ nhất trước", StringComparison.Ordinal)
             ? "time_asc"
             : "time_desc";
     }
@@ -1808,10 +2124,19 @@ public class MainViewModel : INotifyPropertyChanged
     {
         return selectedPeriod switch
         {
-            "24 gio qua" => "day",
-            "7 ngay qua" => "week",
-            "30 ngay qua" => "month",
+            "24 giờ qua" => "day",
+            "7 ngày qua" => "week",
+            "30 ngày qua" => "month",
             _ => "all"
+        };
+    }
+
+    private static string GetPlaybackModeLabel(string? playbackMode)
+    {
+        return playbackMode?.Trim().ToLowerInvariant() switch
+        {
+            "audio" => "Audio",
+            _ => "TTS"
         };
     }
 
@@ -1831,30 +2156,199 @@ public class MainViewModel : INotifyPropertyChanged
     {
         var session = _authService.CurrentSession;
         var loginId = session?.LoginId ?? "guest";
+        var isGuestAccess = IsGuestAccess(session);
 
-        CurrentUserDisplayName = session?.FullName ?? "Khách";
-        CurrentUserInitials = session?.Initials ?? "VK";
-        CurrentUserAccountLabel = loginId;
-        CurrentUserPasswordLabel = session is null
-            ? "Chưa đăng nhập"
+        CurrentUserDisplayName = isGuestAccess ? "Khách tham quan" : session!.FullName;
+        CurrentUserInitials = isGuestAccess ? "VK" : session!.Initials;
+        CurrentUserAccountLabel = isGuestAccess ? "Khách tham quan" : $"@{loginId}";
+        CurrentUserPasswordLabel = isGuestAccess
+            ? "Vào nhanh bằng nút truy cập"
             : string.Equals(loginId, "user", StringComparison.OrdinalIgnoreCase)
                 ? "12345678 (mặc định)"
                 : "•••••••• (đã ẩn)";
-        CurrentUserStatusLine = session is null
-            ? "Khách khám phá"
-            : $"{session.RoleLabel} • @{loginId}";
+        CurrentUserStatusLine = isGuestAccess
+            ? "Chế độ tham quan nhanh"
+            : $"{session!.RoleLabel} • @{loginId}";
+        LoadAccountProfileEditor(clearFeedback: true);
+        OnPropertyChanged(nameof(CanManageAccountProfile));
+        OnPropertyChanged(nameof(CanSaveAccountProfile));
+        OnPropertyChanged(nameof(AccountSettingsAccessMessage));
+        OnPropertyChanged(nameof(NarrationModeDisplay));
+        OnPropertyChanged(nameof(NarrationModeDescription));
+        (SaveAccountProfileCommand as Command)?.ChangeCanExecute();
+        (ResetAccountProfileCommand as Command)?.ChangeCanExecute();
         OnPropertyChanged(nameof(HomeNarrationSummary));
+    }
+
+    public void ResetAccountProfileEditor()
+    {
+        LoadAccountProfileEditor(clearFeedback: true);
+    }
+
+    private async Task SaveAccountProfileAsync()
+    {
+        if (!CanManageAccountProfile)
+        {
+            AccountSettingsErrorMessage = "Chế độ khách tham quan chưa hỗ trợ cập nhật hồ sơ.";
+            AccountSettingsSuccessMessage = string.Empty;
+            return;
+        }
+
+        if (IsSavingAccountProfile)
+        {
+            return;
+        }
+
+        ClearAccountSettingsFeedback();
+
+        var request = new AccountProfileUpdateRequest
+        {
+            FullName = AccountProfileFullName,
+            Email = AccountProfileEmail,
+            PhoneNumber = AccountProfilePhoneNumber
+        };
+
+        var validationResult = _accountProfileValidationService.Validate(request);
+        if (!validationResult.IsValid)
+        {
+            AccountSettingsErrorMessage = validationResult.ErrorMessage;
+            return;
+        }
+
+        IsSavingAccountProfile = true;
+
+        try
+        {
+            var result = await _authService.UpdateCurrentUserProfileAsync(request);
+            if (!result.Succeeded)
+            {
+                AccountSettingsErrorMessage = result.Message;
+                return;
+            }
+
+            AccountSettingsSuccessMessage = result.Message;
+            AddLog($"{NowLabel()} Cập nhật hồ sơ tài khoản");
+        }
+        finally
+        {
+            IsSavingAccountProfile = false;
+        }
+    }
+
+    private void LoadAccountProfileEditor(bool clearFeedback)
+    {
+        var session = _authService.CurrentSession;
+
+        _accountProfileFullName = session?.FullName ?? string.Empty;
+        _accountProfileEmail = session?.Email ?? string.Empty;
+        _accountProfilePhoneNumber = session?.PhoneNumber ?? string.Empty;
+
+        OnPropertyChanged(nameof(AccountProfileFullName));
+        OnPropertyChanged(nameof(AccountProfileEmail));
+        OnPropertyChanged(nameof(AccountProfilePhoneNumber));
+
+        if (clearFeedback)
+        {
+            ClearAccountSettingsFeedback();
+        }
+    }
+
+    private void ClearAccountSettingsFeedback()
+    {
+        AccountSettingsErrorMessage = string.Empty;
+        AccountSettingsSuccessMessage = string.Empty;
     }
 
     private void LoadPersistedState()
     {
         LoadUserPreferences();
         LoadPersistedHistory(EventLogs, UsageHistoryCategory.Activity);
+        LoadPersistedHistory(ListeningHistoryLocalEntries, UsageHistoryCategory.Listening);
         LoadPersistedHistory(ViewHistory, UsageHistoryCategory.Viewing);
         RaiseEventLogStateChanged();
         RaiseListeningHistoryStateChanged();
         RaiseViewHistoryStateChanged();
         TriggerListeningHistoryRefresh();
+    }
+
+    private ListeningHistoryDisplayItem? FindListeningHistoryItem(Guid historyId)
+    {
+        return ListeningHistory.FirstOrDefault(item => item.Id == historyId);
+    }
+
+    private async Task<POI?> ResolvePoiForListeningHistoryAsync(
+        ListeningHistoryDisplayItem item,
+        CancellationToken cancellationToken = default)
+    {
+        POI? basePoi = null;
+
+        if (item.PoiId != Guid.Empty)
+        {
+            basePoi = _pois.FirstOrDefault(poi => poi.Id == item.PoiId)
+                ?? await _poiProvider.GetPoiByIdAsync(item.PoiId, cancellationToken);
+        }
+
+        return BuildPoiFromListeningHistoryItem(item, basePoi);
+    }
+
+    private static POI? BuildPoiFromListeningHistoryItem(
+        ListeningHistoryDisplayItem item,
+        POI? basePoi)
+    {
+        var poiId = item.PoiId != Guid.Empty
+            ? item.PoiId
+            : basePoi?.Id ?? Guid.Empty;
+
+        if (poiId == Guid.Empty &&
+            string.IsNullOrWhiteSpace(item.PoiName) &&
+            string.IsNullOrWhiteSpace(basePoi?.Name))
+        {
+            return null;
+        }
+
+        var narrationText = string.IsNullOrWhiteSpace(item.NarrationSnapshot)
+            ? basePoi?.GetNarrationText(item.Language) ?? string.Empty
+            : item.NarrationSnapshot;
+
+        return new POI
+        {
+            Id = poiId == Guid.Empty ? Guid.NewGuid() : poiId,
+            Code = string.IsNullOrWhiteSpace(item.PoiCode) ? basePoi?.Code ?? string.Empty : item.PoiCode,
+            Name = string.IsNullOrWhiteSpace(item.PoiName) ? basePoi?.Name ?? "POI lịch sử" : item.PoiName,
+            Category = basePoi?.Category ?? "Ẩm thực",
+            Address = string.IsNullOrWhiteSpace(item.Address) ? basePoi?.Address ?? string.Empty : item.Address,
+            Description = string.IsNullOrWhiteSpace(item.Description)
+                ? basePoi?.Description ?? string.Empty
+                : item.Description,
+            SpecialDish = string.IsNullOrWhiteSpace(item.SpecialDish)
+                ? basePoi?.SpecialDish ?? string.Empty
+                : item.SpecialDish,
+            ImageSource = string.IsNullOrWhiteSpace(item.ImageSource)
+                ? basePoi?.ImageSource ?? string.Empty
+                : item.ImageSource,
+            MapLink = string.IsNullOrWhiteSpace(item.MapLink)
+                ? basePoi?.MapLink ?? string.Empty
+                : item.MapLink,
+            NarrationText = narrationText,
+            AudioAssetPath = string.IsNullOrWhiteSpace(item.AudioAssetPath)
+                ? basePoi?.AudioAssetPath ?? string.Empty
+                : item.AudioAssetPath,
+            Priority = basePoi?.Priority ?? 1,
+            Latitude = basePoi?.Latitude ?? 0,
+            Longitude = basePoi?.Longitude ?? 0,
+            TriggerRadiusMeters = basePoi?.TriggerRadiusMeters ?? 50,
+            CooldownMinutes = basePoi?.CooldownMinutes ?? 5,
+            IsActive = basePoi?.IsActive ?? true,
+            NarrationTranslations = !string.IsNullOrWhiteSpace(item.Language) &&
+                !string.IsNullOrWhiteSpace(narrationText)
+                ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    [item.Language] = narrationText
+                }
+                : new Dictionary<string, string>(
+                    basePoi?.NarrationTranslations ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+                    StringComparer.OrdinalIgnoreCase)
+        };
     }
 
     private void ClearEventLogs()
@@ -1867,7 +2361,9 @@ public class MainViewModel : INotifyPropertyChanged
     private void ClearListeningHistory()
     {
         ListeningHistory.Clear();
+        ListeningHistoryLocalEntries.Clear();
         ListeningHistoryRanking.Clear();
+        _usageHistoryService.ClearEntries(UsageHistoryCategory.Listening);
         ListeningHistoryLoadError = string.Empty;
         _lastListeningHistorySyncAt = null;
         RaiseListeningHistoryStateChanged();
@@ -1894,7 +2390,11 @@ public class MainViewModel : INotifyPropertyChanged
     {
         OnPropertyChanged(nameof(HasListeningHistory));
         OnPropertyChanged(nameof(IsListeningHistoryEmpty));
+        OnPropertyChanged(nameof(HasListeningHistoryLocalEntries));
+        OnPropertyChanged(nameof(IsListeningHistoryFallbackVisible));
+        OnPropertyChanged(nameof(IsListeningHistoryDisplayEmpty));
         OnPropertyChanged(nameof(HasListeningHistoryRanking));
+        OnPropertyChanged(nameof(ListeningHistoryFallbackSummary));
         OnPropertyChanged(nameof(ListeningHistorySummary));
         (ClearListeningHistoryCommand as Command)?.ChangeCanExecute();
         (RefreshListeningHistoryCommand as Command)?.ChangeCanExecute();
@@ -1915,6 +2415,11 @@ public class MainViewModel : INotifyPropertyChanged
             return;
         }
 
+        AddHistoryEntry(
+            ListeningHistoryLocalEntries,
+            UsageHistoryCategory.Listening,
+            message,
+            RaiseListeningHistoryStateChanged);
         TriggerListeningHistoryRefresh();
     }
 
@@ -2016,6 +2521,13 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         return $"{UserPreferenceKeyPrefix}.{scope}";
+    }
+
+    private bool IsGuestAccess(AuthSession? session = null)
+    {
+        var currentSession = session ?? _authService.CurrentSession;
+        return currentSession is null ||
+               string.Equals(currentSession.Role, "guest", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string GetLanguageDisplayName(string? languageCode) => languageCode?.ToLowerInvariant() switch

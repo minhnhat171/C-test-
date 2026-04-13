@@ -34,7 +34,7 @@
                                    FontSize="13"
                                    TextColor="#9A3412" />
 
-                            <Label Text="Bạn đã xác thực thành công. Giờ có thể nghe Talk to Speech ngay trên từng box quán ở trang chủ hoặc bật GPS để nghe theo vị trí."
+                            <Label Text="Bạn đang ở chế độ khách tham quan. Giờ có thể nghe Talk to Speech ngay trên từng box quán ở trang chủ hoặc bật GPS để nghe theo vị trí."
                                    FontSize="13"
                                    TextColor="#7C2D12" />
                         </VerticalStackLayout>
@@ -54,7 +54,7 @@
                                        TextColor="White" />
                             </Border>
 
-                            <Button Text="Đăng xuất"
+                            <Button Text="Về màn chào"
                                     Command="{Binding SignOutCommand}"
                                     BackgroundColor="#FFFFFF"
                                     TextColor="#111111"
@@ -269,7 +269,7 @@
                                            FontSize="10"
                                            FontAttributes="Bold"
                                            TextColor="#A16207" />
-                                    <Label Text="Xác thực"
+                                    <Label Text="Vào app"
                                            FontSize="13"
                                            FontAttributes="Bold"
                                            TextColor="#173A43" />
@@ -753,7 +753,7 @@
                         BackgroundColor="#FFFCF8"
                         StrokeThickness="0"
                         Padding="18"
-                        MaximumHeightRequest="520"
+                        MaximumHeightRequest="620"
                         StrokeShape="RoundRectangle 28">
                     <ScrollView>
                         <VerticalStackLayout Spacing="16">
@@ -786,44 +786,339 @@
                                        VerticalTextAlignment="Center" />
 
                                 <Button Grid.Column="1"
-                                        Text="Xóa"
-                                        Command="{Binding ClearListeningHistoryCommand}"
-                                        IsEnabled="{Binding HasListeningHistory}"
-                                        BackgroundColor="#FFF2E7"
-                                        TextColor="#9A3412"
+                                        Text="Làm mới"
+                                        Command="{Binding RefreshListeningHistoryCommand}"
+                                        BackgroundColor="#173A43"
+                                        TextColor="White"
                                         CornerRadius="16"
                                         Padding="12,8" />
                             </Grid>
 
-                            <Label Text="Chưa có lượt nghe nào trong tài khoản này."
-                                   FontSize="13"
-                                   TextColor="#6B7280"
-                                   IsVisible="{Binding IsListeningHistoryEmpty}" />
+                            <Border BackgroundColor="#FFFFFF"
+                                    Stroke="#EADFD2"
+                                    StrokeThickness="1"
+                                    Padding="14"
+                                    StrokeShape="RoundRectangle 18">
+                                <VerticalStackLayout Spacing="10">
+                                    <Label Text="Bộ lọc hiển thị"
+                                           FontSize="13"
+                                           FontAttributes="Bold"
+                                           TextColor="#1F2937" />
 
-                            <VerticalStackLayout Spacing="10"
-                                                 BindableLayout.ItemsSource="{Binding ListeningHistory}">
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate>
+                                    <Grid ColumnDefinitions="*,*"
+                                          ColumnSpacing="10">
                                         <Border BackgroundColor="#FFF8F1"
                                                 StrokeThickness="0"
-                                                Padding="14,12"
-                                                StrokeShape="RoundRectangle 18">
-                                            <Grid ColumnDefinitions="Auto,*"
-                                                  ColumnSpacing="10">
-                                                <Label Text="•"
-                                                       FontSize="18"
-                                                       TextColor="#EA580C"
-                                                       VerticalTextAlignment="Start" />
-
-                                                <Label Grid.Column="1"
-                                                       Text="{Binding .}"
-                                                       FontSize="13"
-                                                       TextColor="#374151"
-                                                       LineBreakMode="WordWrap" />
-                                            </Grid>
+                                                Padding="12,6"
+                                                StrokeShape="RoundRectangle 14">
+                                            <Picker Title="Khoảng thời gian"
+                                                    ItemsSource="{Binding ListeningHistoryPeriodOptions}"
+                                                    SelectedItem="{Binding SelectedListeningHistoryPeriod}" />
                                         </Border>
-                                    </DataTemplate>
-                                </BindableLayout.ItemTemplate>
+
+                                        <Border Grid.Column="1"
+                                                BackgroundColor="#FFF8F1"
+                                                StrokeThickness="0"
+                                                Padding="12,6"
+                                                StrokeShape="RoundRectangle 14">
+                                            <Picker Title="Sắp xếp"
+                                                    ItemsSource="{Binding ListeningHistorySortOptions}"
+                                                    SelectedItem="{Binding SelectedListeningHistorySort}" />
+                                        </Border>
+                                    </Grid>
+
+                                    <Border BackgroundColor="#FFF8F1"
+                                            StrokeThickness="0"
+                                            Padding="12,6"
+                                            StrokeShape="RoundRectangle 14">
+                                        <Picker Title="Chế độ xem"
+                                                ItemsSource="{Binding ListeningHistoryViewOptions}"
+                                                SelectedItem="{Binding SelectedListeningHistoryView}" />
+                                    </Border>
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Label Text="{Binding ListeningHistorySyncStatus}"
+                                   FontSize="12"
+                                   TextColor="#6B7280" />
+
+                            <ActivityIndicator IsRunning="{Binding IsListeningHistoryLoading}"
+                                               IsVisible="{Binding IsListeningHistoryLoading}"
+                                               Color="#173A43" />
+
+                            <Border BackgroundColor="#FDEEEE"
+                                    Stroke="#E4B6B0"
+                                    StrokeThickness="1"
+                                    Padding="14,12"
+                                    StrokeShape="RoundRectangle 18"
+                                    IsVisible="{Binding HasListeningHistoryLoadError}">
+                                <Label Text="{Binding ListeningHistoryLoadError}"
+                                       FontSize="13"
+                                       TextColor="#A53A32" />
+                            </Border>
+
+                            <Border BackgroundColor="#FFF8F1"
+                                    StrokeThickness="0"
+                                    Padding="18"
+                                    StrokeShape="RoundRectangle 22"
+                                    IsVisible="{Binding IsListeningHistoryDisplayEmpty}">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="Danh sách lịch sử nghe đang trống"
+                                           FontSize="18"
+                                           FontAttributes="Bold"
+                                           TextColor="#7C2D12" />
+
+                                    <Label Text="Khi người dùng nghe thuyết minh bằng TTS hoặc audio, hệ thống sẽ lưu thời gian nghe, ngôn ngữ và phiên bản phát để bạn xem lại ở đây."
+                                           FontSize="13"
+                                           TextColor="#6B7280" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border BackgroundColor="#FFF8F1"
+                                    StrokeThickness="0"
+                                    Padding="18"
+                                    StrokeShape="RoundRectangle 22"
+                                    IsVisible="{Binding IsListeningHistoryFallbackVisible}">
+                                <VerticalStackLayout Spacing="10">
+                                    <Label Text="Lượt nghe vừa ghi nhận"
+                                           FontSize="18"
+                                           FontAttributes="Bold"
+                                           TextColor="#7C2D12" />
+
+                                    <Label Text="{Binding ListeningHistoryFallbackSummary}"
+                                           FontSize="13"
+                                           TextColor="#6B7280" />
+
+                                    <VerticalStackLayout Spacing="8"
+                                                         BindableLayout.ItemsSource="{Binding ListeningHistoryLocalEntries}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BackgroundColor="#FFFFFF"
+                                                        StrokeThickness="0"
+                                                        Padding="14,12"
+                                                        StrokeShape="RoundRectangle 18">
+                                                    <Grid ColumnDefinitions="Auto,*"
+                                                          ColumnSpacing="10">
+                                                        <Label Text="•"
+                                                               FontSize="18"
+                                                               TextColor="#EA580C"
+                                                               VerticalTextAlignment="Start" />
+
+                                                        <Label Grid.Column="1"
+                                                               Text="{Binding .}"
+                                                               FontSize="13"
+                                                               TextColor="#374151"
+                                                               LineBreakMode="WordWrap" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <VerticalStackLayout Spacing="12">
+                                <VerticalStackLayout Spacing="10"
+                                                     IsVisible="{Binding IsListeningHistoryTimelineVisible}"
+                                                     BindableLayout.ItemsSource="{Binding ListeningHistory}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BackgroundColor="#FFF8F1"
+                                                    StrokeThickness="0"
+                                                    Padding="14,12"
+                                                    StrokeShape="RoundRectangle 18">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnListeningHistoryItemTapped" />
+                                                </Border.GestureRecognizers>
+
+                                                <VerticalStackLayout Spacing="12">
+                                                    <Grid ColumnDefinitions="72,*"
+                                                          ColumnSpacing="12">
+                                                        <Border BackgroundColor="#F3E7D8"
+                                                                StrokeThickness="0"
+                                                                HeightRequest="72"
+                                                                WidthRequest="72"
+                                                                StrokeShape="RoundRectangle 16">
+                                                            <Grid>
+                                                                <Image Source="{Binding ImageSource}"
+                                                                       Aspect="AspectFill"
+                                                                       IsVisible="{Binding HasImage}" />
+
+                                                                <Label Text="{Binding PlaybackModeLabel}"
+                                                                       FontSize="12"
+                                                                       FontAttributes="Bold"
+                                                                       TextColor="#9A3412"
+                                                                       HorizontalTextAlignment="Center"
+                                                                       VerticalTextAlignment="Center" />
+                                                            </Grid>
+                                                        </Border>
+
+                                                        <VerticalStackLayout Grid.Column="1"
+                                                                             Spacing="6">
+                                                            <Grid ColumnDefinitions="*,Auto"
+                                                                  ColumnSpacing="8">
+                                                                <Label Text="{Binding Title}"
+                                                                       FontSize="15"
+                                                                       FontAttributes="Bold"
+                                                                       TextColor="#1F2937"
+                                                                       LineBreakMode="TailTruncation" />
+
+                                                                <Border Grid.Column="1"
+                                                                        BackgroundColor="{Binding StatusAccentColor}"
+                                                                        StrokeThickness="0"
+                                                                        Padding="8,4"
+                                                                        VerticalOptions="Start"
+                                                                        StrokeShape="RoundRectangle 12">
+                                                                    <Label Text="{Binding StatusLabel}"
+                                                                           FontSize="10"
+                                                                           TextColor="White" />
+                                                                </Border>
+                                                            </Grid>
+
+                                                            <Label Text="{Binding StartedAtLabel}"
+                                                                   FontSize="12"
+                                                                   TextColor="#7C2D12" />
+
+                                                            <Label Text="{Binding DetailSummaryLabel}"
+                                                                   FontSize="12"
+                                                                   TextColor="#374151" />
+
+                                                            <Label Text="{Binding DetailLabel}"
+                                                                   FontSize="12"
+                                                                   TextColor="#6B7280" />
+                                                        </VerticalStackLayout>
+                                                    </Grid>
+
+                                                    <Label Text="{Binding Address}"
+                                                           FontSize="12"
+                                                           TextColor="#6B7280"
+                                                           LineBreakMode="TailTruncation"
+                                                           MaxLines="2"
+                                                           IsVisible="{Binding HasAddress}" />
+
+                                                    <Label Text="{Binding Description}"
+                                                           FontSize="13"
+                                                           TextColor="#374151"
+                                                           LineBreakMode="TailTruncation"
+                                                           MaxLines="3"
+                                                           IsVisible="{Binding HasDescription}" />
+
+                                                    <Border BackgroundColor="#FFFFFF"
+                                                            StrokeThickness="0"
+                                                            Padding="12"
+                                                            StrokeShape="RoundRectangle 16"
+                                                            IsVisible="{Binding HasNarrationPreview}">
+                                                        <VerticalStackLayout Spacing="6">
+                                                            <Label Text="Nội dung đã nghe"
+                                                                   FontSize="11"
+                                                                   FontAttributes="Bold"
+                                                                   TextColor="#9A3412" />
+
+                                                            <Label Text="{Binding NarrationPreview}"
+                                                                   FontSize="12"
+                                                                   TextColor="#4B5563"
+                                                                   LineBreakMode="TailTruncation"
+                                                                   MaxLines="3" />
+                                                        </VerticalStackLayout>
+                                                    </Border>
+
+                                                    <Grid ColumnDefinitions="*,*,Auto"
+                                                          ColumnSpacing="10">
+                                                        <Button Text="Xem chi tiết"
+                                                                Clicked="OnListeningHistoryDetailClicked"
+                                                                BackgroundColor="#173A43"
+                                                                TextColor="White"
+                                                                CornerRadius="16"
+                                                                Padding="12,10" />
+
+                                                        <Button Grid.Column="1"
+                                                                Text="{Binding ReplayActionText}"
+                                                                Clicked="OnReplayListeningHistoryClicked"
+                                                                IsEnabled="{Binding CanReplay}"
+                                                                BackgroundColor="#FFF2E7"
+                                                                TextColor="#9A3412"
+                                                                CornerRadius="16"
+                                                                Padding="12,10" />
+
+                                                        <Button Grid.Column="2"
+                                                                Text="Xóa"
+                                                                Clicked="OnDeleteListeningHistoryClicked"
+                                                                BackgroundColor="#FFFFFF"
+                                                                TextColor="#B91C1C"
+                                                                CornerRadius="16"
+                                                                Padding="12,10" />
+                                                    </Grid>
+                                                </VerticalStackLayout>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+
+                                <Border BackgroundColor="#FFFFFF"
+                                        Stroke="#EADFD2"
+                                        StrokeThickness="1"
+                                        Padding="14"
+                                        StrokeShape="RoundRectangle 18"
+                                        IsVisible="{Binding IsListeningHistoryRankingVisible}">
+                                    <VerticalStackLayout Spacing="12">
+                                        <Label Text="Xếp hạng POI được nghe nhiều"
+                                               FontSize="16"
+                                               FontAttributes="Bold"
+                                               TextColor="#161616" />
+
+                                        <Label Text="Tổng hợp theo bộ lọc hiện tại để bạn nhìn nhanh quán nào được nghe nhiều nhất."
+                                               FontSize="12"
+                                               TextColor="#6B7280" />
+
+                                        <Label Text="Chưa có dữ liệu xếp hạng trong bộ lọc hiện tại."
+                                               FontSize="13"
+                                               TextColor="#6B7280"
+                                               IsVisible="{Binding IsListeningHistoryEmpty}" />
+
+                                        <VerticalStackLayout Spacing="10"
+                                                             IsVisible="{Binding HasListeningHistoryRanking}"
+                                                             BindableLayout.ItemsSource="{Binding ListeningHistoryRanking}">
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BackgroundColor="#FFF8F1"
+                                                            StrokeThickness="0"
+                                                            Padding="14,12"
+                                                            StrokeShape="RoundRectangle 18">
+                                                        <Grid ColumnDefinitions="Auto,*"
+                                                              ColumnSpacing="12">
+                                                            <Border BackgroundColor="#173A43"
+                                                                    StrokeThickness="0"
+                                                                    Padding="12,8"
+                                                                    VerticalOptions="Start"
+                                                                    StrokeShape="RoundRectangle 14">
+                                                                <Label Text="{Binding Rank, StringFormat='#{0}'}"
+                                                                       FontSize="12"
+                                                                       FontAttributes="Bold"
+                                                                       TextColor="White" />
+                                                            </Border>
+
+                                                            <VerticalStackLayout Grid.Column="1"
+                                                                                 Spacing="6">
+                                                                <Label Text="{Binding Title}"
+                                                                       FontSize="14"
+                                                                       FontAttributes="Bold"
+                                                                       TextColor="#1F2937" />
+
+                                                                <Label Text="{Binding SummaryLabel}"
+                                                                       FontSize="12"
+                                                                       TextColor="#374151" />
+
+                                                                <Label Text="{Binding LastStartedAtLabel, StringFormat='Lần gần nhất: {0}'}"
+                                                                       FontSize="12"
+                                                                       TextColor="#7C2D12" />
+                                                            </VerticalStackLayout>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </VerticalStackLayout>
+                                    </VerticalStackLayout>
+                                </Border>
                             </VerticalStackLayout>
                         </VerticalStackLayout>
                     </ScrollView>
@@ -904,10 +1199,42 @@
                                     StrokeThickness="0"
                                     Padding="16"
                                     StrokeShape="RoundRectangle 22">
-                                <VerticalStackLayout Spacing="12">
+                                <VerticalStackLayout Spacing="14">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="Hồ sơ cá nhân"
+                                               FontSize="18"
+                                               FontAttributes="Bold"
+                                               TextColor="#161616" />
+                                        <Label Text="{Binding AccountSettingsAccessMessage}"
+                                               FontSize="12"
+                                               TextColor="#6B7280" />
+                                    </VerticalStackLayout>
+
+                                    <Border BackgroundColor="#FDEEEE"
+                                            Stroke="#E4B6B0"
+                                            StrokeThickness="1"
+                                            Padding="14,12"
+                                            StrokeShape="RoundRectangle 18"
+                                            IsVisible="{Binding HasAccountSettingsError}">
+                                        <Label Text="{Binding AccountSettingsErrorMessage}"
+                                               FontSize="13"
+                                               TextColor="#A53A32" />
+                                    </Border>
+
+                                    <Border BackgroundColor="#ECFDF3"
+                                            Stroke="#BBE3CB"
+                                            StrokeThickness="1"
+                                            Padding="14,12"
+                                            StrokeShape="RoundRectangle 18"
+                                            IsVisible="{Binding HasAccountSettingsSuccess}">
+                                        <Label Text="{Binding AccountSettingsSuccessMessage}"
+                                               FontSize="13"
+                                               TextColor="#166534" />
+                                    </Border>
+
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="14">
-                                        <Label Text="Tên đăng nhập"
+                                        <Label Text="Chế độ truy cập"
                                                FontSize="13"
                                                FontAttributes="Bold"
                                                TextColor="#374151" />
@@ -919,7 +1246,7 @@
 
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="14">
-                                        <Label Text="Mật khẩu"
+                                        <Label Text="Trạng thái phiên"
                                                FontSize="13"
                                                FontAttributes="Bold"
                                                TextColor="#374151" />
@@ -927,6 +1254,85 @@
                                                Text="{Binding CurrentUserPasswordLabel}"
                                                FontSize="13"
                                                TextColor="#111827" />
+                                    </Grid>
+
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="Họ và tên"
+                                               FontSize="13"
+                                               FontAttributes="Bold"
+                                               TextColor="#374151" />
+                                        <Border BackgroundColor="#F7F4EF"
+                                                StrokeThickness="0"
+                                                Padding="12,4"
+                                                StrokeShape="RoundRectangle 16">
+                                            <Entry Text="{Binding AccountProfileFullName}"
+                                                   Placeholder="Nhập họ và tên"
+                                                   IsEnabled="{Binding CanManageAccountProfile}"
+                                                   BackgroundColor="Transparent"
+                                                   TextColor="#111827"
+                                                   PlaceholderColor="#9CA3AF" />
+                                        </Border>
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="Email"
+                                               FontSize="13"
+                                               FontAttributes="Bold"
+                                               TextColor="#374151" />
+                                        <Border BackgroundColor="#F7F4EF"
+                                                StrokeThickness="0"
+                                                Padding="12,4"
+                                                StrokeShape="RoundRectangle 16">
+                                            <Entry Text="{Binding AccountProfileEmail}"
+                                                   Placeholder="Nhập email"
+                                                   Keyboard="Email"
+                                                   IsEnabled="{Binding CanManageAccountProfile}"
+                                                   BackgroundColor="Transparent"
+                                                   TextColor="#111827"
+                                                   PlaceholderColor="#9CA3AF" />
+                                        </Border>
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="Số điện thoại"
+                                               FontSize="13"
+                                               FontAttributes="Bold"
+                                               TextColor="#374151" />
+                                        <Border BackgroundColor="#F7F4EF"
+                                                StrokeThickness="0"
+                                                Padding="12,4"
+                                                StrokeShape="RoundRectangle 16">
+                                            <Entry Text="{Binding AccountProfilePhoneNumber}"
+                                                   Placeholder="Nhập số điện thoại"
+                                                   Keyboard="Telephone"
+                                                   IsEnabled="{Binding CanManageAccountProfile}"
+                                                   BackgroundColor="Transparent"
+                                                   TextColor="#111827"
+                                                   PlaceholderColor="#9CA3AF" />
+                                        </Border>
+                                    </VerticalStackLayout>
+
+                                    <ActivityIndicator IsRunning="{Binding IsSavingAccountProfile}"
+                                                       IsVisible="{Binding IsSavingAccountProfile}"
+                                                       Color="#173A43" />
+
+                                    <Grid ColumnDefinitions="*,*"
+                                          ColumnSpacing="10">
+                                        <Button Text="Lưu thay đổi"
+                                                Command="{Binding SaveAccountProfileCommand}"
+                                                IsEnabled="{Binding CanSaveAccountProfile}"
+                                                BackgroundColor="#173A43"
+                                                TextColor="White"
+                                                CornerRadius="16"
+                                                Padding="12,10" />
+
+                                        <Button Grid.Column="1"
+                                                Text="Nhập lại"
+                                                Command="{Binding ResetAccountProfileCommand}"
+                                                BackgroundColor="#FFF2E7"
+                                                TextColor="#9A3412"
+                                                CornerRadius="16"
+                                                Padding="12,10" />
                                     </Grid>
                                 </VerticalStackLayout>
                             </Border>
@@ -936,6 +1342,46 @@
                                     Padding="16"
                                     StrokeShape="RoundRectangle 22">
                                 <VerticalStackLayout Spacing="14">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="Tùy chọn ứng dụng"
+                                               FontSize="18"
+                                               FontAttributes="Bold"
+                                               TextColor="#161616" />
+                                        <Label Text="Hiển thị ngôn ngữ đang dùng và phiên bản phát hiện tại cho flow thuyết minh."
+                                               FontSize="12"
+                                               TextColor="#6B7280" />
+                                    </VerticalStackLayout>
+
+                                    <Border BackgroundColor="#FFF8F1"
+                                            StrokeThickness="0"
+                                            Padding="14"
+                                            StrokeShape="RoundRectangle 18">
+                                        <VerticalStackLayout Spacing="6">
+                                            <Grid ColumnDefinitions="*,Auto"
+                                                  ColumnSpacing="12">
+                                                <Label Text="Phiên bản phát hiện tại"
+                                                       FontSize="13"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#374151" />
+
+                                                <Border Grid.Column="1"
+                                                        BackgroundColor="#173A43"
+                                                        StrokeThickness="0"
+                                                        Padding="10,6"
+                                                        StrokeShape="RoundRectangle 14">
+                                                    <Label Text="{Binding NarrationModeDisplay}"
+                                                           FontSize="11"
+                                                           FontAttributes="Bold"
+                                                           TextColor="White" />
+                                                </Border>
+                                            </Grid>
+
+                                            <Label Text="{Binding NarrationModeDescription}"
+                                                   FontSize="12"
+                                                   TextColor="#6B7280" />
+                                        </VerticalStackLayout>
+                                    </Border>
+
                                     <Label Text="Cài đặt âm thanh"
                                            FontSize="18"
                                            FontAttributes="Bold"
@@ -1040,35 +1486,291 @@
                                                    TextColor="#6B7280" />
                                         </VerticalStackLayout>
 
-                                        <Button Text="Xóa"
-                                                Command="{Binding ClearListeningHistoryCommand}"
-                                                IsEnabled="{Binding HasListeningHistory}"
-                                                BackgroundColor="#FFF2E7"
-                                                TextColor="#9A3412"
+                                        <Button Text="Làm mới"
+                                                Command="{Binding RefreshListeningHistoryCommand}"
+                                                BackgroundColor="#173A43"
+                                                TextColor="White"
                                                 CornerRadius="16"
                                                 Padding="12,8" />
                                     </Grid>
 
-                                    <Label Text="Chưa có lịch sử nghe nào."
-                                           FontSize="13"
-                                           TextColor="#6B7280"
-                                           IsVisible="{Binding IsListeningHistoryEmpty}" />
+                                    <Border BackgroundColor="#FFF8F1"
+                                            StrokeThickness="0"
+                                            Padding="14"
+                                            StrokeShape="RoundRectangle 18">
+                                        <VerticalStackLayout Spacing="10">
+                                            <Label Text="Bộ lọc hiển thị"
+                                                   FontSize="13"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#1F2937" />
 
-                                    <VerticalStackLayout Spacing="10"
-                                                         BindableLayout.ItemsSource="{Binding ListeningHistory}">
-                                        <BindableLayout.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border BackgroundColor="#FFF8F1"
+                                            <Grid ColumnDefinitions="*,*"
+                                                  ColumnSpacing="10">
+                                                <Border BackgroundColor="#FFFFFF"
                                                         StrokeThickness="0"
-                                                        Padding="14,12"
-                                                        StrokeShape="RoundRectangle 18">
-                                                    <Label Text="{Binding .}"
-                                                           FontSize="13"
-                                                           TextColor="#374151"
-                                                           LineBreakMode="WordWrap" />
+                                                        Padding="12,6"
+                                                        StrokeShape="RoundRectangle 14">
+                                                    <Picker Title="Khoảng thời gian"
+                                                            ItemsSource="{Binding ListeningHistoryPeriodOptions}"
+                                                            SelectedItem="{Binding SelectedListeningHistoryPeriod}" />
                                                 </Border>
-                                            </DataTemplate>
-                                        </BindableLayout.ItemTemplate>
+
+                                                <Border Grid.Column="1"
+                                                        BackgroundColor="#FFFFFF"
+                                                        StrokeThickness="0"
+                                                        Padding="12,6"
+                                                        StrokeShape="RoundRectangle 14">
+                                                    <Picker Title="Sắp xếp"
+                                                            ItemsSource="{Binding ListeningHistorySortOptions}"
+                                                            SelectedItem="{Binding SelectedListeningHistorySort}" />
+                                                </Border>
+                                            </Grid>
+
+                                            <Border BackgroundColor="#FFFFFF"
+                                                    StrokeThickness="0"
+                                                    Padding="12,6"
+                                                    StrokeShape="RoundRectangle 14">
+                                                <Picker Title="Chế độ xem"
+                                                        ItemsSource="{Binding ListeningHistoryViewOptions}"
+                                                        SelectedItem="{Binding SelectedListeningHistoryView}" />
+                                            </Border>
+                                        </VerticalStackLayout>
+                                    </Border>
+
+                                    <Label Text="{Binding ListeningHistorySyncStatus}"
+                                           FontSize="12"
+                                           TextColor="#6B7280" />
+
+                                    <ActivityIndicator IsRunning="{Binding IsListeningHistoryLoading}"
+                                                       IsVisible="{Binding IsListeningHistoryLoading}"
+                                                       Color="#173A43" />
+
+                                    <Border BackgroundColor="#FDEEEE"
+                                            Stroke="#E4B6B0"
+                                            StrokeThickness="1"
+                                            Padding="14,12"
+                                            StrokeShape="RoundRectangle 18"
+                                            IsVisible="{Binding HasListeningHistoryLoadError}">
+                                        <Label Text="{Binding ListeningHistoryLoadError}"
+                                               FontSize="13"
+                                               TextColor="#A53A32" />
+                                    </Border>
+
+                                    <Border BackgroundColor="#FFF8F1"
+                                            StrokeThickness="0"
+                                            Padding="18"
+                                            StrokeShape="RoundRectangle 22"
+                                            IsVisible="{Binding IsListeningHistoryDisplayEmpty}">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Label Text="Danh sách lịch sử nghe đang trống"
+                                                   FontSize="16"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#7C2D12" />
+
+                                            <Label Text="Phần chức năng này sẽ cập nhật lại toàn bộ bản ghi nghe gần đây của tài khoản, gồm thời gian nghe, ngôn ngữ và phiên bản phát."
+                                                   FontSize="13"
+                                                   TextColor="#6B7280" />
+                                        </VerticalStackLayout>
+                                    </Border>
+
+                                    <Border BackgroundColor="#FFF8F1"
+                                            StrokeThickness="0"
+                                            Padding="18"
+                                            StrokeShape="RoundRectangle 22"
+                                            IsVisible="{Binding IsListeningHistoryFallbackVisible}">
+                                        <VerticalStackLayout Spacing="10">
+                                            <Label Text="Lượt nghe vừa ghi nhận"
+                                                   FontSize="16"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#7C2D12" />
+
+                                            <Label Text="{Binding ListeningHistoryFallbackSummary}"
+                                                   FontSize="13"
+                                                   TextColor="#6B7280" />
+
+                                            <VerticalStackLayout Spacing="8"
+                                                                 BindableLayout.ItemsSource="{Binding ListeningHistoryLocalEntries}">
+                                                <BindableLayout.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BackgroundColor="#FFFFFF"
+                                                                StrokeThickness="0"
+                                                                Padding="14,12"
+                                                                StrokeShape="RoundRectangle 18">
+                                                            <Grid ColumnDefinitions="Auto,*"
+                                                                  ColumnSpacing="10">
+                                                                <Label Text="•"
+                                                                       FontSize="18"
+                                                                       TextColor="#EA580C"
+                                                                       VerticalTextAlignment="Start" />
+
+                                                                <Label Grid.Column="1"
+                                                                       Text="{Binding .}"
+                                                                       FontSize="13"
+                                                                       TextColor="#374151"
+                                                                       LineBreakMode="WordWrap" />
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </BindableLayout.ItemTemplate>
+                                            </VerticalStackLayout>
+                                        </VerticalStackLayout>
+                                    </Border>
+
+                                    <VerticalStackLayout Spacing="12">
+                                        <VerticalStackLayout Spacing="10"
+                                                             IsVisible="{Binding IsListeningHistoryTimelineVisible}"
+                                                             BindableLayout.ItemsSource="{Binding ListeningHistory}">
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BackgroundColor="#FFF8F1"
+                                                            StrokeThickness="0"
+                                                            Padding="14,12"
+                                                            StrokeShape="RoundRectangle 18">
+                                                        <Border.GestureRecognizers>
+                                                            <TapGestureRecognizer Tapped="OnListeningHistoryItemTapped" />
+                                                        </Border.GestureRecognizers>
+
+                                                        <VerticalStackLayout Spacing="10">
+                                                            <Grid ColumnDefinitions="Auto,*"
+                                                                  ColumnSpacing="12">
+                                                                <Border BackgroundColor="#F3E7D8"
+                                                                        StrokeThickness="0"
+                                                                        Padding="10,8"
+                                                                        VerticalOptions="Start"
+                                                                        StrokeShape="RoundRectangle 14">
+                                                                    <Label Text="{Binding PlaybackModeLabel}"
+                                                                           FontSize="11"
+                                                                           FontAttributes="Bold"
+                                                                           TextColor="#9A3412" />
+                                                                </Border>
+
+                                                                <VerticalStackLayout Grid.Column="1"
+                                                                                     Spacing="5">
+                                                                    <Grid ColumnDefinitions="*,Auto"
+                                                                          ColumnSpacing="8">
+                                                                        <Label Text="{Binding Title}"
+                                                                               FontSize="14"
+                                                                               FontAttributes="Bold"
+                                                                               TextColor="#1F2937"
+                                                                               LineBreakMode="TailTruncation" />
+
+                                                                        <Border Grid.Column="1"
+                                                                                BackgroundColor="{Binding StatusAccentColor}"
+                                                                                StrokeThickness="0"
+                                                                                Padding="8,4"
+                                                                                VerticalOptions="Start"
+                                                                                StrokeShape="RoundRectangle 12">
+                                                                            <Label Text="{Binding StatusLabel}"
+                                                                                   FontSize="10"
+                                                                                   TextColor="White" />
+                                                                        </Border>
+                                                                    </Grid>
+
+                                                                    <Label Text="{Binding StartedAtLabel}"
+                                                                           FontSize="12"
+                                                                           TextColor="#7C2D12" />
+
+                                                                    <Label Text="{Binding DetailSummaryLabel}"
+                                                                           FontSize="12"
+                                                                           TextColor="#374151" />
+                                                                </VerticalStackLayout>
+                                                            </Grid>
+
+                                                            <Label Text="{Binding NarrationPreview}"
+                                                                   FontSize="12"
+                                                                   TextColor="#4B5563"
+                                                                   LineBreakMode="TailTruncation"
+                                                                   MaxLines="3"
+                                                                   IsVisible="{Binding HasNarrationPreview}" />
+
+                                                            <Grid ColumnDefinitions="*,*"
+                                                                  ColumnSpacing="10">
+                                                                <Button Text="Chi tiết"
+                                                                        Clicked="OnListeningHistoryDetailClicked"
+                                                                        BackgroundColor="#173A43"
+                                                                        TextColor="White"
+                                                                        CornerRadius="16"
+                                                                        Padding="12,10" />
+
+                                                                <Button Grid.Column="1"
+                                                                        Text="{Binding ReplayActionText}"
+                                                                        Clicked="OnReplayListeningHistoryClicked"
+                                                                        IsEnabled="{Binding CanReplay}"
+                                                                        BackgroundColor="#FFF2E7"
+                                                                        TextColor="#9A3412"
+                                                                        CornerRadius="16"
+                                                                        Padding="12,10" />
+                                                            </Grid>
+                                                        </VerticalStackLayout>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </VerticalStackLayout>
+
+                                        <Border BackgroundColor="#FFF8F1"
+                                                StrokeThickness="0"
+                                                Padding="14"
+                                                StrokeShape="RoundRectangle 18"
+                                                IsVisible="{Binding IsListeningHistoryRankingVisible}">
+                                            <VerticalStackLayout Spacing="12">
+                                                <Label Text="Xếp hạng POI được nghe nhiều"
+                                                       FontSize="15"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#161616" />
+
+                                                <Label Text="Tổng hợp theo bộ lọc hiện tại để bạn xem nhanh quán nào được nghe nhiều nhất."
+                                                       FontSize="12"
+                                                       TextColor="#6B7280" />
+
+                                                <Label Text="Chưa có dữ liệu xếp hạng trong bộ lọc hiện tại."
+                                                       FontSize="13"
+                                                       TextColor="#6B7280"
+                                                       IsVisible="{Binding IsListeningHistoryEmpty}" />
+
+                                                <VerticalStackLayout Spacing="10"
+                                                                     IsVisible="{Binding HasListeningHistoryRanking}"
+                                                                     BindableLayout.ItemsSource="{Binding ListeningHistoryRanking}">
+                                                    <BindableLayout.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border BackgroundColor="#FFFFFF"
+                                                                    StrokeThickness="0"
+                                                                    Padding="12"
+                                                                    StrokeShape="RoundRectangle 16">
+                                                                <Grid ColumnDefinitions="Auto,*"
+                                                                      ColumnSpacing="12">
+                                                                    <Border BackgroundColor="#173A43"
+                                                                            StrokeThickness="0"
+                                                                            Padding="10,7"
+                                                                            VerticalOptions="Start"
+                                                                            StrokeShape="RoundRectangle 12">
+                                                                        <Label Text="{Binding Rank, StringFormat='#{0}'}"
+                                                                               FontSize="11"
+                                                                               FontAttributes="Bold"
+                                                                               TextColor="White" />
+                                                                    </Border>
+
+                                                                    <VerticalStackLayout Grid.Column="1"
+                                                                                         Spacing="5">
+                                                                        <Label Text="{Binding Title}"
+                                                                               FontSize="13"
+                                                                               FontAttributes="Bold"
+                                                                               TextColor="#1F2937" />
+
+                                                                        <Label Text="{Binding SummaryLabel}"
+                                                                               FontSize="12"
+                                                                               TextColor="#374151" />
+
+                                                                        <Label Text="{Binding LastStartedAtLabel, StringFormat='Lần gần nhất: {0}'}"
+                                                                               FontSize="12"
+                                                                               TextColor="#7C2D12" />
+                                                                    </VerticalStackLayout>
+                                                                </Grid>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </BindableLayout.ItemTemplate>
+                                                </VerticalStackLayout>
+                                            </VerticalStackLayout>
+                                        </Border>
                                     </VerticalStackLayout>
                                 </VerticalStackLayout>
                             </Border>

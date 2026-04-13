@@ -3,15 +3,36 @@ namespace VinhKhanhGuide.App.Models;
 public sealed class ListeningHistoryDisplayItem
 {
     public Guid Id { get; init; }
+    public Guid PoiId { get; init; }
     public string PoiCode { get; init; } = string.Empty;
     public string PoiName { get; init; } = string.Empty;
+    public string Address { get; init; } = string.Empty;
+    public string Description { get; init; } = string.Empty;
+    public string SpecialDish { get; init; } = string.Empty;
+    public string ImageSource { get; init; } = string.Empty;
+    public string MapLink { get; init; } = string.Empty;
+    public string Language { get; init; } = string.Empty;
+    public string LanguageLabel { get; init; } = string.Empty;
+    public string PlaybackMode { get; init; } = "tts";
+    public string PlaybackModeLabel { get; init; } = "TTS";
+    public string NarrationSnapshot { get; init; } = string.Empty;
+    public string AudioAssetPath { get; init; } = string.Empty;
+    public string NarrationPreview { get; init; } = string.Empty;
     public string Title => string.IsNullOrWhiteSpace(PoiCode) ? PoiName : $"{PoiName} ({PoiCode})";
     public string StartedAtLabel { get; init; } = string.Empty;
+    public string StartedAtShortLabel { get; init; } = string.Empty;
     public string DetailLabel { get; init; } = string.Empty;
+    public string DetailSummaryLabel { get; init; } = string.Empty;
     public string StatusLabel { get; init; } = string.Empty;
     public string StatusAccentColor { get; init; } = "#EA580C";
     public string ErrorMessage { get; init; } = string.Empty;
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
+    public bool HasImage => !string.IsNullOrWhiteSpace(ImageSource);
+    public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
+    public bool HasAddress => !string.IsNullOrWhiteSpace(Address);
+    public bool HasNarrationPreview => !string.IsNullOrWhiteSpace(NarrationPreview);
+    public bool CanReplay => !string.IsNullOrWhiteSpace(NarrationSnapshot);
+    public string ReplayActionText => PlaybackModeLabel == "Audio" ? "Phát lại Audio" : "Phát lại TTS";
 
     public override string ToString()
     {
@@ -19,6 +40,7 @@ public sealed class ListeningHistoryDisplayItem
         {
             StartedAtLabel,
             Title,
+            DetailSummaryLabel,
             DetailLabel,
             StatusLabel
         };

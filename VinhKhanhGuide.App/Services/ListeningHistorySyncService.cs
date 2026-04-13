@@ -37,11 +37,19 @@ public class ListeningHistorySyncService : IListeningHistorySyncService
                 PoiId = poi.Id,
                 PoiCode = poi.Code,
                 PoiName = poi.Name,
+                PoiAddress = poi.Address,
+                PoiDescription = poi.Description,
+                PoiSpecialDish = poi.SpecialDish,
+                PoiImageSource = poi.ImageSource,
+                PoiMapLink = poi.MapLink,
                 UserCode = session?.Email ?? "guest",
                 UserDisplayName = session?.FullName ?? "Khach",
                 UserEmail = session?.Email ?? string.Empty,
                 TriggerType = autoTriggered ? "GPS" : "APP",
                 Language = string.IsNullOrWhiteSpace(language) ? "vi" : language!.Trim(),
+                PlaybackMode = "tts",
+                NarrationSnapshot = poi.GetNarrationText(language),
+                AudioAssetPath = poi.AudioAssetPath,
                 Source = "app",
                 DevicePlatform = DeviceInfo.Current.Platform.ToString(),
                 AutoTriggered = autoTriggered,
@@ -152,6 +160,36 @@ public class ListeningHistorySyncService : IListeningHistorySyncService
         {
             _logger.LogWarning(ex, "Could not load listening history ranking for the current app user.");
             return [];
+        }
+    }
+
+    public async Task<bool> DeleteAsync(
+        Guid historyId,
+        CancellationToken cancellationToken = default)
+    {
+        if (historyId == Guid.Empty)
+        {
+            return false;
+        }
+
+        try
+        {
+            var response = await _httpClient.DeleteAsync(
+                $"api/analytics/listening-history/{historyId}",
+                cancellationToken);
+
+            if (response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return true;
+            }
+
+            response.EnsureSuccessStatusCode();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not delete listening history entry {HistoryId}.", historyId);
+            return false;
         }
     }
 

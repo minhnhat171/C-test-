@@ -11,35 +11,17 @@ public class AuthPageViewModel : INotifyPropertyChanged
     private readonly IAuthService _authService;
 
     private bool _isBusy;
-    private bool _isLoginMode = true;
-    private string _fullName = string.Empty;
-    private string _username = string.Empty;
-    private string _password = string.Empty;
-    private string _confirmPassword = string.Empty;
-    private string _selectedAccountType = "Khách khám phá";
     private string _errorMessage = string.Empty;
-    private string _successMessage = string.Empty;
 
     public AuthPageViewModel(IAuthService authService)
     {
         _authService = authService;
-
-        SwitchToLoginCommand = new Command(SwitchToLoginMode);
-        SwitchToRegisterCommand = new Command(SwitchToRegisterMode);
-        SubmitCommand = new Command(async () => await SubmitAsync(), () => !IsBusy);
+        EnterAppCommand = new Command(async () => await EnterAppAsync(), () => !IsBusy);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public ICommand SwitchToLoginCommand { get; }
-    public ICommand SwitchToRegisterCommand { get; }
-    public ICommand SubmitCommand { get; }
-
-    public IReadOnlyList<string> AccountTypeOptions { get; } =
-    [
-        "Khách khám phá",
-        "Chủ quán"
-    ];
+    public ICommand EnterAppCommand { get; }
 
     public bool IsBusy
     {
@@ -52,111 +34,21 @@ public class AuthPageViewModel : INotifyPropertyChanged
             }
 
             OnPropertyChanged(nameof(IsNotBusy));
-            (SubmitCommand as Command)?.ChangeCanExecute();
+            (EnterAppCommand as Command)?.ChangeCanExecute();
         }
     }
 
     public bool IsNotBusy => !IsBusy;
 
-    public bool IsLoginMode
-    {
-        get => _isLoginMode;
-        private set
-        {
-            if (!SetProperty(ref _isLoginMode, value))
-            {
-                return;
-            }
+    public string WelcomeTitle => "Vào ứng dụng ngay";
 
-            OnPropertyChanged(nameof(IsRegisterMode));
-            OnPropertyChanged(nameof(FormTitle));
-            OnPropertyChanged(nameof(FormSubtitle));
-            OnPropertyChanged(nameof(FormHint));
-            OnPropertyChanged(nameof(SubmitButtonText));
-            ClearFeedback();
-        }
-    }
+    public string WelcomeSubtitle =>
+        "Phiên bản hiện tại ưu tiên du khách đi thẳng vào giao diện chính. Luồng quét QR sẽ được nối ở prompt sau.";
 
-    public bool IsRegisterMode => !IsLoginMode;
+    public string WelcomeHint =>
+        "Tạm thời app chạy ở chế độ khách tham quan, không cần đăng nhập hoặc đăng ký.";
 
-    public string FormTitle => IsLoginMode ? "Đăng nhập để tiếp tục" : "Tạo tài khoản mới";
-
-    public string FormSubtitle => IsLoginMode
-        ? "Xác thực để vào trang chủ, xem từng box quán và phát Talk to Speech ngay tại đó."
-        : "Làm theo sequence: kiểm tra dữ liệu, tạo tài khoản rồi quay lại đăng nhập để vào flow nghe thuyết minh.";
-
-    public string FormHint => IsLoginMode
-        ? "Tài khoản mẫu đang có sẵn: user / 12345678."
-        : "Đăng ký xong app sẽ quay lại tab đăng nhập. Sau đó bạn vào trang chủ và nghe thuyết minh ngay trên từng box quán.";
-
-    public string SubmitButtonText => IsLoginMode ? "Đăng nhập" : "Tạo tài khoản";
-
-    public string SelectedAccountTypeHint => SelectedAccountType == "Chủ quán"
-        ? "Phù hợp cho quán muốn quản lý nội dung và dữ liệu tại điểm."
-        : "Dành cho người dùng khám phá, nghe thuyết minh và theo dõi hành trình.";
-
-    public string FullName
-    {
-        get => _fullName;
-        set
-        {
-            if (SetProperty(ref _fullName, value))
-            {
-                ClearFeedback();
-            }
-        }
-    }
-
-    public string Username
-    {
-        get => _username;
-        set
-        {
-            if (SetProperty(ref _username, value))
-            {
-                ClearFeedback();
-            }
-        }
-    }
-
-    public string Password
-    {
-        get => _password;
-        set
-        {
-            if (SetProperty(ref _password, value))
-            {
-                ClearFeedback();
-            }
-        }
-    }
-
-    public string ConfirmPassword
-    {
-        get => _confirmPassword;
-        set
-        {
-            if (SetProperty(ref _confirmPassword, value))
-            {
-                ClearFeedback();
-            }
-        }
-    }
-
-    public string SelectedAccountType
-    {
-        get => _selectedAccountType;
-        set
-        {
-            if (!SetProperty(ref _selectedAccountType, value))
-            {
-                return;
-            }
-
-            OnPropertyChanged(nameof(SelectedAccountTypeHint));
-            ClearFeedback();
-        }
-    }
+    public string EnterAppButtonText => "Khám phá phố ẩm thực";
 
     public string ErrorMessage
     {
@@ -174,39 +66,7 @@ public class AuthPageViewModel : INotifyPropertyChanged
 
     public bool HasErrorMessage => !string.IsNullOrWhiteSpace(ErrorMessage);
 
-    public string SuccessMessage
-    {
-        get => _successMessage;
-        private set
-        {
-            if (!SetProperty(ref _successMessage, value))
-            {
-                return;
-            }
-
-            OnPropertyChanged(nameof(HasSuccessMessage));
-        }
-    }
-
-    public bool HasSuccessMessage => !string.IsNullOrWhiteSpace(SuccessMessage);
-
-    private void SwitchToLoginMode()
-    {
-        IsLoginMode = true;
-        FullName = string.Empty;
-        Password = string.Empty;
-        ConfirmPassword = string.Empty;
-        SelectedAccountType = AccountTypeOptions[0];
-    }
-
-    private void SwitchToRegisterMode()
-    {
-        IsLoginMode = false;
-        Password = string.Empty;
-        ConfirmPassword = string.Empty;
-    }
-
-    private async Task SubmitAsync()
+    private async Task EnterAppAsync()
     {
         if (IsBusy)
         {
@@ -214,36 +74,15 @@ public class AuthPageViewModel : INotifyPropertyChanged
         }
 
         IsBusy = true;
-        ClearFeedback();
+        ErrorMessage = string.Empty;
 
         try
         {
-            var result = IsLoginMode
-                ? await _authService.SignInAsync(Username, Password)
-                : await _authService.RegisterAsync(
-                    FullName,
-                    Username,
-                    Password,
-                    ConfirmPassword,
-                    GetSelectedRole());
-
+            var result = await _authService.ContinueAsGuestAsync();
             if (!result.Succeeded)
             {
                 ErrorMessage = result.Message;
-                return;
             }
-
-            Password = string.Empty;
-            ConfirmPassword = string.Empty;
-
-            if (IsRegisterMode)
-            {
-                FullName = string.Empty;
-                SelectedAccountType = AccountTypeOptions[0];
-                IsLoginMode = true;
-            }
-
-            SuccessMessage = result.Message;
         }
         finally
         {
@@ -251,30 +90,22 @@ public class AuthPageViewModel : INotifyPropertyChanged
         }
     }
 
-    private string GetSelectedRole()
+    private bool SetProperty<T>(
+        ref T backingStore,
+        T value,
+        [CallerMemberName] string propertyName = "")
     {
-        return SelectedAccountType == "Chủ quán" ? "poi_owner" : "user";
-    }
-
-    private void ClearFeedback()
-    {
-        ErrorMessage = string.Empty;
-        SuccessMessage = string.Empty;
-    }
-
-    private bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
-    {
-        if (EqualityComparer<T>.Default.Equals(storage, value))
+        if (EqualityComparer<T>.Default.Equals(backingStore, value))
         {
             return false;
         }
 
-        storage = value;
+        backingStore = value;
         OnPropertyChanged(propertyName);
         return true;
     }
 
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    private void OnPropertyChanged([CallerMemberName] string propertyName = "")
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }

@@ -49,4 +49,12 @@ public class ListeningHistoryController : ControllerBase
             ? NoContent()
             : NotFound();
     }
+
+    [HttpDelete("{id:guid}")]
+    public IActionResult Delete(Guid id)
+    {
+        return _repository.Delete(id)
+            ? NoContent()
+            : NotFound();
+    }
 }

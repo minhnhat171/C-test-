@@ -9,6 +9,7 @@ namespace VinhKhanhGuide.App.Services;
 
 public class AuthService : IAuthService
 {
+    private const string GuestRole = "guest";
     private const string UsersPreferenceKey = "vinhkhanh.auth.users.v2";
     private const string LegacyUsersPreferenceKey = "vinhkhanh.auth.users.v1";
     private const string SessionPreferenceKey = "vinhkhanh.auth.session.login.v2";
@@ -36,6 +37,19 @@ public class AuthService : IAuthService
     {
         EnsureDefaultAdminAccount();
         RestoreSession();
+    }
+
+    public Task<AuthResult> ContinueAsGuestAsync()
+    {
+        Preferences.Default.Remove(SessionPreferenceKey);
+        Preferences.Default.Remove(LegacySessionPreferenceKey);
+
+        CurrentSession = CreateGuestSession();
+        SessionChanged?.Invoke(this, EventArgs.Empty);
+
+        return Task.FromResult(AuthResult.Success(
+            CurrentSession,
+            "Đã vào ứng dụng ở chế độ khách tham quan."));
     }
 
     public Task<AuthResult> SignInAsync(string username, string password)
@@ -141,6 +155,49 @@ public class AuthService : IAuthService
             "Đăng ký thành công. Hãy đăng nhập bằng tên đăng nhập vừa tạo."));
     }
 
+    public Task<AuthResult> UpdateCurrentUserProfileAsync(AccountProfileUpdateRequest request)
+    {
+        if (CurrentSession is null || string.Equals(CurrentSession.Role, GuestRole, StringComparison.OrdinalIgnoreCase))
+        {
+            return Task.FromResult(AuthResult.Failure("Chế độ khách tham quan chưa hỗ trợ cập nhật hồ sơ."));
+        }
+
+        var users = LoadUsers();
+        var currentUser = users.FirstOrDefault(user =>
+            user.Id == CurrentSession.UserId ||
+            string.Equals(user.Username, CurrentSession.Username, StringComparison.OrdinalIgnoreCase));
+
+        if (currentUser is null)
+        {
+            return Task.FromResult(AuthResult.Failure("Không tìm thấy hồ sơ người dùng hiện tại."));
+        }
+
+        var normalizedEmail = string.IsNullOrWhiteSpace(request.Email)
+            ? string.Empty
+            : NormalizeEmail(request.Email);
+
+        var emailExists = !string.IsNullOrWhiteSpace(normalizedEmail) &&
+            users.Any(user =>
+                user.Id != currentUser.Id &&
+                string.Equals(user.Email, normalizedEmail, StringComparison.OrdinalIgnoreCase));
+
+        if (emailExists)
+        {
+            return Task.FromResult(AuthResult.Failure("Email này đã được sử dụng bởi tài khoản khác."));
+        }
+
+        currentUser.FullName = request.FullName.Trim();
+        currentUser.Email = normalizedEmail;
+        currentUser.PhoneNumber = NormalizePhoneNumber(request.PhoneNumber);
+
+        SaveUsers(users);
+        SetCurrentSession(currentUser);
+
+        return Task.FromResult(AuthResult.Success(
+            CurrentSession!,
+            "Cập nhật thông tin tài khoản thành công."));
+    }
+
     public Task SignOutAsync()
     {
         CurrentSession = null;
@@ -184,6 +241,19 @@ public class AuthService : IAuthService
         SessionChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    private static AuthSession CreateGuestSession()
+    {
+        return new AuthSession
+        {
+            UserId = Guid.Empty,
+            FullName = "Khách tham quan",
+            Username = "guest",
+            Email = string.Empty,
+            PhoneNumber = string.Empty,
+            Role = GuestRole
+        };
+    }
+
     private static AuthSession ToSession(AuthUser user)
     {
         return new AuthSession
@@ -192,6 +262,7 @@ public class AuthService : IAuthService
             FullName = user.FullName,
             Username = user.Username,
             Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
             Role = user.Role
         };
     }
@@ -204,6 +275,11 @@ public class AuthService : IAuthService
     private static string NormalizeUsername(string username)
     {
         return username.Trim().ToLowerInvariant();
+    }
+
+    private static string NormalizePhoneNumber(string? phoneNumber)
+    {
+        return phoneNumber?.Trim() ?? string.Empty;
     }
 
     private static string NormalizeRole(string? role)
@@ -309,6 +385,7 @@ public class AuthService : IAuthService
             user.FullName = string.IsNullOrWhiteSpace(user.FullName) ? uniqueUsername : user.FullName.Trim();
             user.Username = uniqueUsername;
             user.Email = normalizedEmail;
+            user.PhoneNumber = NormalizePhoneNumber(user.PhoneNumber);
             user.Role = NormalizeRole(user.Role);
             user.CreatedAtUtc = user.CreatedAtUtc == default ? DateTimeOffset.UtcNow : user.CreatedAtUtc;
 

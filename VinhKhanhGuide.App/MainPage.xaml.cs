@@ -133,11 +133,72 @@ public partial class MainPage : ContentPage
         ListeningHistoryOverlay.IsVisible = false;
     }
 
+    private async void OnListeningHistoryItemTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not BindableObject bindable ||
+            bindable.BindingContext is not ListeningHistoryDisplayItem item)
+        {
+            return;
+        }
+
+        await OpenListeningHistoryDetailAsync(item);
+    }
+
+    private async void OnListeningHistoryDetailClicked(object? sender, EventArgs e)
+    {
+        if (sender is not BindableObject bindable ||
+            bindable.BindingContext is not ListeningHistoryDisplayItem item)
+        {
+            return;
+        }
+
+        await OpenListeningHistoryDetailAsync(item);
+    }
+
+    private async void OnReplayListeningHistoryClicked(object? sender, EventArgs e)
+    {
+        if (sender is not BindableObject bindable ||
+            bindable.BindingContext is not ListeningHistoryDisplayItem item)
+        {
+            return;
+        }
+
+        await _viewModel.ReplayListeningHistoryAsync(item.Id);
+        RefreshMapPins(centerOnSelection: false);
+    }
+
+    private async void OnDeleteListeningHistoryClicked(object? sender, EventArgs e)
+    {
+        if (sender is not BindableObject bindable ||
+            bindable.BindingContext is not ListeningHistoryDisplayItem item)
+        {
+            return;
+        }
+
+        var confirmed = await DisplayAlert(
+            "Xóa bản ghi",
+            $"Bạn có muốn xóa bản ghi nghe của {item.PoiName} khỏi lịch sử không?",
+            "Xóa",
+            "Hủy");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var deleted = await _viewModel.DeleteListeningHistoryEntryAsync(item.Id);
+        if (!deleted)
+        {
+            await DisplayAlert("Thông báo", "Không thể xóa bản ghi lịch sử này.", "OK");
+        }
+    }
+
     private void OnOpenUserProfileClicked(object? sender, TappedEventArgs e)
     {
         RestaurantSearchEntry.Unfocus();
         UserProfileOverlay.IsVisible = true;
         ListeningHistoryOverlay.IsVisible = false;
+        _viewModel.ResetAccountProfileEditor();
         _viewModel.RefreshListeningHistoryCommand.Execute(null);
     }
 
@@ -470,10 +531,16 @@ public partial class MainPage : ContentPage
         });
     }
 
-    private async Task OpenPoiDetailAsync(Guid poiId)
+    private async Task OpenPoiDetailAsync(Guid? poiId = null)
     {
-        var selectedPoi = _viewModel.PoiStatuses.FirstOrDefault(item => item.PoiId == poiId);
-        if (selectedPoi is null)
+        if (poiId.HasValue &&
+            _viewModel.SelectedPoiId != poiId.Value &&
+            _viewModel.PoiStatuses.Any(item => item.PoiId == poiId.Value))
+        {
+            _viewModel.SelectPoi(poiId.Value);
+        }
+
+        if (_viewModel.SelectedPoiId is null)
         {
             return;
         }
@@ -500,6 +567,20 @@ public partial class MainPage : ContentPage
         {
             _isNavigatingToPoiDetail = false;
         }
+    }
+
+    private async Task OpenListeningHistoryDetailAsync(ListeningHistoryDisplayItem item)
+    {
+        var canOpen = await _viewModel.OpenListeningHistoryDetailAsync(item.Id);
+        if (!canOpen)
+        {
+            await DisplayAlert("Thông báo", "Không thể mở chi tiết từ bản ghi lịch sử này.", "OK");
+            return;
+        }
+
+        HideSecondaryOverlays();
+        RefreshMapPins(centerOnSelection: false);
+        await OpenPoiDetailAsync();
     }
 
     private static Mapsui.Map CreateMap()

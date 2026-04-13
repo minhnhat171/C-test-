@@ -54,6 +54,38 @@ public class PoiProvider : IPoiProvider
         return ClonePois(FallbackPois);
     }
 
+    public async Task<POI?> GetPoiByIdAsync(Guid poiId, CancellationToken cancellationToken = default)
+    {
+        if (poiId == Guid.Empty)
+        {
+            return null;
+        }
+
+        try
+        {
+            var dto = await _httpClient.GetFromJsonAsync<PoiDto>($"api/pois/{poiId}", cancellationToken);
+            if (dto is not null)
+            {
+                return dto.ToDomain();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load POI {PoiId} from API.", poiId);
+        }
+
+        if (TryGetLastSuccessfulRemotePois(out var cachedPois))
+        {
+            var cachedPoi = cachedPois.FirstOrDefault(item => item.Id == poiId);
+            if (cachedPoi is not null)
+            {
+                return cachedPoi;
+            }
+        }
+
+        return ClonePois(FallbackPois).FirstOrDefault(item => item.Id == poiId);
+    }
+
     private void CacheSuccessfulRemotePois(IReadOnlyList<POI> pois)
     {
         lock (_syncRoot)

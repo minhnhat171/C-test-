@@ -105,6 +105,21 @@ public class ListeningHistoryRepository
         }
     }
 
+    public bool Delete(Guid id)
+    {
+        lock (_syncRoot)
+        {
+            var removed = _items.RemoveAll(item => item.Id == id);
+            if (removed == 0)
+            {
+                return false;
+            }
+
+            SaveUnsafe();
+            return true;
+        }
+    }
+
     private List<ListeningHistoryEntryDto> LoadItems()
     {
         if (!File.Exists(_dataFilePath))
@@ -197,11 +212,19 @@ public class ListeningHistoryRepository
             PoiId = request.PoiId,
             PoiCode = request.PoiCode?.Trim() ?? string.Empty,
             PoiName = request.PoiName?.Trim() ?? string.Empty,
+            PoiAddress = request.PoiAddress?.Trim() ?? string.Empty,
+            PoiDescription = request.PoiDescription?.Trim() ?? string.Empty,
+            PoiSpecialDish = request.PoiSpecialDish?.Trim() ?? string.Empty,
+            PoiImageSource = request.PoiImageSource?.Trim() ?? string.Empty,
+            PoiMapLink = request.PoiMapLink?.Trim() ?? string.Empty,
             UserCode = request.UserCode?.Trim() ?? "guest",
             UserDisplayName = request.UserDisplayName?.Trim() ?? "Khach",
             UserEmail = request.UserEmail?.Trim() ?? string.Empty,
             TriggerType = string.IsNullOrWhiteSpace(request.TriggerType) ? "APP" : request.TriggerType.Trim(),
             Language = string.IsNullOrWhiteSpace(request.Language) ? "vi" : request.Language.Trim(),
+            PlaybackMode = NormalizePlaybackMode(request.PlaybackMode),
+            NarrationSnapshot = request.NarrationSnapshot?.Trim() ?? string.Empty,
+            AudioAssetPath = request.AudioAssetPath?.Trim() ?? string.Empty,
             Source = string.IsNullOrWhiteSpace(request.Source) ? "app" : request.Source.Trim(),
             DevicePlatform = request.DevicePlatform?.Trim() ?? string.Empty,
             AutoTriggered = request.AutoTriggered,
@@ -219,11 +242,19 @@ public class ListeningHistoryRepository
         normalized.Id = normalized.Id == Guid.Empty ? Guid.NewGuid() : normalized.Id;
         normalized.PoiCode ??= string.Empty;
         normalized.PoiName ??= string.Empty;
+        normalized.PoiAddress ??= string.Empty;
+        normalized.PoiDescription ??= string.Empty;
+        normalized.PoiSpecialDish ??= string.Empty;
+        normalized.PoiImageSource ??= string.Empty;
+        normalized.PoiMapLink ??= string.Empty;
         normalized.UserCode = string.IsNullOrWhiteSpace(normalized.UserCode) ? "guest" : normalized.UserCode;
         normalized.UserDisplayName = string.IsNullOrWhiteSpace(normalized.UserDisplayName) ? "Khach" : normalized.UserDisplayName;
         normalized.UserEmail ??= string.Empty;
         normalized.TriggerType = string.IsNullOrWhiteSpace(normalized.TriggerType) ? "APP" : normalized.TriggerType;
         normalized.Language = string.IsNullOrWhiteSpace(normalized.Language) ? "vi" : normalized.Language;
+        normalized.PlaybackMode = NormalizePlaybackMode(normalized.PlaybackMode);
+        normalized.NarrationSnapshot ??= string.Empty;
+        normalized.AudioAssetPath ??= string.Empty;
         normalized.Source = string.IsNullOrWhiteSpace(normalized.Source) ? "app" : normalized.Source;
         normalized.DevicePlatform ??= string.Empty;
         normalized.ErrorMessage ??= string.Empty;
@@ -250,6 +281,15 @@ public class ListeningHistoryRepository
             "time_asc" => "time_asc",
             "oldest" => "time_asc",
             _ => "time_desc"
+        };
+    }
+
+    private static string NormalizePlaybackMode(string? playbackMode)
+    {
+        return playbackMode?.Trim().ToLowerInvariant() switch
+        {
+            "audio" => "audio",
+            _ => "tts"
         };
     }
 

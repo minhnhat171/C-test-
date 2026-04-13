@@ -17,7 +17,7 @@ public partial class App : Application
         _authService = authService;
         _authService.SessionChanged += OnSessionChanged;
 
-        UpdateRootPage();
+        MainPage = CreateAuthRootPage();
     }
 
     private void OnSessionChanged(object? sender, EventArgs e)
