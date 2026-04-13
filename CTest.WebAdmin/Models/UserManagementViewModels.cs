@@ -39,11 +39,11 @@ public class UserSummaryViewModel
         ? LastActiveAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
         : "--";
 
-    public string StatusLabel => IsOnline ? "Online" : "Offline";
+    public string StatusLabel => IsOnline ? "Trực tuyến" : "Ngoại tuyến";
 
     public string StatusBadgeClass => IsOnline ? "text-bg-success" : "text-bg-secondary";
 
-    public string ListenDurationLabel => $"{TotalListenSeconds} giay";
+    public string ListenDurationLabel => $"{TotalListenSeconds} giây";
 }
 
 public class UserDetailViewModel
@@ -79,7 +79,7 @@ public class UserDetailViewModel
         ? LastCompletedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
         : "--";
 
-    public string StatusLabel => IsOnline ? "Online" : "Offline";
+    public string StatusLabel => IsOnline ? "Trực tuyến" : "Ngoại tuyến";
 
     public string StatusBadgeClass => IsOnline ? "text-bg-success" : "text-bg-secondary";
 }

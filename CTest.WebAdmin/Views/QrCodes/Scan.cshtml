@@ -1,0 +1,327 @@
+@model QrScanViewModel
+@using System.Text.Json
+@{
+    Layout = null;
+    var narrationText = string.IsNullOrWhiteSpace(Model.NarrationText)
+        ? Model.Description
+        : Model.NarrationText;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@Model.PoiName - QR Audio Guide</title>
+    <meta name="description" content="@Model.Description" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-top: #fff4d6;
+            --bg-bottom: #f7efe4;
+            --card: rgba(255, 255, 255, 0.92);
+            --ink: #1f2937;
+            --muted: #6b7280;
+            --accent: #c2410c;
+            --accent-dark: #9a3412;
+            --line: rgba(148, 163, 184, 0.18);
+            --shadow: 0 28px 60px rgba(31, 41, 55, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Be Vietnam Pro", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 30%),
+                linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+            display: flex;
+            justify-content: center;
+            padding: 24px 16px 48px;
+        }
+
+        .scan-shell {
+            width: min(100%, 760px);
+        }
+
+        .scan-card {
+            background: var(--card);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .scan-hero {
+            padding: 22px 22px 18px;
+            background:
+                radial-gradient(circle at right top, rgba(251, 191, 36, 0.28), transparent 36%),
+                linear-gradient(135deg, rgba(255, 247, 237, 0.96), rgba(255, 255, 255, 0.96));
+            border-bottom: 1px solid var(--line);
+        }
+
+        .scan-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 237, 213, 0.95);
+            color: var(--accent-dark);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .scan-title {
+            margin: 14px 0 8px;
+            font-size: clamp(1.9rem, 1.45rem + 2vw, 2.8rem);
+            line-height: 1.06;
+            letter-spacing: -0.04em;
+        }
+
+        .scan-description {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        .scan-body {
+            padding: 22px;
+            display: grid;
+            gap: 16px;
+        }
+
+        .scan-panel {
+            border-radius: 22px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 18px;
+        }
+
+        .scan-panel-label {
+            margin: 0 0 10px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .scan-text {
+            margin: 0;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .scan-meta {
+            display: grid;
+            gap: 12px;
+        }
+
+        .scan-meta-item {
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: #fffaf2;
+            border: 1px solid rgba(251, 191, 36, 0.18);
+        }
+
+        .scan-meta-label {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+        }
+
+        .scan-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .scan-btn {
+            appearance: none;
+            border: 0;
+            border-radius: 999px;
+            padding: 14px 18px;
+            font: inherit;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+
+        .scan-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .scan-btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, #ea580c 100%);
+            color: white;
+            box-shadow: 0 18px 30px rgba(194, 65, 12, 0.22);
+        }
+
+        .scan-btn-secondary {
+            background: #fff7ed;
+            color: var(--accent-dark);
+            border: 1px solid rgba(194, 65, 12, 0.16);
+        }
+
+        .scan-link {
+            color: var(--accent-dark);
+            word-break: break-all;
+        }
+
+        .scan-note {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        @@media (max-width: 640px) {
+            body {
+                padding-inline: 12px;
+            }
+
+            .scan-hero,
+            .scan-body {
+                padding: 18px;
+            }
+
+            .scan-actions {
+                display: grid;
+            }
+
+            .scan-btn {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="scan-shell">
+        <section class="scan-card">
+            <header class="scan-hero">
+                <div class="scan-badge">QR Audio Guide</div>
+                <h1 class="scan-title">@Model.PoiName</h1>
+                <p class="scan-description">@Model.Description</p>
+            </header>
+
+            <div class="scan-body">
+                <section class="scan-panel">
+                    <p class="scan-panel-label">Nghe thuyet minh</p>
+                    <div class="scan-actions">
+                        <button type="button" class="scan-btn scan-btn-primary" id="speakBtn">Nghe ngay</button>
+                        <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">Dung doc</button>
+                        @if (!string.IsNullOrWhiteSpace(Model.MapLink))
+                        {
+                            <a class="scan-btn scan-btn-secondary" href="@Model.MapLink" target="_blank" rel="noopener noreferrer">Mo ban do</a>
+                        }
+                    </div>
+                    <p class="scan-note" id="speechStatus">Trang se thu doc noi dung tu dong sau khi mo.</p>
+                </section>
+
+                <section class="scan-panel">
+                    <p class="scan-panel-label">Noi dung thuyet minh</p>
+                    <p class="scan-text">@narrationText</p>
+                </section>
+
+                <section class="scan-meta">
+                    @if (!string.IsNullOrWhiteSpace(Model.Address))
+                    {
+                        <div class="scan-meta-item">
+                            <span class="scan-meta-label">Dia chi</span>
+                            <div>@Model.Address</div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model.SpecialDish))
+                    {
+                        <div class="scan-meta-item">
+                            <span class="scan-meta-label">Mon goi y</span>
+                            <div>@Model.SpecialDish</div>
+                        </div>
+                    }
+
+                    <div class="scan-meta-item">
+                        <span class="scan-meta-label">Ma diem</span>
+                        <div>@Model.PoiCode</div>
+                    </div>
+
+                    <div class="scan-meta-item">
+                        <span class="scan-meta-label">Link cong khai</span>
+                        <a class="scan-link" href="@Model.PublicUrl">@Model.PublicUrl</a>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        (() => {
+            const narrationText = @Html.Raw(JsonSerializer.Serialize(narrationText));
+            const status = document.getElementById("speechStatus");
+            const speakBtn = document.getElementById("speakBtn");
+            const stopBtn = document.getElementById("stopBtn");
+
+            const updateStatus = (message) => {
+                if (status) {
+                    status.textContent = message;
+                }
+            };
+
+            const stopSpeaking = () => {
+                if (!("speechSynthesis" in window)) {
+                    updateStatus("Trinh duyet nay khong ho tro doc tu dong.");
+                    return;
+                }
+
+                window.speechSynthesis.cancel();
+                updateStatus("Da dung phat thuyet minh.");
+            };
+
+            const speak = () => {
+                if (!narrationText || !narrationText.trim()) {
+                    updateStatus("Chua co noi dung thuyet minh de phat.");
+                    return;
+                }
+
+                if (!("speechSynthesis" in window)) {
+                    updateStatus("Trinh duyet nay khong ho tro speech synthesis.");
+                    return;
+                }
+
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(narrationText);
+                utterance.lang = "vi-VN";
+                utterance.rate = 1;
+                utterance.onstart = () => updateStatus("Dang phat thuyet minh...");
+                utterance.onend = () => updateStatus("Da phat xong. Ban co the bam Nghe ngay de nghe lai.");
+                utterance.onerror = () => updateStatus("Khong the phat tu dong. Thu bam Nghe ngay mot lan nua.");
+
+                window.speechSynthesis.speak(utterance);
+            };
+
+            speakBtn?.addEventListener("click", speak);
+            stopBtn?.addEventListener("click", stopSpeaking);
+
+            window.addEventListener("beforeunload", stopSpeaking);
+            window.setTimeout(speak, 600);
+        })();
+    </script>
+</body>
+</html>

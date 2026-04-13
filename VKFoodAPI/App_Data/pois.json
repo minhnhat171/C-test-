@@ -8,7 +8,7 @@
     "Address": "534 Vĩnh Khánh, P. Khánh Hội, Q.4",
     "Description": "Ốc Oanh là một trong những quán ốc nổi tiếng nhất trên phố ẩm thực Vĩnh Khánh, đông khách từ chiều đến tối.",
     "SpecialDish": "Ốc hương xào bơ tỏi, ốc len xào dừa, sò điệp nướng mỡ hành",
-    "NarrationText": "Bạn đang ở gần quán Ốc Oanh. Đây là một trong những quán ốc nổi tiếng nhất trên phố ẩm thực Vĩnh Khánh, nổi bật với ốc hương xào bơ tỏi, ốc len xào dừa và sò điệp nướng mỡ hành.",
+    "NarrationText": "Bạn đang ở gần quán Ốc Oanh. Đây là một trong những quán ốc nổi tiếng nhất trên phố ẩm thực Vĩnh Khánh, nổi bật với ốc hương xào bơ tỏi, ốc len xào dừa và sò điệp nướng mỡ hành. thơm ngon",
     "MapLink": "https://maps.google.com/?q=10.7607247,106.7007223",
     "AudioAssetPath": "",
     "Priority": 10,
@@ -18,7 +18,7 @@
     "CooldownMinutes": 6,
     "IsActive": true,
     "NarrationTranslations": {
-      "vi": "Bạn đang ở gần quán Ốc Oanh. Đây là một trong những quán ốc nổi tiếng nhất trên phố ẩm thực Vĩnh Khánh, nổi bật với ốc hương xào bơ tỏi, ốc len xào dừa và sò điệp nướng mỡ hành.",
+      "vi": "Bạn đang ở gần quán Ốc Oanh. Đây là một trong những quán ốc nổi tiếng nhất trên phố ẩm thực Vĩnh Khánh, nổi bật với ốc hương xào bơ tỏi, ốc len xào dừa và sò điệp nướng mỡ hành. thơm ngon",
       "en": "You are near Ốc Oanh. Address: 534 Vĩnh Khánh, P. Khánh Hội, Q.4. Signature dishes: Ốc hương xào bơ tỏi, ốc len xào dừa, sò điệp nướng mỡ hành.",
       "zh": "您正在靠近 Ốc Oanh。地址：534 Vĩnh Khánh, P. Khánh Hội, Q.4。推荐菜品：Ốc hương xào bơ tỏi, ốc len xào dừa, sò điệp nướng mỡ hành。",
       "ko": "지금 Ốc Oanh 근처에 있습니다. 주소는 534 Vĩnh Khánh, P. Khánh Hội, Q.4이며 추천 메뉴는 Ốc hương xào bơ tỏi, ốc len xào dừa, sò điệp nướng mỡ hành 입니다.",

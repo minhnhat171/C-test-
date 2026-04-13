@@ -1,109 +1,109 @@
 @model ListeningHistoryPageViewModel
 @{
-    ViewData["Title"] = "Lich su nghe";
+    ViewData["Title"] = "Lịch sử nghe";
 }
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
     <div>
-        <h2 class="mb-1">Lich su nghe</h2>
+        <h2 class="mb-1">Lịch sử nghe</h2>
         <div class="text-muted">
-            Theo doi luot nghe tu app, sap xep theo thoi gian, loc theo ngay / tuan / thang
-            va xem xep hang POI duoc nghe nhieu nhat.
+            Theo dõi lượt nghe từ app, sắp xếp theo thời gian, lọc theo ngày / tuần / tháng
+            và xem xếp hạng POI được nghe nhiều nhất.
         </div>
     </div>
-    <div class="small text-muted" id="refresh-status">Tu dong cap nhat moi 8 giay</div>
+    <div class="small text-muted" id="refresh-status">Tự động cập nhật mỗi 8 giây</div>
 </div>
 
 <form id="history-filter-form" asp-controller="Analytics" asp-action="ListeningHistory" method="get" class="card shadow-sm mb-4">
     <div class="card-body">
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label fw-semibold" for="period">Moc thoi gian</label>
+                <label class="form-label fw-semibold" for="period">Mốc thời gian</label>
                 <select class="form-select" id="period" name="period">
                     @if (Model.SelectedPeriod == "all")
                     {
-                        <option value="all" selected>Tat ca</option>
+                        <option value="all" selected>Tất cả</option>
                     }
                     else
                     {
-                        <option value="all">Tat ca</option>
+                        <option value="all">Tất cả</option>
                     }
 
                     @if (Model.SelectedPeriod == "day")
                     {
-                        <option value="day" selected>24 gio qua</option>
+                        <option value="day" selected>24 giờ qua</option>
                     }
                     else
                     {
-                        <option value="day">24 gio qua</option>
+                        <option value="day">24 giờ qua</option>
                     }
 
                     @if (Model.SelectedPeriod == "week")
                     {
-                        <option value="week" selected>7 ngay qua</option>
+                        <option value="week" selected>7 ngày qua</option>
                     }
                     else
                     {
-                        <option value="week">7 ngay qua</option>
+                        <option value="week">7 ngày qua</option>
                     }
 
                     @if (Model.SelectedPeriod == "month")
                     {
-                        <option value="month" selected>30 ngay qua</option>
+                        <option value="month" selected>30 ngày qua</option>
                     }
                     else
                     {
-                        <option value="month">30 ngay qua</option>
+                        <option value="month">30 ngày qua</option>
                     }
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label fw-semibold" for="sortBy">Sap xep</label>
+                <label class="form-label fw-semibold" for="sortBy">Sắp xếp</label>
                 <select class="form-select" id="sortBy" name="sortBy">
                     @if (Model.SelectedSortBy == "time_desc")
                     {
-                        <option value="time_desc" selected>Moi nhat truoc</option>
+                        <option value="time_desc" selected>Mới nhất trước</option>
                     }
                     else
                     {
-                        <option value="time_desc">Moi nhat truoc</option>
+                        <option value="time_desc">Mới nhất trước</option>
                     }
 
                     @if (Model.SelectedSortBy == "time_asc")
                     {
-                        <option value="time_asc" selected>Cu nhat truoc</option>
+                        <option value="time_asc" selected>Cũ nhất trước</option>
                     }
                     else
                     {
-                        <option value="time_asc">Cu nhat truoc</option>
+                        <option value="time_asc">Cũ nhất trước</option>
                     }
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label fw-semibold" for="view">Man hinh chinh</label>
+                <label class="form-label fw-semibold" for="view">Chế độ xem</label>
                 <select class="form-select" id="view" name="view">
                     @if (Model.SelectedView == "timeline")
                     {
-                        <option value="timeline" selected>Dong thoi gian</option>
+                        <option value="timeline" selected>Dòng thời gian</option>
                     }
                     else
                     {
-                        <option value="timeline">Dong thoi gian</option>
+                        <option value="timeline">Dòng thời gian</option>
                     }
 
                     @if (Model.SelectedView == "ranking")
                     {
-                        <option value="ranking" selected>Xep hang POI</option>
+                        <option value="ranking" selected>Xếp hạng POI</option>
                     }
                     else
                     {
-                        <option value="ranking">Xep hang POI</option>
+                        <option value="ranking">Xếp hạng POI</option>
                     }
                 </select>
             </div>
             <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary flex-grow-1">Cap nhat</button>
-                <a class="btn btn-outline-secondary" asp-controller="Analytics" asp-action="ListeningHistory">Dat lai</a>
+                <button type="submit" class="btn btn-primary flex-grow-1">Cập nhật</button>
+                <a class="btn btn-outline-secondary" asp-controller="Analytics" asp-action="ListeningHistory">Đặt lại</a>
             </div>
         </div>
     </div>
@@ -139,11 +139,11 @@
                     container.innerHTML = await response.text();
 
                     if (refreshStatus) {
-                        refreshStatus.textContent = `Tu dong cap nhat luc ${new Date().toLocaleTimeString("vi-VN")}`;
+                        refreshStatus.textContent = `Tự động cập nhật lúc ${new Date().toLocaleTimeString("vi-VN")}`;
                     }
                 } catch {
                     if (refreshStatus) {
-                        refreshStatus.textContent = "Dang cho API hoac app gui du lieu moi...";
+                        refreshStatus.textContent = "Đang chờ API hoặc app gửi dữ liệu mới...";
                     }
                 }
             }

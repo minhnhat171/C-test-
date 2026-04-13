@@ -46,7 +46,7 @@ public class ListeningHistoryService
                 TotalSessions = timelineItems.Count,
                 CompletedSessions = timelineItems.Count(item => item.Completed),
                 TotalListenSeconds = timelineItems.Sum(item => item.ListenSeconds),
-                MostPlayedPoi = rankingItems.FirstOrDefault()?.PoiName ?? "Chua co du lieu"
+                MostPlayedPoi = rankingItems.FirstOrDefault()?.PoiName ?? "Chưa có dữ liệu"
             };
         }
         catch (Exception ex) when (
@@ -59,7 +59,7 @@ public class ListeningHistoryService
                 SelectedSortBy = normalizedSortBy,
                 SelectedPeriod = normalizedPeriod,
                 SelectedView = normalizedView,
-                LoadErrorMessage = $"Khong tai duoc lich su nghe tu API: {ex.Message}"
+                LoadErrorMessage = $"Không tải được lịch sử nghe từ API: {ex.Message}"
             };
         }
     }

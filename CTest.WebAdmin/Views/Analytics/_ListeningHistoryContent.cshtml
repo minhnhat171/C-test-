@@ -11,7 +11,7 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small mb-1">Tong luot nghe</div>
+                <div class="text-muted small mb-1">Tổng lượt nghe</div>
                 <div class="display-6">@Model.TotalSessions</div>
             </div>
         </div>
@@ -19,7 +19,7 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small mb-1">Hoan tat</div>
+                <div class="text-muted small mb-1">Hoàn tất</div>
                 <div class="display-6">@Model.CompletedSessions</div>
             </div>
         </div>
@@ -27,7 +27,7 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small mb-1">Ty le hoan tat</div>
+                <div class="text-muted small mb-1">Tỷ lệ hoàn tất</div>
                 <div class="display-6">@Model.CompletionRate%</div>
             </div>
         </div>
@@ -35,9 +35,9 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small mb-1">Nghe nhieu nhat</div>
+                <div class="text-muted small mb-1">Nghe nhiều nhất</div>
                 <div class="fw-bold fs-5">@Model.MostPlayedPoi</div>
-                <div class="small text-muted mt-2">Tong @Model.TotalListenSeconds giay nghe trong bo loc hien tai</div>
+                <div class="small text-muted mt-2">Tổng @Model.TotalListenSeconds giây nghe trong bộ lọc hiện tại</div>
             </div>
         </div>
     </div>
@@ -46,24 +46,24 @@
 @if (Model.SelectedView == "ranking")
 {
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white fw-semibold">Xep hang POI duoc nghe nhieu nhat</div>
+        <div class="card-header bg-white fw-semibold">Xếp hạng POI được nghe nhiều nhất</div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th style="width: 80px;">Top</th>
+                        <th style="width: 80px;">Hạng</th>
                         <th>POI</th>
-                        <th style="width: 140px;">Luot nghe</th>
-                        <th style="width: 140px;">Hoan tat</th>
-                        <th style="width: 160px;">Tong thoi gian</th>
-                        <th style="width: 180px;">Lan cuoi</th>
+                        <th style="width: 140px;">Lượt nghe</th>
+                        <th style="width: 140px;">Hoàn tất</th>
+                        <th style="width: 160px;">Tổng thời gian</th>
+                        <th style="width: 180px;">Lần cuối</th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.RankingItems.Count == 0)
                 {
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">Chua co du lieu nghe tu app trong bo loc hien tai.</td>
+                        <td colspan="6" class="text-center text-muted py-4">Chưa có dữ liệu nghe từ app trong bộ lọc hiện tại.</td>
                     </tr>
                 }
                 else
@@ -93,25 +93,25 @@
     </div>
 
     <div class="card shadow-sm">
-        <div class="card-header bg-white fw-semibold">Dong thoi gian nghe</div>
+        <div class="card-header bg-white fw-semibold">Dòng thời gian nghe</div>
         <div class="table-responsive">
             <table class="table table-striped align-middle mb-0">
                 <thead>
                     <tr>
-                        <th style="width: 180px;">Bat dau</th>
+                        <th style="width: 180px;">Bắt đầu</th>
                         <th>POI</th>
-                        <th style="width: 180px;">Nguoi nghe</th>
-                        <th style="width: 110px;">Kich hoat</th>
-                        <th style="width: 110px;">Ngon ngu</th>
-                        <th style="width: 150px;">Thoi gian</th>
-                        <th style="width: 150px;">Trang thai</th>
+                        <th style="width: 180px;">Người nghe</th>
+                        <th style="width: 110px;">Kích hoạt</th>
+                        <th style="width: 110px;">Ngôn ngữ</th>
+                        <th style="width: 150px;">Thời gian</th>
+                        <th style="width: 150px;">Trạng thái</th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.TimelineItems.Count == 0)
                 {
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">Chua co luot nghe nao duoc dong bo.</td>
+                        <td colspan="7" class="text-center text-muted py-4">Chưa có lượt nghe nào được đồng bộ.</td>
                     </tr>
                 }
                 else
@@ -127,7 +127,7 @@
                         <tr>
                             <td>
                                 <div>@item.StartedAtDisplay</div>
-                                <div class="small text-muted">Ket thuc: @item.CompletedAtDisplay</div>
+                                <div class="small text-muted">Kết thúc: @item.CompletedAtDisplay</div>
                             </td>
                             <td>
                                 <div class="fw-semibold">@item.PoiName</div>
@@ -161,25 +161,25 @@
 else
 {
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white fw-semibold">Dong thoi gian nghe</div>
+        <div class="card-header bg-white fw-semibold">Dòng thời gian nghe</div>
         <div class="table-responsive">
             <table class="table table-striped align-middle mb-0">
                 <thead>
                     <tr>
-                        <th style="width: 180px;">Bat dau</th>
+                        <th style="width: 180px;">Bắt đầu</th>
                         <th>POI</th>
-                        <th style="width: 180px;">Nguoi nghe</th>
-                        <th style="width: 110px;">Kich hoat</th>
-                        <th style="width: 110px;">Ngon ngu</th>
-                        <th style="width: 150px;">Thoi gian</th>
-                        <th style="width: 150px;">Trang thai</th>
+                        <th style="width: 180px;">Người nghe</th>
+                        <th style="width: 110px;">Kích hoạt</th>
+                        <th style="width: 110px;">Ngôn ngữ</th>
+                        <th style="width: 150px;">Thời gian</th>
+                        <th style="width: 150px;">Trạng thái</th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.TimelineItems.Count == 0)
                 {
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">Chua co luot nghe nao duoc dong bo.</td>
+                        <td colspan="7" class="text-center text-muted py-4">Chưa có lượt nghe nào được đồng bộ.</td>
                     </tr>
                 }
                 else
@@ -195,7 +195,7 @@ else
                         <tr>
                             <td>
                                 <div>@item.StartedAtDisplay</div>
-                                <div class="small text-muted">Ket thuc: @item.CompletedAtDisplay</div>
+                                <div class="small text-muted">Kết thúc: @item.CompletedAtDisplay</div>
                             </td>
                             <td>
                                 <div class="fw-semibold">@item.PoiName</div>
@@ -227,24 +227,24 @@ else
     </div>
 
     <div class="card shadow-sm">
-        <div class="card-header bg-white fw-semibold">Xep hang POI duoc nghe nhieu nhat</div>
+        <div class="card-header bg-white fw-semibold">Xếp hạng POI được nghe nhiều nhất</div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th style="width: 80px;">Top</th>
+                        <th style="width: 80px;">Hạng</th>
                         <th>POI</th>
-                        <th style="width: 140px;">Luot nghe</th>
-                        <th style="width: 140px;">Hoan tat</th>
-                        <th style="width: 160px;">Tong thoi gian</th>
-                        <th style="width: 180px;">Lan cuoi</th>
+                        <th style="width: 140px;">Lượt nghe</th>
+                        <th style="width: 140px;">Hoàn tất</th>
+                        <th style="width: 160px;">Tổng thời gian</th>
+                        <th style="width: 180px;">Lần cuối</th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.RankingItems.Count == 0)
                 {
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">Chua co du lieu nghe tu app trong bo loc hien tai.</td>
+                        <td colspan="6" class="text-center text-muted py-4">Chưa có dữ liệu nghe từ app trong bộ lọc hiện tại.</td>
                     </tr>
                 }
                 else

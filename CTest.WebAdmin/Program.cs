@@ -1,4 +1,5 @@
 using CTest.WebAdmin.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 var poiApiBaseUrl = builder.Configuration["PoiApi:BaseUrl"] ?? "http://localhost:5287/";
@@ -26,6 +27,11 @@ builder.Services.AddScoped<UserManagementService>();
 builder.Services.AddScoped<PoiValidationService>();
 
 var app = builder.Build();
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
+});
 
 if (!app.Environment.IsDevelopment())
 {

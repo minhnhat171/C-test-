@@ -121,12 +121,30 @@ public class QrCodeItemViewModel
     public string PoiCode { get; set; } = string.Empty;
     public string PoiName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
     public string ActivationType { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public string Payload { get; set; } = string.Empty;
+    public string PublicUrl { get; set; } = string.Empty;
+    public string NarrationText { get; set; } = string.Empty;
+    public string MapLink { get; set; } = string.Empty;
+    public string SpecialDish { get; set; } = string.Empty;
 
     public string DisplayId =>
         PoiId == Guid.Empty
             ? "N/A"
             : PoiId.ToString("N")[..8].ToUpperInvariant();
+}
+
+public class QrScanViewModel
+{
+    public Guid PoiId { get; set; }
+    public string PoiCode { get; set; } = string.Empty;
+    public string PoiName { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string NarrationText { get; set; } = string.Empty;
+    public string MapLink { get; set; } = string.Empty;
+    public string SpecialDish { get; set; } = string.Empty;
+    public string PublicUrl { get; set; } = string.Empty;
 }

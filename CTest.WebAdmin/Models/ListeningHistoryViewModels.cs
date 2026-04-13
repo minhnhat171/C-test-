@@ -9,7 +9,7 @@ public class ListeningHistoryPageViewModel
     public int TotalSessions { get; set; }
     public int CompletedSessions { get; set; }
     public int TotalListenSeconds { get; set; }
-    public string MostPlayedPoi { get; set; } = "Chua co du lieu";
+    public string MostPlayedPoi { get; set; } = "Chưa có dữ liệu";
     public List<ListeningHistoryItemViewModel> TimelineItems { get; set; } = new();
     public List<PoiListeningRankingItemViewModel> RankingItems { get; set; } = new();
 
@@ -43,7 +43,7 @@ public class ListeningHistoryItemViewModel
         ? CompletedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
         : "--";
 
-    public string DurationLabel => $"{ListenSeconds} giay";
+    public string DurationLabel => $"{ListenSeconds} giây";
 
     public string StatusLabel
     {
@@ -51,12 +51,12 @@ public class ListeningHistoryItemViewModel
         {
             if (Completed)
             {
-                return "Hoan tat";
+                return "Hoàn tất";
             }
 
             return string.IsNullOrWhiteSpace(ErrorMessage)
-                ? "Dang nghe / Dung som"
-                : "Dung vi loi";
+                ? "Đang nghe / dừng sớm"
+                : "Dừng vì lỗi";
         }
     }
 }
@@ -75,7 +75,7 @@ public class PoiListeningRankingItemViewModel
         ? "0%"
         : $"{Math.Round(CompletedCount * 100.0 / ListenCount):0}%";
 
-    public string TotalListenLabel => $"{TotalListenSeconds} giay";
+    public string TotalListenLabel => $"{TotalListenSeconds} giây";
 
     public string LastStartedAtDisplay => LastStartedAtUtc.HasValue
         ? LastStartedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")

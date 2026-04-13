@@ -129,6 +129,17 @@
         line-height: 1.6;
     }
 
+    .qr-link-box {
+        border-radius: 18px;
+        background: rgba(255,255,255,0.8);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        padding: 0.9rem;
+    }
+
+    .qr-link-box code {
+        word-break: break-all;
+    }
+
     @@media (max-width: 1199.98px) {
         .qr-layout {
             grid-template-columns: 1fr;
@@ -178,6 +189,8 @@
                                     <a asp-action="Index" asp-route-selectedPoiId="@item.PoiId" class="btn btn-outline-primary btn-sm rounded-pill">Tạo QR</a>
                                     <button type="button" class="btn btn-outline-success btn-sm rounded-pill js-download-qr" data-target="qr-svg-@item.PoiId">Tải QR PNG</button>
                                     <button type="button" class="btn btn-outline-dark btn-sm rounded-pill" onclick="window.print()">In QR</button>
+                                    <a href="@item.PublicUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm rounded-pill">Test link</a>
+                                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill js-copy-link" data-url="@item.PublicUrl">Copy link</button>
                                 </div>
                             </td>
                         </tr>
@@ -194,6 +207,15 @@
                     <div class="qr-preview-card">
                         <div class="qr-preview-kicker">Preview</div>
                         <div class="qr-preview-title">@Model.SelectedItem.PoiName</div>
+                        <div class="qr-link-box mt-3">
+                            <div class="small text-uppercase fw-bold text-secondary mb-2">Public QR link</div>
+                            <code>@Model.SelectedItem.PublicUrl</code>
+                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                <a href="@Model.SelectedItem.PublicUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm rounded-pill">Mo link cong khai</a>
+                                <button type="button" class="btn btn-outline-dark btn-sm rounded-pill js-copy-link" data-url="@Model.SelectedItem.PublicUrl">Copy link</button>
+                            </div>
+                            <div class="small text-muted mt-2">Dung link nay khi tao QR tren me-qr.</div>
+                        </div>
                         <div class="qr-meta mt-2">Quét để nghe ngay. Payload demo: <code>@Model.SelectedItem.Payload</code></div>
 
                         <div class="qr-svg-wrap">
@@ -203,7 +225,7 @@
                                 {
                                     for (var col = 0; col < 21; col++)
                                     {
-                                        if (ShouldFillCell(Model.SelectedItem.Payload, row, col))
+                                        if (ShouldFillCell(Model.SelectedItem.PublicUrl, row, col))
                                         {
                                             <rect x="@(col * 10)" y="@(row * 10)" width="10" height="10" fill="#0f172a"></rect>
                                         }
@@ -213,11 +235,16 @@
                         </div>
 
                         <div class="qr-meta">@Model.SelectedItem.Description</div>
+                        @if (!string.IsNullOrWhiteSpace(Model.SelectedItem.Address))
+                        {
+                            <div class="qr-meta mt-2">Dia chi: @Model.SelectedItem.Address</div>
+                        }
 
                         <div class="d-flex flex-wrap gap-2 mt-3">
                             <a asp-controller="Pois" asp-action="Details" asp-route-id="@Model.SelectedItem.PoiId" class="btn btn-outline-primary rounded-pill px-4">Xem POI</a>
                             <button type="button" class="btn btn-success rounded-pill px-4 js-download-qr" data-target="qr-svg-@Model.SelectedItem.PoiId">Tải PNG</button>
                             <button type="button" class="btn btn-dark rounded-pill px-4" onclick="window.print()">In QR</button>
+                            <a href="@Model.SelectedItem.PublicUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary rounded-pill px-4">Test link</a>
                         </div>
                     </div>
                 }
@@ -265,6 +292,24 @@
             document.querySelectorAll(".js-download-qr").forEach((button) => {
                 button.addEventListener("click", () => {
                     downloadSvgAsPng(button.dataset.target);
+                });
+            });
+
+            document.querySelectorAll(".js-copy-link").forEach((button) => {
+                button.addEventListener("click", async () => {
+                    const { url } = button.dataset;
+                    if (!url) return;
+
+                    try {
+                        await navigator.clipboard.writeText(url);
+                        const originalText = button.textContent;
+                        button.textContent = "Da copy";
+                        window.setTimeout(() => {
+                            button.textContent = originalText;
+                        }, 1600);
+                    } catch {
+                        window.prompt("Copy link nay de dua vao me-qr:", url);
+                    }
                 });
             });
         })();

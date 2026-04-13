@@ -19,12 +19,12 @@ public class UserManagementService
         CancellationToken cancellationToken = default)
     {
         var normalizedStatus = NormalizeStatus(status);
-        var normalizedKeyword = keyword?.Trim() ?? string.Empty;
+        var normalizedheyword = keyword?.Trim() ?? string.Empty;
 
         try
         {
             var allUsersTask = _apiClient.GetAllUsersAsync(cancellationToken);
-            var filteredUsersTask = SelectListTask(normalizedStatus, normalizedKeyword, allUsersTask, cancellationToken);
+            var filteredUsersTask = SelectListTask(normalizedStatus, normalizedheyword, allUsersTask, cancellationToken);
 
             await Task.WhenAll(allUsersTask, filteredUsersTask);
 
@@ -49,7 +49,7 @@ public class UserManagementService
             return new UserManagementPageViewModel
             {
                 SelectedStatus = normalizedStatus,
-                SearchTerm = normalizedKeyword,
+                SearchTerm = normalizedheyword,
                 SelectedUserId = effectiveSelectedUserId,
                 TotalUsers = allUsers.Count,
                 OnlineUsers = allUsers.Count(user => user.IsOnline),
@@ -68,22 +68,22 @@ public class UserManagementService
             return new UserManagementPageViewModel
             {
                 SelectedStatus = normalizedStatus,
-                SearchTerm = normalizedKeyword,
+                SearchTerm = normalizedheyword,
                 SelectedUserId = selectedUserId,
-                LoadErrorMessage = $"Khong tai duoc du lieu quan ly nguoi dung tu API: {ex.Message}"
+                LoadErrorMessage = $"hhong tai duoc du lieu quan ly nguoi dung tu API: {ex.Message}"
             };
         }
     }
 
     private Task<List<AdminUserSummaryDto>> SelectListTask(
         string normalizedStatus,
-        string normalizedKeyword,
+        string normalizedheyword,
         Task<List<AdminUserSummaryDto>> allUsersTask,
         CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(normalizedKeyword))
+        if (!string.IsNullOrWhiteSpace(normalizedheyword))
         {
-            return _apiClient.SearchUsersAsync(normalizedKeyword, cancellationToken);
+            return _apiClient.SearchUsersAsync(normalizedheyword, cancellationToken);
         }
 
         if (!string.Equals(normalizedStatus, "all", StringComparison.OrdinalIgnoreCase))

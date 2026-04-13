@@ -11,7 +11,7 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small mb-1">Tong nguoi dung</div>
+                <div class="text-muted small mb-1">Tổng người dùng</div>
                 <div class="display-6">@Model.TotalUsers</div>
             </div>
         </div>
@@ -19,7 +19,7 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small mb-1">Dang online</div>
+                <div class="text-muted small mb-1">Trực tuyến</div>
                 <div class="display-6 text-success">@Model.OnlineUsers</div>
             </div>
         </div>
@@ -27,7 +27,7 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small mb-1">Dang offline</div>
+                <div class="text-muted small mb-1">Ngoại tuyến</div>
                 <div class="display-6 text-secondary">@Model.OfflineUsers</div>
             </div>
         </div>
@@ -35,7 +35,7 @@
     <div class="col-md-6 col-xl-3">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small mb-1">Ket qua hien tai</div>
+                <div class="text-muted small mb-1">Kết quả hiện tại</div>
                 <div class="display-6">@Model.FilteredUsers</div>
             </div>
         </div>
@@ -46,7 +46,7 @@
     <div class="col-xl-5">
         <div class="card shadow-sm">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <span class="fw-semibold">Danh sach nguoi dung</span>
+                <span class="fw-semibold">Danh sách người dùng</span>
                 @if (Model.HasFilters)
                 {
                     <span class="badge text-bg-light">@Model.FilteredUsers / @Model.TotalUsers</span>
@@ -56,16 +56,16 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Nguoi dung</th>
-                            <th style="width: 110px;">Trang thai</th>
-                            <th style="width: 130px;">Lan cuoi</th>
+                            <th>Người dùng</th>
+                            <th style="width: 110px;">Trạng thái</th>
+                            <th style="width: 130px;">Lần cuối</th>
                         </tr>
                     </thead>
                     <tbody>
                     @if (Model.Items.Count == 0)
                     {
                         <tr>
-                            <td colspan="3" class="text-center text-muted py-4">Khong tim thay nguoi dung phu hop.</td>
+                            <td colspan="3" class="text-center text-muted py-4">Không tìm thấy người dùng phù hợp.</td>
                         </tr>
                     }
                     else
@@ -88,11 +88,11 @@
                                     </div>
                                     <div class="small text-muted">@item.UserCode | @item.Email</div>
                                     <div class="small text-muted">@item.Role | @(string.IsNullOrWhiteSpace(item.DevicePlatform) ? "--" : item.DevicePlatform)</div>
-                                    <div class="small text-muted">POI gan nhat: @(string.IsNullOrWhiteSpace(item.LastPoiName) ? "--" : item.LastPoiName)</div>
+                                    <div class="small text-muted">POI gần nhất: @(string.IsNullOrWhiteSpace(item.LastPoiName) ? "--" : item.LastPoiName)</div>
                                 </td>
                                 <td>
                                     <span class="badge @item.StatusBadgeClass">@item.StatusLabel</span>
-                                    <div class="small text-muted mt-2">@item.TotalSessions phien</div>
+                                    <div class="small text-muted mt-2">@item.TotalSessions phiên</div>
                                 </td>
                                 <td>
                                     <div>@item.LastActiveDisplay</div>
@@ -109,10 +109,10 @@
 
     <div class="col-xl-7">
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white fw-semibold">Ho so chi tiet nguoi dung</div>
+            <div class="card-header bg-white fw-semibold">Hồ sơ chi tiết người dùng</div>
             @if (Model.SelectedUser is null)
             {
-                <div class="card-body text-muted">Chon mot nguoi dung trong danh sach de xem chi tiet.</div>
+                <div class="card-body text-muted">Chọn một người dùng trong danh sách để xem chi tiết.</div>
             }
             else
             {
@@ -129,44 +129,44 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <div class="border rounded-4 p-3 h-100">
-                                <div class="small text-muted mb-2">Thong tin chung</div>
-                                <div><span class="fw-semibold">Vai tro:</span> @detail.Role</div>
-                                <div><span class="fw-semibold">Ngon ngu uu tien:</span> @detail.PreferredLanguage</div>
-                                <div><span class="fw-semibold">So dien thoai:</span> @(string.IsNullOrWhiteSpace(detail.PhoneNumber) ? "--" : detail.PhoneNumber)</div>
-                                <div><span class="fw-semibold">Tao luc:</span> @detail.CreatedAtDisplay</div>
+                                <div class="small text-muted mb-2">Thông tin chung</div>
+                                <div><span class="fw-semibold">Vai trò:</span> @detail.Role</div>
+                                <div><span class="fw-semibold">Ngôn ngữ ưu tiên:</span> @detail.PreferredLanguage</div>
+                                <div><span class="fw-semibold">Số điện thoại:</span> @(string.IsNullOrWhiteSpace(detail.PhoneNumber) ? "--" : detail.PhoneNumber)</div>
+                                <div><span class="fw-semibold">Tạo lúc:</span> @detail.CreatedAtDisplay</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="border rounded-4 p-3 h-100">
-                                <div class="small text-muted mb-2">Hoat dong gan nhat</div>
-                                <div><span class="fw-semibold">Lan hoat dong cuoi:</span> @detail.LastActiveDisplay</div>
-                                <div><span class="fw-semibold">Lan nghe hoan tat:</span> @detail.LastCompletedDisplay</div>
-                                <div><span class="fw-semibold">Nen tang:</span> @(string.IsNullOrWhiteSpace(detail.DevicePlatform) ? "--" : detail.DevicePlatform)</div>
-                                <div><span class="fw-semibold">Nguon kich hoat:</span> @((string.IsNullOrWhiteSpace(detail.LastTriggerType) ? "--" : detail.LastTriggerType) + " / " + (string.IsNullOrWhiteSpace(detail.LastSource) ? "--" : detail.LastSource))</div>
+                                <div class="small text-muted mb-2">Hoạt động gần nhất</div>
+                                <div><span class="fw-semibold">Lần hoạt động cuối:</span> @detail.LastActiveDisplay</div>
+                                <div><span class="fw-semibold">Lần nghe hoàn tất:</span> @detail.LastCompletedDisplay</div>
+                                <div><span class="fw-semibold">Nền tảng:</span> @(string.IsNullOrWhiteSpace(detail.DevicePlatform) ? "--" : detail.DevicePlatform)</div>
+                                <div><span class="fw-semibold">Nguồn kích hoạt:</span> @((string.IsNullOrWhiteSpace(detail.LastTriggerType) ? "--" : detail.LastTriggerType) + " / " + (string.IsNullOrWhiteSpace(detail.LastSource) ? "--" : detail.LastSource))</div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="border rounded-4 p-3 h-100">
-                                <div class="small text-muted mb-1">Tong phien nghe</div>
+                                <div class="small text-muted mb-1">Tong phiên nghe</div>
                                 <div class="display-6">@detail.TotalSessions</div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="border rounded-4 p-3 h-100">
-                                <div class="small text-muted mb-1">Phien hoan tat</div>
+                                <div class="small text-muted mb-1">Phiên hoàn tất</div>
                                 <div class="display-6">@detail.CompletedSessions</div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="border rounded-4 p-3 h-100">
-                                <div class="small text-muted mb-1">Tong thoi gian nghe</div>
+                                <div class="small text-muted mb-1">Tổng thời gian nghe</div>
                                 <div class="display-6">@detail.TotalListenSeconds</div>
-                                <div class="small text-muted">giay</div>
+                                <div class="small text-muted">giây</div>
                             </div>
                         </div>
                         <div class="col-12">
                             <div class="border rounded-4 p-3">
-                                <div class="small text-muted mb-2">POI gan nhat</div>
+                                <div class="small text-muted mb-2">POI gần nhất</div>
                                 <div class="fw-semibold">@(string.IsNullOrWhiteSpace(detail.LastPoiName) ? "--" : detail.LastPoiName)</div>
                                 <div class="small text-muted">@(string.IsNullOrWhiteSpace(detail.LastPoiCode) ? "--" : detail.LastPoiCode)</div>
                             </div>
@@ -177,11 +177,11 @@
         </div>
 
         <div class="card shadow-sm">
-            <div class="card-header bg-white fw-semibold">Vi tri nguoi dung tren ban do</div>
+            <div class="card-header bg-white fw-semibold">Vị trí người dùng trên bản đồ</div>
             @if (Model.SelectedLocation is null)
             {
                 <div class="card-body text-muted">
-                    Chua co vi tri gan nhat de hien thi. Vi tri se duoc suy ra tu POI vua nghe tren app.
+                    Chưa có vị trí gần nhất để hiển thị. Vị trí sẽ được suy ra từ POI vừa nghe trên app.
                 </div>
             }
             else
@@ -189,7 +189,7 @@
                 var location = Model.SelectedLocation;
                 <div class="ratio ratio-16x9 border-bottom">
                     <iframe src="@location.MapEmbedUrl"
-                            title="Ban do vi tri nguoi dung"
+                            title="Bản đồ vị trí người dùng"
                             loading="lazy"
                             referrerpolicy="no-referrer-when-downgrade"></iframe>
                 </div>
@@ -201,9 +201,9 @@
                             <div class="small text-muted mt-1">@location.PoiCode | @location.Latitude, @location.Longitude</div>
                         </div>
                         <div class="text-end">
-                            <div class="small text-muted">Cap nhat luc</div>
+                            <div class="small text-muted">Cập nhật lúc</div>
                             <div class="fw-semibold">@location.UpdatedAtDisplay</div>
-                            <a class="btn btn-outline-primary btn-sm mt-2" href="@location.MapLink" target="_blank" rel="noreferrer">Mo Google Maps</a>
+                            <a class="btn btn-outline-primary btn-sm mt-2" href="@location.MapLink" target="_blank" rel="noreferrer">Mở Google Maps</a>
                         </div>
                     </div>
                 </div>
