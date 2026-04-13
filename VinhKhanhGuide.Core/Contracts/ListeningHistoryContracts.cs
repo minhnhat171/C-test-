@@ -6,11 +6,19 @@ public sealed class ListeningHistoryEntryDto
     public Guid PoiId { get; set; }
     public string PoiCode { get; set; } = string.Empty;
     public string PoiName { get; set; } = string.Empty;
+    public string PoiAddress { get; set; } = string.Empty;
+    public string PoiDescription { get; set; } = string.Empty;
+    public string PoiSpecialDish { get; set; } = string.Empty;
+    public string PoiImageSource { get; set; } = string.Empty;
+    public string PoiMapLink { get; set; } = string.Empty;
     public string UserCode { get; set; } = string.Empty;
     public string UserDisplayName { get; set; } = string.Empty;
     public string UserEmail { get; set; } = string.Empty;
     public string TriggerType { get; set; } = string.Empty;
     public string Language { get; set; } = string.Empty;
+    public string PlaybackMode { get; set; } = "tts";
+    public string NarrationSnapshot { get; set; } = string.Empty;
+    public string AudioAssetPath { get; set; } = string.Empty;
     public string Source { get; set; } = "app";
     public string DevicePlatform { get; set; } = string.Empty;
     public bool AutoTriggered { get; set; }
@@ -28,11 +36,19 @@ public sealed class ListeningHistoryEntryDto
             PoiId = PoiId,
             PoiCode = PoiCode,
             PoiName = PoiName,
+            PoiAddress = PoiAddress,
+            PoiDescription = PoiDescription,
+            PoiSpecialDish = PoiSpecialDish,
+            PoiImageSource = PoiImageSource,
+            PoiMapLink = PoiMapLink,
             UserCode = UserCode,
             UserDisplayName = UserDisplayName,
             UserEmail = UserEmail,
             TriggerType = TriggerType,
             Language = Language,
+            PlaybackMode = PlaybackMode,
+            NarrationSnapshot = NarrationSnapshot,
+            AudioAssetPath = AudioAssetPath,
             Source = Source,
             DevicePlatform = DevicePlatform,
             AutoTriggered = AutoTriggered,
@@ -50,11 +66,19 @@ public sealed class ListeningHistoryCreateRequest
     public Guid PoiId { get; set; }
     public string PoiCode { get; set; } = string.Empty;
     public string PoiName { get; set; } = string.Empty;
+    public string PoiAddress { get; set; } = string.Empty;
+    public string PoiDescription { get; set; } = string.Empty;
+    public string PoiSpecialDish { get; set; } = string.Empty;
+    public string PoiImageSource { get; set; } = string.Empty;
+    public string PoiMapLink { get; set; } = string.Empty;
     public string UserCode { get; set; } = string.Empty;
     public string UserDisplayName { get; set; } = string.Empty;
     public string UserEmail { get; set; } = string.Empty;
     public string TriggerType { get; set; } = string.Empty;
     public string Language { get; set; } = string.Empty;
+    public string PlaybackMode { get; set; } = "tts";
+    public string NarrationSnapshot { get; set; } = string.Empty;
+    public string AudioAssetPath { get; set; } = string.Empty;
     public string Source { get; set; } = "app";
     public string DevicePlatform { get; set; } = string.Empty;
     public bool AutoTriggered { get; set; }

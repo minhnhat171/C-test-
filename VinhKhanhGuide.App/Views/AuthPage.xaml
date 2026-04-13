@@ -8,7 +8,7 @@
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <VerticalStackLayout Padding="22,30,22,26" Spacing="18">
+        <VerticalStackLayout Padding="22,32,22,26" Spacing="18">
 
             <Border StrokeThickness="0"
                     Padding="22"
@@ -21,17 +21,43 @@
                     </LinearGradientBrush>
                 </Border.Background>
 
-                <VerticalStackLayout Spacing="20">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="VinhKhanh"
-                               FontSize="28"
-                               FontAttributes="Bold"
-                               TextColor="#FFF9F2" />
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="VinhKhanh"
+                           FontSize="30"
+                           FontAttributes="Bold"
+                           TextColor="#FFF9F2" />
 
-                        <Label Text="Đăng nhập trước khi vào app để mở trang chủ, xem từng box quán và nghe Talk to Speech ngay tại đó."
-                               FontSize="15"
-                               LineHeight="1.2"
-                               TextColor="#E9F3EF" />
+                    <Label Text="Bản hiện tại dành cho du khách vào nhanh để trải nghiệm ngay giao diện chính, chọn box quán và nghe thuyết minh."
+                           FontSize="15"
+                           LineHeight="1.25"
+                           TextColor="#E9F3EF" />
+
+                    <Border BackgroundColor="#F5EBDD"
+                            StrokeThickness="0"
+                            Padding="14,10"
+                            StrokeShape="RoundRectangle 18">
+                        <Label Text="Luồng quét QR là hướng đúng và mình đã chừa chỗ để nối ở prompt sau."
+                               FontSize="13"
+                               TextColor="#1C4748" />
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="#FFFDFC"
+                    Stroke="#E4D8CC"
+                    StrokeThickness="1"
+                    Padding="20"
+                    StrokeShape="RoundRectangle 30">
+                <VerticalStackLayout Spacing="16">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="{Binding WelcomeTitle}"
+                               FontSize="24"
+                               FontAttributes="Bold"
+                               TextColor="#1B2A2F" />
+
+                        <Label Text="{Binding WelcomeSubtitle}"
+                               FontSize="13"
+                               TextColor="#67757A" />
                     </VerticalStackLayout>
 
                     <Grid ColumnDefinitions="*,*"
@@ -46,12 +72,12 @@
                                 StrokeShape="RoundRectangle 22">
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="B1"
-                                        FontSize="11"
+                                       FontSize="11"
                                        FontAttributes="Bold"
                                        TextColor="#A96A45" />
-                                <Label Text="Xác thực tài khoản"
-                                        FontSize="14"
-                                        FontAttributes="Bold"
+                                <Label Text="Mở app"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
                                        TextColor="#1C4748" />
                             </VerticalStackLayout>
                         </Border>
@@ -68,7 +94,7 @@
                                        FontSize="11"
                                        FontAttributes="Bold"
                                        TextColor="#A96A45" />
-                                <Label Text="Vào trang chủ"
+                                <Label Text="Bấm vào nhanh"
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="#1C4748" />
@@ -82,7 +108,7 @@
                                 Stroke="#E4D5C4"
                                 StrokeThickness="1"
                                 HeightRequest="88"
-                                WidthRequest="148"
+                                WidthRequest="172"
                                 HorizontalOptions="Center"
                                 StrokeShape="RoundRectangle 22">
                             <VerticalStackLayout Spacing="4">
@@ -90,186 +116,13 @@
                                        FontSize="11"
                                        FontAttributes="Bold"
                                        TextColor="#A96A45" />
-                                <Label Text="Nghe tại box quán"
+                                <Label Text="Chọn box để nghe"
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="#1C4748" />
                             </VerticalStackLayout>
                         </Border>
                     </Grid>
-                </VerticalStackLayout>
-            </Border>
-
-            <Border BackgroundColor="#FFFDFC"
-                    Stroke="#E4D8CC"
-                    StrokeThickness="1"
-                    Padding="20"
-                    StrokeShape="RoundRectangle 30">
-                <VerticalStackLayout Spacing="16">
-                    <VerticalStackLayout Spacing="4">
-                        <Label Text="{Binding FormTitle}"
-                               FontSize="22"
-                               FontAttributes="Bold"
-                               TextColor="#1B2A2F" />
-
-                        <Label Text="{Binding FormSubtitle}"
-                               FontSize="13"
-                               TextColor="#67757A" />
-                    </VerticalStackLayout>
-
-                    <Border BackgroundColor="#F1E7D9"
-                            StrokeThickness="0"
-                            Padding="5"
-                            StrokeShape="RoundRectangle 21">
-                        <Grid ColumnDefinitions="*,*"
-                              ColumnSpacing="8">
-                            <Button Text="Đăng nhập"
-                                    Command="{Binding SwitchToLoginCommand}"
-                                    FontAttributes="Bold"
-                                    CornerRadius="17"
-                                    HeightRequest="46">
-                                <Button.Triggers>
-                                    <DataTrigger TargetType="Button"
-                                                 Binding="{Binding IsLoginMode}"
-                                                 Value="True">
-                                        <Setter Property="BackgroundColor" Value="#173A43" />
-                                        <Setter Property="TextColor" Value="#FFF9F2" />
-                                    </DataTrigger>
-                                    <DataTrigger TargetType="Button"
-                                                 Binding="{Binding IsLoginMode}"
-                                                 Value="False">
-                                        <Setter Property="BackgroundColor" Value="#F1E7D9" />
-                                        <Setter Property="TextColor" Value="#7A4D2D" />
-                                    </DataTrigger>
-                                </Button.Triggers>
-                            </Button>
-
-                            <Button Grid.Column="1"
-                                    Text="Đăng ký"
-                                    Command="{Binding SwitchToRegisterCommand}"
-                                    FontAttributes="Bold"
-                                    CornerRadius="17"
-                                    HeightRequest="46">
-                                <Button.Triggers>
-                                    <DataTrigger TargetType="Button"
-                                                 Binding="{Binding IsRegisterMode}"
-                                                 Value="True">
-                                        <Setter Property="BackgroundColor" Value="#173A43" />
-                                        <Setter Property="TextColor" Value="#FFF9F2" />
-                                    </DataTrigger>
-                                    <DataTrigger TargetType="Button"
-                                                 Binding="{Binding IsRegisterMode}"
-                                                 Value="False">
-                                        <Setter Property="BackgroundColor" Value="#F1E7D9" />
-                                        <Setter Property="TextColor" Value="#7A4D2D" />
-                                    </DataTrigger>
-                                </Button.Triggers>
-                            </Button>
-                        </Grid>
-                    </Border>
-
-                    <VerticalStackLayout Spacing="12">
-                        <VerticalStackLayout Spacing="6"
-                                             IsVisible="{Binding IsRegisterMode}">
-                            <Label Text="Họ và tên"
-                                   FontSize="13"
-                                   TextColor="#34474E" />
-
-                            <Border BackgroundColor="#FAF6F0"
-                                    Stroke="#D9CEC1"
-                                    StrokeThickness="1"
-                                    Padding="14,10"
-                                    StrokeShape="RoundRectangle 18">
-                                <Entry Text="{Binding FullName}"
-                                       Placeholder="Nguyễn Văn A"
-                                       BackgroundColor="Transparent"
-                                       ClearButtonVisibility="WhileEditing"
-                                       TextColor="#13242A"
-                                       PlaceholderColor="#9BA8AD" />
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Spacing="6">
-                            <Label Text="Tên đăng nhập"
-                                   FontSize="13"
-                                   TextColor="#34474E" />
-
-                            <Border BackgroundColor="#FAF6F0"
-                                    Stroke="#D9CEC1"
-                                    StrokeThickness="1"
-                                    Padding="14,10"
-                                    StrokeShape="RoundRectangle 18">
-                                <Entry Text="{Binding Username}"
-                                       Placeholder="Ví dụ: user"
-                                       BackgroundColor="Transparent"
-                                       ClearButtonVisibility="WhileEditing"
-                                       TextColor="#13242A"
-                                       PlaceholderColor="#9BA8AD" />
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Spacing="6">
-                            <Label Text="Mật khẩu"
-                                   FontSize="13"
-                                   TextColor="#34474E" />
-
-                            <Border BackgroundColor="#FAF6F0"
-                                    Stroke="#D9CEC1"
-                                    StrokeThickness="1"
-                                    Padding="14,10"
-                                    StrokeShape="RoundRectangle 18">
-                                <Entry Text="{Binding Password}"
-                                       IsPassword="True"
-                                       Placeholder="Tối thiểu 8 ký tự"
-                                       BackgroundColor="Transparent"
-                                       TextColor="#13242A"
-                                       PlaceholderColor="#9BA8AD" />
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Spacing="6"
-                                             IsVisible="{Binding IsRegisterMode}">
-                            <Label Text="Xác nhận mật khẩu"
-                                   FontSize="13"
-                                   TextColor="#34474E" />
-
-                            <Border BackgroundColor="#FAF6F0"
-                                    Stroke="#D9CEC1"
-                                    StrokeThickness="1"
-                                    Padding="14,10"
-                                    StrokeShape="RoundRectangle 18">
-                                <Entry Text="{Binding ConfirmPassword}"
-                                       IsPassword="True"
-                                       Placeholder="Nhập lại mật khẩu"
-                                       BackgroundColor="Transparent"
-                                       TextColor="#13242A"
-                                       PlaceholderColor="#9BA8AD" />
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Spacing="6"
-                                             IsVisible="{Binding IsRegisterMode}">
-                            <Label Text="Loại khách"
-                                   FontSize="13"
-                                   TextColor="#34474E" />
-
-                            <Border BackgroundColor="#FAF6F0"
-                                    Stroke="#D9CEC1"
-                                    StrokeThickness="1"
-                                    Padding="14,4"
-                                    StrokeShape="RoundRectangle 18">
-                                <Picker Title="Chọn loại khách"
-                                        ItemsSource="{Binding AccountTypeOptions}"
-                                        SelectedItem="{Binding SelectedAccountType}"
-                                        TextColor="#13242A"
-                                        TitleColor="#9BA8AD" />
-                            </Border>
-
-                            <Label Text="{Binding SelectedAccountTypeHint}"
-                                   FontSize="12"
-                                   TextColor="#6C7A7F" />
-                        </VerticalStackLayout>
-                    </VerticalStackLayout>
 
                     <Border BackgroundColor="#FDEEEE"
                             Stroke="#E4B6B0"
@@ -282,62 +135,24 @@
                                TextColor="#A53A32" />
                     </Border>
 
-                    <Border BackgroundColor="#EDF7F0"
-                            Stroke="#B6D6BF"
-                            StrokeThickness="1"
-                            Padding="14,12"
-                            StrokeShape="RoundRectangle 18"
-                            IsVisible="{Binding HasSuccessMessage}">
-                        <Label Text="{Binding SuccessMessage}"
-                               FontSize="13"
-                               TextColor="#246446" />
-                    </Border>
-
-                    <Button Text="{Binding SubmitButtonText}"
-                            Command="{Binding SubmitCommand}"
+                    <Button Text="{Binding EnterAppButtonText}"
+                            Command="{Binding EnterAppCommand}"
                             IsEnabled="{Binding IsNotBusy}"
                             BackgroundColor="#C6672F"
                             TextColor="White"
                             FontAttributes="Bold"
                             CornerRadius="18"
-                            HeightRequest="52" />
+                            HeightRequest="54" />
 
                     <ActivityIndicator IsRunning="{Binding IsBusy}"
                                        IsVisible="{Binding IsBusy}"
                                        Color="#215C57" />
 
-                    <Label Text="{Binding FormHint}"
+                    <Label Text="{Binding WelcomeHint}"
                            FontSize="12"
                            TextColor="#6C7A7F" />
                 </VerticalStackLayout>
             </Border>
-
-            <Border BackgroundColor="#FFF8F1"
-                    Stroke="#E8D8C7"
-                    StrokeThickness="1"
-                    Padding="16"
-                    StrokeShape="RoundRectangle 24">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="Ghi chú luồng xác thực"
-                           FontSize="16"
-                           FontAttributes="Bold"
-                           TextColor="#7A4D2D" />
-
-                    <Label Text="Đăng nhập: kiểm tra dữ liệu đầu vào, tìm tài khoản, đối chiếu mật khẩu rồi mới lưu phiên hiện tại."
-                           FontSize="13"
-                           TextColor="#5B4A3F" />
-
-                    <Label Text="Đăng ký: kiểm tra trùng tên đăng nhập, tạo tài khoản mới và đưa bạn trở lại tab đăng nhập khi thành công."
-                           FontSize="13"
-                           TextColor="#5B4A3F" />
-
-                    <Label Text="Sau khi xác thực, trang chủ sẽ hiển thị danh sách quán dưới dạng các box thông tin và mỗi box có nút &quot;Nghe thuyết minh&quot; để phát TTS tương ứng."
-                           FontSize="13"
-                           TextColor="#5B4A3F" />
-                </VerticalStackLayout>
-            </Border>
-
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

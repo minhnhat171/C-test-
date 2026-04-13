@@ -6,6 +6,7 @@ public class AuthSession
     public string FullName { get; init; } = string.Empty;
     public string Username { get; init; } = string.Empty;
     public string Email { get; init; } = string.Empty;
+    public string PhoneNumber { get; init; } = string.Empty;
     public string Role { get; init; } = "user";
 
     public string LoginId => string.IsNullOrWhiteSpace(Username) ? Email : Username;
@@ -16,6 +17,7 @@ public class AuthSession
     {
         "admin" => "Quản trị viên",
         "poi_owner" => "Chủ quán",
+        "guest" => "Khách tham quan",
         _ => "Khách khám phá"
     };
 

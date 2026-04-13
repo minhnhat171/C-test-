@@ -27,4 +27,8 @@ public interface IListeningHistorySyncService
     Task<IReadOnlyList<PoiListeningCountDto>> GetCurrentUserRankingAsync(
         string? period,
         CancellationToken cancellationToken = default);
+
+    Task<bool> DeleteAsync(
+        Guid historyId,
+        CancellationToken cancellationToken = default);
 }
