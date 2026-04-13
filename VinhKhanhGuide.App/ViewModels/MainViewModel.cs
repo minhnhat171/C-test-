@@ -31,7 +31,8 @@ public class MainViewModel : INotifyPropertyChanged
     public const string EntranceAddress = "40 Vĩnh Khánh, P. Khánh Hội, Q.4";
 
     private readonly ILocationService _locationService;
-    private readonly IPoiProvider _poiProvider;
+    private readonly IPoiRepository _poiRepository;
+    private readonly ISearchService _searchService;
     private readonly INarrationService _narrationService;
     private readonly IAuthService _authService;
     private readonly IAudioSettingsService _audioSettingsService;
@@ -98,6 +99,7 @@ public class MainViewModel : INotifyPropertyChanged
     private bool _isPreviewingAudioSettings;
     private string _audioSettingsErrorMessage = string.Empty;
     private string _audioSettingsSuccessMessage = string.Empty;
+    private string _searchResultStatusText = string.Empty;
 
     private bool _isListeningHistoryLoading;
     private string _listeningHistoryLoadError = string.Empty;
@@ -108,7 +110,8 @@ public class MainViewModel : INotifyPropertyChanged
 
     public MainViewModel(
         ILocationService locationService,
-        IPoiProvider poiProvider,
+        IPoiRepository poiRepository,
+        ISearchService searchService,
         INarrationService narrationService,
         IAuthService authService,
         IAudioSettingsService audioSettingsService,
@@ -118,7 +121,8 @@ public class MainViewModel : INotifyPropertyChanged
         GeofenceEngine geofenceEngine)
     {
         _locationService = locationService;
-        _poiProvider = poiProvider;
+        _poiRepository = poiRepository;
+        _searchService = searchService;
         _narrationService = narrationService;
         _authService = authService;
         _audioSettingsService = audioSettingsService;
@@ -478,6 +482,12 @@ public class MainViewModel : INotifyPropertyChanged
     {
         get => _isSearchResultEmpty;
         private set => SetProperty(ref _isSearchResultEmpty, value);
+    }
+
+    public string SearchResultStatusText
+    {
+        get => _searchResultStatusText;
+        private set => SetProperty(ref _searchResultStatusText, value);
     }
 
     public string CurrentUserDisplayName
@@ -1075,18 +1085,8 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         AddRecentSearch(SearchQuery);
-
-        var matchedPoi = GetSearchMatches(SearchQuery)
-            .Select(item => _pois.FirstOrDefault(poi => poi.Id == item.PoiId))
-            .FirstOrDefault(poi => poi is not null);
-
-        if (matchedPoi is null)
-        {
-            return false;
-        }
-
-        SetSelectedPoi(matchedPoi, true, null);
-        return true;
+        UpdateFilteredPoiStatuses();
+        return FilteredPoiStatuses.Count > 0;
     }
 
     public bool ApplySearchSuggestion(SearchSuggestionItem suggestion)
@@ -1335,7 +1335,7 @@ public class MainViewModel : INotifyPropertyChanged
         bool forceRefresh = false,
         CancellationToken cancellationToken = default)
     {
-        var latestPois = await _poiProvider.GetPoisAsync(cancellationToken);
+        var latestPois = await _poiRepository.GetPoisAsync(cancellationToken);
         var snapshot = CreatePoiSnapshot(latestPois);
 
         if (!forceRefresh && string.Equals(_poiDataSnapshot, snapshot, StringComparison.Ordinal))
@@ -1974,9 +1974,14 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void UpdateFilteredPoiStatuses()
     {
-        var visibleItems = string.IsNullOrWhiteSpace(SearchQuery)
-            ? PoiStatuses.ToList()
-            : GetSearchMatches(SearchQuery);
+        var searchResult = _searchService.Search(SearchQuery);
+        var visibleItems = searchResult.HasKeyword
+            ? searchResult.Results
+                .Select(result => PoiStatuses.FirstOrDefault(item => item.PoiId == result.Id))
+                .Where(item => item is not null)
+                .Cast<PoiStatusItem>()
+                .ToList()
+            : PoiStatuses.ToList();
 
         FilteredPoiStatuses.Clear();
 
@@ -1985,24 +1990,10 @@ public class MainViewModel : INotifyPropertyChanged
             FilteredPoiStatuses.Add(item);
         }
 
-        IsSearchResultEmpty = HasSearchQuery && FilteredPoiStatuses.Count == 0;
-    }
-
-    private List<PoiStatusItem> GetSearchMatches(string query)
-    {
-        var normalizedQuery = NormalizeForSearch(query);
-
-        if (string.IsNullOrWhiteSpace(normalizedQuery))
-        {
-            return PoiStatuses.ToList();
-        }
-
-        return PoiStatuses
-            .Where(item => ContainsNormalized(item.Name, normalizedQuery))
-            .OrderBy(item => !NormalizeForSearch(item.Name).StartsWith(normalizedQuery, StringComparison.Ordinal))
-            .ThenBy(item => item.DistanceMeters)
-            .ThenBy(item => item.Name)
-            .ToList();
+        IsSearchResultEmpty = searchResult.HasKeyword && FilteredPoiStatuses.Count == 0;
+        SearchResultStatusText = IsSearchResultEmpty
+            ? searchResult.EmptyStateMessage
+            : string.Empty;
     }
 
     private void RefreshSearchSuggestions()
@@ -2015,83 +2006,13 @@ public class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        var query = SearchQuery.Trim();
-        var suggestions = new List<SearchSuggestionItem>();
-        var seenTexts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var suggestions = _searchService.BuildSuggestions(
+            SearchQuery,
+            _recentSearches,
+            MaxSearchSuggestions,
+            MaxPinnedRecentSuggestions);
 
-        void AddSuggestion(string text, string supportingText, bool isRecent)
-        {
-            if (string.IsNullOrWhiteSpace(text) || !seenTexts.Add(text))
-            {
-                return;
-            }
-
-            suggestions.Add(new SearchSuggestionItem
-            {
-                Text = text,
-                SupportingText = supportingText,
-                IsRecent = isRecent
-            });
-        }
-
-        if (_recentSearches.Count > 0)
-        {
-            IEnumerable<string> recentItems;
-
-            if (string.IsNullOrWhiteSpace(query))
-            {
-                recentItems = _recentSearches.Take(MaxPinnedRecentSuggestions);
-            }
-            else
-            {
-                var normalizedQuery = NormalizeForSearch(query);
-                var matchedRecentItems = _recentSearches
-                    .Where(item => ContainsNormalized(item, normalizedQuery))
-                    .Take(MaxPinnedRecentSuggestions)
-                    .ToList();
-
-                recentItems = matchedRecentItems.Count > 0
-                    ? matchedRecentItems
-                    : _recentSearches.Take(MaxPinnedRecentSuggestions);
-            }
-
-            foreach (var recent in recentItems)
-            {
-                AddSuggestion(recent, "Tìm gần đây", true);
-
-                if (suggestions.Count >= MaxSearchSuggestions)
-                {
-                    break;
-                }
-            }
-        }
-
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            foreach (var poi in PoiStatuses)
-            {
-                AddSuggestion(poi.Name, poi.Address, false);
-
-                if (suggestions.Count >= MaxSearchSuggestions)
-                {
-                    break;
-                }
-            }
-        }
-        else
-        {
-            foreach (var poi in GetSearchMatches(query))
-            {
-                AddSuggestion(poi.Name, poi.Address, false);
-
-                if (suggestions.Count >= MaxSearchSuggestions)
-                {
-                    break;
-                }
-            }
-        }
-
-        foreach (var suggestion in suggestions.Take(MaxSearchSuggestions))
+        foreach (var suggestion in suggestions)
         {
             SearchSuggestions.Add(suggestion);
         }
@@ -2123,12 +2044,6 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         RefreshSearchSuggestions();
-    }
-
-    private static bool ContainsNormalized(string source, string query)
-    {
-        var normalizedSource = NormalizeForSearch(source);
-        return normalizedSource.Contains(query, StringComparison.Ordinal);
     }
 
     private void TriggerListeningHistoryRefresh()
@@ -2226,7 +2141,7 @@ public class MainViewModel : INotifyPropertyChanged
                 .Select(async poiId => new
                 {
                     PoiId = poiId,
-                    Poi = await _poiProvider.GetPoiByIdAsync(poiId, cancellationToken)
+                    Poi = await _poiRepository.GetPoiByIdAsync(poiId, cancellationToken)
                 })
                 .ToList();
 
@@ -2639,7 +2554,7 @@ public class MainViewModel : INotifyPropertyChanged
         if (item.PoiId != Guid.Empty)
         {
             basePoi = _pois.FirstOrDefault(poi => poi.Id == item.PoiId)
-                ?? await _poiProvider.GetPoiByIdAsync(item.PoiId, cancellationToken);
+                ?? await _poiRepository.GetPoiByIdAsync(item.PoiId, cancellationToken);
         }
 
         return BuildPoiFromListeningHistoryItem(item, basePoi);

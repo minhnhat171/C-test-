@@ -253,18 +253,10 @@ public partial class MainPage : ContentPage
 
     private void OnSearchCompleted(object? sender, EventArgs e)
     {
-        var foundMatch = _viewModel.ExecuteSearch();
-
-        if (foundMatch)
-        {
-            _viewModel.HideSearchSuggestions();
-            RefreshMapPins(centerOnSelection: true);
-            RestaurantSearchEntry.Unfocus();
-            return;
-        }
-
-        _viewModel.ShowSearchSuggestions();
+        _viewModel.ExecuteSearch();
+        _viewModel.HideSearchSuggestions();
         RefreshMapPins(centerOnSelection: false);
+        RestaurantSearchEntry.Unfocus();
     }
 
     private void OnSearchSuggestionTapped(object? sender, TappedEventArgs e)
@@ -277,14 +269,10 @@ public partial class MainPage : ContentPage
                 return;
             }
 
-            var foundMatch = _viewModel.ApplySearchSuggestion(suggestion);
+            _viewModel.ApplySearchSuggestion(suggestion);
             _viewModel.HideSearchSuggestions();
 
-            if (foundMatch)
-            {
-                RefreshMapPins(centerOnSelection: true);
-            }
-
+            RefreshMapPins(centerOnSelection: false);
             RestaurantSearchEntry.Unfocus();
         }
         catch

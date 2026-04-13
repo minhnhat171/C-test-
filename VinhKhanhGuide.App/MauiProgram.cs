@@ -44,6 +44,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<IListeningHistorySyncService, ListeningHistorySyncService>();
         builder.Services.AddSingleton<ILocationService, LocationService>();
         builder.Services.AddSingleton<IPoiProvider, PoiProvider>();
+        builder.Services.AddSingleton<IPoiRepository, PoiRepository>();
+        builder.Services.AddSingleton<ISearchService, SearchService>();
         builder.Services.AddSingleton<INarrationService, NarrationService>();
         builder.Services.AddSingleton<GeofenceEngine>();
 

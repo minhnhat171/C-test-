@@ -330,7 +330,7 @@
                            TextColor="#6B7280" />
                 </VerticalStackLayout>
 
-                <Label Text="Không tìm thấy quán phù hợp với từ khóa của bạn."
+                <Label Text="{Binding SearchResultStatusText}"
                        FontSize="13"
                        TextColor="#8A8A8A"
                        IsVisible="{Binding IsSearchResultEmpty}" />
@@ -676,7 +676,7 @@
                                 <Entry x:Name="RestaurantSearchEntry"
                                        Grid.Column="1"
                                        Text="{Binding SearchQuery}"
-                                       Placeholder="Tìm tên quán ăn"
+                                       Placeholder="Tìm quán, món nổi bật"
                                        Completed="OnSearchCompleted"
                                        Focused="OnSearchFocused"
                                        Unfocused="OnSearchUnfocused"
