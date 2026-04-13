@@ -239,43 +239,95 @@
                                 SelectionMode="Single"
                                 SelectionChanged="OnPoiSelectionChanged">
                     <CollectionView.ItemsLayout>
-                        <GridItemsLayout Orientation="Vertical"
-                                         Span="2"
-                                         HorizontalItemSpacing="16"
-                                         VerticalItemSpacing="18" />
+                        <LinearItemsLayout Orientation="Vertical"
+                                           ItemSpacing="18" />
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <VerticalStackLayout Spacing="8">
-                                <Border BackgroundColor="#FFFFFF"
-                                        StrokeThickness="0"
-                                        HeightRequest="132"
-                                        StrokeShape="RoundRectangle 18">
-                                    <Grid>
-                                        <Image Source="{Binding ImageSource}"
-                                               Aspect="AspectFill" />
-
-                                        <Border BackgroundColor="#111111"
+                            <Border BackgroundColor="#FFFFFF"
+                                    StrokeThickness="0"
+                                    Padding="14"
+                                    StrokeShape="RoundRectangle 18">
+                                <VerticalStackLayout Spacing="12">
+                                    <Grid ColumnDefinitions="112,*"
+                                          ColumnSpacing="14">
+                                        <Border BackgroundColor="#F5F1EA"
                                                 StrokeThickness="0"
-                                                Padding="8,4"
-                                                HorizontalOptions="Start"
-                                                VerticalOptions="Start"
-                                                Margin="10"
-                                                StrokeShape="RoundRectangle 12"
-                                                IsVisible="{Binding IsInsideRadius}">
-                                            <Label Text="{Binding InRadiusBadge}"
-                                                   FontSize="10"
-                                                   TextColor="White" />
+                                                HeightRequest="112"
+                                                StrokeShape="RoundRectangle 16">
+                                            <Image Source="{Binding ImageSource}"
+                                                   Aspect="AspectFill" />
                                         </Border>
-                                    </Grid>
-                                </Border>
 
-                                <Label Text="{Binding Name}"
-                                       HorizontalTextAlignment="Center"
-                                       FontSize="14"
-                                       FontAttributes="Bold"
-                                       TextColor="#242424" />
-                            </VerticalStackLayout>
+                                        <VerticalStackLayout Grid.Column="1"
+                                                             Spacing="6">
+                                            <Grid ColumnDefinitions="*,Auto"
+                                                  ColumnSpacing="8">
+                                                <Label Text="{Binding Name}"
+                                                       FontSize="16"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#242424"
+                                                       LineBreakMode="TailTruncation" />
+
+                                                <Border Grid.Column="1"
+                                                        BackgroundColor="#173A43"
+                                                        StrokeThickness="0"
+                                                        Padding="8,4"
+                                                        StrokeShape="RoundRectangle 12"
+                                                        IsVisible="{Binding IsNarrationActive}">
+                                                    <Label Text="Đang phát"
+                                                           FontSize="10"
+                                                           TextColor="White" />
+                                                </Border>
+                                            </Grid>
+
+                                            <Label Text="{Binding Address}"
+                                                   FontSize="12"
+                                                   TextColor="#6B7280"
+                                                   LineBreakMode="TailTruncation"
+                                                   MaxLines="2" />
+
+                                            <Label Text="{Binding DistanceLabel}"
+                                                   FontSize="12"
+                                                   TextColor="#9A3412"
+                                                   MaxLines="2" />
+
+                                            <Label Text="{Binding SpecialDishLabel}"
+                                                   FontSize="12"
+                                                   TextColor="#374151"
+                                                   LineBreakMode="TailTruncation"
+                                                   MaxLines="2" />
+                                        </VerticalStackLayout>
+                                    </Grid>
+
+                                    <Label Text="{Binding Description}"
+                                           FontSize="13"
+                                           TextColor="#404040"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="3" />
+
+                                    <Grid ColumnDefinitions="*"
+                                          ColumnSpacing="10">
+                                        <Button Text="{Binding NarrationActionText}"
+                                                Clicked="OnPoiNarrationClicked"
+                                                BackgroundColor="#FFF2E7"
+                                                TextColor="#9A3412"
+                                                CornerRadius="16"
+                                                Padding="14,10">
+                                            <Button.Triggers>
+                                                <DataTrigger TargetType="Button"
+                                                             Binding="{Binding IsNarrationActive}"
+                                                             Value="True">
+                                                    <Setter Property="BackgroundColor"
+                                                            Value="#173A43" />
+                                                    <Setter Property="TextColor"
+                                                            Value="White" />
+                                                </DataTrigger>
+                                            </Button.Triggers>
+                                        </Button>
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
@@ -321,8 +373,8 @@
                                FontSize="13"
                                TextColor="#404040" />
 
-                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
-                            <Button Text="Nghe"
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <Button Text="{Binding SelectedPoiNarrationActionText}"
                                     Clicked="OnNarrateSelectedClicked"
                                     BackgroundColor="#111111"
                                     TextColor="White"
@@ -330,15 +382,6 @@
                                     Padding="16,10" />
 
                             <Button Grid.Column="1"
-                                    Text="Dừng nghe"
-                                    Command="{Binding StopNarrationCommand}"
-                                    IsEnabled="{Binding IsNarrating}"
-                                    BackgroundColor="#EDE9E3"
-                                    TextColor="#222222"
-                                    CornerRadius="18"
-                                    Padding="16,10" />
-
-                            <Button Grid.Column="2"
                                     Text="Chỉ đường"
                                     Clicked="OnOpenMapClicked"
                                     BackgroundColor="#F2ECE4"

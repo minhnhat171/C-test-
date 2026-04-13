@@ -76,7 +76,7 @@
 
                     <Grid ColumnDefinitions="*,*"
                           ColumnSpacing="12">
-                        <Button Text="Nghe ngay"
+                        <Button Text="{Binding SelectedPoiNarrationActionText}"
                                 Clicked="OnNarrateSelectedClicked"
                                 BackgroundColor="#173A43"
                                 TextColor="White"

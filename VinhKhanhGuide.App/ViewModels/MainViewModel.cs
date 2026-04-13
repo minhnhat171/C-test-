@@ -55,6 +55,7 @@ public class MainViewModel : INotifyPropertyChanged
     private int _narrationSessionId;
     private Guid? _lastAutoNarratedPoiId;
     private LocationDto? _lastLocation;
+    private Guid? _activeNarrationPoiId;
     private bool _hasLocationPermission;
     private bool _hasCheckedLocationPermission;
     private POI? _selectedPoi;
@@ -154,6 +155,8 @@ public class MainViewModel : INotifyPropertyChanged
     public IReadOnlyList<POI> Pois => _pois;
     public LocationDto? LastLocation => _lastLocation;
     public Guid? SelectedPoiId => _selectedPoi?.Id;
+    public bool IsSelectedPoiNarrating => _selectedPoi is not null && IsNarrating && _activeNarrationPoiId == _selectedPoi.Id;
+    public string SelectedPoiNarrationActionText => IsSelectedPoiNarrating ? "Dừng" : "Nghe thuyết minh";
 
     public bool IsTracking
     {
@@ -184,6 +187,8 @@ public class MainViewModel : INotifyPropertyChanged
 
             _isNarrating = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(IsSelectedPoiNarrating));
+            OnPropertyChanged(nameof(SelectedPoiNarrationActionText));
             (StopNarrationCommand as Command)?.ChangeCanExecute();
         }
     }
@@ -729,7 +734,50 @@ public class MainViewModel : INotifyPropertyChanged
             return;
         }
 
+        if (IsCurrentNarration(_selectedPoi))
+        {
+            StatusText = $"Nội dung của {_selectedPoi.Name} đang được phát";
+            AddLog($"{NowLabel()} Bỏ qua phát lại {_selectedPoi.Name} vì nội dung đang phát");
+            return;
+        }
+
         await NarratePoiAsync(_selectedPoi, false, GetDistanceForPoi(_selectedPoi.Id));
+    }
+
+    public async Task ToggleSelectedPoiNarrationAsync()
+    {
+        if (_selectedPoi is null)
+        {
+            StatusText = "Chưa có quán được chọn";
+            return;
+        }
+
+        if (IsCurrentNarration(_selectedPoi))
+        {
+            await StopNarrationAsync();
+            return;
+        }
+
+        await NarratePoiAsync(_selectedPoi, false, GetDistanceForPoi(_selectedPoi.Id));
+    }
+
+    public async Task TogglePoiNarrationAsync(Guid poiId)
+    {
+        var poi = _pois.FirstOrDefault(item => item.Id == poiId);
+        if (poi is null)
+        {
+            return;
+        }
+
+        SetSelectedPoi(poi, true, null);
+
+        if (IsCurrentNarration(poi))
+        {
+            await StopNarrationAsync();
+            return;
+        }
+
+        await NarratePoiAsync(poi, false, GetDistanceForPoi(poi.Id));
     }
 
     public async Task StopNarrationAsync()
@@ -739,12 +787,14 @@ public class MainViewModel : INotifyPropertyChanged
         Interlocked.Increment(ref _narrationSessionId);
         await _narrationService.StopAsync();
 
+        SetActiveNarrationPoiId(null);
         IsNarrating = false;
         StatusText = hadActiveNarration
             ? "Đã dừng thuyết minh"
             : IsTracking
                 ? "GPS đang hoạt động"
                 : "Sẵn sàng phát thuyết minh";
+        await MainThread.InvokeOnMainThreadAsync(() => RefreshNarrationPresentation());
 
         if (hadActiveNarration)
         {
@@ -1122,6 +1172,12 @@ public class MainViewModel : INotifyPropertyChanged
 
     private async Task NarratePoiAsync(POI poi, bool autoTriggered, double? distanceMeters)
     {
+        if (IsCurrentNarration(poi))
+        {
+            StatusText = $"Nội dung của {poi.Name} đang được phát";
+            return;
+        }
+
         var listenStopwatch = Stopwatch.StartNew();
         var narrationSessionId = Interlocked.Increment(ref _narrationSessionId);
         var historyTask = Task.FromResult<Guid?>(null);
@@ -1134,6 +1190,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
+            SetActiveNarrationPoiId(poi.Id);
             IsNarrating = true;
             StatusText = autoTriggered
                 ? $"Tự động phát: {poi.Name}"
@@ -1143,6 +1200,8 @@ public class MainViewModel : INotifyPropertyChanged
             {
                 SetSelectedPoi(poi, false, null);
             }
+
+            RefreshNarrationPresentation();
         });
 
         AddLog(
@@ -1192,7 +1251,9 @@ public class MainViewModel : INotifyPropertyChanged
             {
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
+                    SetActiveNarrationPoiId(null);
                     IsNarrating = false;
+                    RefreshNarrationPresentation();
 
                     if (!StatusText.StartsWith("Lỗi phát âm thanh:", StringComparison.Ordinal))
                     {
@@ -1232,6 +1293,7 @@ public class MainViewModel : INotifyPropertyChanged
                 TriggerRadiusMeters = poi.TriggerRadiusMeters,
                 IsInsideRadius = hasDistance && evaluatedItem.IsInside,
                 IsNearest = nearestPoiId == poi.Id,
+                IsNarrationActive = IsNarrating && _activeNarrationPoiId == poi.Id,
                 Priority = poi.Priority
             });
         }
@@ -1253,6 +1315,8 @@ public class MainViewModel : INotifyPropertyChanged
         _selectedPoi = poi;
         _hasUserSelectedPoi = userInitiated || _hasUserSelectedPoi;
         UpdateSelectedPoiDetails(evaluated);
+        OnPropertyChanged(nameof(IsSelectedPoiNarrating));
+        OnPropertyChanged(nameof(SelectedPoiNarrationActionText));
 
         if (userInitiated)
         {
@@ -1314,6 +1378,8 @@ public class MainViewModel : INotifyPropertyChanged
         SelectedPoiNarrationPreview = string.Empty;
         SelectedPoiMapLink = string.Empty;
         SelectedPoiImageSource = string.Empty;
+        OnPropertyChanged(nameof(IsSelectedPoiNarrating));
+        OnPropertyChanged(nameof(SelectedPoiNarrationActionText));
     }
 
     private double? GetDistanceForPoi(Guid poiId)
@@ -1332,6 +1398,45 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         return DateTimeOffset.UtcNow - lastNarratedAt >= TimeSpan.FromMinutes(poi.CooldownMinutes);
+    }
+
+    private bool IsCurrentNarration(POI poi) => IsNarrating && _activeNarrationPoiId == poi.Id;
+
+    private void SetActiveNarrationPoiId(Guid? poiId)
+    {
+        if (_activeNarrationPoiId == poiId)
+        {
+            return;
+        }
+
+        _activeNarrationPoiId = poiId;
+        OnPropertyChanged(nameof(IsSelectedPoiNarrating));
+        OnPropertyChanged(nameof(SelectedPoiNarrationActionText));
+    }
+
+    private IReadOnlyList<(POI Poi, double DistanceMeters, bool IsInside)> EvaluateCurrentPoiStatuses()
+    {
+        if (_lastLocation is null || _pois.Count == 0)
+        {
+            return Array.Empty<(POI Poi, double DistanceMeters, bool IsInside)>();
+        }
+
+        return _geofenceEngine.Evaluate(_lastLocation, _pois);
+    }
+
+    private void RefreshNarrationPresentation()
+    {
+        var evaluated = EvaluateCurrentPoiStatuses();
+        var nearestPoi = evaluated.FirstOrDefault().Poi;
+
+        RefreshPoiList(evaluated, nearestPoi?.Id);
+
+        if (_selectedPoi is not null)
+        {
+            UpdateSelectedPoiDetails(evaluated.Count > 0 ? evaluated : null);
+        }
+
+        RaiseMapStateChanged();
     }
 
     private void AddLog(string message)

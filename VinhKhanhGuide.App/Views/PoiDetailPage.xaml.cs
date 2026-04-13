@@ -16,7 +16,7 @@ public partial class PoiDetailPage : ContentPage
 
     private async void OnNarrateSelectedClicked(object? sender, EventArgs e)
     {
-        await _viewModel.NarrateSelectedPoiAsync();
+        await _viewModel.ToggleSelectedPoiNarrationAsync();
     }
 
     private async void OnOpenMapClicked(object? sender, EventArgs e)

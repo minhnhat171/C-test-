@@ -84,12 +84,24 @@ public partial class MainPage : ContentPage
 
     private async void OnTopBellClicked(object? sender, EventArgs e)
     {
-        await _viewModel.NarrateSelectedPoiAsync();
+        await _viewModel.ToggleSelectedPoiNarrationAsync();
     }
 
     private async void OnNarrateSelectedClicked(object? sender, EventArgs e)
     {
-        await _viewModel.NarrateSelectedPoiAsync();
+        await _viewModel.ToggleSelectedPoiNarrationAsync();
+    }
+
+    private async void OnPoiNarrationClicked(object? sender, EventArgs e)
+    {
+        if (sender is not BindableObject bindable ||
+            bindable.BindingContext is not PoiStatusItem item)
+        {
+            return;
+        }
+
+        await _viewModel.TogglePoiNarrationAsync(item.PoiId);
+        RefreshMapPins(centerOnSelection: false);
     }
 
     private async void OnHomeClicked(object? sender, EventArgs e)

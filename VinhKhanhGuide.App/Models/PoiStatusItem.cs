@@ -16,6 +16,7 @@ public class PoiStatusItem
     public double TriggerRadiusMeters { get; set; }
     public bool IsInsideRadius { get; set; }
     public bool IsNearest { get; set; }
+    public bool IsNarrationActive { get; set; }
     public int Priority { get; set; }
 
     public string PriorityLabel => $"P{Priority}";
@@ -24,6 +25,8 @@ public class PoiStatusItem
     public string NearestLabel => IsNearest ? "POI gần nhất" : string.Empty;
     public string InRadiusBadge => IsInsideRadius ? "Đang ở gần" : string.Empty;
     public string SpecialDishLabel => $"Món nổi bật: {SpecialDish}";
+    public string NarrationActionText => IsNarrationActive ? "Dừng" : "Nghe thuyết minh";
+    public string NarrationStateText => IsNarrationActive ? "Đang phát thuyết minh" : "Sẵn sàng nghe";
 
     public string DistanceLabel =>
         double.IsNaN(DistanceMeters)
