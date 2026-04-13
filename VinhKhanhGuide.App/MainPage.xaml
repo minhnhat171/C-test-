@@ -34,7 +34,7 @@
                                    FontSize="13"
                                    TextColor="#9A3412" />
 
-                            <Label Text="Bạn đã có lớp đăng nhập/đăng ký trước khi vào app. Giờ có thể tiếp tục theo dõi GPS và nghe thuyết minh."
+                            <Label Text="Bạn đã xác thực thành công. Giờ có thể nghe Talk to Speech ngay trên từng box quán ở trang chủ hoặc bật GPS để nghe theo vị trí."
                                    FontSize="13"
                                    TextColor="#7C2D12" />
                         </VerticalStackLayout>
@@ -226,9 +226,111 @@
                     </CollectionView>
                 </VerticalStackLayout>
 
-                <Label Text="Danh sách quán"
-                       FontSize="18"
-                       TextColor="#5D5D5D" />
+                <Border BackgroundColor="#173A43"
+                        StrokeThickness="0"
+                        Padding="18"
+                        StrokeShape="RoundRectangle 26">
+                    <VerticalStackLayout Spacing="14">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="12">
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="Talk to Speech tại trang chủ"
+                                       FontSize="20"
+                                       FontAttributes="Bold"
+                                       TextColor="#FFF9F2" />
+
+                                <Label Text="{Binding HomeNarrationSummary}"
+                                       FontSize="13"
+                                       LineBreakMode="WordWrap"
+                                       TextColor="#D9EEE7" />
+                            </VerticalStackLayout>
+
+                            <Border Grid.Column="1"
+                                    BackgroundColor="#FDE7D7"
+                                    StrokeThickness="0"
+                                    Padding="12,8"
+                                    VerticalOptions="Start"
+                                    StrokeShape="RoundRectangle 16">
+                                <Label Text="{Binding AudioSettingsSummary}"
+                                       FontSize="11"
+                                       FontAttributes="Bold"
+                                       TextColor="#7C2D12" />
+                            </Border>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,*,*"
+                              ColumnSpacing="10">
+                            <Border BackgroundColor="#F7E9D8"
+                                    StrokeThickness="0"
+                                    Padding="12,10"
+                                    StrokeShape="RoundRectangle 18">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="B1"
+                                           FontSize="10"
+                                           FontAttributes="Bold"
+                                           TextColor="#A16207" />
+                                    <Label Text="Xác thực"
+                                           FontSize="13"
+                                           FontAttributes="Bold"
+                                           TextColor="#173A43" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border Grid.Column="1"
+                                    BackgroundColor="#F7E9D8"
+                                    StrokeThickness="0"
+                                    Padding="12,10"
+                                    StrokeShape="RoundRectangle 18">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="B2"
+                                           FontSize="10"
+                                           FontAttributes="Bold"
+                                           TextColor="#A16207" />
+                                    <Label Text="Chọn box quán"
+                                           FontSize="13"
+                                           FontAttributes="Bold"
+                                           TextColor="#173A43" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border Grid.Column="2"
+                                    BackgroundColor="#F7E9D8"
+                                    StrokeThickness="0"
+                                    Padding="12,10"
+                                    StrokeShape="RoundRectangle 18">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="B3"
+                                           FontSize="10"
+                                           FontAttributes="Bold"
+                                           TextColor="#A16207" />
+                                    <Label Text="Nghe thuyết minh"
+                                           FontSize="13"
+                                           FontAttributes="Bold"
+                                           TextColor="#173A43" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </Grid>
+
+                        <Border BackgroundColor="#214A53"
+                                StrokeThickness="0"
+                                Padding="14,12"
+                                StrokeShape="RoundRectangle 18">
+                            <Label Text="{Binding HomeNarrationAvailabilityText}"
+                                   FontSize="12"
+                                   TextColor="#E8F6F2" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Danh sách quán"
+                           FontSize="18"
+                           TextColor="#5D5D5D" />
+
+                    <Label Text="Mỗi quán là một box thông tin riêng. Bạn có thể nghe giới thiệu trực tiếp ngay tại đây mà không cần rời trang chủ."
+                           FontSize="13"
+                           TextColor="#6B7280" />
+                </VerticalStackLayout>
 
                 <Label Text="Không tìm thấy quán phù hợp với từ khóa của bạn."
                        FontSize="13"
@@ -305,6 +407,29 @@
                                            TextColor="#404040"
                                            LineBreakMode="TailTruncation"
                                            MaxLines="3" />
+
+                                    <Border BackgroundColor="#FFF8F1"
+                                            StrokeThickness="0"
+                                            Padding="12"
+                                            StrokeShape="RoundRectangle 16"
+                                            IsVisible="{Binding HasNarrationPreview}">
+                                        <VerticalStackLayout Spacing="6">
+                                            <Label Text="Xem trước nội dung TTS"
+                                                   FontSize="11"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#9A3412" />
+
+                                            <Label Text="{Binding NarrationPreview}"
+                                                   FontSize="12"
+                                                   TextColor="#4B5563"
+                                                   LineBreakMode="TailTruncation"
+                                                   MaxLines="3" />
+
+                                            <Label Text="{Binding NarrationGuideText}"
+                                                   FontSize="11"
+                                                   TextColor="#7C2D12" />
+                                        </VerticalStackLayout>
+                                    </Border>
 
                                     <Grid ColumnDefinitions="*"
                                           ColumnSpacing="10">

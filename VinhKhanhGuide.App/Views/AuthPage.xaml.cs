@@ -108,7 +108,7 @@ public partial class AuthPage : ContentPage
                                 },
                                 new Label
                                 {
-                                    Text = "Đăng nhập trước khi vào bản đồ để bật GPS, theo dõi hành trình và nghe thuyết minh tự động.",
+                                    Text = "Đăng nhập trước khi vào app để mở trang chủ, xem từng box quán và nghe Talk to Speech ngay tại đó.",
                                     FontSize = 15,
                                     TextColor = Color.FromArgb("#E9F3EF")
                                 },
@@ -128,9 +128,9 @@ public partial class AuthPage : ContentPage
                                     RowSpacing = 12,
                                     Children =
                                     {
-                                        CreateHeroStepCard("B1", "Xác thực", 0, 0),
-                                        CreateHeroStepCard("B2", "Mở bản đồ", 0, 1),
-                                        CreateHeroStepCard("B3", "GPS và audio", 1, 0, columnSpan: 2, widthRequest: 148)
+                                        CreateHeroStepCard("B1", "Xác thực tài khoản", 0, 0),
+                                        CreateHeroStepCard("B2", "Vào trang chủ", 0, 1),
+                                        CreateHeroStepCard("B3", "Nghe tại box quán", 1, 0, columnSpan: 2, widthRequest: 148)
                                     }
                                 }
                             }

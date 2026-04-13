@@ -28,7 +28,7 @@
                                FontAttributes="Bold"
                                TextColor="#FFF9F2" />
 
-                        <Label Text="Đăng nhập trước khi vào bản đồ để bật GPS, theo dõi hành trình và nghe thuyết minh tự động."
+                        <Label Text="Đăng nhập trước khi vào app để mở trang chủ, xem từng box quán và nghe Talk to Speech ngay tại đó."
                                FontSize="15"
                                LineHeight="1.2"
                                TextColor="#E9F3EF" />
@@ -49,7 +49,7 @@
                                         FontSize="11"
                                        FontAttributes="Bold"
                                        TextColor="#A96A45" />
-                                <Label Text="Xác thực"
+                                <Label Text="Xác thực tài khoản"
                                         FontSize="14"
                                         FontAttributes="Bold"
                                        TextColor="#1C4748" />
@@ -68,7 +68,7 @@
                                        FontSize="11"
                                        FontAttributes="Bold"
                                        TextColor="#A96A45" />
-                                <Label Text="Mở bản đồ"
+                                <Label Text="Vào trang chủ"
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="#1C4748" />
@@ -90,7 +90,7 @@
                                        FontSize="11"
                                        FontAttributes="Bold"
                                        TextColor="#A96A45" />
-                                <Label Text="GPS và audio"
+                                <Label Text="Nghe tại box quán"
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="#1C4748" />
@@ -328,6 +328,10 @@
                            TextColor="#5B4A3F" />
 
                     <Label Text="Đăng ký: kiểm tra trùng tên đăng nhập, tạo tài khoản mới và đưa bạn trở lại tab đăng nhập khi thành công."
+                           FontSize="13"
+                           TextColor="#5B4A3F" />
+
+                    <Label Text="Sau khi xác thực, trang chủ sẽ hiển thị danh sách quán dưới dạng các box thông tin và mỗi box có nút &quot;Nghe thuyết minh&quot; để phát TTS tương ứng."
                            FontSize="13"
                            TextColor="#5B4A3F" />
                 </VerticalStackLayout>

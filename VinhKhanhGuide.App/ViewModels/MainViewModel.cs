@@ -156,7 +156,32 @@ public class MainViewModel : INotifyPropertyChanged
     public LocationDto? LastLocation => _lastLocation;
     public Guid? SelectedPoiId => _selectedPoi?.Id;
     public bool IsSelectedPoiNarrating => _selectedPoi is not null && IsNarrating && _activeNarrationPoiId == _selectedPoi.Id;
-    public string SelectedPoiNarrationActionText => IsSelectedPoiNarrating ? "Dừng" : "Nghe thuyết minh";
+    public string SelectedPoiNarrationActionText => IsSelectedPoiNarrating ? "Dừng thuyết minh" : "Nghe thuyết minh";
+    public string HomeNarrationSummary
+    {
+        get
+        {
+            var activePoi = _activeNarrationPoiId.HasValue
+                ? _pois.FirstOrDefault(item => item.Id == _activeNarrationPoiId.Value)
+                : null;
+
+            if (IsNarrating && activePoi is not null)
+            {
+                return $"Đang phát Talk to Speech cho {activePoi.Name}. Bạn có thể bấm lại trên box quán để dừng.";
+            }
+
+            if (_pois.Count == 0)
+            {
+                return "Khi có dữ liệu quán, mỗi quán sẽ hiện thành một box thông tin riêng để người dùng nghe giới thiệu ngay tại trang chủ.";
+            }
+
+            return $"{CurrentUserDisplayName} có thể chủ động bấm \"Nghe thuyết minh\" trên từng box quán để tìm hiểu nội dung trước khi di chuyển tới nơi.";
+        }
+    }
+
+    public string HomeNarrationAvailabilityText => _pois.Count == 0
+        ? "Đang chờ danh sách quán từ hệ thống quản trị."
+        : $"{_pois.Count} quán sẵn sàng phát Talk to Speech • Ngôn ngữ hiện tại: {SelectedLanguageDisplayName}";
 
     public bool IsTracking
     {
@@ -189,6 +214,7 @@ public class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsSelectedPoiNarrating));
             OnPropertyChanged(nameof(SelectedPoiNarrationActionText));
+            OnPropertyChanged(nameof(HomeNarrationSummary));
             (StopNarrationCommand as Command)?.ChangeCanExecute();
         }
     }
@@ -271,8 +297,10 @@ public class MainViewModel : INotifyPropertyChanged
 
             PersistUserPreferences();
             UpdateSelectedPoiDetails();
+            RefreshNarrationPresentation();
             OnPropertyChanged(nameof(SelectedLanguageDisplayName));
             OnPropertyChanged(nameof(AudioSettingsSummary));
+            OnPropertyChanged(nameof(HomeNarrationAvailabilityText));
 
             if (!_isRestoringUserPreferences)
             {
@@ -1286,6 +1314,7 @@ public class MainViewModel : INotifyPropertyChanged
                 ImageSource = poi.ImageSource,
                 Description = poi.Description,
                 SpecialDish = poi.SpecialDish,
+                NarrationPreview = BuildNarrationPreview(poi.GetNarrationText(SelectedLanguage)),
                 MapLink = poi.MapLink,
                 Latitude = poi.Latitude,
                 Longitude = poi.Longitude,
@@ -1300,6 +1329,8 @@ public class MainViewModel : INotifyPropertyChanged
 
         UpdateFilteredPoiStatuses();
         RefreshSearchSuggestions();
+        OnPropertyChanged(nameof(HomeNarrationSummary));
+        OnPropertyChanged(nameof(HomeNarrationAvailabilityText));
     }
 
     private void SetSelectedPoi(
@@ -1412,6 +1443,7 @@ public class MainViewModel : INotifyPropertyChanged
         _activeNarrationPoiId = poiId;
         OnPropertyChanged(nameof(IsSelectedPoiNarrating));
         OnPropertyChanged(nameof(SelectedPoiNarrationActionText));
+        OnPropertyChanged(nameof(HomeNarrationSummary));
     }
 
     private IReadOnlyList<(POI Poi, double DistanceMeters, bool IsInside)> EvaluateCurrentPoiStatuses()
@@ -1463,7 +1495,7 @@ public class MainViewModel : INotifyPropertyChanged
     private void UpdateFilteredPoiStatuses()
     {
         var visibleItems = string.IsNullOrWhiteSpace(SearchQuery)
-            ? PoiStatuses.ToList()
+            ? SortPoiStatusesForHome(PoiStatuses)
             : GetSearchMatches(SearchQuery);
 
         FilteredPoiStatuses.Clear();
@@ -1474,6 +1506,18 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         IsSearchResultEmpty = HasSearchQuery && FilteredPoiStatuses.Count == 0;
+    }
+
+    private static List<PoiStatusItem> SortPoiStatusesForHome(IEnumerable<PoiStatusItem> items)
+    {
+        return items
+            .OrderByDescending(item => item.IsNarrationActive)
+            .ThenByDescending(item => item.IsInsideRadius)
+            .ThenByDescending(item => item.IsNearest)
+            .ThenBy(item => double.IsNaN(item.DistanceMeters) ? double.MaxValue : item.DistanceMeters)
+            .ThenByDescending(item => item.Priority)
+            .ThenBy(item => item.Name)
+            .ToList();
     }
 
     private List<PoiStatusItem> GetSearchMatches(string query)
@@ -1805,6 +1849,7 @@ public class MainViewModel : INotifyPropertyChanged
         CurrentUserStatusLine = session is null
             ? "Khách khám phá"
             : $"{session.RoleLabel} • @{loginId}";
+        OnPropertyChanged(nameof(HomeNarrationSummary));
     }
 
     private void LoadPersistedState()
@@ -1950,9 +1995,10 @@ public class MainViewModel : INotifyPropertyChanged
             _isRestoringUserPreferences = false;
         }
 
-        UpdateSelectedPoiDetails();
+        RefreshNarrationPresentation();
         OnPropertyChanged(nameof(SelectedLanguageDisplayName));
         OnPropertyChanged(nameof(AudioSettingsSummary));
+        OnPropertyChanged(nameof(HomeNarrationAvailabilityText));
     }
 
     private void PersistUserPreferences()
@@ -2008,6 +2054,22 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         return builder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    private static string BuildNarrationPreview(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return "Chưa có nội dung thuyết minh cho quán này.";
+        }
+
+        var normalized = string.Join(
+            ' ',
+            text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+        return normalized.Length <= 150
+            ? normalized
+            : $"{normalized[..147].TrimEnd()}...";
     }
 
     private static string CreatePoiSnapshot(IEnumerable<POI> pois)

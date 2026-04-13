@@ -82,12 +82,12 @@ public class AuthPageViewModel : INotifyPropertyChanged
     public string FormTitle => IsLoginMode ? "Đăng nhập để tiếp tục" : "Tạo tài khoản mới";
 
     public string FormSubtitle => IsLoginMode
-        ? "Xác thực nhanh để vào bản đồ, GPS và phần thuyết minh tự động."
-        : "Làm theo đúng sequence: kiểm tra dữ liệu, lưu tài khoản rồi quay lại đăng nhập.";
+        ? "Xác thực để vào trang chủ, xem từng box quán và phát Talk to Speech ngay tại đó."
+        : "Làm theo sequence: kiểm tra dữ liệu, tạo tài khoản rồi quay lại đăng nhập để vào flow nghe thuyết minh.";
 
     public string FormHint => IsLoginMode
         ? "Tài khoản mẫu đang có sẵn: user / 12345678."
-        : "Đăng ký xong app sẽ quay lại tab đăng nhập. Tên đăng nhập nên viết liền, không dấu.";
+        : "Đăng ký xong app sẽ quay lại tab đăng nhập. Sau đó bạn vào trang chủ và nghe thuyết minh ngay trên từng box quán.";
 
     public string SubmitButtonText => IsLoginMode ? "Đăng nhập" : "Tạo tài khoản";
 

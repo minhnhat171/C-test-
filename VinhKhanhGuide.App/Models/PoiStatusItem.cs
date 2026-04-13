@@ -9,6 +9,7 @@ public class PoiStatusItem
     public string ImageSource { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string SpecialDish { get; set; } = string.Empty;
+    public string NarrationPreview { get; set; } = string.Empty;
     public string MapLink { get; set; } = string.Empty;
     public double Latitude { get; set; }
     public double Longitude { get; set; }
@@ -24,9 +25,13 @@ public class PoiStatusItem
     public string StatusLabel => IsInsideRadius ? "Trong vùng geofence" : "Ngoài vùng";
     public string NearestLabel => IsNearest ? "POI gần nhất" : string.Empty;
     public string InRadiusBadge => IsInsideRadius ? "Đang ở gần" : string.Empty;
+    public bool HasNarrationPreview => !string.IsNullOrWhiteSpace(NarrationPreview);
     public string SpecialDishLabel => $"Món nổi bật: {SpecialDish}";
-    public string NarrationActionText => IsNarrationActive ? "Dừng" : "Nghe thuyết minh";
+    public string NarrationActionText => IsNarrationActive ? "Dừng thuyết minh" : "Nghe thuyết minh";
     public string NarrationStateText => IsNarrationActive ? "Đang phát thuyết minh" : "Sẵn sàng nghe";
+    public string NarrationGuideText => IsNarrationActive
+        ? "Phần Talk to Speech của quán này đang phát."
+        : "Bấm để nghe phần Talk to Speech ngay tại trang chủ.";
 
     public string DistanceLabel =>
         double.IsNaN(DistanceMeters)
