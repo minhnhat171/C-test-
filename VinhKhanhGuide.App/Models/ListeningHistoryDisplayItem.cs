@@ -31,7 +31,7 @@ public sealed class ListeningHistoryDisplayItem
     public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
     public bool HasAddress => !string.IsNullOrWhiteSpace(Address);
     public bool HasNarrationPreview => !string.IsNullOrWhiteSpace(NarrationPreview);
-    public bool CanReplay => !string.IsNullOrWhiteSpace(NarrationSnapshot);
+    public bool CanReplay => !string.IsNullOrWhiteSpace(NarrationSnapshot) || !string.IsNullOrWhiteSpace(AudioAssetPath);
     public string ReplayActionText => PlaybackModeLabel == "Audio" ? "Phát lại Audio" : "Phát lại TTS";
 
     public override string ToString()

@@ -178,16 +178,14 @@
                                 CornerRadius="18"
                                 Padding="16,8" />
 
-                        <Border Grid.Column="2"
+                        <Button Grid.Column="2"
+                                Text="{Binding AudioSettingsQuickActionText}"
+                                Clicked="OnOpenAudioSettingsClicked"
                                 BackgroundColor="#FFFFFF"
-                                StrokeThickness="0"
-                                Padding="14,4"
-                                StrokeShape="RoundRectangle 18">
-                            <Picker Title="Ngôn ngữ"
-                                    HorizontalOptions="Fill"
-                                    ItemsSource="{Binding SupportedLanguages}"
-                                    SelectedItem="{Binding SelectedLanguage}" />
-                        </Border>
+                                TextColor="#173A43"
+                                FontAttributes="Bold"
+                                CornerRadius="18"
+                                Padding="14,8" />
                     </Grid>
                 </VerticalStackLayout>
 
@@ -1343,11 +1341,11 @@
                                     StrokeShape="RoundRectangle 22">
                                 <VerticalStackLayout Spacing="14">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="Tùy chọn ứng dụng"
+                                        <Label Text="Cài đặt âm thanh"
                                                FontSize="18"
                                                FontAttributes="Bold"
                                                TextColor="#161616" />
-                                        <Label Text="Hiển thị ngôn ngữ đang dùng và phiên bản phát hiện tại cho flow thuyết minh."
+                                        <Label Text="Chọn ngôn ngữ và kiểu phát để nghe thử trước, chỉ áp dụng cho toàn bộ ứng dụng khi bạn nhấn Lưu."
                                                FontSize="12"
                                                TextColor="#6B7280" />
                                     </VerticalStackLayout>
@@ -1359,7 +1357,7 @@
                                         <VerticalStackLayout Spacing="6">
                                             <Grid ColumnDefinitions="*,Auto"
                                                   ColumnSpacing="12">
-                                                <Label Text="Phiên bản phát hiện tại"
+                                                <Label Text="Cấu hình hiện tại"
                                                        FontSize="13"
                                                        FontAttributes="Bold"
                                                        TextColor="#374151" />
@@ -1376,16 +1374,51 @@
                                                 </Border>
                                             </Grid>
 
+                                            <Label Text="{Binding CurrentAudioSettingsSummary}"
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#111827" />
+
                                             <Label Text="{Binding NarrationModeDescription}"
                                                    FontSize="12"
                                                    TextColor="#6B7280" />
                                         </VerticalStackLayout>
                                     </Border>
 
-                                    <Label Text="Cài đặt âm thanh"
-                                           FontSize="18"
-                                           FontAttributes="Bold"
-                                           TextColor="#161616" />
+                                    <Border BackgroundColor="#F7F4EF"
+                                            StrokeThickness="0"
+                                            Padding="14"
+                                            StrokeShape="RoundRectangle 18">
+                                        <VerticalStackLayout Spacing="12">
+                                            <Grid ColumnDefinitions="*,Auto"
+                                                  ColumnSpacing="12">
+                                                <Label Text="Bản nháp đang chỉnh"
+                                                       FontSize="13"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#374151" />
+
+                                                <Border Grid.Column="1"
+                                                        BackgroundColor="#FFF2E7"
+                                                        StrokeThickness="0"
+                                                        Padding="10,6"
+                                                        StrokeShape="RoundRectangle 14">
+                                                    <Label Text="{Binding DraftPlaybackModeDisplay}"
+                                                           FontSize="11"
+                                                           FontAttributes="Bold"
+                                                           TextColor="#9A3412" />
+                                                </Border>
+                                            </Grid>
+
+                                            <Label Text="{Binding DraftAudioSettingsSummary}"
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#111827" />
+
+                                            <Label Text="{Binding DraftPlaybackModeDescription}"
+                                                   FontSize="12"
+                                                   TextColor="#6B7280" />
+                                        </VerticalStackLayout>
+                                    </Border>
 
                                     <Grid ColumnDefinitions="*,Auto"
                                           ColumnSpacing="14">
@@ -1393,13 +1426,13 @@
                                             <Label Text="Tự động phát khi người dùng đi vào vùng quán"
                                                    FontSize="13"
                                                    TextColor="#111827" />
-                                            <Label Text="{Binding AudioSettingsSummary}"
+                                            <Label Text="Thay đổi ở đây chỉ là bản nháp cho đến khi bạn nhấn Lưu."
                                                    FontSize="12"
                                                    TextColor="#6B7280" />
                                         </VerticalStackLayout>
 
                                         <Switch Grid.Column="1"
-                                                IsToggled="{Binding IsAutoNarrationEnabled}" />
+                                                IsToggled="{Binding DraftIsAutoNarrationEnabled}" />
                                     </Grid>
 
                                     <VerticalStackLayout Spacing="6">
@@ -1413,9 +1446,84 @@
                                                 StrokeShape="RoundRectangle 16">
                                             <Picker Title="Chọn ngôn ngữ"
                                                     ItemsSource="{Binding SupportedLanguages}"
-                                                    SelectedItem="{Binding SelectedLanguage}" />
+                                                    ItemDisplayBinding="{Binding Label}"
+                                                    SelectedItem="{Binding DraftSelectedLanguageOption}" />
+                                        </Border>
+                                        <Label Text="{Binding DraftSelectedLanguageDisplayName}"
+                                               FontSize="12"
+                                               TextColor="#6B7280" />
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="Kiểu phát"
+                                               FontSize="13"
+                                               FontAttributes="Bold"
+                                               TextColor="#374151" />
+                                        <Border BackgroundColor="#F7F4EF"
+                                                StrokeThickness="0"
+                                                Padding="12,2"
+                                                StrokeShape="RoundRectangle 16">
+                                            <Picker Title="Chọn kiểu phát"
+                                                    ItemsSource="{Binding SupportedPlaybackModes}"
+                                                    ItemDisplayBinding="{Binding Label}"
+                                                    SelectedItem="{Binding DraftSelectedPlaybackModeOption}" />
                                         </Border>
                                     </VerticalStackLayout>
+
+                                    <Border BackgroundColor="#FDEEEE"
+                                            Stroke="#E4B6B0"
+                                            StrokeThickness="1"
+                                            Padding="14,12"
+                                            StrokeShape="RoundRectangle 18"
+                                            IsVisible="{Binding HasAudioSettingsError}">
+                                        <Label Text="{Binding AudioSettingsErrorMessage}"
+                                               FontSize="13"
+                                               TextColor="#A53A32" />
+                                    </Border>
+
+                                    <Border BackgroundColor="#ECFDF3"
+                                            Stroke="#BBE3CB"
+                                            StrokeThickness="1"
+                                            Padding="14,12"
+                                            StrokeShape="RoundRectangle 18"
+                                            IsVisible="{Binding HasAudioSettingsSuccess}">
+                                        <Label Text="{Binding AudioSettingsSuccessMessage}"
+                                               FontSize="13"
+                                               TextColor="#166534" />
+                                    </Border>
+
+                                    <ActivityIndicator IsRunning="{Binding IsPreviewingAudioSettings}"
+                                                       IsVisible="{Binding IsPreviewingAudioSettings}"
+                                                       Color="#173A43" />
+
+                                    <Grid ColumnDefinitions="*,*,*"
+                                          ColumnSpacing="10">
+                                        <Button Text="Nghe thử"
+                                                Command="{Binding PreviewAudioSettingsCommand}"
+                                                IsEnabled="{Binding CanPreviewAudioSettings}"
+                                                BackgroundColor="#173A43"
+                                                TextColor="White"
+                                                CornerRadius="16"
+                                                Padding="12,10" />
+
+                                        <Button Grid.Column="1"
+                                                Text="Lưu"
+                                                Command="{Binding SaveAudioSettingsCommand}"
+                                                IsEnabled="{Binding CanSaveAudioSettings}"
+                                                BackgroundColor="#C6672F"
+                                                TextColor="White"
+                                                CornerRadius="16"
+                                                Padding="12,10" />
+
+                                        <Button Grid.Column="2"
+                                                Text="Giữ cấu hình cũ"
+                                                Command="{Binding ResetAudioSettingsCommand}"
+                                                IsEnabled="{Binding CanResetAudioSettings}"
+                                                BackgroundColor="#FFF2E7"
+                                                TextColor="#9A3412"
+                                                CornerRadius="16"
+                                                Padding="12,10" />
+                                    </Grid>
                                 </VerticalStackLayout>
                             </Border>
 

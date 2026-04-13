@@ -38,6 +38,7 @@ public static class MauiProgram
         });
 
         builder.Services.AddSingleton<IAuthService, AuthService>();
+        builder.Services.AddSingleton<IAudioSettingsService, AudioSettingsService>();
         builder.Services.AddSingleton<IAccountProfileValidationService, AccountProfileValidationService>();
         builder.Services.AddSingleton<IUsageHistoryService, UsageHistoryService>();
         builder.Services.AddSingleton<IListeningHistorySyncService, ListeningHistorySyncService>();

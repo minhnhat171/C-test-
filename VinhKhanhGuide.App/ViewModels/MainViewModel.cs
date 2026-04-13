@@ -18,7 +18,7 @@ namespace VinhKhanhGuide.App.ViewModels;
 
 public class MainViewModel : INotifyPropertyChanged
 {
-    private const string DefaultNarrationMode = "TTS";
+    private const string DefaultNarrationMode = "tts";
     private const int MaxRecentSearches = 6;
     private const int MaxSearchSuggestions = 6;
     private const int MaxPinnedRecentSuggestions = 3;
@@ -34,6 +34,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly IPoiProvider _poiProvider;
     private readonly INarrationService _narrationService;
     private readonly IAuthService _authService;
+    private readonly IAudioSettingsService _audioSettingsService;
     private readonly IAccountProfileValidationService _accountProfileValidationService;
     private readonly IUsageHistoryService _usageHistoryService;
     private readonly IListeningHistorySyncService _listeningHistorySyncService;
@@ -77,6 +78,10 @@ public class MainViewModel : INotifyPropertyChanged
     private string _selectedPoiMapLink = string.Empty;
     private string _selectedPoiImageSource = string.Empty;
     private string _selectedLanguage = "vi";
+    private string _selectedPlaybackMode = DefaultNarrationMode;
+    private string _draftSelectedLanguage = "vi";
+    private string _draftSelectedPlaybackMode = DefaultNarrationMode;
+    private bool _draftIsAutoNarrationEnabled = true;
     private string _searchQuery = string.Empty;
     private string _currentUserDisplayName = "Khách tham quan";
     private string _currentUserStatusLine = "Chế độ tham quan nhanh";
@@ -89,6 +94,10 @@ public class MainViewModel : INotifyPropertyChanged
     private bool _isSavingAccountProfile;
     private string _accountSettingsErrorMessage = string.Empty;
     private string _accountSettingsSuccessMessage = string.Empty;
+    private bool _isSavingAudioSettings;
+    private bool _isPreviewingAudioSettings;
+    private string _audioSettingsErrorMessage = string.Empty;
+    private string _audioSettingsSuccessMessage = string.Empty;
 
     private bool _isListeningHistoryLoading;
     private string _listeningHistoryLoadError = string.Empty;
@@ -102,6 +111,7 @@ public class MainViewModel : INotifyPropertyChanged
         IPoiProvider poiProvider,
         INarrationService narrationService,
         IAuthService authService,
+        IAudioSettingsService audioSettingsService,
         IAccountProfileValidationService accountProfileValidationService,
         IUsageHistoryService usageHistoryService,
         IListeningHistorySyncService listeningHistorySyncService,
@@ -111,6 +121,7 @@ public class MainViewModel : INotifyPropertyChanged
         _poiProvider = poiProvider;
         _narrationService = narrationService;
         _authService = authService;
+        _audioSettingsService = audioSettingsService;
         _accountProfileValidationService = accountProfileValidationService;
         _usageHistoryService = usageHistoryService;
         _listeningHistorySyncService = listeningHistorySyncService;
@@ -134,6 +145,9 @@ public class MainViewModel : INotifyPropertyChanged
         RefreshListeningHistoryCommand = new Command(async () => await RefreshListeningHistoryAsync());
         SaveAccountProfileCommand = new Command(async () => await SaveAccountProfileAsync(), () => CanSaveAccountProfile);
         ResetAccountProfileCommand = new Command(ResetAccountProfileEditor, () => CanManageAccountProfile && !IsSavingAccountProfile);
+        PreviewAudioSettingsCommand = new Command(async () => await PreviewAudioSettingsAsync(), () => CanPreviewAudioSettings);
+        SaveAudioSettingsCommand = new Command(async () => await SaveAudioSettingsAsync(), () => CanSaveAudioSettings);
+        ResetAudioSettingsCommand = new Command(ResetAudioSettingsDraft, () => CanResetAudioSettings);
 
         SyncCurrentUser();
         LoadPersistedState();
@@ -151,7 +165,19 @@ public class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<string> ListeningHistoryLocalEntries { get; } = new();
     public ObservableCollection<ListeningHistoryRankingDisplayItem> ListeningHistoryRanking { get; } = new();
     public ObservableCollection<string> ViewHistory { get; } = new();
-    public IReadOnlyList<string> SupportedLanguages { get; } = ["vi", "en", "zh", "ko", "fr"];
+    public IReadOnlyList<AudioSettingsOption> SupportedLanguages { get; } =
+    [
+        new() { Code = "vi", Label = "Tiếng Việt", Description = "Giọng tiếng Việt chuẩn cho khách nội địa." },
+        new() { Code = "en", Label = "English", Description = "Giọng đọc tiếng Anh với accent English." },
+        new() { Code = "zh", Label = "中文", Description = "Bản đọc tiếng Trung." },
+        new() { Code = "ko", Label = "한국어", Description = "Bản đọc tiếng Hàn." },
+        new() { Code = "fr", Label = "Français", Description = "Bản đọc tiếng Pháp." }
+    ];
+    public IReadOnlyList<AudioSettingsOption> SupportedPlaybackModes { get; } =
+    [
+        new() { Code = "tts", Label = "TTS", Description = "Đọc bằng giọng máy theo ngôn ngữ đã chọn." },
+        new() { Code = "audio", Label = "Audio", Description = "Ưu tiên phát file audio thu sẵn nếu quán đã có asset." }
+    ];
     public IReadOnlyList<string> ListeningHistoryPeriodOptions { get; } = ["Tất cả", "24 giờ qua", "7 ngày qua", "30 ngày qua"];
     public IReadOnlyList<string> ListeningHistorySortOptions { get; } = ["Mới nhất trước", "Cũ nhất trước"];
     public IReadOnlyList<string> ListeningHistoryViewOptions { get; } = ["Dòng thời gian", "Xếp hạng POI"];
@@ -166,6 +192,9 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand RefreshListeningHistoryCommand { get; }
     public ICommand SaveAccountProfileCommand { get; }
     public ICommand ResetAccountProfileCommand { get; }
+    public ICommand PreviewAudioSettingsCommand { get; }
+    public ICommand SaveAudioSettingsCommand { get; }
+    public ICommand ResetAudioSettingsCommand { get; }
 
     public IReadOnlyList<POI> Pois => _pois;
     public LocationDto? LastLocation => _lastLocation;
@@ -303,44 +332,121 @@ public class MainViewModel : INotifyPropertyChanged
     public string SelectedLanguage
     {
         get => _selectedLanguage;
-        set
+        private set
         {
-            if (!SetProperty(ref _selectedLanguage, value))
+            var normalizedLanguage = NormalizeLanguageCode(value);
+            if (!SetProperty(ref _selectedLanguage, normalizedLanguage))
             {
                 return;
             }
 
-            PersistUserPreferences();
             UpdateSelectedPoiDetails();
             RefreshNarrationPresentation();
             OnPropertyChanged(nameof(SelectedLanguageDisplayName));
             OnPropertyChanged(nameof(AudioSettingsSummary));
             OnPropertyChanged(nameof(HomeNarrationAvailabilityText));
+            OnPropertyChanged(nameof(CurrentAudioSettingsSummary));
+            OnPropertyChanged(nameof(AudioSettingsQuickActionText));
+            OnPropertyChanged(nameof(HasPendingAudioSettingsChanges));
+            UpdateAudioSettingsCommandStates();
+        }
+    }
 
-            if (!_isRestoringUserPreferences)
+    public string SelectedPlaybackMode
+    {
+        get => _selectedPlaybackMode;
+        private set
+        {
+            var normalizedPlaybackMode = NormalizePlaybackMode(value);
+            if (!SetProperty(ref _selectedPlaybackMode, normalizedPlaybackMode))
             {
-                AddLog($"{NowLabel()} Chuyển ngôn ngữ sang {SelectedLanguageDisplayName}");
+                return;
             }
+
+            OnPropertyChanged(nameof(NarrationModeDisplay));
+            OnPropertyChanged(nameof(NarrationModeDescription));
+            OnPropertyChanged(nameof(AudioSettingsSummary));
+            OnPropertyChanged(nameof(HomeNarrationAvailabilityText));
+            OnPropertyChanged(nameof(CurrentAudioSettingsSummary));
+            OnPropertyChanged(nameof(AudioSettingsQuickActionText));
+            OnPropertyChanged(nameof(HasPendingAudioSettingsChanges));
+            UpdateAudioSettingsCommandStates();
         }
     }
 
     public bool IsAutoNarrationEnabled
     {
         get => _isAutoNarrationEnabled;
-        set
+        private set
         {
             if (!SetProperty(ref _isAutoNarrationEnabled, value))
             {
                 return;
             }
 
-            PersistUserPreferences();
             OnPropertyChanged(nameof(AudioSettingsSummary));
+            OnPropertyChanged(nameof(CurrentAudioSettingsSummary));
+            OnPropertyChanged(nameof(AudioSettingsQuickActionText));
+            OnPropertyChanged(nameof(HasPendingAudioSettingsChanges));
+            UpdateAudioSettingsCommandStates();
+        }
+    }
 
-            if (!_isRestoringUserPreferences)
+    public string DraftSelectedLanguage
+    {
+        get => _draftSelectedLanguage;
+        set
+        {
+            var normalizedLanguage = NormalizeLanguageCode(value);
+            if (!SetProperty(ref _draftSelectedLanguage, normalizedLanguage))
             {
-                AddLog($"{NowLabel()} {(value ? "Bật" : "Tắt")} tự động phát khi vào vùng");
+                return;
             }
+
+            OnPropertyChanged(nameof(DraftSelectedLanguageDisplayName));
+            OnPropertyChanged(nameof(DraftSelectedLanguageOption));
+            OnPropertyChanged(nameof(DraftAudioSettingsSummary));
+            OnPropertyChanged(nameof(HasPendingAudioSettingsChanges));
+            ClearAudioSettingsFeedback();
+            UpdateAudioSettingsCommandStates();
+        }
+    }
+
+    public string DraftSelectedPlaybackMode
+    {
+        get => _draftSelectedPlaybackMode;
+        set
+        {
+            var normalizedPlaybackMode = NormalizePlaybackMode(value);
+            if (!SetProperty(ref _draftSelectedPlaybackMode, normalizedPlaybackMode))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(DraftPlaybackModeDisplay));
+            OnPropertyChanged(nameof(DraftSelectedPlaybackModeOption));
+            OnPropertyChanged(nameof(DraftPlaybackModeDescription));
+            OnPropertyChanged(nameof(DraftAudioSettingsSummary));
+            OnPropertyChanged(nameof(HasPendingAudioSettingsChanges));
+            ClearAudioSettingsFeedback();
+            UpdateAudioSettingsCommandStates();
+        }
+    }
+
+    public bool DraftIsAutoNarrationEnabled
+    {
+        get => _draftIsAutoNarrationEnabled;
+        set
+        {
+            if (!SetProperty(ref _draftIsAutoNarrationEnabled, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(DraftAudioSettingsSummary));
+            OnPropertyChanged(nameof(HasPendingAudioSettingsChanges));
+            ClearAudioSettingsFeedback();
+            UpdateAudioSettingsCommandStates();
         }
     }
 
@@ -496,10 +602,121 @@ public class MainViewModel : INotifyPropertyChanged
         ? "Bạn có thể cập nhật hồ sơ cá nhân ngay trên thiết bị này. Hệ thống sẽ kiểm tra dữ liệu trước khi lưu."
         : "Bản hiện tại đang vào app ở chế độ khách tham quan. Luồng QR và tài khoản sẽ được nối lại ở bước sau.";
 
-    public string NarrationModeDisplay => DefaultNarrationMode;
+    public bool IsSavingAudioSettings
+    {
+        get => _isSavingAudioSettings;
+        private set
+        {
+            if (!SetProperty(ref _isSavingAudioSettings, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(CanSaveAudioSettings));
+            OnPropertyChanged(nameof(CanPreviewAudioSettings));
+            OnPropertyChanged(nameof(CanResetAudioSettings));
+            UpdateAudioSettingsCommandStates();
+        }
+    }
+
+    public bool IsPreviewingAudioSettings
+    {
+        get => _isPreviewingAudioSettings;
+        private set
+        {
+            if (!SetProperty(ref _isPreviewingAudioSettings, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(CanSaveAudioSettings));
+            OnPropertyChanged(nameof(CanPreviewAudioSettings));
+            OnPropertyChanged(nameof(CanResetAudioSettings));
+            UpdateAudioSettingsCommandStates();
+        }
+    }
+
+    public string AudioSettingsErrorMessage
+    {
+        get => _audioSettingsErrorMessage;
+        private set
+        {
+            if (!SetProperty(ref _audioSettingsErrorMessage, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasAudioSettingsError));
+        }
+    }
+
+    public bool HasAudioSettingsError => !string.IsNullOrWhiteSpace(AudioSettingsErrorMessage);
+
+    public string AudioSettingsSuccessMessage
+    {
+        get => _audioSettingsSuccessMessage;
+        private set
+        {
+            if (!SetProperty(ref _audioSettingsSuccessMessage, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasAudioSettingsSuccess));
+        }
+    }
+
+    public bool HasAudioSettingsSuccess => !string.IsNullOrWhiteSpace(AudioSettingsSuccessMessage);
+
+    public bool HasPendingAudioSettingsChanges =>
+        !string.Equals(DraftSelectedLanguage, SelectedLanguage, StringComparison.OrdinalIgnoreCase) ||
+        !string.Equals(DraftSelectedPlaybackMode, SelectedPlaybackMode, StringComparison.OrdinalIgnoreCase) ||
+        DraftIsAutoNarrationEnabled != IsAutoNarrationEnabled;
+
+    public bool CanSaveAudioSettings => HasPendingAudioSettingsChanges && !IsSavingAudioSettings && !IsPreviewingAudioSettings;
+
+    public bool CanPreviewAudioSettings => !IsSavingAudioSettings && !IsPreviewingAudioSettings;
+
+    public bool CanResetAudioSettings => HasPendingAudioSettingsChanges && !IsSavingAudioSettings && !IsPreviewingAudioSettings;
+
+    public string NarrationModeDisplay => GetPlaybackModeLabel(SelectedPlaybackMode);
 
     public string NarrationModeDescription =>
-        "Ứng dụng hiện đang dùng Talk to Speech làm chế độ phát mặc định cho phần thuyết minh.";
+        string.Equals(SelectedPlaybackMode, "audio", StringComparison.OrdinalIgnoreCase)
+            ? "Ứng dụng sẽ ưu tiên phát file audio thu sẵn. Nếu quán chưa có file audio, hệ thống sẽ tự chuyển sang TTS để không bị gián đoạn."
+            : "Ứng dụng đang dùng Talk to Speech làm chế độ phát mặc định cho phần thuyết minh.";
+
+    public string DraftSelectedLanguageDisplayName => GetLanguageDisplayName(DraftSelectedLanguage);
+
+    public AudioSettingsOption? DraftSelectedLanguageOption
+    {
+        get => SupportedLanguages.FirstOrDefault(item =>
+            string.Equals(item.Code, DraftSelectedLanguage, StringComparison.OrdinalIgnoreCase));
+        set => DraftSelectedLanguage = value?.Code ?? "vi";
+    }
+
+    public string DraftPlaybackModeDisplay => GetPlaybackModeLabel(DraftSelectedPlaybackMode);
+
+    public AudioSettingsOption? DraftSelectedPlaybackModeOption
+    {
+        get => SupportedPlaybackModes.FirstOrDefault(item =>
+            string.Equals(item.Code, DraftSelectedPlaybackMode, StringComparison.OrdinalIgnoreCase));
+        set => DraftSelectedPlaybackMode = value?.Code ?? DefaultNarrationMode;
+    }
+
+    public string DraftPlaybackModeDescription =>
+        string.Equals(DraftSelectedPlaybackMode, "audio", StringComparison.OrdinalIgnoreCase)
+            ? "Nghe bằng file audio thu sẵn nếu quán đã có asset."
+            : "Nghe bằng giọng đọc máy theo ngôn ngữ bạn chọn.";
+
+    public string CurrentAudioSettingsSummary =>
+        $"{NarrationModeDisplay} • {SelectedLanguageDisplayName} • {(IsAutoNarrationEnabled ? "Tự động phát" : "Chỉ phát thủ công")}";
+
+    public string DraftAudioSettingsSummary =>
+        $"{DraftPlaybackModeDisplay} • {DraftSelectedLanguageDisplayName} • {(DraftIsAutoNarrationEnabled ? "Tự động phát" : "Chỉ phát thủ công")}";
+
+    public string AudioSettingsQuickActionText =>
+        $"{NarrationModeDisplay} • {SelectedLanguageDisplayName}";
 
     public string MapModeBadgeText
     {
@@ -554,7 +771,7 @@ public class MainViewModel : INotifyPropertyChanged
     public string SelectedLanguageDisplayName => GetLanguageDisplayName(SelectedLanguage);
 
     public string AudioSettingsSummary =>
-        $"{(IsAutoNarrationEnabled ? "Tự động phát khi vào vùng" : "Chỉ phát thủ công")} • {SelectedLanguageDisplayName}";
+        $"{(IsAutoNarrationEnabled ? "Tự động phát khi vào vùng" : "Chỉ phát thủ công")} • {SelectedLanguageDisplayName} • {NarrationModeDisplay}";
 
     public bool IsListeningHistoryLoading
     {
@@ -996,12 +1213,17 @@ public class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(item.NarrationSnapshot))
+        if (string.IsNullOrWhiteSpace(item.NarrationSnapshot) &&
+            string.IsNullOrWhiteSpace(item.AudioAssetPath))
         {
             StatusText = "Bản ghi này chưa có nội dung để phát lại";
             return;
         }
 
+        var playbackRequest = ResolvePlaybackRequest(
+            item.PlaybackMode,
+            item.AudioAssetPath,
+            allowAudioFallback: true);
         var narrationSessionId = Interlocked.Increment(ref _narrationSessionId);
 
         await MainThread.InvokeOnMainThreadAsync(() =>
@@ -1013,10 +1235,18 @@ public class MainViewModel : INotifyPropertyChanged
         });
 
         AddLog($"{NowLabel()} Phát lại lịch sử nghe {item.PoiName} [{item.PlaybackModeLabel}]");
+        if (!string.IsNullOrWhiteSpace(playbackRequest.FallbackMessage))
+        {
+            AddLog($"{NowLabel()} {playbackRequest.FallbackMessage}");
+        }
 
         try
         {
-            await _narrationService.SpeakAsync(item.NarrationSnapshot, item.Language);
+            await _narrationService.SpeakAsync(
+                item.NarrationSnapshot,
+                item.Language,
+                playbackRequest.PlaybackMode,
+                playbackRequest.AudioAssetPath);
         }
         catch (Exception ex)
         {
@@ -1444,6 +1674,10 @@ public class MainViewModel : INotifyPropertyChanged
         var narrationSessionId = Interlocked.Increment(ref _narrationSessionId);
         var historyTask = Task.FromResult<Guid?>(null);
         string errorMessage = string.Empty;
+        var playbackRequest = ResolvePlaybackRequest(
+            SelectedPlaybackMode,
+            poi.AudioAssetPath,
+            allowAudioFallback: true);
         _lastNarratedAt[poi.Id] = DateTimeOffset.UtcNow;
         if (autoTriggered)
         {
@@ -1473,12 +1707,24 @@ public class MainViewModel : INotifyPropertyChanged
             $"{NowLabel()} {(autoTriggered ? "Tự động nghe" : "Nghe thủ công")} {poi.Name}" +
             (distanceMeters.HasValue ? $" ({distanceMeters.Value:F0}m)" : string.Empty));
 
-        historyTask = _listeningHistorySyncService.BeginAsync(poi, SelectedLanguage, autoTriggered);
+        if (!string.IsNullOrWhiteSpace(playbackRequest.FallbackMessage))
+        {
+            AddLog($"{NowLabel()} {playbackRequest.FallbackMessage}");
+        }
+
+        historyTask = _listeningHistorySyncService.BeginAsync(
+            poi,
+            SelectedLanguage,
+            playbackRequest.PlaybackMode,
+            autoTriggered);
         _ = RefreshListeningHistoryAfterCreateAsync(historyTask);
 
         try
         {
-            await _narrationService.NarrateAsync(poi, SelectedLanguage);
+            await _narrationService.NarrateAsync(
+                poi,
+                SelectedLanguage,
+                playbackRequest.PlaybackMode);
         }
         catch (Exception ex)
         {
@@ -2173,16 +2419,40 @@ public class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanManageAccountProfile));
         OnPropertyChanged(nameof(CanSaveAccountProfile));
         OnPropertyChanged(nameof(AccountSettingsAccessMessage));
+        OnPropertyChanged(nameof(CurrentAudioSettingsSummary));
+        OnPropertyChanged(nameof(AudioSettingsQuickActionText));
         OnPropertyChanged(nameof(NarrationModeDisplay));
         OnPropertyChanged(nameof(NarrationModeDescription));
         (SaveAccountProfileCommand as Command)?.ChangeCanExecute();
         (ResetAccountProfileCommand as Command)?.ChangeCanExecute();
+        UpdateAudioSettingsCommandStates();
         OnPropertyChanged(nameof(HomeNarrationSummary));
     }
 
     public void ResetAccountProfileEditor()
     {
         LoadAccountProfileEditor(clearFeedback: true);
+    }
+
+    public void ResetAudioSettingsDraft()
+    {
+        _draftSelectedLanguage = SelectedLanguage;
+        _draftSelectedPlaybackMode = SelectedPlaybackMode;
+        _draftIsAutoNarrationEnabled = IsAutoNarrationEnabled;
+
+        OnPropertyChanged(nameof(DraftSelectedLanguage));
+        OnPropertyChanged(nameof(DraftSelectedLanguageDisplayName));
+        OnPropertyChanged(nameof(DraftSelectedLanguageOption));
+        OnPropertyChanged(nameof(DraftSelectedPlaybackMode));
+        OnPropertyChanged(nameof(DraftPlaybackModeDisplay));
+        OnPropertyChanged(nameof(DraftSelectedPlaybackModeOption));
+        OnPropertyChanged(nameof(DraftPlaybackModeDescription));
+        OnPropertyChanged(nameof(DraftIsAutoNarrationEnabled));
+        OnPropertyChanged(nameof(DraftAudioSettingsSummary));
+        OnPropertyChanged(nameof(HasPendingAudioSettingsChanges));
+
+        ClearAudioSettingsFeedback();
+        UpdateAudioSettingsCommandStates();
     }
 
     private async Task SaveAccountProfileAsync()
@@ -2235,6 +2505,84 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    private async Task PreviewAudioSettingsAsync()
+    {
+        if (!CanPreviewAudioSettings)
+        {
+            return;
+        }
+
+        ClearAudioSettingsFeedback();
+        IsPreviewingAudioSettings = true;
+
+        try
+        {
+            await StopNarrationAsync();
+
+            var previewPoi = GetAudioPreviewPoi();
+            var playbackRequest = ResolvePlaybackRequest(
+                DraftSelectedPlaybackMode,
+                previewPoi?.AudioAssetPath,
+                allowAudioFallback: false);
+
+            if (!string.IsNullOrWhiteSpace(playbackRequest.FallbackMessage))
+            {
+                AudioSettingsErrorMessage = playbackRequest.FallbackMessage;
+                return;
+            }
+
+            var previewText = BuildAudioSettingsPreviewText(DraftSelectedLanguage, previewPoi);
+            await _narrationService.SpeakAsync(
+                previewText,
+                DraftSelectedLanguage,
+                playbackRequest.PlaybackMode,
+                playbackRequest.AudioAssetPath);
+
+            AudioSettingsSuccessMessage =
+                $"Đã nghe thử {DraftPlaybackModeDisplay} bằng {DraftSelectedLanguageDisplayName}.";
+        }
+        catch (Exception ex)
+        {
+            AudioSettingsErrorMessage = $"Không thể nghe thử cấu hình âm thanh: {ex.Message}";
+        }
+        finally
+        {
+            IsPreviewingAudioSettings = false;
+        }
+    }
+
+    private Task SaveAudioSettingsAsync()
+    {
+        if (!CanSaveAudioSettings)
+        {
+            return Task.CompletedTask;
+        }
+
+        ClearAudioSettingsFeedback();
+        IsSavingAudioSettings = true;
+
+        try
+        {
+            var settings = new AudioSettingsState
+            {
+                LanguageCode = DraftSelectedLanguage,
+                PlaybackMode = DraftSelectedPlaybackMode,
+                AutoNarrationEnabled = DraftIsAutoNarrationEnabled
+            };
+
+            ApplyAudioSettings(settings, shouldLog: true);
+            PersistUserPreferences();
+
+            AudioSettingsSuccessMessage = "Đã lưu cài đặt âm thanh cho toàn bộ ứng dụng.";
+        }
+        finally
+        {
+            IsSavingAudioSettings = false;
+        }
+
+        return Task.CompletedTask;
+    }
+
     private void LoadAccountProfileEditor(bool clearFeedback)
     {
         var session = _authService.CurrentSession;
@@ -2257,6 +2605,12 @@ public class MainViewModel : INotifyPropertyChanged
     {
         AccountSettingsErrorMessage = string.Empty;
         AccountSettingsSuccessMessage = string.Empty;
+    }
+
+    private void ClearAudioSettingsFeedback()
+    {
+        AudioSettingsErrorMessage = string.Empty;
+        AudioSettingsSuccessMessage = string.Empty;
     }
 
     private void LoadPersistedState()
@@ -2466,34 +2820,15 @@ public class MainViewModel : INotifyPropertyChanged
 
         try
         {
-            var languageKey = $"{GetCurrentUserPreferencePrefix()}.language";
-            var savedLanguage = Preferences.Default.Get(languageKey, "vi");
-
-            if (!SupportedLanguages.Contains(savedLanguage, StringComparer.OrdinalIgnoreCase))
-            {
-                savedLanguage = "vi";
-            }
-
-            if (!string.Equals(_selectedLanguage, savedLanguage, StringComparison.OrdinalIgnoreCase))
-            {
-                _selectedLanguage = savedLanguage;
-                OnPropertyChanged(nameof(SelectedLanguage));
-            }
-
-            var autoNarrationKey = $"{GetCurrentUserPreferencePrefix()}.autoNarration";
-            var savedAutoNarration = Preferences.Default.Get(autoNarrationKey, true);
-
-            if (_isAutoNarrationEnabled != savedAutoNarration)
-            {
-                _isAutoNarrationEnabled = savedAutoNarration;
-                OnPropertyChanged(nameof(IsAutoNarrationEnabled));
-            }
+            var settings = _audioSettingsService.Load(GetCurrentUserPreferencePrefix());
+            ApplyAudioSettings(settings, shouldLog: false);
         }
         finally
         {
             _isRestoringUserPreferences = false;
         }
 
+        ResetAudioSettingsDraft();
         RefreshNarrationPresentation();
         OnPropertyChanged(nameof(SelectedLanguageDisplayName));
         OnPropertyChanged(nameof(AudioSettingsSummary));
@@ -2507,9 +2842,14 @@ public class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        var preferencePrefix = GetCurrentUserPreferencePrefix();
-        Preferences.Default.Set($"{preferencePrefix}.language", SelectedLanguage);
-        Preferences.Default.Set($"{preferencePrefix}.autoNarration", IsAutoNarrationEnabled);
+        _audioSettingsService.Save(
+            GetCurrentUserPreferencePrefix(),
+            new AudioSettingsState
+            {
+                LanguageCode = SelectedLanguage,
+                PlaybackMode = SelectedPlaybackMode,
+                AutoNarrationEnabled = IsAutoNarrationEnabled
+            });
     }
 
     private string GetCurrentUserPreferencePrefix()
@@ -2521,6 +2861,119 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         return $"{UserPreferenceKeyPrefix}.{scope}";
+    }
+
+    private void ApplyAudioSettings(AudioSettingsState settings, bool shouldLog)
+    {
+        var normalizedLanguage = NormalizeLanguageCode(settings.LanguageCode);
+        var normalizedPlaybackMode = NormalizePlaybackMode(settings.PlaybackMode);
+        var languageChanged = !string.Equals(_selectedLanguage, normalizedLanguage, StringComparison.OrdinalIgnoreCase);
+        var playbackModeChanged = !string.Equals(_selectedPlaybackMode, normalizedPlaybackMode, StringComparison.OrdinalIgnoreCase);
+        var autoNarrationChanged = _isAutoNarrationEnabled != settings.AutoNarrationEnabled;
+
+        SelectedLanguage = normalizedLanguage;
+        SelectedPlaybackMode = normalizedPlaybackMode;
+        IsAutoNarrationEnabled = settings.AutoNarrationEnabled;
+
+        if (!shouldLog || _isRestoringUserPreferences)
+        {
+            return;
+        }
+
+        if (languageChanged)
+        {
+            AddLog($"{NowLabel()} Chuyển ngôn ngữ sang {SelectedLanguageDisplayName}");
+        }
+
+        if (playbackModeChanged)
+        {
+            AddLog($"{NowLabel()} Chuyển chế độ phát sang {NarrationModeDisplay}");
+        }
+
+        if (autoNarrationChanged)
+        {
+            AddLog($"{NowLabel()} {(IsAutoNarrationEnabled ? "Bật" : "Tắt")} tự động phát khi vào vùng");
+        }
+    }
+
+    private void UpdateAudioSettingsCommandStates()
+    {
+        OnPropertyChanged(nameof(CanSaveAudioSettings));
+        OnPropertyChanged(nameof(CanPreviewAudioSettings));
+        OnPropertyChanged(nameof(CanResetAudioSettings));
+        (PreviewAudioSettingsCommand as Command)?.ChangeCanExecute();
+        (SaveAudioSettingsCommand as Command)?.ChangeCanExecute();
+        (ResetAudioSettingsCommand as Command)?.ChangeCanExecute();
+    }
+
+    private POI? GetAudioPreviewPoi()
+    {
+        return _selectedPoi ?? _pois.FirstOrDefault();
+    }
+
+    private string BuildAudioSettingsPreviewText(string languageCode, POI? previewPoi)
+    {
+        if (previewPoi is not null)
+        {
+            return previewPoi.GetNarrationText(languageCode);
+        }
+
+        return languageCode.Trim().ToLowerInvariant() switch
+        {
+            "en" => "Hello. This is an English voice preview for Vinh Khanh Food Street.",
+            "zh" => "您好，這是永慶美食街的中文語音試聽。",
+            "ko" => "안녕하세요. 빈칸 음식 거리의 한국어 음성 미리 듣기입니다.",
+            "fr" => "Bonjour. Ceci est un aperçu audio en français pour la rue gastronomique Vinh Khanh.",
+            _ => "Xin chào. Đây là bản nghe thử âm thanh cho phố ẩm thực Vĩnh Khánh."
+        };
+    }
+
+    private PlaybackRequest ResolvePlaybackRequest(
+        string? preferredPlaybackMode,
+        string? audioAssetPath,
+        bool allowAudioFallback)
+    {
+        var normalizedPlaybackMode = NormalizePlaybackMode(preferredPlaybackMode);
+        if (!string.Equals(normalizedPlaybackMode, "audio", StringComparison.OrdinalIgnoreCase))
+        {
+            return new PlaybackRequest("tts", null, null);
+        }
+
+        if (!string.IsNullOrWhiteSpace(audioAssetPath))
+        {
+            return new PlaybackRequest("audio", audioAssetPath.Trim(), null);
+        }
+
+        return allowAudioFallback
+            ? new PlaybackRequest(
+                "tts",
+                null,
+                "Nội dung này chưa có file audio, hệ thống tạm dùng TTS để tiếp tục phát.")
+            : new PlaybackRequest(
+                "audio",
+                null,
+                "Cấu hình Audio đang được chọn nhưng nội dung hiện tại chưa có file audio để nghe thử.");
+    }
+
+    private bool IsSupportedLanguage(string? languageCode)
+    {
+        return SupportedLanguages.Any(item =>
+            string.Equals(item.Code, languageCode, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string NormalizeLanguageCode(string? languageCode)
+    {
+        return IsSupportedLanguage(languageCode)
+            ? languageCode!.Trim().ToLowerInvariant()
+            : "vi";
+    }
+
+    private string NormalizePlaybackMode(string? playbackMode)
+    {
+        return SupportedPlaybackModes.Any(item =>
+            string.Equals(item.Code, playbackMode, StringComparison.OrdinalIgnoreCase))
+            ? playbackMode!.Trim().ToLowerInvariant()
+            : DefaultNarrationMode;
     }
 
     private bool IsGuestAccess(AuthSession? session = null)
@@ -2577,6 +3030,11 @@ public class MainViewModel : INotifyPropertyChanged
             ? normalized
             : $"{normalized[..147].TrimEnd()}...";
     }
+
+    private readonly record struct PlaybackRequest(
+        string PlaybackMode,
+        string? AudioAssetPath,
+        string? FallbackMessage);
 
     private static string CreatePoiSnapshot(IEnumerable<POI> pois)
     {

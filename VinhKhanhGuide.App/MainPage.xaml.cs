@@ -195,16 +195,18 @@ public partial class MainPage : ContentPage
 
     private void OnOpenUserProfileClicked(object? sender, TappedEventArgs e)
     {
-        RestaurantSearchEntry.Unfocus();
-        UserProfileOverlay.IsVisible = true;
-        ListeningHistoryOverlay.IsVisible = false;
-        _viewModel.ResetAccountProfileEditor();
-        _viewModel.RefreshListeningHistoryCommand.Execute(null);
+        ShowUserProfileOverlay();
+    }
+
+    private void OnOpenAudioSettingsClicked(object? sender, EventArgs e)
+    {
+        ShowUserProfileOverlay();
     }
 
     private void OnCloseUserProfileClicked(object? sender, EventArgs e)
     {
         UserProfileOverlay.IsVisible = false;
+        _viewModel.ResetAudioSettingsDraft();
     }
 
     private async void OnOpenMapClicked(object? sender, EventArgs e)
@@ -676,6 +678,16 @@ public partial class MainPage : ContentPage
         {
             UserProfileOverlay.IsVisible = false;
         }
+    }
+
+    private void ShowUserProfileOverlay()
+    {
+        RestaurantSearchEntry.Unfocus();
+        UserProfileOverlay.IsVisible = true;
+        ListeningHistoryOverlay.IsVisible = false;
+        _viewModel.ResetAccountProfileEditor();
+        _viewModel.ResetAudioSettingsDraft();
+        _viewModel.RefreshListeningHistoryCommand.Execute(null);
     }
 
     private Pin CreateRestaurantPin(PoiStatusItem poi)

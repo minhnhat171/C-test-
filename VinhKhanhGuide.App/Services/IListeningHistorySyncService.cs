@@ -8,6 +8,7 @@ public interface IListeningHistorySyncService
     Task<Guid?> BeginAsync(
         POI poi,
         string? language,
+        string? playbackMode,
         bool autoTriggered,
         CancellationToken cancellationToken = default);
 

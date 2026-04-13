@@ -26,6 +26,7 @@ public class ListeningHistorySyncService : IListeningHistorySyncService
     public async Task<Guid?> BeginAsync(
         POI poi,
         string? language,
+        string? playbackMode,
         bool autoTriggered,
         CancellationToken cancellationToken = default)
     {
@@ -47,7 +48,7 @@ public class ListeningHistorySyncService : IListeningHistorySyncService
                 UserEmail = session?.Email ?? string.Empty,
                 TriggerType = autoTriggered ? "GPS" : "APP",
                 Language = string.IsNullOrWhiteSpace(language) ? "vi" : language!.Trim(),
-                PlaybackMode = "tts",
+                PlaybackMode = string.Equals(playbackMode, "audio", StringComparison.OrdinalIgnoreCase) ? "audio" : "tts",
                 NarrationSnapshot = poi.GetNarrationText(language),
                 AudioAssetPath = poi.AudioAssetPath,
                 Source = "app",
