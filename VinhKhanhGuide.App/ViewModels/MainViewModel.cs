@@ -797,15 +797,17 @@ public class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        SetSelectedPoi(poi, true, null);
-
         if (IsCurrentNarration(poi))
         {
             await StopNarrationAsync();
             return;
         }
 
-        await NarratePoiAsync(poi, false, GetDistanceForPoi(poi.Id));
+        await NarratePoiAsync(
+            poi,
+            false,
+            GetDistanceForPoi(poi.Id),
+            syncSelectedPoi: false);
     }
 
     public async Task StopNarrationAsync()
@@ -1198,7 +1200,11 @@ public class MainViewModel : INotifyPropertyChanged
         return CanNarrate(poi);
     }
 
-    private async Task NarratePoiAsync(POI poi, bool autoTriggered, double? distanceMeters)
+    private async Task NarratePoiAsync(
+        POI poi,
+        bool autoTriggered,
+        double? distanceMeters,
+        bool syncSelectedPoi = true)
     {
         if (IsCurrentNarration(poi))
         {
@@ -1224,7 +1230,7 @@ public class MainViewModel : INotifyPropertyChanged
                 ? $"Tự động phát: {poi.Name}"
                 : $"Đang phát: {poi.Name}";
 
-            if (!_hasUserSelectedPoi)
+            if (syncSelectedPoi && !_hasUserSelectedPoi)
             {
                 SetSelectedPoi(poi, false, null);
             }
@@ -1495,7 +1501,7 @@ public class MainViewModel : INotifyPropertyChanged
     private void UpdateFilteredPoiStatuses()
     {
         var visibleItems = string.IsNullOrWhiteSpace(SearchQuery)
-            ? SortPoiStatusesForHome(PoiStatuses)
+            ? PoiStatuses.ToList()
             : GetSearchMatches(SearchQuery);
 
         FilteredPoiStatuses.Clear();
@@ -1506,18 +1512,6 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         IsSearchResultEmpty = HasSearchQuery && FilteredPoiStatuses.Count == 0;
-    }
-
-    private static List<PoiStatusItem> SortPoiStatusesForHome(IEnumerable<PoiStatusItem> items)
-    {
-        return items
-            .OrderByDescending(item => item.IsNarrationActive)
-            .ThenByDescending(item => item.IsInsideRadius)
-            .ThenByDescending(item => item.IsNearest)
-            .ThenBy(item => double.IsNaN(item.DistanceMeters) ? double.MaxValue : item.DistanceMeters)
-            .ThenByDescending(item => item.Priority)
-            .ThenBy(item => item.Name)
-            .ToList();
     }
 
     private List<PoiStatusItem> GetSearchMatches(string query)
