@@ -24,7 +24,7 @@ public class PoiListItemViewModel
     public string DisplayId =>
         Id == Guid.Empty
             ? "N/A"
-            : Id.ToString("N")[..8].ToUpperInvariant();
+            : AdminViewModelIds.BuildShortPoiId(Id);
 }
 
 public class PoiEditorViewModel
@@ -147,4 +147,15 @@ public class QrScanViewModel
     public string MapLink { get; set; } = string.Empty;
     public string SpecialDish { get; set; } = string.Empty;
     public string PublicUrl { get; set; } = string.Empty;
+}
+
+internal static class AdminViewModelIds
+{
+    public static string BuildShortPoiId(Guid id)
+    {
+        var raw = id.ToString("N").ToUpperInvariant();
+        var tail = raw.Length >= 6 ? raw[^6..] : raw;
+
+        return $"POI-{tail}";
+    }
 }

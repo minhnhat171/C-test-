@@ -17,6 +17,9 @@ public class DashboardViewModel
     public int ActivePoiCount { get; set; }
     public bool IsSyncOnline { get; set; }
     public DateTime? LastSyncedAt { get; set; }
+    public string DataSourceLabel { get; set; } = string.Empty;
+    public string DataSourceDescription { get; set; } = string.Empty;
+    public string LoadErrorMessage { get; set; } = string.Empty;
     public List<DashboardDailyListenPoint> DailyListenPoints { get; set; } = new();
     public List<DashboardTopPoiItem> TopPois { get; set; } = new();
     public List<UsageLog> RecentLogs { get; set; } = new();
