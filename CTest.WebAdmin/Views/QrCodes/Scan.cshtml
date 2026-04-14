@@ -5,6 +5,7 @@
     var narrationText = string.IsNullOrWhiteSpace(Model.NarrationText)
         ? Model.Description
         : Model.NarrationText;
+    var shouldAutoOpenApp = Model.AutoOpenApp && !string.IsNullOrWhiteSpace(Model.AppLaunchUrl);
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -230,14 +231,31 @@
                 <section class="scan-panel">
                     <p class="scan-panel-label">Nghe thuyet minh</p>
                     <div class="scan-actions">
-                        <button type="button" class="scan-btn scan-btn-primary" id="speakBtn">Nghe ngay</button>
-                        <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">Dung doc</button>
+                        @if (shouldAutoOpenApp)
+                        {
+                            <button type="button" class="scan-btn scan-btn-primary" id="openAppBtn">Mo app va nghe ngay</button>
+                            <button type="button" class="scan-btn scan-btn-secondary" id="speakBtn">Nghe tren web</button>
+                            <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">Dung doc web</button>
+                        }
+                        else
+                        {
+                            <button type="button" class="scan-btn scan-btn-primary" id="speakBtn">Nghe ngay</button>
+                            <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">Dung doc</button>
+                        }
                         @if (!string.IsNullOrWhiteSpace(Model.MapLink))
                         {
                             <a class="scan-btn scan-btn-secondary" href="@Model.MapLink" target="_blank" rel="noopener noreferrer">Mo ban do</a>
                         }
                     </div>
-                    <p class="scan-note" id="speechStatus">Trang se thu doc noi dung tu dong sau khi mo.</p>
+                    <p class="scan-note" id="speechStatus">
+                        @(shouldAutoOpenApp
+                            ? "Trang se thu mo app de phat TTS ngay. Neu app chua mo duoc, Web se tu phat lam du phong."
+                            : "Trang se thu doc noi dung tu dong sau khi mo.")
+                    </p>
+                    @if (shouldAutoOpenApp)
+                    {
+                        <p class="scan-note">Dung cho diem dung xe buyt tai Khanh Hoi, Vinh Hoi, Xom Chieu. Quet la nghe ngay, khong can GPS.</p>
+                    }
                 </section>
 
                 <section class="scan-panel">
@@ -300,9 +318,13 @@
     <script>
         (() => {
             const narrationText = @Html.Raw(JsonSerializer.Serialize(narrationText));
+            const appLaunchUrl = @Html.Raw(JsonSerializer.Serialize(Model.AppLaunchUrl));
+            const autoOpenApp = @Html.Raw(JsonSerializer.Serialize(shouldAutoOpenApp));
             const status = document.getElementById("speechStatus");
+            const openAppBtn = document.getElementById("openAppBtn");
             const speakBtn = document.getElementById("speakBtn");
             const stopBtn = document.getElementById("stopBtn");
+            let fallbackTimer = 0;
 
             const updateStatus = (message) => {
                 if (status) {
@@ -321,6 +343,11 @@
             };
 
             const speak = () => {
+                if (fallbackTimer) {
+                    window.clearTimeout(fallbackTimer);
+                    fallbackTimer = 0;
+                }
+
                 if (!narrationText || !narrationText.trim()) {
                     updateStatus("Chua co noi dung thuyet minh de phat.");
                     return;
@@ -343,11 +370,51 @@
                 window.speechSynthesis.speak(utterance);
             };
 
+            const openApp = () => {
+                if (!autoOpenApp || !appLaunchUrl) {
+                    speak();
+                    return;
+                }
+
+                updateStatus("Dang chuyen qua app tren dien thoai...");
+
+                if (fallbackTimer) {
+                    window.clearTimeout(fallbackTimer);
+                }
+
+                fallbackTimer = window.setTimeout(() => {
+                    if (!document.hidden) {
+                        updateStatus("Chua mo duoc app. Web dang phat noi dung du phong.");
+                        speak();
+                    }
+                }, 1800);
+
+                window.location.href = appLaunchUrl;
+            };
+
+            document.addEventListener("visibilitychange", () => {
+                if (document.hidden && fallbackTimer) {
+                    window.clearTimeout(fallbackTimer);
+                    fallbackTimer = 0;
+                    updateStatus("Da chuyen sang app. Neu dien thoai hoi xac nhan, hay chon Mo.");
+
+                    if ("speechSynthesis" in window) {
+                        window.speechSynthesis.cancel();
+                    }
+                }
+            });
+
+            openAppBtn?.addEventListener("click", openApp);
             speakBtn?.addEventListener("click", speak);
             stopBtn?.addEventListener("click", stopSpeaking);
 
             window.addEventListener("beforeunload", stopSpeaking);
-            window.setTimeout(speak, 600);
+
+            if (autoOpenApp) {
+                window.setTimeout(openApp, 400);
+            } else {
+                window.setTimeout(speak, 600);
+            }
         })();
     </script>
 </body>

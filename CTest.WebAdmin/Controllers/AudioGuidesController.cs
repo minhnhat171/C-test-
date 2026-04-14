@@ -20,10 +20,11 @@ public class AudioGuidesController : Controller
     [HttpGet]
     public async Task<IActionResult> Index(
         Guid? audioId,
+        Guid? poiId,
         bool createNew = false,
         CancellationToken cancellationToken = default)
     {
-        var vm = await _audioGuideService.LoadManagementPageAsync(audioId, createNew, cancellationToken);
+        var vm = await _audioGuideService.LoadManagementPageAsync(audioId, poiId, createNew, cancellationToken);
         return View("Manage", vm);
     }
 
@@ -35,6 +36,7 @@ public class AudioGuidesController : Controller
     {
         var vm = await _audioGuideService.LoadManagementPageAsync(
             model.Editor.Id,
+            model.ScopePoiId,
             model.Editor.Id == Guid.Empty,
             cancellationToken);
 
@@ -53,8 +55,8 @@ public class AudioGuidesController : Controller
             TempData["AudioMessage"] = result.Message;
 
             return result.AudioGuideId.HasValue
-                ? RedirectToAction(nameof(Index), new { audioId = result.AudioGuideId.Value })
-                : RedirectToAction(nameof(Index), new { createNew = true });
+                ? RedirectToAction(nameof(Index), new { audioId = result.AudioGuideId.Value, poiId = model.ScopePoiId })
+                : RedirectToAction(nameof(Index), new { createNew = true, poiId = model.ScopePoiId });
         }
         catch (HttpRequestException)
         {
@@ -67,7 +69,7 @@ public class AudioGuidesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Delete(Guid id, Guid? scopePoiId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -79,7 +81,7 @@ public class AudioGuidesController : Controller
             TempData["AudioMessage"] = "Khong the ket noi VKFoodAPI nen chua xoa duoc audio.";
         }
 
-        return RedirectToAction(nameof(Index), new { createNew = true });
+        return RedirectToAction(nameof(Index), new { createNew = true, poiId = scopePoiId });
     }
 
     private bool ApplyValidationResult(AudioGuideValidationResult validation)

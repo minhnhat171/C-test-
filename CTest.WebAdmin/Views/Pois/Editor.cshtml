@@ -295,6 +295,7 @@
                         <button type="submit" class="btn btn-primary rounded-pill px-4">@(Model.IsEditMode ? "Lưu thay đổi" : "Tạo POI")</button>
                         @if (Model.IsEditMode)
                         {
+                            <a asp-controller="AudioGuides" asp-action="Index" asp-route-poiId="@Model.Id" class="btn btn-outline-info rounded-pill px-4">Quan ly Audio (@Model.RelatedAudioCount)</a>
                             <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-dark rounded-pill px-4">Xem chi tiết</a>
                             <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedTargetType="poi" asp-route-selectedTargetId="@Model.Id" class="btn btn-outline-success rounded-pill px-4">Tạo QR</a>
                         }

@@ -221,6 +221,8 @@ public class QrCodesController : Controller
             MapLink = target.MapLink,
             SpecialDish = target.SpecialDish,
             PublicUrl = BuildPublicQrUrl(target.TargetType, target.TargetId),
+            AppLaunchUrl = BuildAppLaunchUrl(target.TargetType, target.TargetId),
+            AutoOpenApp = string.Equals(target.TargetType, QrTargetTypes.Poi, StringComparison.OrdinalIgnoreCase),
             EstimatedDurationLabel = target.EstimatedDurationLabel,
             TourStops = target.TourStops
         };
@@ -328,6 +330,16 @@ public class QrCodesController : Controller
                            ?? $"/qr/{QrTargetTypes.Normalize(targetType)}/{Uri.EscapeDataString(targetId)}";
 
         return CombineWithPublicBase(relativePath);
+    }
+
+    private static string BuildAppLaunchUrl(string targetType, string targetId)
+    {
+        if (!string.Equals(QrTargetTypes.Normalize(targetType), QrTargetTypes.Poi, StringComparison.Ordinal))
+        {
+            return string.Empty;
+        }
+
+        return $"vinhkhanhguide://poi/{Uri.EscapeDataString(targetId)}?autoplay=1&source=bus-stop-qr";
     }
 
     private string BuildQrSvgUrl(string targetType, string targetId)

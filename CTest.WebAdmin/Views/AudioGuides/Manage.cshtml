@@ -4,6 +4,11 @@
     var selectedPoiName = Model.Pois.FirstOrDefault(x => x.Id == Model.Editor.PoiId)?.Name ?? "Chưa chọn POI";
 }
 
+@if (string.IsNullOrWhiteSpace(selectedPoiName) && Model.HasPoiScope)
+{
+    selectedPoiName = $"{Model.ScopePoiName} ({Model.ScopePoiCode})";
+}
+
 <style>
     .audio-page {
         --audio-ink: #0f172a;
@@ -171,8 +176,21 @@
             <h1>Quản lý Audio / TTS</h1>
             <p>Trang này lưu audio thật vào VKFoodAPI. Các bản ghi đã publish sẽ được đồng bộ để app dùng lại dữ liệu narration và file audio.</p>
         </div>
-        <a asp-action="Index" asp-route-createNew="true" class="btn btn-primary btn-lg rounded-pill px-4">+ Tạo audio mới</a>
+        <a asp-action="Index" asp-route-poiId="@Model.ScopePoiId" asp-route-createNew="true" class="btn btn-primary btn-lg rounded-pill px-4">+ Tạo audio mới</a>
     </div>
+
+    @if (Model.HasPoiScope)
+    {
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <a asp-controller="Pois" asp-action="Details" asp-route-id="@Model.ScopePoiId" class="btn btn-outline-secondary rounded-pill px-4">Ve POI</a>
+            <a asp-action="Index" class="btn btn-outline-dark rounded-pill px-4">Tat ca audio</a>
+            <a asp-action="Index" asp-route-poiId="@Model.ScopePoiId" asp-route-createNew="true" class="btn btn-primary rounded-pill px-4">+ Tao audio moi cho POI nay</a>
+        </div>
+        <div class="alert alert-primary border-0 shadow-sm">
+            Dang quan ly audio cho POI <strong>@Model.ScopePoiName</strong> (@Model.ScopePoiCode).
+            Hien co <strong>@Model.Items.Count</strong> ban ghi trong danh sach nay.
+        </div>
+    }
 
     @if (TempData["AudioMessage"] is string audioMessage)
     {
@@ -227,7 +245,8 @@
                                 <td>@item.UpdatedAtLocal.ToString("dd/MM/yyyy HH:mm")</td>
                                 <td>
                                     <div class="audio-actions">
-                                        <a asp-action="Index" asp-route-audioId="@item.Id" class="btn btn-outline-primary btn-sm rounded-pill">Sửa</a>
+                                        <a asp-controller="Pois" asp-action="Details" asp-route-id="@item.PoiId" class="btn btn-outline-secondary btn-sm rounded-pill">POI</a>
+                                        <a asp-action="Index" asp-route-audioId="@item.Id" asp-route-poiId="@Model.ScopePoiId" class="btn btn-outline-primary btn-sm rounded-pill">Sửa</a>
                                         <button type="button"
                                                 class="btn btn-outline-dark btn-sm rounded-pill js-audio-preview"
                                                 data-script="@item.Script">
@@ -236,6 +255,7 @@
                                         <form asp-action="Delete" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa audio này không?');">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="scopePoiId" value="@Model.ScopePoiId" />
                                             <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">Xóa</button>
                                         </form>
                                     </div>
@@ -258,6 +278,7 @@
             <div class="audio-panel-body">
                 <form asp-action="Save" method="post" id="audioForm">
                     @Html.AntiForgeryToken()
+                    <input asp-for="ScopePoiId" type="hidden" />
                     <input asp-for="Editor.Id" type="hidden" />
 
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 shadow-sm" role="alert"></div>
@@ -413,3 +434,4 @@
         })();
     </script>
 }
+

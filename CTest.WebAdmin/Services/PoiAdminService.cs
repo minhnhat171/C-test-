@@ -21,8 +21,22 @@ public class PoiAdminService
         string statusFilter,
         CancellationToken cancellationToken = default)
     {
-        var query = (await _poiApiClient.GetPoisAsync(cancellationToken))
-            .Select(x => x.ToListItem())
+        var poisTask = _poiApiClient.GetPoisAsync(cancellationToken);
+        var audioGuidesTask = _audioGuideApiClient.GetAudioGuidesAsync(cancellationToken);
+
+        await Task.WhenAll(poisTask, audioGuidesTask);
+
+        var audioCountByPoi = audioGuidesTask.Result
+            .GroupBy(item => item.PoiId)
+            .ToDictionary(group => group.Key, group => group.Count());
+
+        var query = poisTask.Result
+            .Select(x =>
+            {
+                var item = x.ToListItem();
+                item.RelatedAudioCount = audioCountByPoi.TryGetValue(x.Id, out var count) ? count : 0;
+                return item;
+            })
             .AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(searchTerm))

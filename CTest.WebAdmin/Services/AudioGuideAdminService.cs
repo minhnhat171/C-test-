@@ -17,6 +17,7 @@ public class AudioGuideAdminService
 
     public async Task<AudioGuideManagementPageViewModel> LoadManagementPageAsync(
         Guid? audioId,
+        Guid? poiId,
         bool createNew,
         CancellationToken cancellationToken = default)
     {
@@ -35,7 +36,22 @@ public class AudioGuideAdminService
                 .Select(item => item.ToLookupItem())
                 .ToList();
 
-            vm.Items = audioGuidesTask.Result
+            if (poiId.HasValue)
+            {
+                var scopedPoi = vm.Pois.FirstOrDefault(item => item.Id == poiId.Value);
+                if (scopedPoi is not null)
+                {
+                    vm.ScopePoiId = scopedPoi.Id;
+                    vm.ScopePoiName = scopedPoi.Name;
+                    vm.ScopePoiCode = scopedPoi.Code;
+                }
+            }
+
+            var scopedAudioGuides = audioGuidesTask.Result
+                .Where(item => !vm.ScopePoiId.HasValue || item.PoiId == vm.ScopePoiId.Value)
+                .ToList();
+
+            vm.Items = scopedAudioGuides
                 .OrderByDescending(item => item.UpdatedAtUtc)
                 .ThenBy(item => item.PoiName)
                 .Select(item => item.ToListItem(item.Id == audioId))
@@ -43,15 +59,21 @@ public class AudioGuideAdminService
 
             if (createNew || !vm.Items.Any())
             {
-                vm.Editor = new AudioGuideEditorFormViewModel();
+                vm.Editor = new AudioGuideEditorFormViewModel
+                {
+                    PoiId = vm.ScopePoiId ?? Guid.Empty
+                };
                 return vm;
             }
 
             var selectedGuide = audioId.HasValue
-                ? audioGuidesTask.Result.FirstOrDefault(item => item.Id == audioId.Value)
-                : audioGuidesTask.Result.FirstOrDefault();
+                ? scopedAudioGuides.FirstOrDefault(item => item.Id == audioId.Value)
+                : scopedAudioGuides.FirstOrDefault();
 
-            vm.Editor = selectedGuide?.ToEditorViewModel() ?? new AudioGuideEditorFormViewModel();
+            vm.Editor = selectedGuide?.ToEditorViewModel() ?? new AudioGuideEditorFormViewModel
+            {
+                PoiId = vm.ScopePoiId ?? Guid.Empty
+            };
             return vm;
         }
         catch (HttpRequestException)
