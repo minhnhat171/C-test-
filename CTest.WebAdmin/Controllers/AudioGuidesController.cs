@@ -1,37 +1,37 @@
-using Microsoft.AspNetCore.Mvc;
 using CTest.WebAdmin.Models;
 using CTest.WebAdmin.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CTest.WebAdmin.Controllers;
 
 public class AudioGuidesController : Controller
 {
-    private readonly AppDataService _data;
+    private readonly AudioGuideApiClient _audioGuideApiClient;
+    private readonly PoiApiClient _poiApiClient;
 
-    public AudioGuidesController(AppDataService data)
+    public AudioGuidesController(
+        AudioGuideApiClient audioGuideApiClient,
+        PoiApiClient poiApiClient)
     {
-        _data = data;
+        _audioGuideApiClient = audioGuideApiClient;
+        _poiApiClient = poiApiClient;
     }
 
-    public IActionResult Index(int? audioId, bool createNew = false)
+    [HttpGet]
+    public async Task<IActionResult> Index(
+        Guid? audioId,
+        bool createNew = false,
+        CancellationToken cancellationToken = default)
     {
-        var editor = createNew
-            ? new AudioGuideEditorViewModel()
-            : BuildEditorViewModel(_data.AudioGuides.FirstOrDefault(x => x.Id == audioId) ?? _data.AudioGuides.OrderBy(x => x.Id).FirstOrDefault());
-
-        var vm = new AudioManagementViewModel
-        {
-            Items = _data.AudioGuides.OrderByDescending(x => x.UpdatedAt).ThenBy(x => x.Id).ToList(),
-            Pois = _data.Pois.OrderBy(x => x.Name).ToList(),
-            Editor = editor
-        };
-
-        return View("Manage", vm);
+        var vm = await BuildPageModelAsync(audioId, createNew, cancellationToken);
+        return View("ManageApi", vm);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Save(AudioManagementViewModel model)
+    public async Task<IActionResult> Save(
+        AudioGuideManagementPageViewModel model,
+        CancellationToken cancellationToken = default)
     {
         var editor = model.Editor;
         var poi = _data.Pois.FirstOrDefault(x => x.Id == editor.PoiId);

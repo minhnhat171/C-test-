@@ -4,6 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddSingleton<PoiRepository>();
+builder.Services.AddSingleton<AudioGuideRepository>();
 builder.Services.AddSingleton<ListeningHistoryRepository>();
 builder.Services.AddSingleton<UserManagementRepository>();
 

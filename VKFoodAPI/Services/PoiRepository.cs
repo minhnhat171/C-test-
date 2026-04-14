@@ -92,6 +92,86 @@ public class PoiRepository
         }
     }
 
+    public void ApplyPublishedAudioGuides(IEnumerable<AudioGuideDto> guides)
+    {
+        ArgumentNullException.ThrowIfNull(guides);
+
+        lock (_syncRoot)
+        {
+            var groupedGuides = guides
+                .Where(item => item.IsPublished && item.PoiId != Guid.Empty)
+                .GroupBy(item => item.PoiId)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group
+                        .Select(item => item.Clone())
+                        .ToList());
+
+            var hasChanges = false;
+
+            for (var index = 0; index < _pois.Count; index++)
+            {
+                var poi = _pois[index];
+                var updatedPoi = poi.Clone();
+                updatedPoi.AudioAssetPath = string.Empty;
+
+                if (!groupedGuides.TryGetValue(poi.Id, out var poiGuides) || poiGuides.Count == 0)
+                {
+                    var normalizedWithoutAudio = Normalize(updatedPoi);
+                    if (!AreEquivalent(poi, normalizedWithoutAudio))
+                    {
+                        _pois[index] = normalizedWithoutAudio;
+                        hasChanges = true;
+                    }
+
+                    continue;
+                }
+
+                foreach (var guide in poiGuides
+                    .Where(item => string.Equals(item.SourceType, "tts", StringComparison.OrdinalIgnoreCase) &&
+                                   !string.IsNullOrWhiteSpace(item.Script))
+                    .GroupBy(item => NormalizeLanguageCode(item.LanguageCode), StringComparer.OrdinalIgnoreCase)
+                    .Select(group => group
+                        .OrderByDescending(item => item.UpdatedAtUtc)
+                        .First()))
+                {
+                    var languageCode = NormalizeLanguageCode(guide.LanguageCode);
+                    var script = guide.Script.Trim();
+
+                    updatedPoi.NarrationTranslations[languageCode] = script;
+                    if (string.Equals(languageCode, "vi", StringComparison.OrdinalIgnoreCase))
+                    {
+                        updatedPoi.NarrationText = script;
+                    }
+                }
+
+                var preferredFileGuide = poiGuides
+                    .Where(item => string.Equals(item.SourceType, "file", StringComparison.OrdinalIgnoreCase) &&
+                                   !string.IsNullOrWhiteSpace(item.FilePath))
+                    .OrderBy(item => string.Equals(NormalizeLanguageCode(item.LanguageCode), "vi", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+                    .ThenByDescending(item => item.UpdatedAtUtc)
+                    .FirstOrDefault();
+
+                if (preferredFileGuide is not null)
+                {
+                    updatedPoi.AudioAssetPath = preferredFileGuide.FilePath.Trim();
+                }
+
+                var normalizedUpdatedPoi = Normalize(updatedPoi);
+                if (!AreEquivalent(poi, normalizedUpdatedPoi))
+                {
+                    _pois[index] = normalizedUpdatedPoi;
+                    hasChanges = true;
+                }
+            }
+
+            if (hasChanges)
+            {
+                SaveUnsafe();
+            }
+        }
+    }
+
     private List<PoiDto> LoadPois()
     {
         if (File.Exists(_dataFilePath))
@@ -147,5 +227,62 @@ public class PoiRepository
         normalized.Priority = normalized.Priority <= 0 ? 1 : normalized.Priority;
 
         return normalized;
+    }
+
+    private static string NormalizeLanguageCode(string? languageCode)
+    {
+        var normalized = (languageCode ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (normalized.StartsWith("vi", StringComparison.Ordinal))
+        {
+            return "vi";
+        }
+
+        if (normalized.StartsWith("en", StringComparison.Ordinal))
+        {
+            return "en";
+        }
+
+        if (normalized.StartsWith("zh", StringComparison.Ordinal))
+        {
+            return "zh";
+        }
+
+        if (normalized.StartsWith("ko", StringComparison.Ordinal))
+        {
+            return "ko";
+        }
+
+        if (normalized.StartsWith("fr", StringComparison.Ordinal))
+        {
+            return "fr";
+        }
+
+        return string.IsNullOrWhiteSpace(normalized) ? "vi" : normalized;
+    }
+
+    private static bool AreEquivalent(PoiDto left, PoiDto right)
+    {
+        if (!string.Equals(left.NarrationText, right.NarrationText, StringComparison.Ordinal) ||
+            !string.Equals(left.AudioAssetPath, right.AudioAssetPath, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (left.NarrationTranslations.Count != right.NarrationTranslations.Count)
+        {
+            return false;
+        }
+
+        foreach (var entry in left.NarrationTranslations)
+        {
+            if (!right.NarrationTranslations.TryGetValue(entry.Key, out var otherValue) ||
+                !string.Equals(entry.Value, otherValue, StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

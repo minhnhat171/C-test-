@@ -13,6 +13,11 @@ builder.Services.AddHttpClient<PoiApiClient>(client =>
     client.BaseAddress = new Uri(poiApiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
 });
+builder.Services.AddHttpClient<AudioGuideApiClient>(client =>
+{
+    client.BaseAddress = new Uri(poiApiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 builder.Services.AddHttpClient<ListeningHistoryApiClient>(client =>
 {
     client.BaseAddress = new Uri(poiApiBaseUrl);
