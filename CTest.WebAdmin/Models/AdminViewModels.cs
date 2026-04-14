@@ -20,6 +20,7 @@ public class PoiListItemViewModel
     public double RadiusInMeters { get; set; }
     public int Priority { get; set; }
     public bool IsActive { get; set; }
+    public int RelatedAudioCount { get; set; }
 
     public string DisplayId =>
         Id == Guid.Empty
@@ -208,6 +209,8 @@ public class QrScanViewModel
     public string MapLink { get; set; } = string.Empty;
     public string SpecialDish { get; set; } = string.Empty;
     public string PublicUrl { get; set; } = string.Empty;
+    public string AppLaunchUrl { get; set; } = string.Empty;
+    public bool AutoOpenApp { get; set; }
     public string EstimatedDurationLabel { get; set; } = string.Empty;
     public IReadOnlyList<string> TourStops { get; set; } = Array.Empty<string>();
 }

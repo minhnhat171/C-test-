@@ -6,25 +6,26 @@ namespace CTest.WebAdmin.Controllers;
 
 public class AudioGuidesController : Controller
 {
-    private readonly AudioGuideApiClient _audioGuideApiClient;
-    private readonly PoiApiClient _poiApiClient;
+    private readonly AudioGuideAdminService _audioGuideService;
+    private readonly AudioGuideValidationService _validationService;
 
     public AudioGuidesController(
-        AudioGuideApiClient audioGuideApiClient,
-        PoiApiClient poiApiClient)
+        AudioGuideAdminService audioGuideService,
+        AudioGuideValidationService validationService)
     {
-        _audioGuideApiClient = audioGuideApiClient;
-        _poiApiClient = poiApiClient;
+        _audioGuideService = audioGuideService;
+        _validationService = validationService;
     }
 
     [HttpGet]
     public async Task<IActionResult> Index(
         Guid? audioId,
+        Guid? poiId,
         bool createNew = false,
         CancellationToken cancellationToken = default)
     {
-        var vm = await BuildPageModelAsync(audioId, createNew, cancellationToken);
-        return View("ManageApi", vm);
+        var vm = await _audioGuideService.LoadManagementPageAsync(audioId, poiId, createNew, cancellationToken);
+        return View("Manage", vm);
     }
 
     [HttpPost]
@@ -33,62 +34,64 @@ public class AudioGuidesController : Controller
         AudioGuideManagementPageViewModel model,
         CancellationToken cancellationToken = default)
     {
-        var editor = model.Editor;
-        var poi = _data.Pois.FirstOrDefault(x => x.Id == editor.PoiId);
-        if (poi is null)
+        var vm = await _audioGuideService.LoadManagementPageAsync(
+            model.Editor.Id,
+            model.ScopePoiId,
+            model.Editor.Id == Guid.Empty,
+            cancellationToken);
+
+        vm.Editor = model.Editor;
+        vm.Editor.IsEditMode = model.Editor.Id != Guid.Empty;
+
+        var validation = _validationService.Validate(vm.Editor, vm.Pois);
+        if (!ApplyValidationResult(validation))
         {
-            TempData["AudioMessage"] = "Không tìm thấy POI để lưu audio.";
-            return RedirectToAction(nameof(Index));
+            return View("Manage", vm);
         }
 
-        var guide = _data.AudioGuides.FirstOrDefault(x => x.Id == editor.Id);
-        if (guide is null)
+        try
         {
-            guide = new AudioGuide
-            {
-                Id = _data.AudioGuides.Any() ? _data.AudioGuides.Max(x => x.Id) + 1 : 1
-            };
+            var result = await _audioGuideService.SaveAsync(vm.Editor, vm.Pois, cancellationToken);
+            TempData["AudioMessage"] = result.Message;
 
-            _data.AudioGuides.Add(guide);
+            return result.AudioGuideId.HasValue
+                ? RedirectToAction(nameof(Index), new { audioId = result.AudioGuideId.Value, poiId = model.ScopePoiId })
+                : RedirectToAction(nameof(Index), new { createNew = true, poiId = model.ScopePoiId });
         }
-
-        guide.PoiId = editor.PoiId;
-        guide.PoiName = poi.Name;
-        guide.Language = editor.Language;
-        guide.VoiceType = editor.VoiceType;
-        guide.SourceType = editor.SourceType;
-        guide.ContentOrFile = editor.SourceType == "File" ? editor.FilePath : editor.Script;
-        guide.EstimatedSeconds = editor.EstimatedSeconds > 0 ? editor.EstimatedSeconds : Math.Max(15, (int)Math.Ceiling((editor.Script?.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length ?? 0) / 2.5));
-        guide.IsPublished = editor.IsPublished;
-        guide.UpdatedAt = DateTime.Now;
-
-        TempData["AudioMessage"] = guide.Id == editor.Id && editor.Id != 0
-            ? "Đã cập nhật audio."
-            : "Đã tạo audio mới.";
-
-        return RedirectToAction(nameof(Index), new { audioId = guide.Id });
+        catch (HttpRequestException)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Khong the ket noi VKFoodAPI. Hay mo API truoc roi luu lai.");
+            return View("Manage", vm);
+        }
     }
 
-    private static AudioGuideEditorViewModel BuildEditorViewModel(AudioGuide? guide)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(Guid id, Guid? scopePoiId, CancellationToken cancellationToken = default)
     {
-        if (guide is null)
+        try
         {
-            return new AudioGuideEditorViewModel();
+            var result = await _audioGuideService.DeleteAsync(id, cancellationToken);
+            TempData["AudioMessage"] = result.Message;
+        }
+        catch (HttpRequestException)
+        {
+            TempData["AudioMessage"] = "Khong the ket noi VKFoodAPI nen chua xoa duoc audio.";
         }
 
-        var isFile = string.Equals(guide.SourceType, "File", StringComparison.OrdinalIgnoreCase);
+        return RedirectToAction(nameof(Index), new { createNew = true, poiId = scopePoiId });
+    }
 
-        return new AudioGuideEditorViewModel
+    private bool ApplyValidationResult(AudioGuideValidationResult validation)
+    {
+        foreach (var error in validation.Errors)
         {
-            Id = guide.Id,
-            PoiId = guide.PoiId,
-            Language = guide.Language,
-            VoiceType = guide.VoiceType,
-            SourceType = guide.SourceType,
-            Script = isFile ? string.Empty : guide.ContentOrFile,
-            FilePath = isFile ? guide.ContentOrFile : string.Empty,
-            EstimatedSeconds = guide.EstimatedSeconds,
-            IsPublished = guide.IsPublished
-        };
+            ModelState.AddModelError(error.FieldName, error.Message);
+        }
+
+        return validation.IsValid;
     }
 }
+

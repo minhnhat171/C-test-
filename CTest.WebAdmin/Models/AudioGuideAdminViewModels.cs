@@ -3,9 +3,14 @@ namespace CTest.WebAdmin.Models;
 public class AudioGuideManagementPageViewModel
 {
     public string LoadErrorMessage { get; set; } = string.Empty;
+    public Guid? ScopePoiId { get; set; }
+    public string ScopePoiName { get; set; } = string.Empty;
+    public string ScopePoiCode { get; set; } = string.Empty;
     public List<AudioGuideListItemViewModel> Items { get; set; } = new();
     public List<PoiLookupItemViewModel> Pois { get; set; } = new();
     public AudioGuideEditorFormViewModel Editor { get; set; } = new();
+
+    public bool HasPoiScope => ScopePoiId.HasValue;
 }
 
 public class AudioGuideListItemViewModel

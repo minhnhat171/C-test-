@@ -1043,7 +1043,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     public bool IsListeningHistoryRankingVisible => !IsListeningHistoryTimelineVisible;
 
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(bool enableLocationFlow = true)
     {
         EnsurePoiRefreshLoopStarted();
 
@@ -1056,7 +1056,18 @@ public class MainViewModel : INotifyPropertyChanged
 
         StatusText = "Đang tải danh sách quán...";
         await RefreshPoisIfChangedAsync(forceRefresh: true);
-        await InitializeMapFlowAsync();
+
+        if (enableLocationFlow)
+        {
+            await InitializeMapFlowAsync();
+        }
+        else
+        {
+            await ApplyFallbackMapStateAsync(
+                "Che do QR: san sang phat thuyet minh",
+                "Dang mo noi dung tai diem dung xe buyt Khanh Hoi, Vinh Hoi, Xom Chieu. Khong can GPS.");
+        }
+
         await RefreshOfflinePackageStatusAsync();
         _isInitialized = true;
     }
@@ -1358,6 +1369,67 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         SetSelectedPoi(poi, userInitiated, null);
+    }
+
+    public async Task<bool> OpenPoiFromQrAsync(
+        Guid poiId,
+        bool autoPlay = true,
+        CancellationToken cancellationToken = default)
+    {
+        if (poiId == Guid.Empty)
+        {
+            StatusText = "Ma QR khong hop le";
+            return false;
+        }
+
+        if (!_isInitialized)
+        {
+            await InitializeAsync(enableLocationFlow: false);
+        }
+        else if (_pois.All(item => item.Id != poiId))
+        {
+            await RefreshPoisIfChangedAsync(forceRefresh: true, cancellationToken);
+        }
+
+        var poi = _pois.FirstOrDefault(item => item.Id == poiId)
+                  ?? await _poiRepository.GetPoiByIdAsync(poiId, cancellationToken);
+
+        if (poi is null)
+        {
+            StatusText = "Khong tim thay POI tu ma QR nay";
+            return false;
+        }
+
+        if (!poi.IsActive)
+        {
+            StatusText = "POI nay hien dang tam khoa";
+            return false;
+        }
+
+        SetSelectedPoi(poi, true, null);
+        StatusText = autoPlay
+            ? $"Dang mo QR cua {poi.Name}"
+            : $"Da mo QR cua {poi.Name}";
+        AddLog($"{NowLabel()} QR mo {poi.Name} (khong can GPS)");
+
+        if (!IsTracking)
+        {
+            LocationText = "Che do QR tai diem dung xe buyt: Khong can GPS.";
+        }
+
+        if (!autoPlay)
+        {
+            RefreshNarrationPresentation();
+            return true;
+        }
+
+        if (IsCurrentNarration(poi))
+        {
+            await StopNarrationAsync();
+        }
+
+        await NarratePoiAsync(poi, false, GetDistanceForPoi(poi.Id), syncSelectedPoi: false);
+        return true;
     }
 
     public async Task NarrateSelectedPoiAsync()

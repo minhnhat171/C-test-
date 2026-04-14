@@ -2,6 +2,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using VinhKhanhGuide.Core.Contracts;
 using VinhKhanhGuide.Core.Seed;
+using VKFoodAPI.Models;
 
 namespace VKFoodAPI.Services;
 
@@ -15,7 +16,7 @@ public class AudioGuideRepository
     };
     private readonly PoiRepository _poiRepository;
     private readonly string _dataFilePath;
-    private List<AudioGuideDto> _audioGuides;
+    private List<AudioGuideRecord> _audioGuides;
 
     public AudioGuideRepository(IHostEnvironment environment, PoiRepository poiRepository)
     {
@@ -38,7 +39,7 @@ public class AudioGuideRepository
                 .OrderByDescending(item => item.UpdatedAtUtc)
                 .ThenBy(item => item.PoiName)
                 .ThenBy(item => item.LanguageCode)
-                .Select(item => item.Clone())
+                .Select(item => item.ToDto())
                 .ToList();
         }
     }
@@ -48,7 +49,7 @@ public class AudioGuideRepository
         lock (_syncRoot)
         {
             var item = _audioGuides.FirstOrDefault(x => x.Id == id);
-            return item is null ? null : HydratePoiMetadata(item).Clone();
+            return item is null ? null : HydratePoiMetadata(item).ToDto();
         }
     }
 
@@ -69,7 +70,7 @@ public class AudioGuideRepository
             SaveUnsafe();
             SyncPoisUnsafe();
 
-            return HydratePoiMetadata(created).Clone();
+            return HydratePoiMetadata(created).ToDto();
         }
     }
 
@@ -111,14 +112,14 @@ public class AudioGuideRepository
         }
     }
 
-    private List<AudioGuideDto> LoadAudioGuides()
+    private List<AudioGuideRecord> LoadAudioGuides()
     {
         if (File.Exists(_dataFilePath))
         {
             try
             {
                 var json = File.ReadAllText(_dataFilePath);
-                var items = JsonSerializer.Deserialize<List<AudioGuideDto>>(json, _jsonOptions);
+                var items = JsonSerializer.Deserialize<List<AudioGuideRecord>>(json, _jsonOptions);
                 if (items is not null)
                 {
                     return items
@@ -133,7 +134,7 @@ public class AudioGuideRepository
         }
 
         var seeded = AudioGuideSeedData.CreateDefaultDtos()
-            .Select(item => item.Clone())
+            .Select(AudioGuideRecord.FromDto)
             .Select(Normalize)
             .ToList();
 
@@ -150,12 +151,12 @@ public class AudioGuideRepository
 
     private void SyncPoisUnsafe()
     {
-        _poiRepository.ApplyPublishedAudioGuides(_audioGuides);
+        _poiRepository.ApplyPublishedAudioGuides(_audioGuides.Select(item => item.ToDto()));
     }
 
-    private AudioGuideDto HydratePoiMetadata(AudioGuideDto dto)
+    private AudioGuideRecord HydratePoiMetadata(AudioGuideRecord record)
     {
-        var hydrated = dto.Clone();
+        var hydrated = record.Clone();
         var poi = _poiRepository.GetById(hydrated.PoiId);
 
         if (poi is not null)
@@ -167,9 +168,14 @@ public class AudioGuideRepository
         return hydrated;
     }
 
-    private AudioGuideDto Normalize(AudioGuideDto dto)
+    private AudioGuideRecord Normalize(AudioGuideDto dto)
     {
-        var normalized = dto.Clone();
+        return Normalize(AudioGuideRecord.FromDto(dto));
+    }
+
+    private AudioGuideRecord Normalize(AudioGuideRecord record)
+    {
+        var normalized = record.Clone();
         var poi = _poiRepository.GetById(normalized.PoiId);
 
         normalized.PoiId = poi?.Id ?? normalized.PoiId;
