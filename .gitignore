@@ -2,3 +2,6 @@ bin/
 obj/
 
 .fake
+**/artifacts/
+**/bin/
+**/obj/

@@ -6,12 +6,14 @@ namespace CTest.WebAdmin.Services;
 public class PoiAdminService
 {
     private readonly PoiApiClient _poiApiClient;
-    private readonly AppDataService _data;
+    private readonly AudioGuideApiClient _audioGuideApiClient;
 
-    public PoiAdminService(PoiApiClient poiApiClient, AppDataService data)
+    public PoiAdminService(
+        PoiApiClient poiApiClient,
+        AudioGuideApiClient audioGuideApiClient)
     {
         _poiApiClient = poiApiClient;
-        _data = data;
+        _audioGuideApiClient = audioGuideApiClient;
     }
 
     public async Task<PoiManagementViewModel> LoadManagementPageAsync(
@@ -61,14 +63,18 @@ public class PoiAdminService
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var poi = await _poiApiClient.GetPoiAsync(id, cancellationToken);
+        var poiTask = _poiApiClient.GetPoiAsync(id, cancellationToken);
+        var audioGuidesTask = _audioGuideApiClient.GetAudioGuidesAsync(cancellationToken);
+
+        await Task.WhenAll(poiTask, audioGuidesTask);
+
+        var poi = poiTask.Result;
         if (poi is null)
         {
             return null;
         }
 
-        var relatedAudioCount = _data.AudioGuides.Count(x =>
-            string.Equals(x.PoiName, poi.Name, StringComparison.OrdinalIgnoreCase));
+        var relatedAudioCount = audioGuidesTask.Result.Count(item => item.PoiId == poi.Id);
 
         return poi.ToEditorViewModel(relatedAudioCount);
     }
