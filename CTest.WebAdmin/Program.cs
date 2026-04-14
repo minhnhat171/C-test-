@@ -24,6 +24,8 @@ builder.Services.AddHttpClient<ListeningHistoryApiClient>(client =>
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<AudioGuideAdminService>();
+builder.Services.AddScoped<AudioGuideValidationService>();
 builder.Services.AddScoped<PoiAdminService>();
 builder.Services.AddScoped<ListeningHistoryService>();
 builder.Services.AddScoped<PoiValidationService>();

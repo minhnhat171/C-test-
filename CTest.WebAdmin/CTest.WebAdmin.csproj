@@ -3,10 +3,11 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <DefaultItemExcludes>$(DefaultItemExcludes);artifacts\**;.codex-temp-build\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Controllers\AudioGuidesController.cs" />
+    <Compile Remove="Controllers\AudioGuidesController.Api.cs" />
     <Compile Remove="Controllers\PoisController.cs" />
     <Compile Remove="Controllers\QrCodesController.cs" />
     <Compile Remove="Controllers\TranslationsController.cs" />

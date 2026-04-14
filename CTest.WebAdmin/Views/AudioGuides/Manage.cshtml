@@ -1,4 +1,4 @@
-@model AudioManagementViewModel
+@model AudioGuideManagementPageViewModel
 @{
     ViewData["Title"] = "Quản lý Audio / TTS";
     var selectedPoiName = Model.Pois.FirstOrDefault(x => x.Id == Model.Editor.PoiId)?.Name ?? "Chưa chọn POI";
@@ -36,7 +36,7 @@
 
     .audio-layout {
         display: grid;
-        grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.9fr);
+        grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.95fr);
         gap: 1.2rem;
     }
 
@@ -67,6 +67,10 @@
         padding: 1rem 1.1rem;
         border-color: rgba(148, 163, 184, 0.12);
         vertical-align: middle;
+    }
+
+    .audio-row-selected {
+        background: rgba(255, 247, 237, 0.75);
     }
 
     .audio-pill {
@@ -165,13 +169,19 @@
     <div class="audio-head">
         <div>
             <h1>Quản lý Audio / TTS</h1>
+            <p>Trang này lưu audio thật vào VKFoodAPI. Các bản ghi đã publish sẽ được đồng bộ để app dùng lại dữ liệu narration và file audio.</p>
         </div>
         <a asp-action="Index" asp-route-createNew="true" class="btn btn-primary btn-lg rounded-pill px-4">+ Tạo audio mới</a>
     </div>
 
     @if (TempData["AudioMessage"] is string audioMessage)
     {
-        <div class="alert alert-success border-0 shadow-sm">@audioMessage</div>
+        <div class="alert alert-info border-0 shadow-sm">@audioMessage</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.LoadErrorMessage))
+    {
+        <div class="alert alert-warning border-0 shadow-sm">@Model.LoadErrorMessage</div>
     }
 
     <div class="audio-layout">
@@ -180,41 +190,63 @@
                 <table class="table audio-table align-middle">
                     <thead>
                         <tr>
-                            <th>Tên POI</th>
+                            <th>ID</th>
+                            <th>POI</th>
                             <th>Ngôn ngữ</th>
-                            <th>Loại audio</th>
+                            <th>Nguồn</th>
                             <th>Trạng thái</th>
-                            <th>Ngày cập nhật</th>
+                            <th>Cập nhật</th>
                             <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
-                    @foreach (var item in Model.Items)
+                    @if (Model.Items.Any())
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr class="@(item.IsSelected ? "audio-row-selected" : string.Empty)">
+                                <td><span class="fw-semibold">@item.DisplayId</span></td>
+                                <td>
+                                    <div class="fw-semibold">@item.PoiName</div>
+                                    <div class="text-muted small">@item.PoiCode</div>
+                                </td>
+                                <td>
+                                    <div>@item.LanguageLabel</div>
+                                    <div class="text-muted small">@item.VoiceLabel</div>
+                                </td>
+                                <td>
+                                    <span class="audio-pill @(item.SourceType == "file" ? "source-file" : "source-tts")">
+                                        @item.SourceLabel
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="audio-pill @(item.IsPublished ? "status-published" : "status-draft")">
+                                        @(item.IsPublished ? "Đang dùng" : "Bản nháp")
+                                    </span>
+                                </td>
+                                <td>@item.UpdatedAtLocal.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <div class="audio-actions">
+                                        <a asp-action="Index" asp-route-audioId="@item.Id" class="btn btn-outline-primary btn-sm rounded-pill">Sửa</a>
+                                        <button type="button"
+                                                class="btn btn-outline-dark btn-sm rounded-pill js-audio-preview"
+                                                data-script="@item.Script">
+                                            Nghe thử
+                                        </button>
+                                        <form asp-action="Delete" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa audio này không?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">Xóa</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
                     {
                         <tr>
-                            <td class="fw-semibold">@item.PoiName</td>
-                            <td>@item.Language</td>
-                            <td>
-                                <span class="audio-pill @(item.SourceType == "File" ? "source-file" : "source-tts")">
-                                    @item.SourceType
-                                </span>
-                            </td>
-                            <td>
-                                <span class="audio-pill @(item.IsPublished ? "status-published" : "status-draft")">
-                                    @(item.IsPublished ? "Đang dùng" : "Bản nháp")
-                                </span>
-                            </td>
-                            <td>@item.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td>
-                                <div class="audio-actions">
-                                    <a asp-action="Index" asp-route-audioId="@item.Id" class="btn btn-outline-primary btn-sm rounded-pill">Cập nhật lại</a>
-                                    <button type="button"
-                                            class="btn btn-outline-dark btn-sm rounded-pill js-audio-preview"
-                                            data-script="@(item.SourceType == "TTS" ? item.ContentOrFile : string.Empty)">
-                                        Phát thử audio
-                                    </button>
-                                </div>
-                            </td>
+                            <td colspan="7" class="text-center py-4 text-muted">Chưa có audio nào trong VKFoodAPI.</td>
                         </tr>
                     }
                     </tbody>
@@ -228,73 +260,79 @@
                     @Html.AntiForgeryToken()
                     <input asp-for="Editor.Id" type="hidden" />
 
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 shadow-sm" role="alert"></div>
+
                     <div class="audio-form-grid">
                         <div class="full">
                             <label asp-for="Editor.PoiId" class="form-label">Chọn POI</label>
                             <select asp-for="Editor.PoiId" class="form-select" id="audioPoiId">
-                                <option value="0">Chọn điểm cần gắn audio</option>
+                                <option value="">Chọn điểm cần gắn audio</option>
                                 @foreach (var poi in Model.Pois)
                                 {
-                                    <option value="@poi.Id">@poi.Name</option>
+                                    <option value="@poi.Id">@poi.Name (@poi.Code)</option>
                                 }
                             </select>
+                            <span asp-validation-for="Editor.PoiId" class="text-danger small"></span>
                         </div>
 
                         <div>
-                            <label asp-for="Editor.Language" class="form-label">Chọn ngôn ngữ</label>
-                            <select asp-for="Editor.Language" class="form-select">
-                                <option value="vi-VN">Tiếng Việt</option>
-                                <option value="en-US">Tiếng Anh</option>
-                                <option value="zh-CN">Tiếng Trung</option>
-                                <option value="ko-KR">Tiếng Hàn</option>
+                            <label asp-for="Editor.LanguageCode" class="form-label">Ngôn ngữ</label>
+                            <select asp-for="Editor.LanguageCode" class="form-select">
+                                <option value="vi">Tiếng Việt</option>
+                                <option value="en">Tiếng Anh</option>
+                                <option value="zh">Tiếng Trung</option>
+                                <option value="ko">Tiếng Hàn</option>
+                                <option value="fr">Tiếng Pháp</option>
                             </select>
                         </div>
 
                         <div>
-                            <label asp-for="Editor.SourceType" class="form-label">TTS hay file audio</label>
+                            <label asp-for="Editor.SourceType" class="form-label">Nguồn phát</label>
                             <select asp-for="Editor.SourceType" class="form-select" id="audioSourceType">
-                                <option value="TTS">TTS</option>
-                                <option value="File">File audio</option>
+                                <option value="tts">TTS</option>
+                                <option value="file">File audio</option>
                             </select>
                         </div>
 
                         <div>
                             <label asp-for="Editor.VoiceType" class="form-label">Giọng đọc</label>
                             <select asp-for="Editor.VoiceType" class="form-select">
-                                <option value="Female">Female</option>
-                                <option value="Male">Male</option>
-                                <option value="Neutral">Neutral</option>
+                                <option value="female">Nữ</option>
+                                <option value="male">Nam</option>
+                                <option value="neutral">Trung tính</option>
                             </select>
                         </div>
 
                         <div>
                             <label asp-for="Editor.EstimatedSeconds" class="form-label">Thời lượng dự kiến</label>
-                            <input asp-for="Editor.EstimatedSeconds" class="form-control" id="audioEstimatedSeconds" />
+                            <input asp-for="Editor.EstimatedSeconds" class="form-control" id="audioEstimatedSeconds" type="number" min="0" />
+                            <span asp-validation-for="Editor.EstimatedSeconds" class="text-danger small"></span>
                         </div>
 
                         <div class="full" id="ttsScriptGroup">
-                            <label asp-for="Editor.Script" class="form-label">Nhập script</label>
+                            <label asp-for="Editor.Script" class="form-label">Nội dung script</label>
                             <textarea asp-for="Editor.Script" class="form-control" id="audioScript"></textarea>
+                            <span asp-validation-for="Editor.Script" class="text-danger small"></span>
                         </div>
 
                         <div class="full d-none" id="audioFileGroup">
                             <label asp-for="Editor.FilePath" class="form-label">Đường dẫn file audio</label>
                             <input asp-for="Editor.FilePath" class="form-control" />
+                            <span asp-validation-for="Editor.FilePath" class="text-danger small"></span>
                         </div>
 
                         <div class="full">
                             <div class="form-check form-switch mt-2">
                                 <input asp-for="Editor.IsPublished" class="form-check-input" />
-                                <label asp-for="Editor.IsPublished" class="form-check-label">Trạng thái xuất bản</label>
+                                <label asp-for="Editor.IsPublished" class="form-check-label">Publish để app dùng dữ liệu này</label>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex flex-wrap gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary rounded-pill px-4">Lưu / cập nhật</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">Lưu vào API</button>
                         <button type="button" class="btn btn-outline-dark rounded-pill px-4" id="previewSpeechButton">Nghe thử</button>
-                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="generateTtsButton">Sinh TTS</button>
-                        <button type="button" class="btn btn-outline-success rounded-pill px-4" id="downloadAudioButton">Tải xuống</button>
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="estimateTtsButton">Ước lượng thời lượng</button>
                     </div>
                 </form>
 
@@ -302,9 +340,9 @@
                     <div class="audio-preview-label">Preview</div>
                     <div class="audio-preview-title" id="audioPreviewPoi">@selectedPoiName</div>
                     <div class="text-muted mt-2" id="audioPreviewSummary">
-                        @(Model.Editor.SourceType == "File"
-                            ? "Bản ghi đang dùng nguồn file audio."
-                            : "Bản ghi đang dùng TTS và có thể nghe thử trực tiếp trên trình duyệt.")
+                        @(string.Equals(Model.Editor.SourceType, "file", StringComparison.OrdinalIgnoreCase)
+                            ? "Bản ghi hiện dùng file audio. App sẽ lấy file này từ dữ liệu dùng chung khi bản ghi được publish."
+                            : "Bản ghi hiện dùng TTS. Script sẽ được đồng bộ sang narration trong dữ liệu dùng chung.")
                     </div>
                 </div>
             </div>
@@ -313,6 +351,7 @@
 </div>
 
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script>
         (() => {
             const scriptInput = document.getElementById("audioScript");
@@ -320,20 +359,19 @@
             const ttsGroup = document.getElementById("ttsScriptGroup");
             const fileGroup = document.getElementById("audioFileGroup");
             const previewButton = document.getElementById("previewSpeechButton");
-            const generateButton = document.getElementById("generateTtsButton");
-            const downloadButton = document.getElementById("downloadAudioButton");
+            const estimateButton = document.getElementById("estimateTtsButton");
             const estimatedSeconds = document.getElementById("audioEstimatedSeconds");
             const poiSelect = document.getElementById("audioPoiId");
             const previewPoi = document.getElementById("audioPreviewPoi");
             const previewSummary = document.getElementById("audioPreviewSummary");
 
             const syncSourceMode = () => {
-                const isFile = sourceType.value === "File";
+                const isFile = sourceType.value === "file";
                 ttsGroup.classList.toggle("d-none", isFile);
                 fileGroup.classList.toggle("d-none", !isFile);
                 previewSummary.textContent = isFile
-                    ? "Bản ghi đang dùng nguồn file audio."
-                    : "Bản ghi đang dùng TTS và có thể nghe thử trực tiếp trên trình duyệt.";
+                    ? "Bản ghi hiện dùng file audio. App sẽ lấy file này từ dữ liệu dùng chung khi bản ghi được publish."
+                    : "Bản ghi hiện dùng TTS. Script sẽ được đồng bộ sang narration trong dữ liệu dùng chung.";
             };
 
             const syncPoiLabel = () => {
@@ -350,28 +388,18 @@
                 window.speechSynthesis.speak(utterance);
             };
 
-            sourceType.addEventListener("change", syncSourceMode);
-            poiSelect.addEventListener("change", syncPoiLabel);
+            sourceType?.addEventListener("change", syncSourceMode);
+            poiSelect?.addEventListener("change", syncPoiLabel);
 
-            previewButton.addEventListener("click", () => {
-                speakText(scriptInput.value.trim());
+            previewButton?.addEventListener("click", () => {
+                speakText(scriptInput?.value?.trim() || "");
             });
 
-            generateButton.addEventListener("click", () => {
-                const words = scriptInput.value.trim().split(/\s+/).filter(Boolean).length;
-                estimatedSeconds.value = words > 0 ? Math.max(15, Math.ceil(words / 2.5)) : estimatedSeconds.value;
-                previewSummary.textContent = "Đã ước lượng thời lượng TTS dựa trên nội dung script hiện tại.";
-            });
-
-            downloadButton.addEventListener("click", () => {
-                const content = scriptInput.value.trim();
-                const blob = new Blob([content || "Chưa có nội dung audio."], { type: "text/plain;charset=utf-8" });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.href = url;
-                link.download = "audio-preview.txt";
-                link.click();
-                URL.revokeObjectURL(url);
+            estimateButton?.addEventListener("click", () => {
+                const words = (scriptInput?.value || "").trim().split(/\s+/).filter(Boolean).length;
+                if (words > 0) {
+                    estimatedSeconds.value = Math.max(15, Math.ceil(words / 2.5));
+                }
             });
 
             document.querySelectorAll(".js-audio-preview").forEach((button) => {
