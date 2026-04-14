@@ -32,6 +32,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     private readonly ILocationService _locationService;
     private readonly IPoiRepository _poiRepository;
+    private readonly ITourRepository _tourRepository;
     private readonly IPoiOfflineStore _poiOfflineStore;
     private readonly ISearchService _searchService;
     private readonly INarrationService _narrationService;
@@ -50,6 +51,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly List<string> _recentSearches = [];
 
     private IReadOnlyList<POI> _pois = Array.Empty<POI>();
+    private IReadOnlyList<TourDto> _tours = Array.Empty<TourDto>();
     private Task? _poiRefreshLoopTask;
     private bool _isInitialized;
     private bool _isTracking;
@@ -68,6 +70,9 @@ public class MainViewModel : INotifyPropertyChanged
     private POI? _selectedPoi;
     private bool _hasUserSelectedPoi;
     private string _poiDataSnapshot = string.Empty;
+    private string _tourDataSnapshot = string.Empty;
+    private int? _activeTourId;
+    private int _activeTourStopIndex;
     private string _statusText = "Đang chờ khởi động GPS";
     private string _locationText = "Bạn đang xem cổng phố ẩm thực Vĩnh Khánh";
     private string _nearestPoiText = "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
@@ -120,6 +125,7 @@ public class MainViewModel : INotifyPropertyChanged
     public MainViewModel(
         ILocationService locationService,
         IPoiRepository poiRepository,
+        ITourRepository tourRepository,
         IPoiOfflineStore poiOfflineStore,
         ISearchService searchService,
         INarrationService narrationService,
@@ -134,6 +140,7 @@ public class MainViewModel : INotifyPropertyChanged
     {
         _locationService = locationService;
         _poiRepository = poiRepository;
+        _tourRepository = tourRepository;
         _poiOfflineStore = poiOfflineStore;
         _searchService = searchService;
         _narrationService = narrationService;
@@ -182,6 +189,8 @@ public class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<PoiStatusItem> FilteredPoiStatuses { get; } = new();
     public ObservableCollection<SearchSuggestionItem> SearchSuggestions { get; } = new();
     public ObservableCollection<string> EventLogs { get; } = new();
+    public ObservableCollection<TourPackageItem> TourPackages { get; } = new();
+    public ObservableCollection<TourStopProgressItem> ActiveTourStops { get; } = new();
     public ObservableCollection<ListeningHistoryDisplayItem> ListeningHistory { get; } = new();
     public ObservableCollection<string> ListeningHistoryLocalEntries { get; } = new();
     public ObservableCollection<ListeningHistoryRankingDisplayItem> ListeningHistoryRanking { get; } = new();
@@ -220,14 +229,93 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ClearOfflinePackageCommand { get; }
 
     public IReadOnlyList<POI> Pois => _pois;
+    public IReadOnlyList<TourDto> Tours => _tours;
     public LocationDto? LastLocation => _lastLocation;
     public Guid? SelectedPoiId => _selectedPoi?.Id;
     public bool IsSelectedPoiNarrating => _selectedPoi is not null && IsNarrating && _activeNarrationPoiId == _selectedPoi.Id;
     public string SelectedPoiNarrationActionText => IsSelectedPoiNarrating ? "Dừng thuyết minh" : "Nghe thuyết minh";
+    public bool HasTours => TourPackages.Count > 0;
+    public bool HasActiveTour => GetActiveTour() is not null;
+    public bool HasActiveTourStops => ActiveTourStops.Count > 0;
+    public bool IsActiveTourCompleted => HasActiveTour && GetCurrentActiveTourPoi() is null;
+    public IReadOnlyList<PoiStatusItem> VisibleMapPoiStatuses => GetVisibleMapPoiStatuses();
+    public string TourSectionSummary => !HasTours
+        ? "Chưa có tour nào từ WebAdmin."
+        : HasActiveTour
+            ? $"Đang theo tour {GetActiveTour()!.Name}. Khi chọn tour, app sẽ phát giới thiệu tour trước rồi mới theo GPS từng chặng."
+            : $"{TourPackages.Count} gói tour sẵn sàng. Chạm một tour để nghe giới thiệu và bắt đầu lộ trình.";
+    public string ActiveTourName => GetActiveTour()?.Name ?? "Chưa chọn tour";
+    public string ActiveTourSummary
+    {
+        get
+        {
+            var activeTour = GetActiveTour();
+            if (activeTour is null)
+            {
+                return "Chọn một tour để app chỉ theo dõi POI đầu tiên, sau đó tự chuyển sang các điểm kế tiếp khi khách di chuyển đúng lộ trình.";
+            }
+
+            var stopIds = GetActiveTourStopIds();
+            if (stopIds.Count == 0)
+            {
+                return "Tour hiện tại không còn điểm dừng hợp lệ.";
+            }
+
+            if (GetCurrentActiveTourPoi() is null)
+            {
+                return $"Tour {activeTour.Name} đã hoàn tất {stopIds.Count}/{stopIds.Count} điểm dừng.";
+            }
+
+            return $"Tour đang chạy {Math.Min(_activeTourStopIndex + 1, stopIds.Count)}/{stopIds.Count}. App chỉ tự phát đúng POI hiện tại của tour rồi mới mở chặng kế tiếp.";
+        }
+    }
+    public string ActiveTourCurrentStopText
+    {
+        get
+        {
+            var currentPoi = GetCurrentActiveTourPoi();
+            if (currentPoi is null)
+            {
+                return HasActiveTour
+                    ? "Điểm hiện tại: tour đã hoàn tất."
+                    : "Điểm hiện tại: chưa chọn tour.";
+            }
+
+            return $"Điểm hiện tại: {currentPoi.Name}";
+        }
+    }
+    public string ActiveTourNextStopText
+    {
+        get
+        {
+            var nextPoi = GetNextActiveTourPoi();
+            if (nextPoi is null)
+            {
+                return HasActiveTour
+                    ? "Điểm kế tiếp: không còn, tour đã hoàn tất."
+                    : "Điểm kế tiếp: chọn tour để app xác định lộ trình.";
+            }
+
+            return $"Điểm kế tiếp: {nextPoi.Name}";
+        }
+    }
     public string HomeNarrationSummary
     {
         get
         {
+            var activeTour = GetActiveTour();
+            if (activeTour is not null)
+            {
+                var currentPoi = GetCurrentActiveTourPoi();
+                if (currentPoi is null)
+                {
+                    return $"Tour {activeTour.Name} đã hoàn tất. Bạn có thể chọn tour khác hoặc quay về chế độ POI tự do.";
+                }
+
+                var totalStops = GetActiveTourStopIds().Count;
+                return $"Tour {activeTour.Name} đang theo chặng {Math.Min(_activeTourStopIndex + 1, totalStops)}/{totalStops}: {currentPoi.Name}. Khi người dùng vào đúng vùng GPS của chặng này, app sẽ phát rồi chuyển sang điểm kế tiếp.";
+            }
+
             var activePoi = _activeNarrationPoiId.HasValue
                 ? _pois.FirstOrDefault(item => item.Id == _activeNarrationPoiId.Value)
                 : null;
@@ -1003,7 +1091,9 @@ public class MainViewModel : INotifyPropertyChanged
 
         if (_hasLocationPermission && _lastLocation is not null)
         {
-            StatusText = "Đã dừng GPS, vẫn giữ vị trí cuối cùng";
+            StatusText = HasActiveTour
+                ? $"{BuildIdleStatusText()} Vẫn giữ vị trí cuối cùng."
+                : "Đã dừng GPS, vẫn giữ vị trí cuối cùng";
         }
         else
         {
@@ -1140,30 +1230,97 @@ public class MainViewModel : INotifyPropertyChanged
         if (_pois.Count == 0)
         {
             LocationText = "Bạn đang xem cổng phố ẩm thực Vĩnh Khánh";
-            NearestPoiText = "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
-            StatusText = IsTracking
-                ? "GPS đang hoạt động"
-                : _hasLocationPermission
-                    ? "GPS đã dừng"
-                    : "Bản đồ đang dùng vị trí mặc định";
+            NearestPoiText = HasActiveTour
+                ? ActiveTourCurrentStopText
+                : "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
+            StatusText = BuildIdleStatusText();
             UpdateMapBadges();
             RaiseMapStateChanged();
             return;
         }
 
         RefreshPoiList(Array.Empty<(POI Poi, double DistanceMeters, bool IsInside)>(), null);
-        SetSelectedPoi(_pois.First(), false, null);
+        SetSelectedPoi(GetCurrentActiveTourPoi() ?? _pois.First(), false, null);
 
         LocationText = "Bạn đang xem cổng phố ẩm thực Vĩnh Khánh";
-        NearestPoiText = "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
-        StatusText = IsTracking
-            ? "GPS đang hoạt động"
-            : _hasLocationPermission
-                ? "GPS đã dừng"
-                : "Bản đồ đang dùng vị trí mặc định";
+        NearestPoiText = HasActiveTour
+            ? ActiveTourCurrentStopText
+            : "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
+        StatusText = BuildIdleStatusText();
 
         UpdateMapBadges();
         RaiseMapStateChanged();
+    }
+
+    public async Task ActivateTourAsync(int tourId)
+    {
+        var tour = _tours.FirstOrDefault(item => item.Id == tourId && item.IsActive);
+        if (tour is null)
+        {
+            StatusText = "Không tìm thấy tour đang hoạt động";
+            return;
+        }
+
+        if (IsNarrating)
+        {
+            await StopNarrationAsync();
+        }
+
+        _activeTourId = tour.Id;
+        _activeTourStopIndex = 0;
+        _hasUserSelectedPoi = false;
+
+        NormalizeActiveTourState();
+        RefreshTourState();
+
+        var currentPoi = GetCurrentActiveTourPoi();
+        if (currentPoi is not null)
+        {
+            SetSelectedPoi(currentPoi, false, EvaluateCurrentPoiStatuses());
+        }
+
+        StatusText = currentPoi is null
+            ? $"Tour {tour.Name} chưa có POI hợp lệ để theo dõi"
+            : $"Đã chọn tour {tour.Name}. App sẽ theo GPS từ {currentPoi.Name}.";
+
+        AddLog($"{NowLabel()} Kích hoạt tour {tour.Name}");
+        await NarrateTourActivationAsync(tour);
+
+        if (_lastLocation is not null)
+        {
+            await ApplyLocationSnapshotAsync(_lastLocation, allowAutoNarrate: false);
+            return;
+        }
+
+        RefreshNarrationPresentation();
+    }
+
+    public async Task StopActiveTourAsync()
+    {
+        var activeTour = GetActiveTour();
+        if (activeTour is null)
+        {
+            return;
+        }
+
+        if (IsNarrating)
+        {
+            await StopNarrationAsync();
+        }
+
+        _activeTourId = null;
+        _activeTourStopIndex = 0;
+        RefreshTourState();
+        AddLog($"{NowLabel()} Tắt tour {activeTour.Name}");
+
+        if (_lastLocation is not null)
+        {
+            await ApplyLocationSnapshotAsync(_lastLocation, allowAutoNarrate: false);
+            return;
+        }
+
+        RefreshNarrationPresentation();
+        StatusText = "Đã quay về chế độ POI tự do";
     }
 
     public bool ExecuteSearch(string? query = null)
@@ -1270,9 +1427,7 @@ public class MainViewModel : INotifyPropertyChanged
         IsNarrating = false;
         StatusText = hadActiveNarration
             ? "Đã dừng thuyết minh"
-            : IsTracking
-                ? "GPS đang hoạt động"
-                : "Sẵn sàng phát thuyết minh";
+            : BuildIdleStatusText();
         await MainThread.InvokeOnMainThreadAsync(() => RefreshNarrationPresentation());
 
         if (hadActiveNarration)
@@ -1367,7 +1522,7 @@ public class MainViewModel : INotifyPropertyChanged
 
                     if (!StatusText.StartsWith("Lỗi phát lại lịch sử:", StringComparison.Ordinal))
                     {
-                        StatusText = IsTracking ? "GPS đang hoạt động" : "Sẵn sàng phát thuyết minh";
+                        StatusText = BuildIdleStatusText();
                     }
                 });
             }
@@ -1403,6 +1558,8 @@ public class MainViewModel : INotifyPropertyChanged
         _hasUserSelectedPoi = false;
         _insidePoiIds.Clear();
         _lastAutoNarratedPoiId = null;
+        _activeTourId = null;
+        _activeTourStopIndex = 0;
         HideSearchSuggestions();
         ClearSearch();
 
@@ -1433,10 +1590,19 @@ public class MainViewModel : INotifyPropertyChanged
         bool forceRefresh = false,
         CancellationToken cancellationToken = default)
     {
-        var latestPois = await _poiRepository.GetPoisAsync(cancellationToken);
-        var snapshot = CreatePoiSnapshot(latestPois);
+        var latestPoisTask = _poiRepository.GetPoisAsync(cancellationToken);
+        var latestToursTask = _tourRepository.GetToursAsync(cancellationToken);
 
-        if (!forceRefresh && string.Equals(_poiDataSnapshot, snapshot, StringComparison.Ordinal))
+        await Task.WhenAll(latestPoisTask, latestToursTask);
+
+        var latestPois = latestPoisTask.Result;
+        var latestTours = latestToursTask.Result;
+        var poiSnapshot = CreatePoiSnapshot(latestPois);
+        var tourSnapshot = CreateTourSnapshot(latestTours);
+
+        if (!forceRefresh &&
+            string.Equals(_poiDataSnapshot, poiSnapshot, StringComparison.Ordinal) &&
+            string.Equals(_tourDataSnapshot, tourSnapshot, StringComparison.Ordinal))
         {
             return;
         }
@@ -1447,10 +1613,17 @@ public class MainViewModel : INotifyPropertyChanged
         {
             var previousSelectedPoiId = _selectedPoi?.Id;
             var previousSnapshot = _poiDataSnapshot;
+            var previousTourSnapshot = _tourDataSnapshot;
 
             _pois = latestPois.ToList();
-            _poiDataSnapshot = snapshot;
+            _tours = latestTours
+                .Where(item => item.IsActive)
+                .Select(item => item.Clone())
+                .ToList();
+            _poiDataSnapshot = poiSnapshot;
+            _tourDataSnapshot = tourSnapshot;
             CleanupPoiState();
+            NormalizeActiveTourState();
 
             var nearestPoi = default(POI);
             IReadOnlyList<(POI Poi, double DistanceMeters, bool IsInside)> evaluated =
@@ -1464,6 +1637,7 @@ public class MainViewModel : INotifyPropertyChanged
 
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
+                RefreshTourState();
                 RefreshPoiList(evaluated, nearestPoi?.Id);
 
                 if (_lastLocation is not null)
@@ -1482,13 +1656,17 @@ public class MainViewModel : INotifyPropertyChanged
                     NearestPoiText = "Chạm marker để xem chi tiết quán";
                 }
 
-                ApplySelectedPoiAfterRefresh(previousSelectedPoiId, nearestPoi, evaluated);
+                ApplySelectedPoiAfterRefresh(
+                    previousSelectedPoiId,
+                    GetCurrentActiveTourPoi() ?? nearestPoi,
+                    evaluated);
                 UpdateMapBadges();
             });
 
-            if (_isInitialized && !string.IsNullOrWhiteSpace(previousSnapshot))
+            if (_isInitialized &&
+                (!string.IsNullOrWhiteSpace(previousSnapshot) || !string.IsNullOrWhiteSpace(previousTourSnapshot)))
             {
-                AddLog($"{NowLabel()} Dong bo du lieu moi tu WebAdmin ({_pois.Count} POI)");
+                AddLog($"{NowLabel()} Dong bo du lieu moi tu WebAdmin ({_pois.Count} POI, {_tours.Count} tour)");
             }
         }
         finally
@@ -1581,6 +1759,7 @@ public class MainViewModel : INotifyPropertyChanged
             .Where(item => item.IsInside)
             .Select(item => item.Poi.Id)
             .ToHashSet();
+        var currentTourPoi = GetCurrentActiveTourPoi();
 
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
@@ -1593,7 +1772,7 @@ public class MainViewModel : INotifyPropertyChanged
             }
             else if (!_hasUserSelectedPoi)
             {
-                SetSelectedPoi(nearest.Poi ?? _selectedPoi ?? _pois.FirstOrDefault(), false, results);
+                SetSelectedPoi(currentTourPoi ?? nearest.Poi ?? _selectedPoi ?? _pois.FirstOrDefault(), false, results);
             }
             else
             {
@@ -1605,11 +1784,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         if (allowAutoNarrate)
         {
-            var candidate = results
-                .Where(item => item.IsInside)
-                .OrderByDescending(item => item.Poi.Priority)
-                .ThenBy(item => item.DistanceMeters)
-                .FirstOrDefault();
+            var candidate = ResolveAutoNarrationCandidate(results);
 
             if (IsAutoNarrationEnabled && candidate.Poi is not null && ShouldAutoNarrate(candidate.Poi))
             {
@@ -1639,6 +1814,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
+            RefreshTourState();
             RefreshPoiList(Array.Empty<(POI Poi, double DistanceMeters, bool IsInside)>(), null);
 
             if (_pois.Count == 0)
@@ -1650,11 +1826,13 @@ public class MainViewModel : INotifyPropertyChanged
             }
             else
             {
-                NearestPoiText = "Chạm marker để xem chi tiết quán";
+                NearestPoiText = HasActiveTour
+                    ? ActiveTourCurrentStopText
+                    : "Chạm marker để xem chi tiết quán";
 
                 if (_selectedPoi is null)
                 {
-                    SetSelectedPoi(_pois.FirstOrDefault(), false, null);
+                    SetSelectedPoi(GetCurrentActiveTourPoi() ?? _pois.FirstOrDefault(), false, null);
                 }
                 else
                 {
@@ -1686,6 +1864,374 @@ public class MainViewModel : INotifyPropertyChanged
         {
             _lastNarratedAt.Remove(stalePoiId);
         }
+    }
+
+    private void NormalizeActiveTourState()
+    {
+        var activeTour = GetActiveTour();
+        if (activeTour is null)
+        {
+            _activeTourId = null;
+            _activeTourStopIndex = 0;
+            return;
+        }
+
+        var activeStopIds = GetTourStopIds(activeTour);
+        if (activeStopIds.Count == 0)
+        {
+            _activeTourId = null;
+            _activeTourStopIndex = 0;
+            return;
+        }
+
+        if (_activeTourStopIndex < 0)
+        {
+            _activeTourStopIndex = 0;
+            return;
+        }
+
+        if (_activeTourStopIndex > activeStopIds.Count)
+        {
+            _activeTourStopIndex = activeStopIds.Count;
+        }
+    }
+
+    private void RefreshTourState()
+    {
+        TourPackages.Clear();
+
+        foreach (var tour in _tours.OrderBy(item => item.Name))
+        {
+            var stopIds = GetTourStopIds(tour);
+            if (stopIds.Count == 0)
+            {
+                continue;
+            }
+
+            var stopNames = stopIds
+                .Select(poiId => _pois.FirstOrDefault(item => item.Id == poiId)?.Name ?? "POI không xác định")
+                .ToList();
+            var isSelected = _activeTourId == tour.Id;
+
+            TourPackages.Add(new TourPackageItem
+            {
+                TourId = tour.Id,
+                Code = tour.Code,
+                Name = tour.Name,
+                Description = tour.Description,
+                EstimatedMinutes = tour.EstimatedMinutes,
+                StopCount = stopIds.Count,
+                StopsSummary = string.Join(" • ", stopNames.Take(3)) + (stopNames.Count > 3 ? " ..." : string.Empty),
+                IsSelected = isSelected,
+                IsCompleted = isSelected && GetCurrentActiveTourPoi() is null
+            });
+        }
+
+        ActiveTourStops.Clear();
+
+        var activeTour = GetActiveTour();
+        if (activeTour is null)
+        {
+            RaiseTourStateChanged();
+            return;
+        }
+
+        var activeStopIds = GetActiveTourStopIds();
+        for (var index = 0; index < activeStopIds.Count; index++)
+        {
+            var poiId = activeStopIds[index];
+            var poi = _pois.FirstOrDefault(item => item.Id == poiId);
+            if (poi is null)
+            {
+                continue;
+            }
+
+            ActiveTourStops.Add(new TourStopProgressItem
+            {
+                Order = index + 1,
+                PoiId = poi.Id,
+                Name = poi.Name,
+                Address = poi.Address,
+                IsCompleted = index < _activeTourStopIndex,
+                IsCurrent = index == _activeTourStopIndex && _activeTourStopIndex < activeStopIds.Count,
+                IsUpcoming = index > _activeTourStopIndex
+            });
+        }
+
+        RaiseTourStateChanged();
+    }
+
+    private IReadOnlyList<PoiStatusItem> GetVisibleMapPoiStatuses()
+    {
+        var activeTourPoiIds = GetActiveTourStopIds().ToHashSet();
+        if (activeTourPoiIds.Count == 0)
+        {
+            return PoiStatuses.ToList();
+        }
+
+        return PoiStatuses
+            .Where(item => activeTourPoiIds.Contains(item.PoiId))
+            .ToList();
+    }
+
+    private TourDto? GetActiveTour()
+    {
+        return _activeTourId.HasValue
+            ? _tours.FirstOrDefault(item => item.Id == _activeTourId.Value)
+            : null;
+    }
+
+    private IReadOnlyList<Guid> GetTourStopIds(TourDto? tour)
+    {
+        if (tour is null)
+        {
+            return Array.Empty<Guid>();
+        }
+
+        var activePoiIds = _pois
+            .Select(item => item.Id)
+            .ToHashSet();
+
+        return tour.PoiIds
+            .Where(poiId => poiId != Guid.Empty && activePoiIds.Contains(poiId))
+            .Distinct()
+            .ToList();
+    }
+
+    private IReadOnlyList<Guid> GetActiveTourStopIds()
+    {
+        return GetTourStopIds(GetActiveTour());
+    }
+
+    private Guid? GetCurrentActiveTourPoiId()
+    {
+        var stopIds = GetActiveTourStopIds();
+        return _activeTourStopIndex >= 0 && _activeTourStopIndex < stopIds.Count
+            ? stopIds[_activeTourStopIndex]
+            : null;
+    }
+
+    private POI? GetCurrentActiveTourPoi()
+    {
+        var currentPoiId = GetCurrentActiveTourPoiId();
+        return currentPoiId.HasValue
+            ? _pois.FirstOrDefault(item => item.Id == currentPoiId.Value)
+            : null;
+    }
+
+    private POI? GetNextActiveTourPoi()
+    {
+        var stopIds = GetActiveTourStopIds();
+        var nextIndex = _activeTourStopIndex + 1;
+
+        if (nextIndex < 0 || nextIndex >= stopIds.Count)
+        {
+            return null;
+        }
+
+        return _pois.FirstOrDefault(item => item.Id == stopIds[nextIndex]);
+    }
+
+    private HashSet<Guid> GetCompletedActiveTourPoiIds()
+    {
+        return GetActiveTourStopIds()
+            .Take(Math.Max(0, _activeTourStopIndex))
+            .ToHashSet();
+    }
+
+    private Dictionary<Guid, int> GetActiveTourOrderLookup()
+    {
+        return GetActiveTourStopIds()
+            .Select((poiId, index) => new { PoiId = poiId, Order = index + 1 })
+            .ToDictionary(item => item.PoiId, item => item.Order);
+    }
+
+    private bool TryAdvanceActiveTourAfterNarration(Guid poiId, out string completedTourName)
+    {
+        completedTourName = string.Empty;
+
+        var activeTour = GetActiveTour();
+        if (activeTour is null)
+        {
+            return false;
+        }
+
+        var currentPoiId = GetCurrentActiveTourPoiId();
+        if (!currentPoiId.HasValue || currentPoiId.Value != poiId)
+        {
+            return false;
+        }
+
+        var stopIds = GetActiveTourStopIds();
+        if (_activeTourStopIndex < stopIds.Count)
+        {
+            _activeTourStopIndex++;
+        }
+
+        if (_activeTourStopIndex >= stopIds.Count)
+        {
+            completedTourName = activeTour.Name;
+        }
+
+        if (!_hasUserSelectedPoi)
+        {
+            _selectedPoi = GetCurrentActiveTourPoi() ?? _selectedPoi;
+        }
+
+        return true;
+    }
+
+    private static bool ShouldAdvanceActiveTourAfterNarration(
+        POI poi,
+        bool autoTriggered,
+        double? distanceMeters)
+    {
+        return autoTriggered ||
+               (distanceMeters.HasValue && distanceMeters.Value <= poi.TriggerRadiusMeters);
+    }
+
+    private (POI Poi, double DistanceMeters, bool IsInside) ResolveAutoNarrationCandidate(
+        IReadOnlyList<(POI Poi, double DistanceMeters, bool IsInside)> results)
+    {
+        if (HasActiveTour)
+        {
+            var currentTourPoiId = GetCurrentActiveTourPoiId();
+            if (!currentTourPoiId.HasValue)
+            {
+                return default;
+            }
+
+            var currentTourResult = results.FirstOrDefault(item => item.Poi.Id == currentTourPoiId.Value);
+            if (currentTourResult.Poi is not null && currentTourResult.IsInside)
+            {
+                return currentTourResult;
+            }
+
+            return default;
+        }
+
+        return results
+            .Where(item => item.IsInside)
+            .OrderByDescending(item => item.Poi.Priority)
+            .ThenBy(item => item.DistanceMeters)
+            .FirstOrDefault();
+    }
+
+    private string BuildIdleStatusText()
+    {
+        var activeTour = GetActiveTour();
+        if (activeTour is not null)
+        {
+            var currentPoi = GetCurrentActiveTourPoi();
+            if (currentPoi is null)
+            {
+                return $"Tour {activeTour.Name} đã hoàn tất";
+            }
+
+            return IsTracking
+                ? $"Tour {activeTour.Name}: đang chờ {currentPoi.Name}"
+                : $"Tour {activeTour.Name}: sẵn sàng theo dõi {currentPoi.Name}";
+        }
+
+        return IsTracking ? "GPS đang hoạt động" : "Sẵn sàng phát thuyết minh";
+    }
+
+    private async Task NarrateTourActivationAsync(TourDto tour)
+    {
+        var sessionId = Interlocked.Increment(ref _narrationSessionId);
+        var narrationText = BuildTourActivationNarrationText(tour, SelectedLanguage);
+        string errorMessage = string.Empty;
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            SetActiveNarrationPoiId(null);
+            IsNarrating = true;
+            StatusText = $"Đang giới thiệu tour: {tour.Name}";
+            RefreshNarrationPresentation();
+        });
+
+        try
+        {
+            await _narrationService.SpeakAsync(
+                narrationText,
+                SelectedLanguage,
+                playbackMode: "tts");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            AddLog($"{NowLabel()} Lỗi TTS tour: {ex.Message}");
+
+            if (sessionId == Volatile.Read(ref _narrationSessionId))
+            {
+                StatusText = $"Không phát được giới thiệu tour: {ex.Message}";
+            }
+        }
+        finally
+        {
+            if (sessionId == Volatile.Read(ref _narrationSessionId))
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    SetActiveNarrationPoiId(null);
+                    IsNarrating = false;
+                    RefreshNarrationPresentation();
+
+                    if (!StatusText.StartsWith("Không phát được giới thiệu tour:", StringComparison.Ordinal))
+                    {
+                        StatusText = BuildIdleStatusText();
+                    }
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(errorMessage))
+            {
+                AddLog($"{NowLabel()} Phát giới thiệu tour {tour.Name}");
+            }
+        }
+    }
+
+    private string BuildTourActivationNarrationText(TourDto tour, string languageCode)
+    {
+        var stopPois = GetTourStopIds(tour)
+            .Select(poiId => _pois.FirstOrDefault(item => item.Id == poiId))
+            .Where(poi => poi is not null)
+            .Cast<POI>()
+            .ToList();
+        var firstStop = stopPois.FirstOrDefault();
+        var nextStop = stopPois.Skip(1).FirstOrDefault();
+        var stopSummary = stopPois.Count == 0
+            ? string.Empty
+            : string.Join(", ", stopPois.Take(4).Select(item => item.Name));
+
+        return NormalizeLanguageCode(languageCode) switch
+        {
+            "en" =>
+                $"You selected the tour {tour.Name}. {tour.Description} This route has {stopPois.Count} stops and is estimated at {tour.EstimatedMinutes} minutes. " +
+                $"The first stop is {firstStop?.Name ?? "not available"}. " +
+                $"{(nextStop is null ? "There is no second stop yet." : $"The next stop is {nextStop.Name}.")} " +
+                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"Main stops: {stopSummary}.")}",
+            "zh" =>
+                $"您已选择行程 {tour.Name}。{tour.Description} 此行程共有 {stopPois.Count} 个停靠点，预计 {tour.EstimatedMinutes} 分钟。" +
+                $"第一站是 {firstStop?.Name ?? "暂未设置"}。" +
+                $"{(nextStop is null ? "目前没有下一站。" : $"下一站是 {nextStop.Name}。")}" +
+                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $" 主要站点包括：{stopSummary}。")}",
+            "ko" =>
+                $"{tour.Name} 투어를 선택했습니다. {tour.Description} 이 투어는 총 {stopPois.Count}개 경유지이며 예상 시간은 {tour.EstimatedMinutes}분입니다. " +
+                $"첫 번째 지점은 {firstStop?.Name ?? "설정되지 않았습니다"} 입니다. " +
+                $"{(nextStop is null ? "다음 지점은 아직 없습니다." : $"다음 지점은 {nextStop.Name} 입니다.")}" +
+                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $" 주요 지점: {stopSummary}.")}",
+            "fr" =>
+                $"Vous avez choisi le tour {tour.Name}. {tour.Description} Ce parcours comprend {stopPois.Count} étapes pour environ {tour.EstimatedMinutes} minutes. " +
+                $"La première étape est {firstStop?.Name ?? "non définie"}. " +
+                $"{(nextStop is null ? "Il n'y a pas encore d'étape suivante." : $"L'étape suivante est {nextStop.Name}.")}" +
+                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $" Étapes principales : {stopSummary}.")}",
+            _ =>
+                $"Bạn đã chọn tour {tour.Name}. {tour.Description} Tour này có {stopPois.Count} điểm dừng, thời lượng dự kiến {tour.EstimatedMinutes} phút. " +
+                $"Điểm bắt đầu là {firstStop?.Name ?? "chưa xác định"}. " +
+                $"{(nextStop is null ? "Hiện chưa có điểm kế tiếp." : $"Điểm kế tiếp là {nextStop.Name}.")} " +
+                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"Các điểm chính gồm {stopSummary}.")}"
+        };
     }
 
     private void ApplySelectedPoiAfterRefresh(
@@ -1723,6 +2269,23 @@ public class MainViewModel : INotifyPropertyChanged
         LocationText =
             $"Lat {location.Latitude:F6} | Lng {location.Longitude:F6} | Sai so {location.AccuracyMeters?.ToString("F0") ?? "?"}m";
 
+        var activeTour = GetActiveTour();
+        var currentTourPoi = GetCurrentActiveTourPoi();
+        if (activeTour is not null && currentTourPoi is not null)
+        {
+            var tourDistance = GetDistanceForPoi(currentTourPoi.Id);
+            var totalStops = GetActiveTourStopIds().Count;
+            NearestPoiText =
+                $"Tour {activeTour.Name}: chặng {Math.Min(_activeTourStopIndex + 1, totalStops)}/{totalStops} - {currentTourPoi.Name} ({tourDistance?.ToString("F0") ?? "?"}m)";
+            return;
+        }
+
+        if (activeTour is not null)
+        {
+            NearestPoiText = $"Tour {activeTour.Name} đã hoàn tất";
+            return;
+        }
+
         NearestPoiText = nearestPoi is null
             ? "Chua xac dinh quan gan nhat"
             : $"Quan gan nhat: {nearestPoi.Name} ({nearestDistanceMeters?.ToString("F0") ?? "?"}m)";
@@ -1730,12 +2293,16 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void UpdateMapBadges()
     {
-        MapPoiBadgeText = _pois.Count == 0
+        var visibleMapPoiCount = VisibleMapPoiStatuses.Count;
+
+        MapPoiBadgeText = visibleMapPoiCount == 0
             ? "0 POI"
-            : $"{_pois.Count} POI hoạt động";
+            : HasActiveTour
+                ? $"{visibleMapPoiCount} POI trong tour"
+                : $"{_pois.Count} POI hoạt động";
 
         MapModeBadgeText = IsTracking
-            ? "GPS trực tiếp"
+            ? HasActiveTour ? "GPS tour trực tiếp" : "GPS trực tiếp"
             : _lastLocation is not null
                 ? "Đã có vị trí"
                 : _hasCheckedLocationPermission
@@ -1837,20 +2404,35 @@ public class MainViewModel : INotifyPropertyChanged
         finally
         {
             listenStopwatch.Stop();
+            var narrationCompleted = string.IsNullOrWhiteSpace(errorMessage)
+                && narrationSessionId == Volatile.Read(ref _narrationSessionId);
 
             var historyId = await historyTask;
             if (historyId.HasValue)
             {
-                var completed = string.IsNullOrWhiteSpace(errorMessage)
-                    && narrationSessionId == Volatile.Read(ref _narrationSessionId);
-
                 await _listeningHistorySyncService.CompleteAsync(
                     historyId.Value,
                     (int)Math.Round(listenStopwatch.Elapsed.TotalSeconds),
-                    completed,
-                    completed ? string.Empty : errorMessage);
+                    narrationCompleted,
+                    narrationCompleted ? string.Empty : errorMessage);
 
                 await RefreshListeningHistoryAsync();
+            }
+
+            if (narrationCompleted &&
+                ShouldAdvanceActiveTourAfterNarration(poi, autoTriggered, distanceMeters) &&
+                TryAdvanceActiveTourAfterNarration(poi.Id, out var completedTourName))
+            {
+                AddLog($"{NowLabel()} Hoan tat chặng tour tại {poi.Name}");
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    RefreshTourState();
+                    RefreshNarrationPresentation();
+                    StatusText = string.IsNullOrWhiteSpace(completedTourName)
+                        ? BuildIdleStatusText()
+                        : $"Đã hoàn tất tour {completedTourName}";
+                });
             }
 
             if (narrationSessionId == Volatile.Read(ref _narrationSessionId))
@@ -1863,7 +2445,7 @@ public class MainViewModel : INotifyPropertyChanged
 
                     if (!StatusText.StartsWith("Lỗi phát âm thanh:", StringComparison.Ordinal))
                     {
-                        StatusText = IsTracking ? "GPS đang hoạt động" : "Sẵn sàng phát thuyết minh";
+                        StatusText = BuildIdleStatusText();
                     }
                 });
             }
@@ -1875,6 +2457,9 @@ public class MainViewModel : INotifyPropertyChanged
         Guid? nearestPoiId)
     {
         var lookup = evaluated.ToDictionary(item => item.Poi.Id);
+        var currentTourPoiId = GetCurrentActiveTourPoiId();
+        var completedTourPoiIds = GetCompletedActiveTourPoiIds();
+        var tourOrders = GetActiveTourOrderLookup();
 
         PoiStatuses.Clear();
 
@@ -1901,12 +2486,16 @@ public class MainViewModel : INotifyPropertyChanged
                 IsInsideRadius = hasDistance && evaluatedItem.IsInside,
                 IsNearest = nearestPoiId == poi.Id,
                 IsNarrationActive = IsNarrating && _activeNarrationPoiId == poi.Id,
+                IsActiveTourStop = currentTourPoiId == poi.Id,
+                IsCompletedTourStop = completedTourPoiIds.Contains(poi.Id),
+                TourOrder = tourOrders.TryGetValue(poi.Id, out var tourOrder) ? tourOrder : null,
                 Priority = poi.Priority
             });
         }
 
         UpdateFilteredPoiStatuses();
         RefreshSearchSuggestions();
+        RaiseTourStateChanged();
         OnPropertyChanged(nameof(HomeNarrationSummary));
         OnPropertyChanged(nameof(HomeNarrationAvailabilityText));
     }
@@ -2039,6 +2628,7 @@ public class MainViewModel : INotifyPropertyChanged
         var evaluated = EvaluateCurrentPoiStatuses();
         var nearestPoi = evaluated.FirstOrDefault().Poi;
 
+        RefreshTourState();
         RefreshPoiList(evaluated, nearestPoi?.Id);
 
         if (_selectedPoi is not null)
@@ -2068,6 +2658,20 @@ public class MainViewModel : INotifyPropertyChanged
     private void RaiseMapStateChanged()
     {
         MainThread.BeginInvokeOnMainThread(() => MapStateChanged?.Invoke(this, EventArgs.Empty));
+    }
+
+    private void RaiseTourStateChanged()
+    {
+        OnPropertyChanged(nameof(HasTours));
+        OnPropertyChanged(nameof(HasActiveTour));
+        OnPropertyChanged(nameof(HasActiveTourStops));
+        OnPropertyChanged(nameof(IsActiveTourCompleted));
+        OnPropertyChanged(nameof(TourSectionSummary));
+        OnPropertyChanged(nameof(ActiveTourName));
+        OnPropertyChanged(nameof(ActiveTourSummary));
+        OnPropertyChanged(nameof(ActiveTourCurrentStopText));
+        OnPropertyChanged(nameof(ActiveTourNextStopText));
+        OnPropertyChanged(nameof(HomeNarrationSummary));
     }
 
     private void UpdateFilteredPoiStatuses()
@@ -3248,6 +3852,34 @@ public class MainViewModel : INotifyPropertyChanged
                     .Append(translation.Key)
                     .Append('=')
                     .Append(translation.Value);
+            }
+
+            builder.AppendLine();
+        }
+
+        return builder.ToString();
+    }
+
+    private static string CreateTourSnapshot(IEnumerable<TourDto> tours)
+    {
+        var builder = new StringBuilder();
+
+        foreach (var tour in tours.OrderBy(item => item.Id))
+        {
+            builder
+                .Append(tour.Id).Append('|')
+                .Append(tour.Code).Append('|')
+                .Append(tour.Name).Append('|')
+                .Append(tour.Description).Append('|')
+                .Append(tour.EstimatedMinutes).Append('|')
+                .Append(tour.IsActive).Append('|')
+                .Append(tour.IsQrEnabled);
+
+            foreach (var poiId in tour.PoiIds)
+            {
+                builder
+                    .Append('|')
+                    .Append(poiId);
             }
 
             builder.AppendLine();

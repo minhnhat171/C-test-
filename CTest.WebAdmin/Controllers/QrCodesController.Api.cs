@@ -11,16 +11,16 @@ namespace CTest.WebAdmin.Controllers;
 public class QrCodesController : Controller
 {
     private readonly PoiApiClient _poiApiClient;
-    private readonly AppDataService _data;
+    private readonly TourApiClient _tourApiClient;
     private readonly QrCodeOptions _qrCodeOptions;
 
     public QrCodesController(
         PoiApiClient poiApiClient,
-        AppDataService data,
+        TourApiClient tourApiClient,
         IOptions<QrCodeOptions> qrCodeOptions)
     {
         _poiApiClient = poiApiClient;
-        _data = data;
+        _tourApiClient = tourApiClient;
         _qrCodeOptions = qrCodeOptions.Value;
     }
 
@@ -41,17 +41,22 @@ public class QrCodesController : Controller
 
         try
         {
-            var pois = await _poiApiClient.GetPoisAsync(cancellationToken);
+            var poisTask = _poiApiClient.GetPoisAsync(cancellationToken);
+            var toursTask = _tourApiClient.GetToursAsync(cancellationToken);
+
+            await Task.WhenAll(poisTask, toursTask);
+
+            var pois = poisTask.Result;
+            var poiLookup = pois.ToDictionary(item => item.Id);
             targets.AddRange(pois.Select(BuildPoiTarget));
+            targets.AddRange(toursTask.Result
+                .Where(tour => tour.IsQrEnabled)
+                .Select(tour => BuildTourTarget(tour, poiLookup)));
         }
         catch (HttpRequestException)
         {
-            vm.LoadErrorMessage = "Khong the ket noi VKFoodAPI. QR POI se xuat hien lai khi API chay; QR tour van co san.";
+            vm.LoadErrorMessage = "Không thể kết nối VKFoodAPI. Danh sách QR cho POI và tour sẽ xuất hiện lại khi API chạy.";
         }
-
-        targets.AddRange(_data.Tours
-            .Where(tour => tour.IsQrEnabled)
-            .Select(BuildTourTarget));
 
         vm.Items = targets
             .OrderBy(target => target.SortOrder)
@@ -151,7 +156,7 @@ public class QrCodesController : Controller
     {
         return QrTargetTypes.Normalize(targetType) switch
         {
-            QrTargetTypes.Tour => ResolveTourTarget(targetId),
+            QrTargetTypes.Tour => await ResolveTourTargetAsync(targetId, cancellationToken),
             _ => await ResolvePoiTargetAsync(targetId, cancellationToken)
         };
     }
@@ -169,15 +174,28 @@ public class QrCodesController : Controller
         return poi is null ? null : BuildPoiTarget(poi);
     }
 
-    private QrTargetDescriptor? ResolveTourTarget(string targetId)
+    private async Task<QrTargetDescriptor?> ResolveTourTargetAsync(
+        string targetId,
+        CancellationToken cancellationToken)
     {
         if (!int.TryParse(targetId, NumberStyles.Integer, CultureInfo.InvariantCulture, out var tourId))
         {
             return null;
         }
 
-        var tour = _data.Tours.FirstOrDefault(item => item.Id == tourId && item.IsQrEnabled);
-        return tour is null ? null : BuildTourTarget(tour);
+        var toursTask = _tourApiClient.GetTourAsync(tourId, cancellationToken);
+        var poisTask = _poiApiClient.GetPoisAsync(cancellationToken);
+
+        await Task.WhenAll(toursTask, poisTask);
+
+        var tour = toursTask.Result;
+        if (tour is null || !tour.IsQrEnabled)
+        {
+            return null;
+        }
+
+        var poiLookup = poisTask.Result.ToDictionary(item => item.Id);
+        return BuildTourTarget(tour, poiLookup);
     }
 
     private QrCodeItemViewModel BuildManagementItem(QrTargetDescriptor target)
@@ -254,28 +272,33 @@ public class QrCodesController : Controller
         };
     }
 
-    private QrTargetDescriptor BuildTourTarget(TourPlan tour)
+    private QrTargetDescriptor BuildTourTarget(
+        TourDto tour,
+        IReadOnlyDictionary<Guid, PoiDto> poiLookup)
     {
-        var tourStops = SplitPoiSequence(tour.PoiSequence);
+        var tourStops = ResolveTourStops(tour.PoiIds, poiLookup);
         var targetId = tour.Id.ToString(CultureInfo.InvariantCulture);
+        var routeSummary = tourStops.Count == 0
+            ? "Chưa có điểm dừng hợp lệ"
+            : string.Join(" -> ", tourStops);
 
         return new QrTargetDescriptor
         {
             TargetType = QrTargetTypes.Tour,
             TargetId = targetId,
-            TargetCode = $"TOUR-{tour.Id:D3}",
+            TargetCode = string.IsNullOrWhiteSpace(tour.Code) ? $"TOUR-{tour.Id:D3}" : tour.Code,
             TargetName = tour.Name,
             TargetKindLabel = "Tour",
             Description = tour.Description,
             Address = string.Empty,
             ActivationType = "QR dieu huong tour",
-            Status = tour.IsQrEnabled ? "San sang" : "Tam khoa",
+            Status = tour.IsActive && tour.IsQrEnabled ? "San sang" : "Tam khoa",
             NarrationText = BuildTourNarration(tour, tourStops),
             MapLink = string.Empty,
             SpecialDish = string.Empty,
-            DetailUrl = $"{Url.Action("Index", "Tours") ?? "/Tours"}#tour-{tour.Id}",
+            DetailUrl = Url.Action("Edit", "Tours", new { id = tour.Id }) ?? $"{Url.Action("Index", "Tours") ?? "/Tours"}#tour-{tour.Id}",
             DetailActionLabel = "Xem tour",
-            RouteSummary = tour.PoiSequence,
+            RouteSummary = routeSummary,
             EstimatedDurationLabel = $"{tour.EstimatedMinutes} phut",
             TourStops = tourStops,
             SortOrder = 1
@@ -299,14 +322,19 @@ public class QrCodesController : Controller
         return $"{poi.Latitude:0.####}, {poi.Longitude:0.####}";
     }
 
-    private static IReadOnlyList<string> SplitPoiSequence(string poiSequence)
+    private static IReadOnlyList<string> ResolveTourStops(
+        IEnumerable<Guid> poiIds,
+        IReadOnlyDictionary<Guid, PoiDto> poiLookup)
     {
-        return (poiSequence ?? string.Empty)
-            .Split(["->", "=>", "\n", ","], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+        return poiIds
+            .Where(poiId => poiId != Guid.Empty)
+            .Select(poiId => poiLookup.TryGetValue(poiId, out var poi)
+                ? poi.Name
+                : $"POI {poiId.ToString("N")[..6].ToUpperInvariant()}")
             .ToList();
     }
 
-    private static string BuildTourNarration(TourPlan tour, IReadOnlyList<string> tourStops)
+    private static string BuildTourNarration(TourDto tour, IReadOnlyList<string> tourStops)
     {
         var stopSummary = tourStops.Count == 0
             ? "Tour chua co diem dung duoc khai bao."

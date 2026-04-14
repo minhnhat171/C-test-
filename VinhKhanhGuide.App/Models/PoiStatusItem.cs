@@ -18,6 +18,9 @@ public class PoiStatusItem
     public bool IsInsideRadius { get; set; }
     public bool IsNearest { get; set; }
     public bool IsNarrationActive { get; set; }
+    public bool IsActiveTourStop { get; set; }
+    public bool IsCompletedTourStop { get; set; }
+    public int? TourOrder { get; set; }
     public int Priority { get; set; }
 
     public string PriorityLabel => $"P{Priority}";
@@ -32,6 +35,12 @@ public class PoiStatusItem
     public string NarrationGuideText => IsNarrationActive
         ? "Phần Talk to Speech của quán này đang phát."
         : "Bấm để nghe phần Talk to Speech ngay tại trang chủ.";
+    public bool HasTourBadge => IsActiveTourStop || IsCompletedTourStop;
+    public string TourBadgeText => !HasTourBadge
+        ? string.Empty
+        : IsCompletedTourStop
+            ? $"Chặng {TourOrder ?? 0} đã xong"
+            : $"Chặng {TourOrder ?? 0} đang dẫn";
 
     public string DistanceLabel =>
         double.IsNaN(DistanceMeters)

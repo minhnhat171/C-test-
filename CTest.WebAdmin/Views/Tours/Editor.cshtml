@@ -1,0 +1,498 @@
+@model TourEditorViewModel
+@{
+    ViewData["Title"] = Model.IsEditMode ? "Sửa tour" : "Tạo tour";
+}
+
+<style>
+    .tour-editor {
+        --tour-ink: #0f172a;
+        --tour-muted: #64748b;
+        --tour-panel: rgba(255,255,255,0.96);
+        --tour-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+        color: var(--tour-ink);
+    }
+
+    .tour-editor-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .tour-editor-title {
+        margin: 0;
+        font-size: clamp(1.7rem, 1.15rem + 2vw, 2.4rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .tour-editor-subtitle {
+        margin-top: 0.45rem;
+        color: var(--tour-muted);
+        max-width: 780px;
+    }
+
+    .tour-editor-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+        gap: 1.2rem;
+    }
+
+    .tour-editor-panel {
+        background: var(--tour-panel);
+        border: 1px solid rgba(255,255,255,0.84);
+        border-radius: 28px;
+        box-shadow: var(--tour-shadow);
+        overflow: hidden;
+    }
+
+    .tour-editor-body,
+    .tour-editor-side {
+        padding: 1.4rem;
+    }
+
+    .tour-editor-section + .tour-editor-section {
+        margin-top: 1.1rem;
+        padding-top: 1.1rem;
+        border-top: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .tour-section-kicker {
+        margin-bottom: 0.85rem;
+        color: var(--tour-muted);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .tour-editor .form-control,
+    .tour-editor textarea {
+        border-radius: 16px;
+        border-color: rgba(148, 163, 184, 0.24);
+        min-height: 48px;
+    }
+
+    .tour-editor textarea {
+        min-height: 120px;
+    }
+
+    .tour-summary-card {
+        padding: 1.1rem;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+        margin-bottom: 1rem;
+    }
+
+    .tour-summary-label {
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--tour-muted);
+    }
+
+    .tour-summary-name {
+        margin-top: 0.55rem;
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .tour-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.8rem;
+        margin-bottom: 1rem;
+    }
+
+    .tour-meta-tile {
+        padding: 1rem;
+        border-radius: 20px;
+        background: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+    }
+
+    .tour-meta-tile strong {
+        display: block;
+        margin-top: 0.35rem;
+        font-size: 1.1rem;
+    }
+
+    .tour-stop-list {
+        display: grid;
+        gap: 0.8rem;
+    }
+
+    .tour-stop-item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 0.85rem;
+        align-items: center;
+        padding: 0.9rem 1rem;
+        border-radius: 22px;
+        background: #fffaf5;
+        border: 1px solid rgba(234, 88, 12, 0.10);
+    }
+
+    .tour-stop-order {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        background: #173a43;
+        color: white;
+    }
+
+    .tour-stop-name {
+        font-weight: 800;
+    }
+
+    .tour-stop-address {
+        color: var(--tour-muted);
+        font-size: 0.92rem;
+        margin-top: 0.15rem;
+    }
+
+    .tour-stop-actions {
+        display: flex;
+        gap: 0.45rem;
+    }
+
+    .tour-stop-actions button {
+        border-radius: 999px;
+        min-width: 42px;
+    }
+
+    .tour-empty {
+        padding: 1.1rem;
+        border-radius: 20px;
+        border: 1px dashed rgba(148, 163, 184, 0.45);
+        color: var(--tour-muted);
+        text-align: center;
+    }
+
+    .tour-poi-palette {
+        display: grid;
+        gap: 0.7rem;
+        max-height: 520px;
+        overflow: auto;
+    }
+
+    .tour-poi-card {
+        display: grid;
+        gap: 0.4rem;
+        padding: 0.95rem 1rem;
+        border-radius: 22px;
+        background: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+    }
+
+    .tour-poi-card-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+
+    .tour-poi-status {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.25rem 0.7rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    .tour-poi-status.active {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .tour-poi-status.inactive {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .tour-poi-card button {
+        justify-self: start;
+        border-radius: 999px;
+    }
+
+    @@media (max-width: 1199.98px) {
+        .tour-editor-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="tour-editor">
+    <div class="tour-editor-header">
+        <div>
+            <h1 class="tour-editor-title">@(Model.IsEditMode ? "Sửa tour" : "Tạo tour mới")</h1>
+            <div class="tour-editor-subtitle">Tạo tour bằng cách chọn POI theo đúng thứ tự app cần dẫn. App MAUI sẽ lấy POI đầu tiên làm chặng hiện tại, sau đó tự chuyển sang POI kế tiếp khi người dùng hoàn thành chặng đang chạy.</div>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Quay lại danh sách</a>
+    </div>
+
+    <div class="tour-editor-layout">
+        <div class="tour-editor-panel">
+            <div class="tour-editor-body">
+                <form asp-action="@(Model.IsEditMode ? "Edit" : "Create")" method="post" id="tourEditorForm">
+                    @Html.AntiForgeryToken()
+                    <input asp-for="Id" type="hidden" />
+                    <input asp-for="IsEditMode" type="hidden" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="tour-editor-section">
+                        <div class="tour-section-kicker">Thông tin cơ bản</div>
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label asp-for="Name" class="form-label">Tên tour</label>
+                                <input asp-for="Name" class="form-control" id="tourName" />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Code" class="form-label">Mã tour</label>
+                                <input asp-for="Code" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="EstimatedMinutes" class="form-label">Thời lượng dự kiến</label>
+                                <input asp-for="EstimatedMinutes" class="form-control" id="tourMinutes" />
+                                <span asp-validation-for="EstimatedMinutes" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch mt-4 pt-2">
+                                    <input asp-for="IsActive" class="form-check-input" />
+                                    <label asp-for="IsActive" class="form-check-label">Tour đang hoạt động</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch mt-4 pt-2">
+                                    <input asp-for="IsQrEnabled" class="form-check-input" />
+                                    <label asp-for="IsQrEnabled" class="form-check-label">Cho phép tạo QR tour</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Description" class="form-label">Mô tả tour</label>
+                                <textarea asp-for="Description" class="form-control" rows="4" id="tourDescription"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tour-editor-section">
+                        <div class="tour-section-kicker">Tuyến điểm dừng</div>
+                        <p class="text-muted mb-3">Dùng danh sách bên phải để thêm quán vào tour. Thứ tự từ trên xuống là thứ tự app sẽ GPS theo dõi và phát nội dung.</p>
+                        <span asp-validation-for="SelectedPoiIds" class="text-danger small d-block mb-3"></span>
+
+                        <div id="selectedStops" class="tour-stop-list">
+                            @foreach (var stop in Model.SelectedStops)
+                            {
+                                <div class="tour-stop-item"
+                                     data-poi-id="@stop.PoiId"
+                                     data-poi-name="@stop.Name"
+                                     data-poi-address="@stop.Address"
+                                     data-poi-active="@stop.IsActive.ToString().ToLowerInvariant()">
+                                    <div class="tour-stop-order"></div>
+                                    <div>
+                                        <div class="tour-stop-name">@stop.Name</div>
+                                        <div class="tour-stop-address">@stop.Address</div>
+                                    </div>
+                                    <div class="tour-stop-actions">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" data-move-up>↑</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" data-move-down>↓</button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" data-remove-stop>X</button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div id="tourEmptyState" class="tour-empty">
+                            Chưa có POI nào trong tour. Hãy thêm ít nhất một quán để app có thể dẫn GPS tuần tự.
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">@(Model.IsEditMode ? "Lưu thay đổi" : "Tạo tour")</button>
+                        @if (Model.IsEditMode && Model.IsQrEnabled)
+                        {
+                            <a asp-controller="QrCodes"
+                               asp-action="Index"
+                               asp-route-selectedTargetType="tour"
+                               asp-route-selectedTargetId="@Model.Id"
+                               class="btn btn-outline-success rounded-pill px-4">
+                                Tạo QR tour
+                            </a>
+                        }
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="tour-editor-panel">
+            <div class="tour-editor-side">
+                <div class="tour-summary-card">
+                    <div class="tour-summary-label">Preview</div>
+                    <div class="tour-summary-name" id="previewTourName">@(string.IsNullOrWhiteSpace(Model.Name) ? "Tên tour sẽ hiển thị ở đây" : Model.Name)</div>
+                    <div class="text-muted mt-2" id="previewTourDescription">@(string.IsNullOrWhiteSpace(Model.Description) ? "Mô tả ngắn của tour sẽ cập nhật theo form." : Model.Description)</div>
+                </div>
+
+                <div class="tour-meta-grid">
+                    <div class="tour-meta-tile">
+                        <span class="tour-summary-label">ID hiển thị</span>
+                        <strong>@Model.DisplayId</strong>
+                    </div>
+                    <div class="tour-meta-tile">
+                        <span class="tour-summary-label">Thời lượng</span>
+                        <strong><span id="previewTourMinutes">@Model.EstimatedMinutes</span> phút</strong>
+                    </div>
+                </div>
+
+                <div class="tour-section-kicker">Kho POI khả dụng</div>
+                <div class="tour-poi-palette">
+                    @foreach (var poi in Model.AvailablePois)
+                    {
+                        <div class="tour-poi-card">
+                            <div class="tour-poi-card-header">
+                                <div>
+                                    <div class="tour-stop-name">@poi.Name</div>
+                                    <div class="tour-stop-address">@poi.Address</div>
+                                </div>
+                                <span class="tour-poi-status @(poi.IsActive ? "active" : "inactive")">
+                                    @(poi.IsActive ? "Hoạt động" : "Tạm khóa")
+                                </span>
+                            </div>
+                            <div class="text-muted small">@poi.Code</div>
+                            <button type="button"
+                                    class="btn btn-outline-dark btn-sm"
+                                    data-add-stop
+                                    data-poi-id="@poi.Id"
+                                    data-poi-name="@poi.Name"
+                                    data-poi-address="@poi.Address"
+                                    data-poi-active="@poi.IsActive.ToString().ToLowerInvariant()">
+                                Thêm vào tour
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const form = document.getElementById('tourEditorForm');
+        const selectedStops = document.getElementById('selectedStops');
+        const emptyState = document.getElementById('tourEmptyState');
+        const tourNameInput = document.getElementById('tourName');
+        const tourDescriptionInput = document.getElementById('tourDescription');
+        const tourMinutesInput = document.getElementById('tourMinutes');
+        const previewName = document.getElementById('previewTourName');
+        const previewDescription = document.getElementById('previewTourDescription');
+        const previewMinutes = document.getElementById('previewTourMinutes');
+
+        function escapeHtml(value) {
+            return value
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function buildStopElement(poiId, poiName, poiAddress, isActive) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'tour-stop-item';
+            wrapper.dataset.poiId = poiId;
+            wrapper.dataset.poiName = poiName;
+            wrapper.dataset.poiAddress = poiAddress;
+            wrapper.dataset.poiActive = isActive;
+            wrapper.innerHTML = `
+                <div class="tour-stop-order"></div>
+                <div>
+                    <div class="tour-stop-name">${escapeHtml(poiName)}</div>
+                    <div class="tour-stop-address">${escapeHtml(poiAddress)}</div>
+                </div>
+                <div class="tour-stop-actions">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-move-up>↑</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-move-down>↓</button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" data-remove-stop>X</button>
+                </div>
+            `;
+
+            return wrapper;
+        }
+
+        function syncStopInputs() {
+            const items = Array.from(selectedStops.querySelectorAll('.tour-stop-item'));
+
+            items.forEach((item, index) => {
+                item.querySelector('.tour-stop-order').textContent = index + 1;
+
+                item.querySelectorAll('input[type="hidden"]').forEach(input => input.remove());
+
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = `SelectedPoiIds[${index}]`;
+                hidden.value = item.dataset.poiId;
+                item.appendChild(hidden);
+            });
+
+            emptyState.style.display = items.length === 0 ? 'block' : 'none';
+        }
+
+        function updatePreview() {
+            previewName.textContent = tourNameInput.value.trim() || 'Tên tour sẽ hiển thị ở đây';
+            previewDescription.textContent = tourDescriptionInput.value.trim() || 'Mô tả ngắn của tour sẽ cập nhật theo form.';
+            previewMinutes.textContent = tourMinutesInput.value.trim() || '0';
+        }
+
+        document.querySelectorAll('[data-add-stop]').forEach(button => {
+            button.addEventListener('click', () => {
+                const poiId = button.dataset.poiId;
+
+                if (selectedStops.querySelector(`.tour-stop-item[data-poi-id="${poiId}"]`)) {
+                    return;
+                }
+
+                selectedStops.appendChild(buildStopElement(
+                    poiId,
+                    button.dataset.poiName,
+                    button.dataset.poiAddress,
+                    button.dataset.poiActive));
+
+                syncStopInputs();
+            });
+        });
+
+        selectedStops.addEventListener('click', event => {
+            const target = event.target;
+            const stopItem = target.closest('.tour-stop-item');
+            if (!stopItem) {
+                return;
+            }
+
+            if (target.matches('[data-remove-stop]')) {
+                stopItem.remove();
+            } else if (target.matches('[data-move-up]') && stopItem.previousElementSibling) {
+                selectedStops.insertBefore(stopItem, stopItem.previousElementSibling);
+            } else if (target.matches('[data-move-down]') && stopItem.nextElementSibling) {
+                selectedStops.insertBefore(stopItem.nextElementSibling, stopItem);
+            }
+
+            syncStopInputs();
+        });
+
+        tourNameInput.addEventListener('input', updatePreview);
+        tourDescriptionInput.addEventListener('input', updatePreview);
+        tourMinutesInput.addEventListener('input', updatePreview);
+
+        syncStopInputs();
+        updatePreview();
+    })();
+</script>

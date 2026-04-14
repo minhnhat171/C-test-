@@ -268,6 +268,28 @@ public partial class MainPage : ContentPage
         RestaurantSearchEntry.Unfocus();
     }
 
+    private async void OnTourSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (e.CurrentSelection.FirstOrDefault() is not TourPackageItem item)
+        {
+            return;
+        }
+
+        await _viewModel.ActivateTourAsync(item.TourId);
+        RefreshMapPins(centerOnSelection: true);
+
+        if (sender is CollectionView collectionView)
+        {
+            collectionView.SelectedItem = null;
+        }
+    }
+
+    private async void OnStopActiveTourClicked(object? sender, EventArgs e)
+    {
+        await _viewModel.StopActiveTourAsync();
+        RefreshMapPins(centerOnSelection: false);
+    }
+
     private void OnSearchSuggestionTapped(object? sender, TappedEventArgs e)
     {
         try
@@ -468,7 +490,7 @@ public partial class MainPage : ContentPage
 
         Pin? selectedPin = null;
 
-        foreach (var poi in _viewModel.PoiStatuses)
+        foreach (var poi in _viewModel.VisibleMapPoiStatuses)
         {
             var pin = CreateRestaurantPin(poi);
             mapView.Pins.Add(pin);
@@ -695,6 +717,10 @@ public partial class MainPage : ContentPage
             Type = PinType.Pin,
             Color = isSelected
                 ? Color.FromArgb("#173A43")
+                : poi.IsActiveTourStop
+                ? Color.FromArgb("#0F766E")
+                : poi.IsCompletedTourStop
+                ? Color.FromArgb("#15803D")
                 : poi.IsInsideRadius
                 ? Color.FromArgb("#EA580C")
                 : poi.IsNearest
@@ -705,6 +731,10 @@ public partial class MainPage : ContentPage
             Address = string.Empty,
             Scale = isSelected
                 ? 0.52F
+                : poi.IsActiveTourStop
+                ? 0.48F
+                : poi.IsCompletedTourStop
+                ? 0.42F
                 : poi.IsInsideRadius
                 ? 0.44F
                 : poi.IsNearest

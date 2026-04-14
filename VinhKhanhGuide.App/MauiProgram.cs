@@ -48,6 +48,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<IPoiOfflineStore, PoiOfflineStore>();
         builder.Services.AddSingleton<IPoiProvider, PoiProvider>();
         builder.Services.AddSingleton<IPoiRepository, PoiRepository>();
+        builder.Services.AddSingleton<ITourProvider, TourProvider>();
+        builder.Services.AddSingleton<ITourRepository, TourRepository>();
         builder.Services.AddSingleton<ISearchService, SearchService>();
         builder.Services.AddSingleton<INarrationService, NarrationService>();
         builder.Services.AddSingleton<GeofenceEngine>();

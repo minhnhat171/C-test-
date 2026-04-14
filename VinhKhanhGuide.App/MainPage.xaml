@@ -190,6 +190,212 @@
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="12">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Gói tour"
+                                   FontSize="18"
+                                   TextColor="#5D5D5D" />
+
+                            <Label Text="{Binding TourSectionSummary}"
+                                   FontSize="13"
+                                   TextColor="#6B7280"
+                                   LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+
+                        <Button Grid.Column="1"
+                                Text="Dừng tour"
+                                Clicked="OnStopActiveTourClicked"
+                                BackgroundColor="#FFFFFF"
+                                TextColor="#173A43"
+                                FontAttributes="Bold"
+                                CornerRadius="18"
+                                Padding="16,8"
+                                IsVisible="{Binding HasActiveTour}" />
+                    </Grid>
+
+                    <CollectionView ItemsSource="{Binding TourPackages}"
+                                    SelectionMode="Single"
+                                    SelectionChanged="OnTourSelectionChanged"
+                                    HeightRequest="210"
+                                    IsVisible="{Binding HasTours}">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal"
+                                               ItemSpacing="14" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border BackgroundColor="#FFFFFF"
+                                        StrokeThickness="0"
+                                        Padding="14"
+                                        WidthRequest="290"
+                                        StrokeShape="RoundRectangle 22">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Grid ColumnDefinitions="*,Auto"
+                                              ColumnSpacing="10">
+                                            <VerticalStackLayout Spacing="4">
+                                                <Label Text="{Binding Name}"
+                                                       FontSize="16"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#173A43"
+                                                       LineBreakMode="TailTruncation" />
+                                                <Label Text="{Binding Code}"
+                                                       FontSize="11"
+                                                       TextColor="#64748B" />
+                                            </VerticalStackLayout>
+
+                                            <Border Grid.Column="1"
+                                                    BackgroundColor="#F6EFE5"
+                                                    StrokeThickness="0"
+                                                    Padding="8,4"
+                                                    VerticalOptions="Start"
+                                                    StrokeShape="RoundRectangle 12">
+                                                <Label Text="{Binding StatusLabel}"
+                                                       FontSize="10"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#9A3412" />
+                                            </Border>
+                                        </Grid>
+
+                                        <Label Text="{Binding Description}"
+                                               FontSize="12"
+                                               TextColor="#475569"
+                                               LineBreakMode="TailTruncation"
+                                               MaxLines="3" />
+
+                                        <Border BackgroundColor="#FFF8F1"
+                                                StrokeThickness="0"
+                                                Padding="12"
+                                                StrokeShape="RoundRectangle 16">
+                                            <VerticalStackLayout Spacing="6">
+                                                <Label Text="{Binding MetaLabel}"
+                                                       FontSize="11"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#9A3412" />
+                                                <Label Text="{Binding StopsSummary}"
+                                                       FontSize="12"
+                                                       TextColor="#334155"
+                                                       LineBreakMode="TailTruncation"
+                                                       MaxLines="3" />
+                                            </VerticalStackLayout>
+                                        </Border>
+
+                                        <Border BackgroundColor="#173A43"
+                                                StrokeThickness="0"
+                                                Padding="10,8"
+                                                StrokeShape="RoundRectangle 14">
+                                            <Label Text="{Binding ActionLabel}"
+                                                   FontSize="11"
+                                                   FontAttributes="Bold"
+                                                   HorizontalTextAlignment="Center"
+                                                   TextColor="#F8FAFC" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <Border BackgroundColor="#FFF7ED"
+                            StrokeThickness="0"
+                            Padding="16"
+                            StrokeShape="RoundRectangle 24"
+                            IsVisible="{Binding HasActiveTour}">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="12">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="{Binding ActiveTourName}"
+                                           FontSize="20"
+                                           FontAttributes="Bold"
+                                           TextColor="#7C2D12" />
+                                    <Label Text="{Binding ActiveTourSummary}"
+                                           FontSize="12"
+                                           TextColor="#9A3412"
+                                           LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+
+                                <Border Grid.Column="1"
+                                        BackgroundColor="#FFFFFF"
+                                        StrokeThickness="0"
+                                        Padding="10,6"
+                                        VerticalOptions="Start"
+                                        StrokeShape="RoundRectangle 14">
+                                    <Label Text="Tour đang chạy"
+                                           FontSize="10"
+                                           FontAttributes="Bold"
+                                           TextColor="#173A43" />
+                                </Border>
+                            </Grid>
+
+                            <Border BackgroundColor="#FFFFFF"
+                                    StrokeThickness="0"
+                                    Padding="12"
+                                    StrokeShape="RoundRectangle 18">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="{Binding ActiveTourCurrentStopText}"
+                                           FontSize="13"
+                                           FontAttributes="Bold"
+                                           TextColor="#173A43" />
+                                    <Label Text="{Binding ActiveTourNextStopText}"
+                                           FontSize="12"
+                                           TextColor="#64748B" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <CollectionView ItemsSource="{Binding ActiveTourStops}"
+                                            SelectionMode="None"
+                                            HeightRequest="180"
+                                            IsVisible="{Binding HasActiveTourStops}">
+                                <CollectionView.ItemsLayout>
+                                    <LinearItemsLayout Orientation="Vertical"
+                                                       ItemSpacing="10" />
+                                </CollectionView.ItemsLayout>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BackgroundColor="#FFFFFF"
+                                                StrokeThickness="0"
+                                                Padding="12"
+                                                StrokeShape="RoundRectangle 18">
+                                            <Grid ColumnDefinitions="Auto,*"
+                                                  ColumnSpacing="12">
+                                                <Border BackgroundColor="#173A43"
+                                                        StrokeThickness="0"
+                                                        WidthRequest="34"
+                                                        HeightRequest="34"
+                                                        StrokeShape="RoundRectangle 17">
+                                                    <Label Text="{Binding Order}"
+                                                           FontSize="14"
+                                                           FontAttributes="Bold"
+                                                           HorizontalTextAlignment="Center"
+                                                           VerticalTextAlignment="Center"
+                                                           TextColor="#F8FAFC" />
+                                                </Border>
+
+                                                <VerticalStackLayout Grid.Column="1"
+                                                                     Spacing="3">
+                                                    <Label Text="{Binding Name}"
+                                                           FontSize="14"
+                                                           FontAttributes="Bold"
+                                                           TextColor="#173A43" />
+                                                    <Label Text="{Binding Address}"
+                                                           FontSize="11"
+                                                           TextColor="#64748B"
+                                                           LineBreakMode="TailTruncation" />
+                                                    <Label Text="{Binding StatusLabel}"
+                                                           FontSize="11"
+                                                           TextColor="#9A3412" />
+                                                </VerticalStackLayout>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="12">
                     <Label Text="Món nổi bật"
                            FontSize="18"
                            TextColor="#5D5D5D" />
@@ -386,6 +592,18 @@
                                                    TextColor="#6B7280"
                                                    LineBreakMode="TailTruncation"
                                                    MaxLines="2" />
+
+                                            <Border BackgroundColor="#E0F2FE"
+                                                    StrokeThickness="0"
+                                                    Padding="8,4"
+                                                    HorizontalOptions="Start"
+                                                    StrokeShape="RoundRectangle 12"
+                                                    IsVisible="{Binding HasTourBadge}">
+                                                <Label Text="{Binding TourBadgeText}"
+                                                       FontSize="10"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#0F766E" />
+                                            </Border>
 
                                             <Label Text="{Binding DistanceLabel}"
                                                    FontSize="12"
