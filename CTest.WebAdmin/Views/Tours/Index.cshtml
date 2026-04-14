@@ -1,34 +1,285 @@
-@model List<TourPlan>
-@{ ViewData["Title"] = "Tour"; }
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h2 class="mb-1">Quản lý tour</h2>
-    </div>
-    <button class="btn btn-primary">+ Thêm tour</button>
-</div>
-<table class="table table-striped align-middle">
-    <thead><tr><th>ID</th><th>Tên tour</th><th>Thời lượng</th><th>Chuỗi POI</th><th>QR</th><th></th></tr></thead>
-    <tbody>
-    @foreach (var item in Model) {
-        <tr id="tour-@item.Id">
-            <td>@item.Id</td>
-            <td>@item.Name</td>
-            <td>@item.EstimatedMinutes phút</td>
-            <td>@item.PoiSequence</td>
-            <td>@(item.IsQrEnabled ? "Bật" : "Tắt")</td>
-            <td class="text-end">
-                @if (item.IsQrEnabled)
-                {
-                    <a asp-controller="QrCodes"
-                       asp-action="Index"
-                       asp-route-selectedTargetType="tour"
-                       asp-route-selectedTargetId="@item.Id"
-                       class="btn btn-outline-success btn-sm rounded-pill">
-                        Tạo QR
-                    </a>
-                }
-            </td>
-        </tr>
+@model TourManagementViewModel
+@{
+    ViewData["Title"] = "Quản lý tour";
+}
+
+<style>
+    .tour-page {
+        --tour-ink: #0f172a;
+        --tour-muted: #64748b;
+        --tour-panel: rgba(255,255,255,0.96);
+        --tour-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+        color: var(--tour-ink);
     }
-    </tbody>
-</table>
+
+    .tour-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .tour-hero h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 1.2rem + 2vw, 2.6rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .tour-hero p {
+        margin: 0.45rem 0 0;
+        color: var(--tour-muted);
+        max-width: 760px;
+    }
+
+    .tour-panel {
+        background: var(--tour-panel);
+        border: 1px solid rgba(255,255,255,0.84);
+        border-radius: 26px;
+        box-shadow: var(--tour-shadow);
+    }
+
+    .tour-toolbar {
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .tour-toolbar-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) 220px auto;
+        gap: 0.9rem;
+    }
+
+    .tour-toolbar .form-control,
+    .tour-toolbar .form-select {
+        min-height: 48px;
+        border-radius: 16px;
+        border-color: rgba(148, 163, 184, 0.26);
+    }
+
+    .tour-table-wrap {
+        overflow: hidden;
+    }
+
+    .tour-table {
+        margin-bottom: 0;
+        --bs-table-bg: transparent;
+    }
+
+    .tour-table thead th {
+        background: rgba(248, 250, 252, 0.98);
+        color: var(--tour-muted);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom-width: 0;
+        padding: 1rem 1.1rem;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .tour-table tbody td {
+        padding: 1rem 1.1rem;
+        border-color: rgba(148, 163, 184, 0.12);
+        vertical-align: middle;
+    }
+
+    .tour-id {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 84px;
+        height: 32px;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-weight: 800;
+    }
+
+    .tour-name {
+        font-weight: 800;
+    }
+
+    .tour-description {
+        margin-top: 0.25rem;
+        color: var(--tour-muted);
+        font-size: 0.92rem;
+    }
+
+    .tour-stops {
+        color: #334155;
+        font-size: 0.94rem;
+    }
+
+    .tour-status,
+    .tour-qr-status {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.38rem 0.8rem;
+        font-size: 0.84rem;
+        font-weight: 700;
+    }
+
+    .tour-status.active,
+    .tour-qr-status.active {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .tour-status.inactive,
+    .tour-qr-status.inactive {
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .tour-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        justify-content: flex-end;
+    }
+
+    .tour-action-btn {
+        border-radius: 999px;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.84rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .tour-empty {
+        padding: 2rem;
+        text-align: center;
+        color: var(--tour-muted);
+    }
+
+    @@media (max-width: 991.98px) {
+        .tour-toolbar-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .tour-hero {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="tour-page">
+    <div class="tour-hero">
+        <div>
+            <h1>Quản lý tour</h1>
+            <p>Chọn danh sách quán theo thứ tự chạy thực tế. WebAdmin sẽ lưu tour vào API để app MAUI nhận cùng một dữ liệu và dẫn GPS tuần tự theo từng POI trong tour.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary btn-lg rounded-pill px-4">+ Tạo tour</a>
+    </div>
+
+    @if (TempData["TourMessage"] is string tourMessage)
+    {
+        <div class="alert alert-success border-0 shadow-sm">@tourMessage</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.LoadErrorMessage))
+    {
+        <div class="alert alert-warning border-0 shadow-sm">@Model.LoadErrorMessage</div>
+    }
+
+    <div class="tour-panel tour-toolbar">
+        <form method="get" asp-action="Index">
+            <div class="tour-toolbar-grid">
+                <input class="form-control" type="search" name="searchTerm" value="@Model.SearchTerm" placeholder="Tìm theo tên tour, mô tả hoặc điểm dừng..." />
+
+                <select class="form-select" name="statusFilter">
+                    <option value="all" selected="@(Model.StatusFilter == "all" ? "selected" : null)">Tất cả trạng thái</option>
+                    <option value="active" selected="@(Model.StatusFilter == "active" ? "selected" : null)">Đang hoạt động</option>
+                    <option value="inactive" selected="@(Model.StatusFilter == "inactive" ? "selected" : null)">Tạm khóa</option>
+                </select>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-dark rounded-pill px-4 flex-grow-1">Lọc dữ liệu</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Đặt lại</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="tour-panel tour-table-wrap">
+        <div class="table-responsive">
+            <table class="table tour-table align-middle">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tour</th>
+                        <th>Thời lượng</th>
+                        <th>Điểm dừng</th>
+                        <th>QR</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Items.Any())
+                {
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr id="tour-@item.Id">
+                            <td><span class="tour-id">@item.DisplayId</span></td>
+                            <td>
+                                <div class="tour-name">@item.Name</div>
+                                <div class="tour-description">@item.Code</div>
+                                @if (!string.IsNullOrWhiteSpace(item.Description))
+                                {
+                                    <div class="tour-description">@item.Description</div>
+                                }
+                            </td>
+                            <td>@item.EstimatedMinutes phút</td>
+                            <td>
+                                <div class="tour-stops">@item.StopsSummary</div>
+                                <div class="tour-description">@item.StopCount điểm dừng</div>
+                            </td>
+                            <td>
+                                <span class="tour-qr-status @(item.IsQrEnabled ? "active" : "inactive")">
+                                    @(item.IsQrEnabled ? "Bật QR" : "Tắt QR")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="tour-status @(item.IsActive ? "active" : "inactive")">
+                                    @(item.IsActive ? "Hoạt động" : "Tạm khóa")
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="tour-actions">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary tour-action-btn">Sửa</a>
+                                    @if (item.IsQrEnabled)
+                                    {
+                                        <a asp-controller="QrCodes"
+                                           asp-action="Index"
+                                           asp-route-selectedTargetType="tour"
+                                           asp-route-selectedTargetId="@item.Id"
+                                           class="btn btn-outline-success tour-action-btn">
+                                            Tạo QR
+                                        </a>
+                                    }
+                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa tour này không?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-outline-danger tour-action-btn">Xóa</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="tour-empty">Không tìm thấy tour phù hợp với bộ lọc hiện tại.</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

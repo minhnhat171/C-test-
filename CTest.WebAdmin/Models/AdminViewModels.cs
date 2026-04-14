@@ -77,6 +77,57 @@ public class PoiLookupItemViewModel
     public bool IsActive { get; set; }
 }
 
+public class TourManagementViewModel
+{
+    public string SearchTerm { get; set; } = string.Empty;
+    public string StatusFilter { get; set; } = "all";
+    public string LoadErrorMessage { get; set; } = string.Empty;
+    public List<TourListItemViewModel> Items { get; set; } = new();
+}
+
+public class TourListItemViewModel
+{
+    public int Id { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public int EstimatedMinutes { get; set; }
+    public bool IsActive { get; set; }
+    public bool IsQrEnabled { get; set; }
+    public IReadOnlyList<string> StopNames { get; set; } = Array.Empty<string>();
+
+    public string DisplayId => Id <= 0 ? "N/A" : $"TOUR-{Id:D3}";
+    public int StopCount => StopNames.Count;
+    public string StopsSummary => StopNames.Count == 0
+        ? "Chưa có điểm dừng"
+        : string.Join(" → ", StopNames.Take(4)) + (StopNames.Count > 4 ? " ..." : string.Empty);
+}
+
+public class TourEditorViewModel
+{
+    public int Id { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public int EstimatedMinutes { get; set; } = 45;
+    public bool IsActive { get; set; } = true;
+    public bool IsQrEnabled { get; set; } = true;
+    public bool IsEditMode { get; set; }
+    public List<Guid> SelectedPoiIds { get; set; } = new();
+    public List<PoiLookupItemViewModel> AvailablePois { get; set; } = new();
+    public List<TourEditorStopViewModel> SelectedStops { get; set; } = new();
+
+    public string DisplayId => Id <= 0 ? "Mới" : $"TOUR-{Id:D3}";
+}
+
+public class TourEditorStopViewModel
+{
+    public Guid PoiId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+}
+
 public class AudioManagementViewModel
 {
     public List<AudioGuide> Items { get; set; } = new();

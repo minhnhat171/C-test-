@@ -6,15 +6,18 @@ namespace CTest.WebAdmin.Services;
 public class DashboardService
 {
     private readonly PoiApiClient _poiApiClient;
+    private readonly TourApiClient _tourApiClient;
     private readonly ListeningHistoryApiClient _listeningHistoryApiClient;
     private readonly AppDataService _fallbackData;
 
     public DashboardService(
         PoiApiClient poiApiClient,
+        TourApiClient tourApiClient,
         ListeningHistoryApiClient listeningHistoryApiClient,
         AppDataService fallbackData)
     {
         _poiApiClient = poiApiClient;
+        _tourApiClient = tourApiClient;
         _listeningHistoryApiClient = listeningHistoryApiClient;
         _fallbackData = fallbackData;
     }
@@ -24,14 +27,15 @@ public class DashboardService
         try
         {
             var poisTask = _poiApiClient.GetPoisAsync(cancellationToken);
+            var toursTask = _tourApiClient.GetToursAsync(cancellationToken);
             var historyTask = _listeningHistoryApiClient.GetListeningHistoryAsync(
                 sortBy: "time_desc",
                 period: "all",
                 cancellationToken: cancellationToken);
 
-            await Task.WhenAll(poisTask, historyTask);
+            await Task.WhenAll(poisTask, toursTask, historyTask);
 
-            return BuildFromSharedData(poisTask.Result, historyTask.Result);
+            return BuildFromSharedData(poisTask.Result, historyTask.Result, toursTask.Result.Count);
         }
         catch (Exception ex) when (
             ex is HttpRequestException ||
@@ -48,7 +52,8 @@ public class DashboardService
 
     private static DashboardViewModel BuildFromSharedData(
         IReadOnlyList<PoiDto> pois,
-        IReadOnlyList<ListeningHistoryEntryDto> history)
+        IReadOnlyList<ListeningHistoryEntryDto> history,
+        int totalTours)
     {
         var dashboardGeneratedAt = DateTime.Now;
         var today = dashboardGeneratedAt.Date;
@@ -83,7 +88,7 @@ public class DashboardService
             MappedPoiCount = pois.Count(HasMapData),
             TotalQrCodes = pois.Count(poi => poi.IsActive && !string.IsNullOrWhiteSpace(poi.Code)),
             TodayListenCount = localizedHistory.Count(x => x.LocalStartedAt.Date == today),
-            TotalTours = 0,
+            TotalTours = totalTours,
             TotalUsageLogs = totalUsageLogs,
             MostPlayedPoi = topPois.FirstOrDefault()?.Name ?? "Chua co du lieu",
             AverageListenSeconds = totalUsageLogs == 0 ? 0 : localizedHistory.Average(x => x.Item.ListenSeconds),

@@ -13,6 +13,11 @@ builder.Services.AddHttpClient<PoiApiClient>(client =>
     client.BaseAddress = new Uri(poiApiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
 });
+builder.Services.AddHttpClient<TourApiClient>(client =>
+{
+    client.BaseAddress = new Uri(poiApiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 builder.Services.AddHttpClient<AudioGuideApiClient>(client =>
 {
     client.BaseAddress = new Uri(poiApiBaseUrl);
@@ -27,6 +32,7 @@ builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<AudioGuideAdminService>();
 builder.Services.AddScoped<AudioGuideValidationService>();
 builder.Services.AddScoped<PoiAdminService>();
+builder.Services.AddScoped<TourAdminService>();
 builder.Services.AddScoped<ListeningHistoryService>();
 builder.Services.AddScoped<PoiValidationService>();
 
