@@ -6,16 +6,17 @@ namespace CTest.WebAdmin.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly AppDataService _data;
+    private readonly DashboardService _dashboardService;
 
-    public HomeController(AppDataService data)
+    public HomeController(DashboardService dashboardService)
     {
-        _data = data;
+        _dashboardService = dashboardService;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index(CancellationToken cancellationToken = default)
     {
-        var today = DateTime.Today;
+        var vm = await _dashboardService.LoadAsync(cancellationToken);
+        /*
         var lastSyncedAt = _data.UsageLogs
             .OrderByDescending(x => x.StartedAt)
             .Select(x => (DateTime?)x.StartedAt)
@@ -79,6 +80,7 @@ public class HomeController : Controller
             RecentLogs = _data.UsageLogs.OrderByDescending(x => x.StartedAt).Take(8).ToList()
         };
 
+        */
         return View("Dashboard", vm);
     }
 }

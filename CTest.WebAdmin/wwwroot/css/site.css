@@ -1,12 +1,27 @@
 html, body { height: 100%; }
 body {
-    background: #f4f7fb;
-    font-family: "Segoe UI", "Be Vietnam Pro", Tahoma, Arial, sans-serif;
+    background: #eef4fb;
+    color: #0f172a;
+    font-family: "Be Vietnam Pro", "Segoe UI", Tahoma, Arial, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+a {
+    text-decoration: none;
 }
 .sidebar { width: 250px; min-height: 100vh; }
 .content-area { min-height: 100vh; }
 .nav-link { border-radius: 10px; padding: 10px 12px; }
 .nav-link:hover { background: rgba(255,255,255,0.12); }
-.stat-card { border: none; border-radius: 16px; }
-.card { border: none; border-radius: 18px; }
-.table { background: white; }
+.stat-card { border: none; border-radius: 18px; }
+.card,
+.alert {
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+.table {
+    background: white;
+    border-radius: 18px;
+}

@@ -463,6 +463,11 @@
         color: #6d28d9;
     }
 
+    .trigger-pill.app {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
     .status-badge {
         display: inline-flex;
         align-items: center;
@@ -522,6 +527,7 @@
     <div class="dashboard-header">
         <div>
             <h1 class="dashboard-title">Bảng điều khiển vận hành</h1>
+            <div class="dashboard-subtitle">@Model.DataSourceDescription</div>
         </div>
 
         <div class="sync-pill @(Model.IsSyncOnline ? "online" : "offline")">
@@ -532,6 +538,11 @@
             </div>
         </div>
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.LoadErrorMessage))
+    {
+        <div class="alert alert-warning border-0 shadow-sm mb-4">@Model.LoadErrorMessage</div>
+    }
 
     <div class="row g-4 mb-4">
         <div class="col-sm-6 col-xl-4 col-xxl-2">
@@ -546,9 +557,9 @@
         <div class="col-sm-6 col-xl-4 col-xxl-2">
             <div class="metric-card metric-audio">
                 <span class="metric-mark">Audio</span>
-                <div class="metric-label">Tổng audio</div>
+                <div class="metric-label">Tổng audio / TTS</div>
                 <div class="metric-value">@Model.TotalAudioGuides</div>
-                <div class="metric-note">@Model.PublishedAudioCount audio đã xuất bản</div>
+                <div class="metric-note">@Model.PublishedAudioCount POI có nội dung sẵn sàng</div>
             </div>
         </div>
 
@@ -557,7 +568,7 @@
                 <span class="metric-mark">Lang</span>
                 <div class="metric-label">Tổng bản dịch</div>
                 <div class="metric-value">@Model.TotalTranslations</div>
-                <div class="metric-note">Nội dung đa ngôn ngữ đang quản lý</div>
+                <div class="metric-note">Các ngôn ngữ ngoài tiếng Việt đang có trong app</div>
             </div>
         </div>
 
@@ -566,7 +577,7 @@
                 <span class="metric-mark">QR</span>
                 <div class="metric-label">Tổng QR code</div>
                 <div class="metric-value">@Model.TotalQrCodes</div>
-                <div class="metric-note">Điểm dừng đang hỗ trợ kích hoạt QR</div>
+                <div class="metric-note">POI có mã app để tạo QR ngay</div>
             </div>
         </div>
 
@@ -714,11 +725,18 @@
                 {
                     @foreach (var item in Model.RecentLogs)
                     {
+                        var triggerClass = item.TriggerType.ToUpperInvariant() switch
+                        {
+                            "QR" => "qr",
+                            "APP" => "app",
+                            _ => "gps"
+                        };
+
                         <tr>
                             <td><span class="user-pill">@item.UserCode</span></td>
                             <td class="fw-semibold">@item.PoiName</td>
                             <td>
-                                <span class="trigger-pill @(item.TriggerType == "QR" ? "qr" : "gps")">@item.TriggerType</span>
+                                <span class="trigger-pill @triggerClass">@item.TriggerType</span>
                             </td>
                             <td>@item.Language</td>
                             <td>@item.StartedAt.ToString("dd/MM/yyyy HH:mm")</td>
