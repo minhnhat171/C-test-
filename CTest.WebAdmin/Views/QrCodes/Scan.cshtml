@@ -11,7 +11,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@Model.PoiName - QR Audio Guide</title>
+    <title>@Model.TargetName - QR Audio Guide</title>
     <meta name="description" content="@Model.Description" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -128,6 +128,12 @@
             gap: 12px;
         }
 
+        .scan-stop-list {
+            margin: 0;
+            padding-left: 1.2rem;
+            line-height: 1.8;
+        }
+
         .scan-meta-item {
             padding: 14px 16px;
             border-radius: 18px;
@@ -215,8 +221,8 @@
     <main class="scan-shell">
         <section class="scan-card">
             <header class="scan-hero">
-                <div class="scan-badge">QR Audio Guide</div>
-                <h1 class="scan-title">@Model.PoiName</h1>
+                <div class="scan-badge">@Model.TargetKindLabel QR Audio Guide</div>
+                <h1 class="scan-title">@Model.TargetName</h1>
                 <p class="scan-description">@Model.Description</p>
             </header>
 
@@ -239,6 +245,19 @@
                     <p class="scan-text">@narrationText</p>
                 </section>
 
+                @if (Model.TourStops.Count > 0)
+                {
+                    <section class="scan-panel">
+                        <p class="scan-panel-label">Lo trinh tour</p>
+                        <ol class="scan-stop-list">
+                            @foreach (var stop in Model.TourStops)
+                            {
+                                <li>@stop</li>
+                            }
+                        </ol>
+                    </section>
+                }
+
                 <section class="scan-meta">
                     @if (!string.IsNullOrWhiteSpace(Model.Address))
                     {
@@ -256,9 +275,17 @@
                         </div>
                     }
 
+                    @if (!string.IsNullOrWhiteSpace(Model.EstimatedDurationLabel))
+                    {
+                        <div class="scan-meta-item">
+                            <span class="scan-meta-label">Thong tin them</span>
+                            <div>@Model.EstimatedDurationLabel</div>
+                        </div>
+                    }
+
                     <div class="scan-meta-item">
-                        <span class="scan-meta-label">Ma diem</span>
-                        <div>@Model.PoiCode</div>
+                        <span class="scan-meta-label">Ma target</span>
+                        <div>@Model.TargetCode</div>
                     </div>
 
                     <div class="scan-meta-item">

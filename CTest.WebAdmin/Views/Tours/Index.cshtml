@@ -7,11 +7,27 @@
     <button class="btn btn-primary">+ Thêm tour</button>
 </div>
 <table class="table table-striped align-middle">
-    <thead><tr><th>ID</th><th>Tên tour</th><th>Thời lượng</th><th>Chuỗi POI</th><th>QR</th></tr></thead>
+    <thead><tr><th>ID</th><th>Tên tour</th><th>Thời lượng</th><th>Chuỗi POI</th><th>QR</th><th></th></tr></thead>
     <tbody>
     @foreach (var item in Model) {
-        <tr>
-            <td>@item.Id</td><td>@item.Name</td><td>@item.EstimatedMinutes phút</td><td>@item.PoiSequence</td><td>@(item.IsQrEnabled ? "Bật" : "Tắt")</td>
+        <tr id="tour-@item.Id">
+            <td>@item.Id</td>
+            <td>@item.Name</td>
+            <td>@item.EstimatedMinutes phút</td>
+            <td>@item.PoiSequence</td>
+            <td>@(item.IsQrEnabled ? "Bật" : "Tắt")</td>
+            <td class="text-end">
+                @if (item.IsQrEnabled)
+                {
+                    <a asp-controller="QrCodes"
+                       asp-action="Index"
+                       asp-route-selectedTargetType="tour"
+                       asp-route-selectedTargetId="@item.Id"
+                       class="btn btn-outline-success btn-sm rounded-pill">
+                        Tạo QR
+                    </a>
+                }
+            </td>
         </tr>
     }
     </tbody>

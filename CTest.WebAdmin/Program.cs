@@ -1,3 +1,4 @@
+using CTest.WebAdmin.Models;
 using CTest.WebAdmin.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 
@@ -6,6 +7,7 @@ var poiApiBaseUrl = builder.Configuration["PoiApi:BaseUrl"] ?? "http://localhost
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<AppDataService>();
+builder.Services.Configure<QrCodeOptions>(builder.Configuration.GetSection("QrCode"));
 builder.Services.AddHttpClient<PoiApiClient>(client =>
 {
     client.BaseAddress = new Uri(poiApiBaseUrl);

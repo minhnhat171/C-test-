@@ -241,7 +241,7 @@
                                 <div class="poi-actions">
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark poi-action-btn">Xem</a>
                                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary poi-action-btn">Sửa</a>
-                                    <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedPoiId="@item.Id" class="btn btn-outline-success poi-action-btn">Tạo QR</a>
+                                    <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedTargetType="poi" asp-route-selectedTargetId="@item.Id" class="btn btn-outline-success poi-action-btn">Tạo QR</a>
                                     <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa POI này không?');">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@item.Id" />

@@ -296,7 +296,7 @@
                         @if (Model.IsEditMode)
                         {
                             <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-dark rounded-pill px-4">Xem chi tiết</a>
-                            <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedPoiId="@Model.Id" class="btn btn-outline-success rounded-pill px-4">Tạo QR</a>
+                            <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedTargetType="poi" asp-route-selectedTargetId="@Model.Id" class="btn btn-outline-success rounded-pill px-4">Tạo QR</a>
                         }
                     </div>
                 </form>

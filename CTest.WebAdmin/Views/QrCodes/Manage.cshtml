@@ -1,17 +1,6 @@
 @model QrManagementViewModel
 @{
     ViewData["Title"] = "Quản lý QR";
-
-    bool ShouldFillCell(string seed, int row, int col)
-    {
-        if ((row < 5 && col < 5) || (row < 5 && col > 15) || (row > 15 && col < 5))
-        {
-            return row == 0 || row == 4 || col == 0 || col == 4 || (row >= 1 && row <= 3 && col >= 1 && col <= 3);
-        }
-
-        var hash = Math.Abs(HashCode.Combine(seed, row, col));
-        return hash % 3 != 0;
-    }
 }
 
 <style>
@@ -46,7 +35,7 @@
 
     .qr-layout {
         display: grid;
-        grid-template-columns: minmax(0, 1.1fr) 420px;
+        grid-template-columns: minmax(0, 1.2fr) 420px;
         gap: 1.2rem;
     }
 
@@ -77,6 +66,24 @@
         padding: 1rem 1.1rem;
         border-color: rgba(148, 163, 184, 0.12);
         vertical-align: middle;
+    }
+
+    .qr-kind {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.28rem 0.75rem;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        background: #e0f2fe;
+        color: #0c4a6e;
+    }
+
+    .qr-kind-tour {
+        background: #fef3c7;
+        color: #92400e;
     }
 
     .qr-status {
@@ -114,7 +121,13 @@
         font-weight: 800;
     }
 
-    .qr-svg-wrap {
+    .qr-target-summary {
+        color: var(--qr-muted);
+        line-height: 1.6;
+        margin-top: 0.55rem;
+    }
+
+    .qr-image-wrap {
         margin: 1.1rem auto;
         width: min(100%, 280px);
         aspect-ratio: 1;
@@ -122,6 +135,15 @@
         border-radius: 24px;
         padding: 1rem;
         box-shadow: 0 20px 40px rgba(37, 99, 235, 0.14);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .qr-image-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
 
     .qr-meta {
@@ -140,6 +162,11 @@
         word-break: break-all;
     }
 
+    .qr-empty {
+        padding: 1.4rem;
+        color: var(--qr-muted);
+    }
+
     @@media (max-width: 1199.98px) {
         .qr-layout {
             grid-template-columns: 1fr;
@@ -155,6 +182,7 @@
     <div class="qr-head">
         <div>
             <h1>Quản lý QR code</h1>
+            <p>Mỗi QR giờ chỉ trỏ đến một <code>target</code> chung gồm <code>targetType</code> và <code>targetId</code>. POI và Tour dùng cùng một flow resolve, cùng một public link, cùng một trang scan.</p>
         </div>
     </div>
 
@@ -169,7 +197,7 @@
                 <table class="table qr-table align-middle">
                     <thead>
                         <tr>
-                            <th>POI</th>
+                            <th>Target</th>
                             <th>Mã QR</th>
                             <th>Loại kích hoạt</th>
                             <th>Trạng thái</th>
@@ -179,15 +207,40 @@
                     <tbody>
                     @foreach (var item in Model.Items)
                     {
+                        var kindClass = item.TargetType == QrTargetTypes.Tour ? "qr-kind qr-kind-tour" : "qr-kind";
+
                         <tr>
-                            <td class="fw-semibold">@item.PoiName</td>
-                            <td><code>@item.PoiCode</code></td>
-                            <td>@item.ActivationType</td>
+                            <td>
+                                <div class="@kindClass">@item.TargetKindLabel</div>
+                                <div class="fw-semibold mt-2">@item.TargetName</div>
+                                @if (!string.IsNullOrWhiteSpace(item.RouteSummary))
+                                {
+                                    <div class="small text-muted mt-1">@item.RouteSummary</div>
+                                }
+                            </td>
+                            <td><code>@item.TargetCode</code></td>
+                            <td>
+                                <div>@item.ActivationType</div>
+                                @if (!string.IsNullOrWhiteSpace(item.EstimatedDurationLabel))
+                                {
+                                    <div class="small text-muted mt-1">@item.EstimatedDurationLabel</div>
+                                }
+                            </td>
                             <td><span class="qr-status">@item.Status</span></td>
                             <td>
                                 <div class="d-flex flex-wrap gap-2">
-                                    <a asp-action="Index" asp-route-selectedPoiId="@item.PoiId" class="btn btn-outline-primary btn-sm rounded-pill">Tạo QR</a>
-                                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill js-download-qr" data-target="qr-svg-@item.PoiId">Tải QR PNG</button>
+                                    <a asp-action="Index"
+                                       asp-route-selectedTargetType="@item.TargetType"
+                                       asp-route-selectedTargetId="@item.TargetId"
+                                       class="btn btn-outline-primary btn-sm rounded-pill">
+                                        Chọn QR
+                                    </a>
+                                    <button type="button"
+                                            class="btn btn-outline-success btn-sm rounded-pill js-download-qr"
+                                            data-qr-url="@item.QrSvgUrl"
+                                            data-filename="@($"{item.TargetType}-{item.DisplayId}".ToLowerInvariant())">
+                                        Tải QR PNG
+                                    </button>
                                     <button type="button" class="btn btn-outline-dark btn-sm rounded-pill" onclick="window.print()">In QR</button>
                                     <a href="@item.PublicUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm rounded-pill">Test link</a>
                                     <button type="button" class="btn btn-outline-success btn-sm rounded-pill js-copy-link" data-url="@item.PublicUrl">Copy link</button>
@@ -204,45 +257,52 @@
             <div class="qr-preview-panel">
                 @if (Model.SelectedItem is not null)
                 {
+                    var selectedKindClass = Model.SelectedItem.TargetType == QrTargetTypes.Tour ? "qr-kind qr-kind-tour" : "qr-kind";
+
                     <div class="qr-preview-card">
                         <div class="qr-preview-kicker">Preview</div>
-                        <div class="qr-preview-title">@Model.SelectedItem.PoiName</div>
+                        <div class="@selectedKindClass mt-2">@Model.SelectedItem.TargetKindLabel</div>
+                        <div class="qr-preview-title">@Model.SelectedItem.TargetName</div>
+                        @if (!string.IsNullOrWhiteSpace(Model.SelectedItem.RouteSummary))
+                        {
+                            <div class="qr-target-summary">@Model.SelectedItem.RouteSummary</div>
+                        }
                         <div class="qr-link-box mt-3">
                             <div class="small text-uppercase fw-bold text-secondary mb-2">Public QR link</div>
                             <code>@Model.SelectedItem.PublicUrl</code>
                             <div class="d-flex flex-wrap gap-2 mt-3">
-                                <a href="@Model.SelectedItem.PublicUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm rounded-pill">Mo link cong khai</a>
+                                <a href="@Model.SelectedItem.PublicUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm rounded-pill">Mở link công khai</a>
                                 <button type="button" class="btn btn-outline-dark btn-sm rounded-pill js-copy-link" data-url="@Model.SelectedItem.PublicUrl">Copy link</button>
                             </div>
-                            <div class="small text-muted mt-2">Dung link nay khi tao QR tren me-qr.</div>
+                            <div class="small text-muted mt-2">Payload QR luôn là public URL resolve theo <code>targetType</code> và <code>targetId</code>.</div>
                         </div>
-                        <div class="qr-meta mt-2">Quét để nghe ngay. Payload demo: <code>@Model.SelectedItem.Payload</code></div>
+                        <div class="qr-meta mt-2">Payload thực tế: <code>@Model.SelectedItem.Payload</code></div>
 
-                        <div class="qr-svg-wrap">
-                            <svg id="qr-svg-@Model.SelectedItem.PoiId" viewBox="0 0 210 210" xmlns="http://www.w3.org/2000/svg">
-                                <rect width="210" height="210" fill="#ffffff"></rect>
-                                @for (var row = 0; row < 21; row++)
-                                {
-                                    for (var col = 0; col < 21; col++)
-                                    {
-                                        if (ShouldFillCell(Model.SelectedItem.PublicUrl, row, col))
-                                        {
-                                            <rect x="@(col * 10)" y="@(row * 10)" width="10" height="10" fill="#0f172a"></rect>
-                                        }
-                                    }
-                                }
-                            </svg>
+                        <div class="qr-image-wrap">
+                            <img src="@Model.SelectedItem.QrSvgUrl" alt="QR code for @Model.SelectedItem.TargetName" />
                         </div>
 
                         <div class="qr-meta">@Model.SelectedItem.Description</div>
                         @if (!string.IsNullOrWhiteSpace(Model.SelectedItem.Address))
                         {
-                            <div class="qr-meta mt-2">Dia chi: @Model.SelectedItem.Address</div>
+                            <div class="qr-meta mt-2">Địa chỉ: @Model.SelectedItem.Address</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.SelectedItem.EstimatedDurationLabel))
+                        {
+                            <div class="qr-meta mt-2">@Model.SelectedItem.EstimatedDurationLabel</div>
                         }
 
                         <div class="d-flex flex-wrap gap-2 mt-3">
-                            <a asp-controller="Pois" asp-action="Details" asp-route-id="@Model.SelectedItem.PoiId" class="btn btn-outline-primary rounded-pill px-4">Xem POI</a>
-                            <button type="button" class="btn btn-success rounded-pill px-4 js-download-qr" data-target="qr-svg-@Model.SelectedItem.PoiId">Tải PNG</button>
+                            @if (!string.IsNullOrWhiteSpace(Model.SelectedItem.DetailUrl))
+                            {
+                                <a href="@Model.SelectedItem.DetailUrl" class="btn btn-outline-primary rounded-pill px-4">@Model.SelectedItem.DetailActionLabel</a>
+                            }
+                            <button type="button"
+                                    class="btn btn-success rounded-pill px-4 js-download-qr"
+                                    data-qr-url="@Model.SelectedItem.QrSvgUrl"
+                                    data-filename="@($"{Model.SelectedItem.TargetType}-{Model.SelectedItem.DisplayId}".ToLowerInvariant())">
+                                Tải PNG
+                            </button>
                             <button type="button" class="btn btn-dark rounded-pill px-4" onclick="window.print()">In QR</button>
                             <a href="@Model.SelectedItem.PublicUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary rounded-pill px-4">Test link</a>
                         </div>
@@ -250,7 +310,7 @@
                 }
                 else
                 {
-                    <div class="text-muted">Chưa có POI để tạo QR.</div>
+                    <div class="qr-empty">Chưa có target nào sẵn để tạo QR.</div>
                 }
             </div>
         </div>
@@ -260,20 +320,23 @@
 @section Scripts {
     <script>
         (() => {
-            const downloadSvgAsPng = (svgId) => {
-                const svg = document.getElementById(svgId);
-                if (!svg) return;
+            const downloadQrAsPng = async (svgUrl, fileName) => {
+                if (!svgUrl) return;
 
-                const serializer = new XMLSerializer();
-                const source = serializer.serializeToString(svg);
+                const response = await fetch(svgUrl, { credentials: "same-origin" });
+                if (!response.ok) {
+                    throw new Error("QR image request failed.");
+                }
+
+                const source = await response.text();
                 const image = new Image();
                 const svgBlob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
-                const url = URL.createObjectURL(svgBlob);
+                const objectUrl = URL.createObjectURL(svgBlob);
 
                 image.onload = () => {
                     const canvas = document.createElement("canvas");
-                    canvas.width = 840;
-                    canvas.height = 840;
+                    canvas.width = 960;
+                    canvas.height = 960;
                     const ctx = canvas.getContext("2d");
                     ctx.fillStyle = "#ffffff";
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -281,17 +344,21 @@
 
                     const link = document.createElement("a");
                     link.href = canvas.toDataURL("image/png");
-                    link.download = `${svgId}.png`;
+                    link.download = `${fileName || "qr-code"}.png`;
                     link.click();
-                    URL.revokeObjectURL(url);
+                    URL.revokeObjectURL(objectUrl);
                 };
 
-                image.src = url;
+                image.src = objectUrl;
             };
 
             document.querySelectorAll(".js-download-qr").forEach((button) => {
-                button.addEventListener("click", () => {
-                    downloadSvgAsPng(button.dataset.target);
+                button.addEventListener("click", async () => {
+                    try {
+                        await downloadQrAsPng(button.dataset.qrUrl, button.dataset.filename);
+                    } catch {
+                        window.alert("Không thể tải QR PNG lúc này.");
+                    }
                 });
             });
 
@@ -303,12 +370,12 @@
                     try {
                         await navigator.clipboard.writeText(url);
                         const originalText = button.textContent;
-                        button.textContent = "Da copy";
+                        button.textContent = "Đã copy";
                         window.setTimeout(() => {
                             button.textContent = originalText;
                         }, 1600);
                     } catch {
-                        window.prompt("Copy link nay de dua vao me-qr:", url);
+                        window.prompt("Copy link này để đưa vào QR:", url);
                     }
                 });
             });

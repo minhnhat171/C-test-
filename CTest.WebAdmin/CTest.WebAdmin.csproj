@@ -11,4 +11,8 @@
     <Compile Remove="Controllers\TranslationsController.cs" />
     <ProjectReference Include="..\VinhKhanhGuide.Core\VinhKhanhGuide.Core.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="QRCoder" Version="1.6.0" />
+  </ItemGroup>
 </Project>

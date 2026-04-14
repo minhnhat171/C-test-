@@ -111,42 +111,69 @@ public class QrManagementViewModel
 {
     public string LoadErrorMessage { get; set; } = string.Empty;
     public List<QrCodeItemViewModel> Items { get; set; } = new();
-    public Guid SelectedPoiId { get; set; }
+    public string SelectedTargetType { get; set; } = string.Empty;
+    public string SelectedTargetId { get; set; } = string.Empty;
     public QrCodeItemViewModel? SelectedItem { get; set; }
 }
 
 public class QrCodeItemViewModel
 {
-    public Guid PoiId { get; set; }
-    public string PoiCode { get; set; } = string.Empty;
-    public string PoiName { get; set; } = string.Empty;
+    public string TargetType { get; set; } = string.Empty;
+    public string TargetId { get; set; } = string.Empty;
+    public string TargetCode { get; set; } = string.Empty;
+    public string TargetName { get; set; } = string.Empty;
+    public string TargetKindLabel { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public string ActivationType { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public string Payload { get; set; } = string.Empty;
     public string PublicUrl { get; set; } = string.Empty;
+    public string QrSvgUrl { get; set; } = string.Empty;
+    public string DetailUrl { get; set; } = string.Empty;
+    public string DetailActionLabel { get; set; } = string.Empty;
     public string NarrationText { get; set; } = string.Empty;
     public string MapLink { get; set; } = string.Empty;
     public string SpecialDish { get; set; } = string.Empty;
+    public string RouteSummary { get; set; } = string.Empty;
+    public string EstimatedDurationLabel { get; set; } = string.Empty;
 
     public string DisplayId =>
-        PoiId == Guid.Empty
+        string.IsNullOrWhiteSpace(TargetId)
             ? "N/A"
-            : PoiId.ToString("N")[..8].ToUpperInvariant();
+            : AdminViewModelIds.BuildShortQrTargetId(TargetType, TargetId);
 }
 
 public class QrScanViewModel
 {
-    public Guid PoiId { get; set; }
-    public string PoiCode { get; set; } = string.Empty;
-    public string PoiName { get; set; } = string.Empty;
+    public string TargetType { get; set; } = string.Empty;
+    public string TargetId { get; set; } = string.Empty;
+    public string TargetCode { get; set; } = string.Empty;
+    public string TargetName { get; set; } = string.Empty;
+    public string TargetKindLabel { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public string NarrationText { get; set; } = string.Empty;
     public string MapLink { get; set; } = string.Empty;
     public string SpecialDish { get; set; } = string.Empty;
     public string PublicUrl { get; set; } = string.Empty;
+    public string EstimatedDurationLabel { get; set; } = string.Empty;
+    public IReadOnlyList<string> TourStops { get; set; } = Array.Empty<string>();
+}
+
+internal static class QrTargetTypes
+{
+    public const string Poi = "poi";
+    public const string Tour = "tour";
+
+    public static string Normalize(string? value)
+    {
+        return value?.Trim().ToLowerInvariant() switch
+        {
+            Tour => Tour,
+            _ => Poi
+        };
+    }
 }
 
 internal static class AdminViewModelIds
@@ -157,5 +184,23 @@ internal static class AdminViewModelIds
         var tail = raw.Length >= 6 ? raw[^6..] : raw;
 
         return $"POI-{tail}";
+    }
+
+    public static string BuildShortQrTargetId(string targetType, string targetId)
+    {
+        var typePrefix = QrTargetTypes.Normalize(targetType) switch
+        {
+            QrTargetTypes.Tour => "TOUR",
+            _ => "POI"
+        };
+
+        var compactId = new string((targetId ?? string.Empty)
+            .Where(char.IsLetterOrDigit)
+            .ToArray())
+            .ToUpperInvariant();
+
+        var tail = compactId.Length >= 6 ? compactId[^6..] : compactId;
+
+        return $"{typePrefix}-{tail}";
     }
 }
