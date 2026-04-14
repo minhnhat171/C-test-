@@ -90,6 +90,7 @@
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <a asp-controller="AudioGuides" asp-action="Index" asp-route-poiId="@Model.Id" class="btn btn-outline-info rounded-pill px-4">Quan ly Audio (@Model.RelatedAudioCount)</a>
+                <a asp-controller="MapPois" asp-action="Index" asp-route-poiId="@Model.Id" class="btn btn-outline-dark rounded-pill px-4">Map POI</a>
                 <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary rounded-pill px-4">Sửa</a>
                 <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedTargetType="poi" asp-route-selectedTargetId="@Model.Id" class="btn btn-outline-success rounded-pill px-4">Tạo QR</a>
                 <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Quay lại</a>
@@ -118,8 +119,8 @@
                 <div class="poi-detail-value">@Model.RelatedAudioCount bản ghi</div>
             </div>
             <div class="poi-detail-card">
-                <div class="poi-detail-label">Bản dịch liên quan</div>
-                <div class="poi-detail-value">@Model.RelatedTranslationCount ngôn ngữ</div>
+                <div class="poi-detail-label">Map POI</div>
+                <div class="poi-detail-value">@(string.IsNullOrWhiteSpace(Model.MapLink) ? "Chưa có map link" : "Sẵn sàng mở từ web quản lý")</div>
             </div>
         </div>
 

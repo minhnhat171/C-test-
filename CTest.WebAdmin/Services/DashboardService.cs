@@ -80,7 +80,7 @@ public class DashboardService
         {
             TotalPois = pois.Count,
             TotalAudioGuides = pois.Sum(CountAudioVariants),
-            TotalTranslations = pois.Sum(CountTranslatedNarrations),
+            MappedPoiCount = pois.Count(HasMapData),
             TotalQrCodes = pois.Count(poi => poi.IsActive && !string.IsNullOrWhiteSpace(poi.Code)),
             TodayListenCount = localizedHistory.Count(x => x.LocalStartedAt.Date == today),
             TotalTours = 0,
@@ -167,7 +167,7 @@ public class DashboardService
         {
             TotalPois = _fallbackData.Pois.Count,
             TotalAudioGuides = _fallbackData.AudioGuides.Count,
-            TotalTranslations = _fallbackData.Translations.Count,
+            MappedPoiCount = _fallbackData.Pois.Count(HasMapData),
             TotalQrCodes = totalQrCodes,
             TodayListenCount = _fallbackData.UsageLogs.Count(x => x.StartedAt.Date == today),
             TotalTours = _fallbackData.Tours.Count,
@@ -197,11 +197,6 @@ public class DashboardService
         var audioFileCount = string.IsNullOrWhiteSpace(poi.AudioAssetPath) ? 0 : 1;
 
         return translationCount + fallbackNarrationCount + audioFileCount;
-    }
-
-    private static int CountTranslatedNarrations(PoiDto poi)
-    {
-        return CountNarrations(poi, includeVietnamese: false);
     }
 
     private static int CountNarrations(PoiDto poi, bool includeVietnamese)
@@ -256,5 +251,22 @@ public class DashboardService
     private static bool IsQrTrigger(string? triggerType)
     {
         return string.Equals(triggerType, "QR", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HasMapData(PoiDto poi)
+    {
+        return HasMapData(poi.Latitude, poi.Longitude, poi.MapLink);
+    }
+
+    private static bool HasMapData(Poi poi)
+    {
+        return HasMapData(poi.Latitude, poi.Longitude, poi.MapLink);
+    }
+
+    private static bool HasMapData(double latitude, double longitude, string? mapLink)
+    {
+        return Math.Abs(latitude) > 0.000001 ||
+               Math.Abs(longitude) > 0.000001 ||
+               !string.IsNullOrWhiteSpace(mapLink);
     }
 }

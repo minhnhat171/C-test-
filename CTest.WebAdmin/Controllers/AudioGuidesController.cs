@@ -21,10 +21,11 @@ public class AudioGuidesController : Controller
     public async Task<IActionResult> Index(
         Guid? audioId,
         Guid? poiId,
+        string? languageCode,
         bool createNew = false,
         CancellationToken cancellationToken = default)
     {
-        var vm = await _audioGuideService.LoadManagementPageAsync(audioId, poiId, createNew, cancellationToken);
+        var vm = await _audioGuideService.LoadManagementPageAsync(audioId, poiId, languageCode, createNew, cancellationToken);
         return View("Manage", vm);
     }
 
@@ -37,6 +38,7 @@ public class AudioGuidesController : Controller
         var vm = await _audioGuideService.LoadManagementPageAsync(
             model.Editor.Id,
             model.ScopePoiId,
+            model.Editor.LanguageCode,
             model.Editor.Id == Guid.Empty,
             cancellationToken);
 
@@ -55,8 +57,8 @@ public class AudioGuidesController : Controller
             TempData["AudioMessage"] = result.Message;
 
             return result.AudioGuideId.HasValue
-                ? RedirectToAction(nameof(Index), new { audioId = result.AudioGuideId.Value, poiId = model.ScopePoiId })
-                : RedirectToAction(nameof(Index), new { createNew = true, poiId = model.ScopePoiId });
+                ? RedirectToAction(nameof(Index), new { audioId = result.AudioGuideId.Value, poiId = model.ScopePoiId, languageCode = model.Editor.LanguageCode })
+                : RedirectToAction(nameof(Index), new { createNew = true, poiId = model.ScopePoiId, languageCode = model.Editor.LanguageCode });
         }
         catch (HttpRequestException)
         {
@@ -69,7 +71,11 @@ public class AudioGuidesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(Guid id, Guid? scopePoiId, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Delete(
+        Guid id,
+        Guid? scopePoiId,
+        string? languageCode,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -81,7 +87,7 @@ public class AudioGuidesController : Controller
             TempData["AudioMessage"] = "Khong the ket noi VKFoodAPI nen chua xoa duoc audio.";
         }
 
-        return RedirectToAction(nameof(Index), new { createNew = true, poiId = scopePoiId });
+        return RedirectToAction(nameof(Index), new { createNew = true, poiId = scopePoiId, languageCode });
     }
 
     private bool ApplyValidationResult(AudioGuideValidationResult validation)

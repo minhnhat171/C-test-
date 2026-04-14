@@ -126,7 +126,7 @@
 
     .metric-card.metric-poi { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); }
     .metric-card.metric-audio { background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); }
-    .metric-card.metric-translation { background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); }
+    .metric-card.metric-map { background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); }
     .metric-card.metric-qr { background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); }
     .metric-card.metric-today { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); }
     .metric-card.metric-top { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
@@ -564,11 +564,11 @@
         </div>
 
         <div class="col-sm-6 col-xl-4 col-xxl-2">
-            <div class="metric-card metric-translation">
-                <span class="metric-mark">Lang</span>
-                <div class="metric-label">Tổng bản dịch</div>
-                <div class="metric-value">@Model.TotalTranslations</div>
-                <div class="metric-note">Các ngôn ngữ ngoài tiếng Việt đang có trong app</div>
+            <div class="metric-card metric-map">
+                <span class="metric-mark">Map</span>
+                <div class="metric-label">POI có dữ liệu map</div>
+                <div class="metric-value">@Model.MappedPoiCount</div>
+                <div class="metric-note">Có tọa độ hoặc map link để mở trực tiếp từ web quản lý</div>
             </div>
         </div>
 

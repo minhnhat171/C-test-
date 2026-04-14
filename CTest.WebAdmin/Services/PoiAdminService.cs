@@ -65,6 +65,46 @@ public class PoiAdminService
         };
     }
 
+    public async Task<MapPoiManagementViewModel> LoadMapManagementPageAsync(
+        Guid? poiId,
+        CancellationToken cancellationToken = default)
+    {
+        var poisTask = _poiApiClient.GetPoisAsync(cancellationToken);
+        var audioGuidesTask = _audioGuideApiClient.GetAudioGuidesAsync(cancellationToken);
+
+        await Task.WhenAll(poisTask, audioGuidesTask);
+
+        var audioCountByPoi = audioGuidesTask.Result
+            .GroupBy(item => item.PoiId)
+            .ToDictionary(group => group.Key, group => group.Count());
+
+        var orderedPois = poisTask.Result
+            .OrderByDescending(x => x.Priority)
+            .ThenBy(x => x.Name)
+            .ToList();
+
+        var items = orderedPois
+            .Select(x =>
+            {
+                var item = x.ToListItem();
+                item.RelatedAudioCount = audioCountByPoi.TryGetValue(x.Id, out var count) ? count : 0;
+                return item;
+            })
+            .ToList();
+
+        var selectedPoi = orderedPois.FirstOrDefault(x => x.Id == poiId) ?? orderedPois.FirstOrDefault();
+        var relatedAudioCount = selectedPoi is not null && audioCountByPoi.TryGetValue(selectedPoi.Id, out var count)
+            ? count
+            : 0;
+
+        return new MapPoiManagementViewModel
+        {
+            Pois = items,
+            SelectedPoiId = selectedPoi?.Id ?? Guid.Empty,
+            Editor = selectedPoi?.ToEditorViewModel(relatedAudioCount) ?? new PoiEditorViewModel()
+        };
+    }
+
     public async Task<IReadOnlyList<PoiListItemViewModel>> LoadValidationSnapshotAsync(
         CancellationToken cancellationToken = default)
     {

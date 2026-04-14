@@ -1,0 +1,702 @@
+@using System.Globalization
+@model MapPoiManagementViewModel
+@{
+    ViewData["Title"] = "Map POI";
+
+    var hasCoordinates = Math.Abs(Model.Editor.Latitude) > 0.000001 || Math.Abs(Model.Editor.Longitude) > 0.000001;
+    var initialLatitude = hasCoordinates ? Model.Editor.Latitude.ToString(CultureInfo.InvariantCulture) : "10.762622";
+    var initialLongitude = hasCoordinates ? Model.Editor.Longitude.ToString(CultureInfo.InvariantCulture) : "106.682172";
+}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+    .map-poi-page {
+        --map-ink: #0f172a;
+        --map-muted: #64748b;
+        --map-panel: rgba(255, 255, 255, 0.96);
+        --map-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+        --map-line: rgba(148, 163, 184, 0.18);
+        color: var(--map-ink);
+    }
+
+    .map-poi-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .map-poi-head h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 1.2rem + 2vw, 2.5rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .map-poi-head p {
+        margin: 0.45rem 0 0;
+        color: var(--map-muted);
+        max-width: 760px;
+    }
+
+    .map-poi-layout {
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1fr);
+        gap: 1.2rem;
+    }
+
+    .map-poi-panel {
+        background: var(--map-panel);
+        border-radius: 28px;
+        box-shadow: var(--map-shadow);
+        overflow: hidden;
+    }
+
+    .map-poi-sidebar {
+        padding: 1.2rem;
+    }
+
+    .map-poi-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        max-height: calc(100vh - 270px);
+        overflow: auto;
+        padding-right: 0.2rem;
+    }
+
+    .map-poi-item {
+        display: block;
+        padding: 0.95rem 1rem;
+        border-radius: 20px;
+        text-decoration: none;
+        color: inherit;
+        background: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+    }
+
+    .map-poi-item:hover {
+        transform: translateX(3px);
+        border-color: rgba(37, 99, 235, 0.26);
+    }
+
+    .map-poi-item.is-active {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-color: rgba(37, 99, 235, 0.28);
+    }
+
+    .map-poi-item-name {
+        font-weight: 800;
+    }
+
+    .map-poi-item-address {
+        margin-top: 0.25rem;
+        color: var(--map-muted);
+        font-size: 0.9rem;
+    }
+
+    .map-poi-item-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-top: 0.7rem;
+        font-size: 0.8rem;
+        color: var(--map-muted);
+    }
+
+    .map-poi-content {
+        padding: 1.3rem;
+    }
+
+    .map-poi-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .map-poi-toolbar h2 {
+        margin: 0;
+        font-size: clamp(1.35rem, 1.1rem + 1vw, 1.9rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .map-poi-toolbar p {
+        margin: 0.35rem 0 0;
+        color: var(--map-muted);
+    }
+
+    .map-poi-map-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) 320px;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .map-poi-map-card,
+    .map-poi-summary-card,
+    .map-poi-form-card {
+        border-radius: 26px;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        background: #f8fafc;
+    }
+
+    .map-poi-map-card {
+        padding: 1rem;
+    }
+
+    .map-poi-summary-card,
+    .map-poi-form-card {
+        padding: 1.1rem;
+    }
+
+    .map-poi-map-frame {
+        height: 460px;
+        border-radius: 22px;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    #poiMapCanvas {
+        width: 100%;
+        height: 100%;
+    }
+
+    .map-poi-kicker {
+        color: var(--map-muted);
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .map-poi-status {
+        margin-top: 0.8rem;
+        color: var(--map-muted);
+        line-height: 1.6;
+    }
+
+    .map-poi-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.8rem;
+        margin-top: 1rem;
+    }
+
+    .map-poi-metric {
+        padding: 0.9rem;
+        border-radius: 18px;
+        background: #fff;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+    }
+
+    .map-poi-metric strong {
+        display: block;
+        margin-top: 0.3rem;
+        font-size: 1.15rem;
+    }
+
+    .map-poi-form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.9rem;
+    }
+
+    .map-poi-form-grid .full {
+        grid-column: 1 / -1;
+    }
+
+    .map-poi-page .form-control,
+    .map-poi-page textarea,
+    .map-poi-page .form-check-input {
+        border-radius: 16px;
+    }
+
+    .map-poi-page .form-control,
+    .map-poi-page textarea {
+        min-height: 48px;
+        border-color: rgba(148, 163, 184, 0.24);
+    }
+
+    .map-poi-page textarea {
+        min-height: 120px;
+    }
+
+    .map-poi-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.2rem;
+    }
+
+    .map-poi-empty {
+        padding: 2rem;
+        color: var(--map-muted);
+        text-align: center;
+    }
+
+    @@media (max-width: 1399.98px) {
+        .map-poi-map-shell {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 1199.98px) {
+        .map-poi-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .map-poi-list {
+            max-height: none;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .map-poi-head,
+        .map-poi-toolbar {
+            flex-direction: column;
+        }
+
+        .map-poi-form-grid,
+        .map-poi-metrics {
+            grid-template-columns: 1fr;
+        }
+
+        .map-poi-map-frame {
+            height: 340px;
+        }
+    }
+</style>
+
+<div class="map-poi-page">
+    <div class="map-poi-head">
+        <div>
+            <h1>Map POI</h1>
+            <p>Chon POI trong danh sach, xem marker tren ban do va sua truc tiep latitude, longitude, radius, noi dung, map link ngay trong mot man hinh.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-controller="Pois" asp-action="Create" class="btn btn-primary btn-lg rounded-pill px-4">+ Tao POI moi</a>
+            <a asp-controller="Pois" asp-action="Index" class="btn btn-outline-secondary btn-lg rounded-pill px-4">Ve danh sach POI</a>
+        </div>
+    </div>
+
+    @if (TempData["MapPoiMessage"] is string mapPoiMessage)
+    {
+        <div class="alert alert-success border-0 shadow-sm">@mapPoiMessage</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.LoadErrorMessage))
+    {
+        <div class="alert alert-warning border-0 shadow-sm">@Model.LoadErrorMessage</div>
+    }
+
+    <div class="map-poi-layout">
+        <div class="map-poi-panel">
+            <div class="map-poi-sidebar">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="fw-bold">Danh sach POI</div>
+                    <span class="text-muted small">@Model.Pois.Count diem</span>
+                </div>
+
+                @if (Model.Pois.Any())
+                {
+                    <div class="map-poi-list">
+                        @foreach (var poi in Model.Pois)
+                        {
+                            <a asp-action="Index"
+                               asp-route-poiId="@poi.Id"
+                               class="map-poi-item @(poi.Id == Model.SelectedPoiId ? "is-active" : null)">
+                                <div class="map-poi-item-name">@poi.Name</div>
+                                <div class="map-poi-item-address">@poi.Address</div>
+                                <div class="map-poi-item-meta">
+                                    <span>@poi.Latitude, @poi.Longitude</span>
+                                    <span>@(poi.IsActive ? "Active" : "Inactive")</span>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="map-poi-empty">Chua co POI de hien thi tren ban do.</div>
+                }
+            </div>
+        </div>
+
+        <div class="map-poi-panel">
+            <div class="map-poi-content">
+                @if (!Model.HasSelection)
+                {
+                    <div class="map-poi-empty">Chon mot POI de bat dau chinh sua tren ban do.</div>
+                }
+                else
+                {
+                    <div class="map-poi-toolbar">
+                        <div>
+                            <div class="map-poi-kicker">Dang chinh sua</div>
+                            <h2>@Model.Editor.Name</h2>
+                            <p>@Model.Editor.Address</p>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-controller="Pois" asp-action="Edit" asp-route-id="@Model.Editor.Id" class="btn btn-outline-primary rounded-pill px-4">Mo form day du</a>
+                            <a asp-controller="AudioGuides" asp-action="Index" asp-route-poiId="@Model.Editor.Id" class="btn btn-outline-info rounded-pill px-4">Audio (@Model.Editor.RelatedAudioCount)</a>
+                            <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedTargetType="poi" asp-route-selectedTargetId="@Model.Editor.Id" class="btn btn-outline-success rounded-pill px-4">Tao QR</a>
+                        </div>
+                    </div>
+
+                    <div class="map-poi-map-shell">
+                        <div class="map-poi-map-card">
+                            <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+                                <div>
+                                    <div class="map-poi-kicker">Ban do thao tac</div>
+                                    <div class="fw-semibold">Keo marker hoac bam len ban do de doi vi tri</div>
+                                </div>
+                                <button type="button" class="btn btn-outline-dark rounded-pill px-4" id="recenterMapButton">Can giua marker</button>
+                            </div>
+
+                            <div class="map-poi-map-frame">
+                                <div id="poiMapCanvas"></div>
+                            </div>
+
+                            <div class="map-poi-status" id="mapPoiStatus">
+                                Marker se dong bo truc tiep vao Latitude, Longitude va Map link.
+                            </div>
+                        </div>
+
+                        <div class="map-poi-summary-card">
+                            <div class="map-poi-kicker">Tom tat nhanh</div>
+                            <div class="fw-semibold mt-2" id="mapPoiNameLabel">@Model.Editor.Name</div>
+                            <div class="text-muted mt-2" id="mapPoiAddressLabel">@Model.Editor.Address</div>
+
+                            <div class="map-poi-metrics">
+                                <div class="map-poi-metric">
+                                    <span class="map-poi-kicker">Latitude</span>
+                                    <strong id="mapPoiLatValue">@initialLatitude</strong>
+                                </div>
+                                <div class="map-poi-metric">
+                                    <span class="map-poi-kicker">Longitude</span>
+                                    <strong id="mapPoiLngValue">@initialLongitude</strong>
+                                </div>
+                                <div class="map-poi-metric">
+                                    <span class="map-poi-kicker">Radius</span>
+                                    <strong id="mapPoiRadiusValue">@Model.Editor.RadiusInMeters m</strong>
+                                </div>
+                                <div class="map-poi-metric">
+                                    <span class="map-poi-kicker">Priority</span>
+                                    <strong id="mapPoiPriorityValue">#@Model.Editor.Priority</strong>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 text-muted">
+                                App code: <strong>@Model.Editor.Code</strong><br />
+                                QR ready: <strong>@(Model.Editor.IsQrEnabled ? "Co" : "Chua ro")</strong><br />
+                                Status: <strong id="mapPoiActiveValue">@(Model.Editor.IsActive ? "Dang hoat dong" : "Tam khoa")</strong>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(Model.Editor.MapLink))
+                            {
+                                <a href="@Model.Editor.MapLink" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary rounded-pill px-4 mt-3" id="mapPoiOpenLink">
+                                    Mo map link
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary rounded-pill px-4 mt-3 d-none" id="mapPoiOpenLink">
+                                    Mo map link
+                                </a>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="map-poi-form-card">
+                        <form asp-action="Save" method="post">
+                            @Html.AntiForgeryToken()
+
+                            <input asp-for="SelectedPoiId" type="hidden" />
+                            <input asp-for="Editor.Id" type="hidden" />
+                            <input asp-for="Editor.Category" type="hidden" />
+                            <input asp-for="Editor.CooldownMinutes" type="hidden" />
+                            <input asp-for="Editor.SpecialDish" type="hidden" />
+                            <input asp-for="Editor.ImageSource" type="hidden" />
+                            <input asp-for="Editor.IsEditMode" type="hidden" />
+
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 shadow-sm"></div>
+
+                            <div class="map-poi-form-grid">
+                                <div>
+                                    <label asp-for="Editor.Code" class="form-label">Ma POI</label>
+                                    <input asp-for="Editor.Code" class="form-control" />
+                                    <span asp-validation-for="Editor.Code" class="text-danger small"></span>
+                                </div>
+
+                                <div>
+                                    <label asp-for="Editor.Priority" class="form-label">Priority</label>
+                                    <input asp-for="Editor.Priority" class="form-control" id="mapPoiPriorityInput" />
+                                    <span asp-validation-for="Editor.Priority" class="text-danger small"></span>
+                                </div>
+
+                                <div class="full">
+                                    <label asp-for="Editor.Name" class="form-label">Ten diem</label>
+                                    <input asp-for="Editor.Name" class="form-control" id="mapPoiNameInput" />
+                                    <span asp-validation-for="Editor.Name" class="text-danger small"></span>
+                                </div>
+
+                                <div class="full">
+                                    <label asp-for="Editor.Address" class="form-label">Dia chi</label>
+                                    <input asp-for="Editor.Address" class="form-control" id="mapPoiAddressInput" />
+                                    <span asp-validation-for="Editor.Address" class="text-danger small"></span>
+                                </div>
+
+                                <div class="full">
+                                    <label asp-for="Editor.Description" class="form-label">Mo ta</label>
+                                    <textarea asp-for="Editor.Description" class="form-control" rows="4"></textarea>
+                                    <span asp-validation-for="Editor.Description" class="text-danger small"></span>
+                                </div>
+
+                                <div class="full">
+                                    <label asp-for="Editor.NarrationScript" class="form-label">Narration script</label>
+                                    <textarea asp-for="Editor.NarrationScript" class="form-control" rows="5"></textarea>
+                                    <span asp-validation-for="Editor.NarrationScript" class="text-danger small"></span>
+                                </div>
+
+                                <div>
+                                    <label asp-for="Editor.Latitude" class="form-label">Latitude</label>
+                                    <input asp-for="Editor.Latitude" class="form-control" id="mapPoiLatitude" />
+                                    <span asp-validation-for="Editor.Latitude" class="text-danger small"></span>
+                                </div>
+
+                                <div>
+                                    <label asp-for="Editor.Longitude" class="form-label">Longitude</label>
+                                    <input asp-for="Editor.Longitude" class="form-control" id="mapPoiLongitude" />
+                                    <span asp-validation-for="Editor.Longitude" class="text-danger small"></span>
+                                </div>
+
+                                <div>
+                                    <label asp-for="Editor.RadiusInMeters" class="form-label">Trigger radius (m)</label>
+                                    <input asp-for="Editor.RadiusInMeters" class="form-control" id="mapPoiRadiusInput" />
+                                    <span asp-validation-for="Editor.RadiusInMeters" class="text-danger small"></span>
+                                </div>
+
+                                <div>
+                                    <label asp-for="Editor.MapLink" class="form-label">Map link</label>
+                                    <input asp-for="Editor.MapLink" class="form-control" id="mapPoiMapLink" />
+                                    <span asp-validation-for="Editor.MapLink" class="text-danger small"></span>
+                                </div>
+
+                                <div class="full">
+                                    <div class="form-check form-switch mt-2">
+                                        <input asp-for="Editor.IsActive" class="form-check-input" id="mapPoiActiveInput" />
+                                        <label asp-for="Editor.IsActive" class="form-check-label">POI dang hoat dong</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="map-poi-actions">
+                                <button type="submit" class="btn btn-primary rounded-pill px-4">Luu thay doi</button>
+                                <a asp-controller="Pois" asp-action="Details" asp-route-id="@Model.Editor.Id" class="btn btn-outline-dark rounded-pill px-4">Xem chi tiet</a>
+                                <a asp-action="Index" asp-route-poiId="@Model.Editor.Id" class="btn btn-outline-secondary rounded-pill px-4">Tai lai du lieu</a>
+                            </div>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        (() => {
+            const latInput = document.getElementById("mapPoiLatitude");
+            const lngInput = document.getElementById("mapPoiLongitude");
+            const radiusInput = document.getElementById("mapPoiRadiusInput");
+            const priorityInput = document.getElementById("mapPoiPriorityInput");
+            const mapLinkInput = document.getElementById("mapPoiMapLink");
+            const activeInput = document.getElementById("mapPoiActiveInput");
+            const nameInput = document.getElementById("mapPoiNameInput");
+            const addressInput = document.getElementById("mapPoiAddressInput");
+            const openLink = document.getElementById("mapPoiOpenLink");
+            const statusBox = document.getElementById("mapPoiStatus");
+            const recenterButton = document.getElementById("recenterMapButton");
+            const latLabel = document.getElementById("mapPoiLatValue");
+            const lngLabel = document.getElementById("mapPoiLngValue");
+            const radiusLabel = document.getElementById("mapPoiRadiusValue");
+            const priorityLabel = document.getElementById("mapPoiPriorityValue");
+            const activeLabel = document.getElementById("mapPoiActiveValue");
+            const nameLabel = document.getElementById("mapPoiNameLabel");
+            const addressLabel = document.getElementById("mapPoiAddressLabel");
+
+            if (!latInput || !lngInput || !radiusInput || !priorityInput || !mapLinkInput) {
+                return;
+            }
+
+            const fallbackLat = 10.762622;
+            const fallbackLng = 106.682172;
+
+            const parseNumber = (value, fallback) => {
+                const parsed = Number.parseFloat(value);
+                return Number.isFinite(parsed) ? parsed : fallback;
+            };
+
+            const formatCoordinate = (value) => Number(value).toFixed(6);
+            const buildMapLink = (lat, lng) => `https://maps.google.com/?q=${formatCoordinate(lat)},${formatCoordinate(lng)}`;
+
+            const syncTextPreview = () => {
+                if (nameLabel) {
+                    nameLabel.textContent = nameInput.value.trim() || "POI chua dat ten";
+                }
+
+                if (addressLabel) {
+                    addressLabel.textContent = addressInput.value.trim() || "Dia chi se hien thi tai day.";
+                }
+            };
+
+            const syncMetaPreview = () => {
+                const lat = parseNumber(latInput.value, fallbackLat);
+                const lng = parseNumber(lngInput.value, fallbackLng);
+                const radius = Math.max(1, parseNumber(radiusInput.value, 50));
+                const priority = Math.max(1, parseNumber(priorityInput.value, 1));
+
+                latLabel.textContent = formatCoordinate(lat);
+                lngLabel.textContent = formatCoordinate(lng);
+                radiusLabel.textContent = `${Math.round(radius)} m`;
+                priorityLabel.textContent = `#${Math.round(priority)}`;
+
+                if (activeLabel) {
+                    activeLabel.textContent = activeInput && activeInput.checked ? "Dang hoat dong" : "Tam khoa";
+                }
+
+                if (openLink) {
+                    const href = mapLinkInput.value.trim();
+                    if (href) {
+                        openLink.href = href;
+                        openLink.classList.remove("d-none");
+                    } else {
+                        openLink.href = "#";
+                        openLink.classList.add("d-none");
+                    }
+                }
+            };
+
+            let map = null;
+            let marker = null;
+            let circle = null;
+
+            const getCoordinates = () => ({
+                lat: parseNumber(latInput.value, fallbackLat),
+                lng: parseNumber(lngInput.value, fallbackLng)
+            });
+
+            const syncCircle = () => {
+                if (!circle || !marker) {
+                    return;
+                }
+
+                const radius = Math.max(1, parseNumber(radiusInput.value, 50));
+                const position = marker.getLatLng();
+                circle.setLatLng(position);
+                circle.setRadius(radius);
+            };
+
+            const syncMapLink = (lat, lng) => {
+                mapLinkInput.value = buildMapLink(lat, lng);
+            };
+
+            const applyCoordinates = (lat, lng, recenter) => {
+                latInput.value = formatCoordinate(lat);
+                lngInput.value = formatCoordinate(lng);
+                syncMapLink(lat, lng);
+                syncMetaPreview();
+
+                if (!marker || !map) {
+                    return;
+                }
+
+                marker.setLatLng([lat, lng]);
+                syncCircle();
+
+                if (recenter) {
+                    map.setView([lat, lng], Math.max(map.getZoom(), 17));
+                }
+            };
+
+            const initializeMap = () => {
+                if (!window.L) {
+                    statusBox.textContent = "Khong tai duoc thu vien ban do. Ban van co the sua bang tay cac truong toa do.";
+                    return;
+                }
+
+                const start = getCoordinates();
+                map = L.map("poiMapCanvas", { zoomControl: true }).setView([start.lat, start.lng], 17);
+
+                L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                    maxZoom: 19,
+                    attribution: "&copy; OpenStreetMap"
+                }).addTo(map);
+
+                marker = L.marker([start.lat, start.lng], { draggable: true }).addTo(map);
+                circle = L.circle([start.lat, start.lng], {
+                    radius: Math.max(1, parseNumber(radiusInput.value, 50)),
+                    color: "#2563eb",
+                    fillColor: "#60a5fa",
+                    fillOpacity: 0.18,
+                    weight: 2
+                }).addTo(map);
+
+                marker.on("dragend", () => {
+                    const position = marker.getLatLng();
+                    applyCoordinates(position.lat, position.lng, false);
+                    statusBox.textContent = "Da cap nhat toa do tu marker.";
+                });
+
+                map.on("click", (event) => {
+                    applyCoordinates(event.latlng.lat, event.latlng.lng, false);
+                    statusBox.textContent = "Da cap nhat toa do tu diem bam tren ban do.";
+                });
+
+                window.setTimeout(() => map.invalidateSize(), 60);
+            };
+
+            latInput.addEventListener("input", () => {
+                const { lat, lng } = getCoordinates();
+                applyCoordinates(lat, lng, false);
+            });
+
+            lngInput.addEventListener("input", () => {
+                const { lat, lng } = getCoordinates();
+                applyCoordinates(lat, lng, false);
+            });
+
+            radiusInput.addEventListener("input", () => {
+                syncCircle();
+                syncMetaPreview();
+            });
+
+            priorityInput.addEventListener("input", syncMetaPreview);
+            activeInput?.addEventListener("change", syncMetaPreview);
+            nameInput.addEventListener("input", syncTextPreview);
+            addressInput.addEventListener("input", syncTextPreview);
+            mapLinkInput.addEventListener("input", syncMetaPreview);
+
+            recenterButton?.addEventListener("click", () => {
+                if (!map || !marker) {
+                    return;
+                }
+
+                map.setView(marker.getLatLng(), 17);
+            });
+
+            syncTextPreview();
+            syncMetaPreview();
+            initializeMap();
+        })();
+    </script>
+}

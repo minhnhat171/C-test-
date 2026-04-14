@@ -333,7 +333,7 @@
                 <div class="sidebar-brand">
                     <div class="sidebar-kicker">VK Admin</div>
                     <h1>Phố ẩm thực Vĩnh Khánh</h1>
-                    <p>Quản lý POI, audio, bản dịch và lịch sử nghe trên cùng một bảng điều khiển rõ ràng, hiện đại.</p>
+                    <p>Quản lý POI, map marker, audio và lịch sử nghe trên cùng một bảng điều khiển rõ ràng, hiện đại.</p>
                 </div>
 
                 <div>
@@ -353,44 +353,43 @@
                             </span>
                             <span class="sidebar-link-tag">02</span>
                         </a>
-                        <a class="@SidebarLinkClass("AudioGuides")" asp-controller="AudioGuides" asp-action="Index">
+                        <a class="@SidebarLinkClass("MapPois")" asp-controller="MapPois" asp-action="Index">
                             <span class="sidebar-link-copy">
-                                <span class="sidebar-link-label">Audio / TTS</span>
-                                <span class="sidebar-link-meta">Kịch bản và phát âm</span>
+                                <span class="sidebar-link-label">Map POI</span>
+                                <span class="sidebar-link-meta">Ban do, marker va radius</span>
                             </span>
                             <span class="sidebar-link-tag">03</span>
                         </a>
-                        <a class="@SidebarLinkClass("Translations")" asp-controller="Translations" asp-action="Index">
+                        <a class="@SidebarLinkClass("AudioGuides")" asp-controller="AudioGuides" asp-action="Index">
                             <span class="sidebar-link-copy">
-                                <span class="sidebar-link-label">Bản dịch</span>
-                                <span class="sidebar-link-meta">Đa ngôn ngữ nội dung</span>
+                                <span class="sidebar-link-label">Audio / TTS</span>
+                                <span class="sidebar-link-meta">Kịch bản và file phát</span>
                             </span>
-                            <span class="sidebar-link-tag">04</span>
+                            <span class="sidebar-link-tag">03</span>
                         </a>
                         <a class="@SidebarLinkClass("QrCodes")" asp-controller="QrCodes" asp-action="Index">
                             <span class="sidebar-link-copy">
                                 <span class="sidebar-link-label">QR code</span>
                                 <span class="sidebar-link-meta">Điều hướng tại điểm</span>
                             </span>
-                            <span class="sidebar-link-tag">05</span>
+                            <span class="sidebar-link-tag">04</span>
                         </a>
                         <a class="@SidebarLinkClass("Tours")" asp-controller="Tours" asp-action="Index">
                             <span class="sidebar-link-copy">
                                 <span class="sidebar-link-label">Tour</span>
                                 <span class="sidebar-link-meta">Lộ trình tham quan</span>
                             </span>
-                            <span class="sidebar-link-tag">06</span>
+                            <span class="sidebar-link-tag">05</span>
                         </a>
                         <a class="@SidebarLinkClass("UsageLogs")" asp-controller="UsageLogs" asp-action="Index">
                             <span class="sidebar-link-copy">
                                 <span class="sidebar-link-label">Lịch sử sử dụng</span>
                                 <span class="sidebar-link-meta">Theo dõi GPS và QR</span>
                             </span>
-                            <span class="sidebar-link-tag">07</span>
+                            <span class="sidebar-link-tag">06</span>
                         </a>
                 <a class="nav-link text-white" asp-controller="Pois" asp-action="Index">Quản lý POI</a>
                 <a class="nav-link text-white" asp-controller="AudioGuides" asp-action="Index">Audio / TTS</a>
-                <a class="nav-link text-white" asp-controller="Translations" asp-action="Index">Bản dịch</a>
                 <a class="nav-link text-white" asp-controller="QrCodes" asp-action="Index">QR code</a>
                 <a class="nav-link text-white" asp-controller="Tours" asp-action="Index">Tour</a>
                 <a class="nav-link text-white" asp-controller="UsageLogs" asp-action="Index">Lịch sử sử dụng</a>

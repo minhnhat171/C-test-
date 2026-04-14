@@ -1,9 +1,19 @@
 using CTest.WebAdmin.Models;
+using VinhKhanhGuide.Core.Contracts;
 
 namespace CTest.WebAdmin.Services;
 
 public class AudioGuideAdminService
 {
+    private static readonly (string Code, string Label)[] SupportedLanguages =
+    [
+        ("vi", "Tieng Viet"),
+        ("en", "Tieng Anh"),
+        ("zh", "Tieng Trung"),
+        ("ko", "Tieng Han"),
+        ("fr", "Tieng Phap")
+    ];
+
     private readonly AudioGuideApiClient _audioGuideApiClient;
     private readonly PoiApiClient _poiApiClient;
 
@@ -18,6 +28,7 @@ public class AudioGuideAdminService
     public async Task<AudioGuideManagementPageViewModel> LoadManagementPageAsync(
         Guid? audioId,
         Guid? poiId,
+        string? languageCode,
         bool createNew,
         CancellationToken cancellationToken = default)
     {
@@ -51,29 +62,34 @@ public class AudioGuideAdminService
                 .Where(item => !vm.ScopePoiId.HasValue || item.PoiId == vm.ScopePoiId.Value)
                 .ToList();
 
+            var normalizedLanguageCode = AudioGuideAdminMappings.NormalizeLanguageCode(languageCode);
+            var selectedGuide = ResolveSelectedGuide(
+                scopedAudioGuides,
+                audioId,
+                normalizedLanguageCode,
+                createNew);
+
             vm.Items = scopedAudioGuides
                 .OrderByDescending(item => item.UpdatedAtUtc)
                 .ThenBy(item => item.PoiName)
-                .Select(item => item.ToListItem(item.Id == audioId))
+                .Select(item => item.ToListItem(item.Id == selectedGuide?.Id))
                 .ToList();
 
-            if (createNew || !vm.Items.Any())
+            vm.LanguageSlots = vm.ScopePoiId.HasValue
+                ? BuildLanguageSlots(scopedAudioGuides, normalizedLanguageCode)
+                : new List<AudioGuideLanguageSlotViewModel>();
+
+            if (createNew || selectedGuide is null)
             {
                 vm.Editor = new AudioGuideEditorFormViewModel
                 {
-                    PoiId = vm.ScopePoiId ?? Guid.Empty
+                    PoiId = vm.ScopePoiId ?? Guid.Empty,
+                    LanguageCode = normalizedLanguageCode
                 };
                 return vm;
             }
 
-            var selectedGuide = audioId.HasValue
-                ? scopedAudioGuides.FirstOrDefault(item => item.Id == audioId.Value)
-                : scopedAudioGuides.FirstOrDefault();
-
-            vm.Editor = selectedGuide?.ToEditorViewModel() ?? new AudioGuideEditorFormViewModel
-            {
-                PoiId = vm.ScopePoiId ?? Guid.Empty
-            };
+            vm.Editor = selectedGuide.ToEditorViewModel();
             return vm;
         }
         catch (HttpRequestException)
@@ -123,6 +139,84 @@ public class AudioGuideAdminService
         return deleted
             ? AudioGuideOperationResult.Success("Da xoa audio khoi VKFoodAPI.", id)
             : AudioGuideOperationResult.Missing("Khong tim thay audio de xoa.");
+    }
+
+    private static AudioGuideDto? ResolveSelectedGuide(
+        IReadOnlyList<AudioGuideDto> scopedAudioGuides,
+        Guid? audioId,
+        string normalizedLanguageCode,
+        bool createNew)
+    {
+        if (createNew || scopedAudioGuides.Count == 0)
+        {
+            return null;
+        }
+
+        if (audioId.HasValue)
+        {
+            var guideById = scopedAudioGuides.FirstOrDefault(item => item.Id == audioId.Value);
+            if (guideById is not null)
+            {
+                return guideById;
+            }
+        }
+
+        var guideByLanguage = scopedAudioGuides
+            .Where(item => string.Equals(
+                AudioGuideAdminMappings.NormalizeLanguageCode(item.LanguageCode),
+                normalizedLanguageCode,
+                StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(item => item.UpdatedAtUtc)
+            .FirstOrDefault();
+
+        return guideByLanguage ?? scopedAudioGuides.FirstOrDefault();
+    }
+
+    private static List<AudioGuideLanguageSlotViewModel> BuildLanguageSlots(
+        IReadOnlyList<AudioGuideDto> scopedAudioGuides,
+        string selectedLanguageCode)
+    {
+        return SupportedLanguages
+            .Select(language =>
+            {
+                var latestGuide = scopedAudioGuides
+                    .Where(item => string.Equals(
+                        AudioGuideAdminMappings.NormalizeLanguageCode(item.LanguageCode),
+                        language.Code,
+                        StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(item => item.UpdatedAtUtc)
+                    .FirstOrDefault();
+
+                var hasAudio = latestGuide is not null;
+                var isPublished = latestGuide?.IsPublished ?? false;
+
+                return new AudioGuideLanguageSlotViewModel
+                {
+                    LanguageCode = language.Code,
+                    LanguageLabel = language.Label,
+                    StatusLabel = !hasAudio
+                        ? "Chua co noi dung"
+                        : isPublished
+                            ? "Dang publish"
+                            : "Ban nhap",
+                    StatusCssClass = !hasAudio
+                        ? "empty"
+                        : isPublished
+                            ? "published"
+                            : "draft",
+                    SourceLabel = hasAudio
+                        ? AudioGuideAdminMappings.GetSourceLabel(latestGuide!.SourceType)
+                        : "Chua co audio",
+                    UpdatedLabel = hasAudio
+                        ? latestGuide!.UpdatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                        : "Chua cap nhat",
+                    AudioId = latestGuide?.Id,
+                    HasAudio = hasAudio,
+                    IsPublished = isPublished,
+                    IsSelected = string.Equals(language.Code, selectedLanguageCode, StringComparison.OrdinalIgnoreCase)
+                };
+            })
+            .ToList();
     }
 }
 

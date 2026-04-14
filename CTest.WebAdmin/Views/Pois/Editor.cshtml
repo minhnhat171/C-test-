@@ -296,6 +296,7 @@
                         @if (Model.IsEditMode)
                         {
                             <a asp-controller="AudioGuides" asp-action="Index" asp-route-poiId="@Model.Id" class="btn btn-outline-info rounded-pill px-4">Quan ly Audio (@Model.RelatedAudioCount)</a>
+                            <a asp-controller="MapPois" asp-action="Index" asp-route-poiId="@Model.Id" class="btn btn-outline-dark rounded-pill px-4">Map POI</a>
                             <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-dark rounded-pill px-4">Xem chi tiết</a>
                             <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedTargetType="poi" asp-route-selectedTargetId="@Model.Id" class="btn btn-outline-success rounded-pill px-4">Tạo QR</a>
                         }
@@ -318,8 +319,8 @@
                         <strong>@Model.RelatedAudioCount</strong>
                     </div>
                     <div class="poi-meta-tile">
-                        <span class="poi-preview-label">Bản dịch</span>
-                        <strong>@Model.RelatedTranslationCount</strong>
+                        <span class="poi-preview-label">Map link</span>
+                        <strong>@(string.IsNullOrWhiteSpace(Model.MapLink) ? "Chưa có" : "Sẵn sàng")</strong>
                     </div>
                     <div class="poi-meta-tile">
                         <span class="poi-preview-label">Bán kính</span>

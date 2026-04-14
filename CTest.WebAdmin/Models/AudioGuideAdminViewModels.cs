@@ -7,6 +7,7 @@ public class AudioGuideManagementPageViewModel
     public string ScopePoiName { get; set; } = string.Empty;
     public string ScopePoiCode { get; set; } = string.Empty;
     public List<AudioGuideListItemViewModel> Items { get; set; } = new();
+    public List<AudioGuideLanguageSlotViewModel> LanguageSlots { get; set; } = new();
     public List<PoiLookupItemViewModel> Pois { get; set; } = new();
     public AudioGuideEditorFormViewModel Editor { get; set; } = new();
 
@@ -50,4 +51,18 @@ public class AudioGuideEditorFormViewModel
     public int EstimatedSeconds { get; set; } = 30;
     public bool IsPublished { get; set; } = true;
     public bool IsEditMode { get; set; }
+}
+
+public class AudioGuideLanguageSlotViewModel
+{
+    public string LanguageCode { get; set; } = string.Empty;
+    public string LanguageLabel { get; set; } = string.Empty;
+    public string StatusLabel { get; set; } = string.Empty;
+    public string StatusCssClass { get; set; } = string.Empty;
+    public string SourceLabel { get; set; } = string.Empty;
+    public string UpdatedLabel { get; set; } = string.Empty;
+    public Guid? AudioId { get; set; }
+    public bool HasAudio { get; set; }
+    public bool IsPublished { get; set; }
+    public bool IsSelected { get; set; }
 }

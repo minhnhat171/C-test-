@@ -57,6 +57,16 @@ public class PoiEditorViewModel
             : Id.ToString("N")[..8].ToUpperInvariant();
 }
 
+public class MapPoiManagementViewModel
+{
+    public string LoadErrorMessage { get; set; } = string.Empty;
+    public List<PoiListItemViewModel> Pois { get; set; } = new();
+    public Guid SelectedPoiId { get; set; }
+    public PoiEditorViewModel Editor { get; set; } = new();
+
+    public bool HasSelection => Editor.Id != Guid.Empty;
+}
+
 public class PoiLookupItemViewModel
 {
     public Guid Id { get; set; }

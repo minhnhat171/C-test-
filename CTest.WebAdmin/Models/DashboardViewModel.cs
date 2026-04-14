@@ -4,7 +4,12 @@ public class DashboardViewModel
 {
     public int TotalPois { get; set; }
     public int TotalAudioGuides { get; set; }
-    public int TotalTranslations { get; set; }
+    public int MappedPoiCount { get; set; }
+    public int TotalTranslations
+    {
+        get => MappedPoiCount;
+        set => MappedPoiCount = value;
+    }
     public int TotalQrCodes { get; set; }
     public int TodayListenCount { get; set; }
     public int TotalTours { get; set; }
