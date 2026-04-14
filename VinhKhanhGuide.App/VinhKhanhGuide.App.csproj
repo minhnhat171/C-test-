@@ -14,6 +14,11 @@
     <NullabilityInfoContextSupport>true</NullabilityInfoContextSupport>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(TargetFramework)' == 'net8.0-android'">
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <AndroidFastDeploymentType>None</AndroidFastDeploymentType>
+  </PropertyGroup>
+
   <ItemGroup>
     <MauiIcon Include="Resources\AppIcon\appicon.svg"
               ForegroundFile="Resources\AppIcon\appiconfg.svg"

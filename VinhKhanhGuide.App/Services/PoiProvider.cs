@@ -17,14 +17,19 @@ public class PoiProvider : IPoiProvider
 
     private readonly HttpClient _httpClient;
     private readonly ILogger<PoiProvider> _logger;
+    private readonly IPoiOfflineStore _poiOfflineStore;
     private readonly object _syncRoot = new();
     private IReadOnlyList<POI> _lastSuccessfulRemotePois = Array.Empty<POI>();
     private bool _hasSuccessfulRemoteFetch;
 
-    public PoiProvider(HttpClient httpClient, ILogger<PoiProvider> logger)
+    public PoiProvider(
+        HttpClient httpClient,
+        ILogger<PoiProvider> logger,
+        IPoiOfflineStore poiOfflineStore)
     {
         _httpClient = httpClient;
         _logger = logger;
+        _poiOfflineStore = poiOfflineStore;
     }
 
     public async Task<IReadOnlyList<POI>> GetPoisAsync(CancellationToken cancellationToken = default)
@@ -38,10 +43,28 @@ public class PoiProvider : IPoiProvider
                 .ToList();
 
             CacheSuccessfulRemotePois(mappedPois);
+            await PersistOfflineSnapshotAsync(mappedPois, cancellationToken);
             return ClonePois(mappedPois);
         }
         catch (Exception ex)
         {
+            try
+            {
+                var offlinePois = await _poiOfflineStore.GetPoisAsync(cancellationToken);
+                if (offlinePois.Count > 0)
+                {
+                    _logger.LogWarning(ex, "Failed to load POIs from API. Using SQLite offline snapshot.");
+                    CacheSuccessfulRemotePois(offlinePois);
+                    return ClonePois(offlinePois);
+                }
+            }
+            catch (Exception offlineEx)
+            {
+                _logger.LogWarning(
+                    offlineEx,
+                    "Failed to read POIs from SQLite offline store after API failure. Falling back to in-memory or seed data.");
+            }
+
             if (TryGetLastSuccessfulRemotePois(out var cachedPois))
             {
                 _logger.LogWarning(ex, "Failed to load POIs from API. Using the last successful API snapshot.");
@@ -51,6 +74,7 @@ public class PoiProvider : IPoiProvider
             _logger.LogWarning(ex, "Failed to load POIs from API. Falling back to local seed data.");
         }
 
+        await EnsureSeedSnapshotAsync(cancellationToken);
         return ClonePois(FallbackPois);
     }
 
@@ -74,6 +98,19 @@ public class PoiProvider : IPoiProvider
             _logger.LogWarning(ex, "Failed to load POI {PoiId} from API.", poiId);
         }
 
+        try
+        {
+            var offlinePoi = await _poiOfflineStore.GetPoiByIdAsync(poiId, cancellationToken);
+            if (offlinePoi is not null)
+            {
+                return offlinePoi;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load POI {PoiId} from SQLite offline store.", poiId);
+        }
+
         if (TryGetLastSuccessfulRemotePois(out var cachedPois))
         {
             var cachedPoi = cachedPois.FirstOrDefault(item => item.Id == poiId);
@@ -92,6 +129,38 @@ public class PoiProvider : IPoiProvider
         {
             _lastSuccessfulRemotePois = ClonePois(pois);
             _hasSuccessfulRemoteFetch = true;
+        }
+    }
+
+    private async Task PersistOfflineSnapshotAsync(
+        IReadOnlyList<POI> pois,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _poiOfflineStore.ReplacePoisAsync(pois, DateTimeOffset.UtcNow, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to persist POIs into SQLite offline store.");
+        }
+    }
+
+    private async Task EnsureSeedSnapshotAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var offlinePois = await _poiOfflineStore.GetPoisAsync(cancellationToken);
+            if (offlinePois.Count > 0)
+            {
+                return;
+            }
+
+            await _poiOfflineStore.ReplacePoisAsync(FallbackPois, DateTimeOffset.UtcNow, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to seed SQLite offline store.");
         }
     }
 

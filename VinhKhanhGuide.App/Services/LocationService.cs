@@ -2,6 +2,12 @@ using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Devices.Sensors;
 using VinhKhanhGuide.Core.Interfaces;
 using VinhKhanhGuide.Core.Models;
+#if ANDROID
+using Android.App;
+using Android.Content;
+using Android.OS;
+using VinhKhanhGuide.App.Platforms.Android.Services;
+#endif
 
 namespace VinhKhanhGuide.App.Services;
 
@@ -12,18 +18,56 @@ public class LocationService : ILocationService
 
     public event EventHandler<LocationDto>? LocationUpdated;
 
+#if !ANDROID
     private CancellationTokenSource? _cts;
     private Task? _listeningTask;
+#endif
+
+    public LocationService()
+    {
+#if ANDROID
+        LocationForegroundServiceHub.LocationUpdated += OnAndroidForegroundLocationUpdated;
+#endif
+    }
 
     public async Task<bool> EnsurePermissionAsync(bool requestIfNeeded = true)
     {
-        var permissionStatus = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
-        if (permissionStatus != PermissionStatus.Granted && requestIfNeeded)
+        var locationWhenInUseStatus = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+        if (locationWhenInUseStatus != PermissionStatus.Granted && requestIfNeeded)
         {
-            permissionStatus = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+            locationWhenInUseStatus = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
         }
 
-        return permissionStatus == PermissionStatus.Granted;
+        if (locationWhenInUseStatus != PermissionStatus.Granted)
+        {
+            return false;
+        }
+
+#if ANDROID
+        if (requestIfNeeded)
+        {
+            try
+            {
+                await Permissions.RequestAsync<Permissions.LocationAlways>();
+            }
+            catch
+            {
+            }
+
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+            {
+                try
+                {
+                    await Permissions.RequestAsync<Permissions.PostNotifications>();
+                }
+                catch
+                {
+                }
+            }
+        }
+#endif
+
+        return true;
     }
 
     public async Task<LocationDto?> GetCurrentLocationAsync(CancellationToken cancellationToken = default)
@@ -36,7 +80,7 @@ public class LocationService : ILocationService
 
             return ToDto(location);
         }
-        catch (OperationCanceledException)
+        catch (System.OperationCanceledException)
         {
             throw;
         }
@@ -49,25 +93,57 @@ public class LocationService : ILocationService
 
     public async Task StartListeningAsync()
     {
-        if (_listeningTask is { IsCompleted: false })
-        {
-            return;
-        }
-
         var hasPermission = await EnsurePermissionAsync();
         if (!hasPermission)
         {
             throw new InvalidOperationException("Chưa được cấp quyền truy cập vị trí.");
         }
 
+#if ANDROID
+        if (!LocationForegroundServiceHub.IsRunning)
+        {
+            var context = global::Android.App.Application.Context;
+            var intent = LocationForegroundService.CreateStartIntent(context);
+
+            if (OperatingSystem.IsAndroidVersionAtLeast(26))
+            {
+                context.StartForegroundService(intent);
+            }
+            else
+            {
+                context.StartService(intent);
+            }
+        }
+
+        var firstLocation = await GetCurrentLocationAsync();
+        PublishLocation(firstLocation);
+        return;
+#else
+        if (_listeningTask is { IsCompleted: false })
+        {
+            return;
+        }
+
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
         _listeningTask = ListenLoopAsync(_cts.Token);
+#endif
     }
 
     public async Task StopListeningAsync()
     {
+#if ANDROID
+        if (!LocationForegroundServiceHub.IsRunning)
+        {
+            return;
+        }
+
+        var context = global::Android.App.Application.Context;
+        context.StartService(LocationForegroundService.CreateStopIntent(context));
+        await Task.CompletedTask;
+        return;
+#else
         if (_cts is null)
         {
             return;
@@ -89,8 +165,10 @@ public class LocationService : ILocationService
         _cts.Dispose();
         _cts = null;
         _listeningTask = null;
+#endif
     }
 
+#if !ANDROID
     private async Task ListenLoopAsync(CancellationToken cancellationToken)
     {
         var firstLocation = await GetCurrentLocationAsync(cancellationToken);
@@ -122,6 +200,7 @@ public class LocationService : ILocationService
             }
         }
     }
+#endif
 
     private void PublishLocation(Location? location)
     {
@@ -143,6 +222,13 @@ public class LocationService : ILocationService
 
         LocationUpdated?.Invoke(this, location);
     }
+
+#if ANDROID
+    private void OnAndroidForegroundLocationUpdated(object? sender, LocationDto location)
+    {
+        PublishLocation(location);
+    }
+#endif
 
     private static LocationDto? ToDto(Location? location)
     {

@@ -39,10 +39,13 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<IAuthService, AuthService>();
         builder.Services.AddSingleton<IAudioSettingsService, AudioSettingsService>();
+        builder.Services.AddSingleton<IAudioAssetCacheService, AudioAssetCacheService>();
         builder.Services.AddSingleton<IAccountProfileValidationService, AccountProfileValidationService>();
         builder.Services.AddSingleton<IUsageHistoryService, UsageHistoryService>();
         builder.Services.AddSingleton<IListeningHistorySyncService, ListeningHistorySyncService>();
         builder.Services.AddSingleton<ILocationService, LocationService>();
+        builder.Services.AddSingleton<IMapOfflineTileService, MapOfflineTileService>();
+        builder.Services.AddSingleton<IPoiOfflineStore, PoiOfflineStore>();
         builder.Services.AddSingleton<IPoiProvider, PoiProvider>();
         builder.Services.AddSingleton<IPoiRepository, PoiRepository>();
         builder.Services.AddSingleton<ISearchService, SearchService>();
@@ -56,6 +59,9 @@ public static class MauiProgram
         builder.Services.AddTransient<Views.AuthPage>();
         builder.Services.AddTransient<Views.PoiDetailPage>();
 
-        return builder.Build();
+        var app = builder.Build();
+        MapTileHttpClientFactory.ConfigureOfflineTileService(
+            app.Services.GetRequiredService<IMapOfflineTileService>());
+        return app;
     }
 }

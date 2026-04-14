@@ -9,8 +9,14 @@ internal static class MapTileHttpClientFactory
     public const string UserAgent = "VinhKhanhGuideApp/1.0";
 
     private static readonly Lazy<HttpClient> SharedClientValue = new(CreateHttpClient);
+    private static IMapOfflineTileService? _offlineTileService;
 
     public static HttpClient SharedClient => SharedClientValue.Value;
+
+    public static void ConfigureOfflineTileService(IMapOfflineTileService offlineTileService)
+    {
+        _offlineTileService = offlineTileService;
+    }
 
     public static void ConfigureRequest(HttpRequestMessage request)
     {
@@ -35,8 +41,9 @@ internal static class MapTileHttpClientFactory
         };
 
         var loggingHandler = new TileLoggingHandler(socketsHandler);
+        var offlineCacheHandler = new TileOfflineCacheHandler(loggingHandler);
 
-        return new HttpClient(loggingHandler, disposeHandler: true)
+        return new HttpClient(offlineCacheHandler, disposeHandler: true)
         {
             Timeout = TimeSpan.FromSeconds(20),
             DefaultRequestVersion = HttpVersion.Version11,
@@ -64,6 +71,32 @@ internal static class MapTileHttpClientFactory
                 Debug.WriteLine($"[MapTile] {request.RequestUri} failed: {ex}");
                 throw;
             }
+        }
+    }
+
+    private sealed class TileOfflineCacheHandler(HttpMessageHandler innerHandler) : DelegatingHandler(innerHandler)
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            var offlineTileService = _offlineTileService;
+            if (offlineTileService is not null)
+            {
+                var cachedTile = await offlineTileService.TryGetCachedTileAsync(request.RequestUri, cancellationToken);
+                if (cachedTile is not null)
+                {
+                    var cachedResponse = new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        RequestMessage = request,
+                        Content = new ByteArrayContent(cachedTile)
+                    };
+                    cachedResponse.Content.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+                    return cachedResponse;
+                }
+            }
+
+            return await base.SendAsync(request, cancellationToken);
         }
     }
 }

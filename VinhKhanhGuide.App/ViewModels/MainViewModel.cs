@@ -32,13 +32,16 @@ public class MainViewModel : INotifyPropertyChanged
 
     private readonly ILocationService _locationService;
     private readonly IPoiRepository _poiRepository;
+    private readonly IPoiOfflineStore _poiOfflineStore;
     private readonly ISearchService _searchService;
     private readonly INarrationService _narrationService;
     private readonly IAuthService _authService;
     private readonly IAudioSettingsService _audioSettingsService;
+    private readonly IAudioAssetCacheService _audioAssetCacheService;
     private readonly IAccountProfileValidationService _accountProfileValidationService;
     private readonly IUsageHistoryService _usageHistoryService;
     private readonly IListeningHistorySyncService _listeningHistorySyncService;
+    private readonly IMapOfflineTileService _mapOfflineTileService;
     private readonly GeofenceEngine _geofenceEngine;
     private readonly SemaphoreSlim _locationUpdateGate = new(1, 1);
     private readonly SemaphoreSlim _listeningHistoryRefreshGate = new(1, 1);
@@ -99,7 +102,13 @@ public class MainViewModel : INotifyPropertyChanged
     private bool _isPreviewingAudioSettings;
     private string _audioSettingsErrorMessage = string.Empty;
     private string _audioSettingsSuccessMessage = string.Empty;
+    private bool _isSyncingOfflinePackage;
+    private string _offlinePackageErrorMessage = string.Empty;
+    private string _offlinePackageSuccessMessage = string.Empty;
     private string _searchResultStatusText = string.Empty;
+    private OfflineContentStatus _offlineContentStatus = new();
+    private OfflineMapStatus _offlineMapStatus = new();
+    private AudioCacheStatus _audioCacheStatus = new();
 
     private bool _isListeningHistoryLoading;
     private string _listeningHistoryLoadError = string.Empty;
@@ -111,24 +120,30 @@ public class MainViewModel : INotifyPropertyChanged
     public MainViewModel(
         ILocationService locationService,
         IPoiRepository poiRepository,
+        IPoiOfflineStore poiOfflineStore,
         ISearchService searchService,
         INarrationService narrationService,
         IAuthService authService,
         IAudioSettingsService audioSettingsService,
+        IAudioAssetCacheService audioAssetCacheService,
         IAccountProfileValidationService accountProfileValidationService,
         IUsageHistoryService usageHistoryService,
         IListeningHistorySyncService listeningHistorySyncService,
+        IMapOfflineTileService mapOfflineTileService,
         GeofenceEngine geofenceEngine)
     {
         _locationService = locationService;
         _poiRepository = poiRepository;
+        _poiOfflineStore = poiOfflineStore;
         _searchService = searchService;
         _narrationService = narrationService;
         _authService = authService;
         _audioSettingsService = audioSettingsService;
+        _audioAssetCacheService = audioAssetCacheService;
         _accountProfileValidationService = accountProfileValidationService;
         _usageHistoryService = usageHistoryService;
         _listeningHistorySyncService = listeningHistorySyncService;
+        _mapOfflineTileService = mapOfflineTileService;
         _geofenceEngine = geofenceEngine;
 
         _locationService.LocationUpdated += OnLocationUpdated;
@@ -152,6 +167,8 @@ public class MainViewModel : INotifyPropertyChanged
         PreviewAudioSettingsCommand = new Command(async () => await PreviewAudioSettingsAsync(), () => CanPreviewAudioSettings);
         SaveAudioSettingsCommand = new Command(async () => await SaveAudioSettingsAsync(), () => CanSaveAudioSettings);
         ResetAudioSettingsCommand = new Command(ResetAudioSettingsDraft, () => CanResetAudioSettings);
+        DownloadOfflinePackageCommand = new Command(async () => await DownloadOfflinePackageAsync(), () => CanDownloadOfflinePackage);
+        ClearOfflinePackageCommand = new Command(async () => await ClearOfflinePackageAsync(), () => CanClearOfflinePackage);
 
         SyncCurrentUser();
         LoadPersistedState();
@@ -199,6 +216,8 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand PreviewAudioSettingsCommand { get; }
     public ICommand SaveAudioSettingsCommand { get; }
     public ICommand ResetAudioSettingsCommand { get; }
+    public ICommand DownloadOfflinePackageCommand { get; }
+    public ICommand ClearOfflinePackageCommand { get; }
 
     public IReadOnlyList<POI> Pois => _pois;
     public LocationDto? LastLocation => _lastLocation;
@@ -678,6 +697,83 @@ public class MainViewModel : INotifyPropertyChanged
 
     public bool HasAudioSettingsSuccess => !string.IsNullOrWhiteSpace(AudioSettingsSuccessMessage);
 
+    public bool IsSyncingOfflinePackage
+    {
+        get => _isSyncingOfflinePackage;
+        private set
+        {
+            if (!SetProperty(ref _isSyncingOfflinePackage, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(CanDownloadOfflinePackage));
+            OnPropertyChanged(nameof(CanClearOfflinePackage));
+            UpdateOfflinePackageCommandStates();
+        }
+    }
+
+    public string OfflinePackageErrorMessage
+    {
+        get => _offlinePackageErrorMessage;
+        private set
+        {
+            if (!SetProperty(ref _offlinePackageErrorMessage, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasOfflinePackageError));
+        }
+    }
+
+    public bool HasOfflinePackageError => !string.IsNullOrWhiteSpace(OfflinePackageErrorMessage);
+
+    public string OfflinePackageSuccessMessage
+    {
+        get => _offlinePackageSuccessMessage;
+        private set
+        {
+            if (!SetProperty(ref _offlinePackageSuccessMessage, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasOfflinePackageSuccess));
+        }
+    }
+
+    public bool HasOfflinePackageSuccess => !string.IsNullOrWhiteSpace(OfflinePackageSuccessMessage);
+
+    public bool CanDownloadOfflinePackage => !IsSyncingOfflinePackage;
+
+    public bool CanClearOfflinePackage =>
+        !IsSyncingOfflinePackage &&
+        (_offlineContentStatus.HasSnapshot || _offlineMapStatus.HasCachedTiles || _audioCacheStatus.HasCachedAssets);
+
+    public string OfflineContentSummary =>
+        _offlineContentStatus.HasSnapshot
+            ? $"{_offlineContentStatus.PoiCount} POI trong SQLite • {FormatTimestamp(_offlineContentStatus.LastSyncedAtUtc, "chưa có mốc đồng bộ")}"
+            : "Chưa có snapshot POI SQLite trên thiết bị.";
+
+    public string OfflineMapSummary =>
+        $"{_offlineMapStatus.CachedTileCount}/{_offlineMapStatus.PlannedTileCount} tile bản đồ khu Vĩnh Khánh • {FormatFileSize(_offlineMapStatus.CachedBytes)}";
+
+    public string OfflineMapDetail =>
+        _offlineMapStatus.IsReady
+            ? "Các tile chính của khu vực luận văn đã sẵn sàng để dùng khi mất mạng."
+            : "App sẽ ưu tiên tile local trước. Các ô chưa tải sẽ không hiển thị khi mất mạng.";
+
+    public string OfflineAudioSummary =>
+        !_audioCacheStatus.HasPublishedAssets
+            ? "Hiện dữ liệu quán chưa công bố file audio thu sẵn."
+            : $"{_audioCacheStatus.CachedAssetCount}/{_audioCacheStatus.AvailableAssetCount} audio asset • {FormatFileSize(_audioCacheStatus.CachedBytes)}";
+
+    public string OfflineAudioDetail =>
+        _audioCacheStatus.HasPublishedAssets
+            ? $"Audio offline gần nhất: {FormatTimestamp(_audioCacheStatus.LastPreparedAtUtc, "chưa có mốc tải gói")}."
+            : "Khi backend bổ sung `AudioAssetPath`, nút tải gói sẽ tải trước các file này xuống máy.";
+
     public bool HasPendingAudioSettingsChanges =>
         !string.Equals(DraftSelectedLanguage, SelectedLanguage, StringComparison.OrdinalIgnoreCase) ||
         !string.Equals(DraftSelectedPlaybackMode, SelectedPlaybackMode, StringComparison.OrdinalIgnoreCase) ||
@@ -866,12 +962,14 @@ public class MainViewModel : INotifyPropertyChanged
         if (_isInitialized)
         {
             await RefreshPoisIfChangedAsync();
+            await RefreshOfflinePackageStatusAsync();
             return;
         }
 
         StatusText = "Đang tải danh sách quán...";
         await RefreshPoisIfChangedAsync(forceRefresh: true);
         await InitializeMapFlowAsync();
+        await RefreshOfflinePackageStatusAsync();
         _isInitialized = true;
     }
 
@@ -2528,6 +2626,126 @@ public class MainViewModel : INotifyPropertyChanged
         AudioSettingsSuccessMessage = string.Empty;
     }
 
+    private async Task DownloadOfflinePackageAsync()
+    {
+        if (!CanDownloadOfflinePackage)
+        {
+            return;
+        }
+
+        ClearOfflinePackageFeedback();
+        IsSyncingOfflinePackage = true;
+
+        try
+        {
+            var pois = await _poiRepository.GetPoisAsync();
+            var mapResult = await _mapOfflineTileService.PrefetchAsync();
+            var audioResult = await _audioAssetCacheService.PrefetchAsync(pois);
+
+            await RefreshOfflinePackageStatusAsync();
+
+            var successMessage =
+                $"Đã cập nhật gói offline: SQLite {_offlineContentStatus.PoiCount} POI, map {mapResult.CachedTileCount}/{mapResult.PlannedTileCount} tile, audio {audioResult.CachedAssetCount}/{audioResult.AvailableAssetCount} asset.";
+
+            var notes = new List<string>();
+            if (mapResult.FailedTileCount > 0)
+            {
+                notes.Add($"Map còn {mapResult.FailedTileCount} tile chưa tải được");
+            }
+
+            if (audioResult.FailedAssetCount > 0)
+            {
+                notes.Add($"Audio còn {audioResult.FailedAssetCount} asset chưa tải được");
+            }
+
+            if (audioResult.AvailableAssetCount == 0)
+            {
+                notes.Add("Dữ liệu quán hiện chưa có audio thu sẵn để tải");
+            }
+
+            OfflinePackageSuccessMessage = notes.Count == 0
+                ? successMessage
+                : $"{successMessage} {string.Join(". ", notes)}.";
+
+            AddLog($"{NowLabel()} Cập nhật gói offline trên thiết bị");
+        }
+        catch (Exception ex)
+        {
+            OfflinePackageErrorMessage = $"Không thể cập nhật gói offline: {ex.Message}";
+        }
+        finally
+        {
+            IsSyncingOfflinePackage = false;
+        }
+    }
+
+    private async Task ClearOfflinePackageAsync()
+    {
+        if (!CanClearOfflinePackage)
+        {
+            return;
+        }
+
+        ClearOfflinePackageFeedback();
+        IsSyncingOfflinePackage = true;
+
+        try
+        {
+            await _mapOfflineTileService.ClearAsync();
+            await _audioAssetCacheService.ClearAsync();
+            await _poiOfflineStore.ClearAsync();
+            await RefreshOfflinePackageStatusAsync();
+
+            OfflinePackageSuccessMessage = "Đã xóa gói offline trên thiết bị.";
+            AddLog($"{NowLabel()} Xóa gói offline trên thiết bị");
+        }
+        catch (Exception ex)
+        {
+            OfflinePackageErrorMessage = $"Không thể xóa gói offline: {ex.Message}";
+        }
+        finally
+        {
+            IsSyncingOfflinePackage = false;
+        }
+    }
+
+    private async Task RefreshOfflinePackageStatusAsync(CancellationToken cancellationToken = default)
+    {
+        var offlinePois = await _poiOfflineStore.GetPoisAsync(cancellationToken);
+        var lastSyncedAt = await _poiOfflineStore.GetLastSyncedAtAsync(cancellationToken);
+        var mapStatus = await _mapOfflineTileService.GetStatusAsync(cancellationToken);
+        var audioStatus = await _audioAssetCacheService.GetStatusAsync(
+            _pois.Count > 0 ? _pois : offlinePois,
+            cancellationToken);
+
+        _offlineContentStatus = new OfflineContentStatus
+        {
+            PoiCount = offlinePois.Count,
+            LastSyncedAtUtc = lastSyncedAt
+        };
+        _offlineMapStatus = mapStatus;
+        _audioCacheStatus = audioStatus;
+
+        RaiseOfflinePackageStateChanged();
+    }
+
+    private async Task RefreshOfflinePackageStatusSafeAsync()
+    {
+        try
+        {
+            await RefreshOfflinePackageStatusAsync();
+        }
+        catch
+        {
+        }
+    }
+
+    private void ClearOfflinePackageFeedback()
+    {
+        OfflinePackageErrorMessage = string.Empty;
+        OfflinePackageSuccessMessage = string.Empty;
+    }
+
     private void LoadPersistedState()
     {
         LoadUserPreferences();
@@ -2538,6 +2756,7 @@ public class MainViewModel : INotifyPropertyChanged
         RaiseListeningHistoryStateChanged();
         RaiseViewHistoryStateChanged();
         TriggerListeningHistoryRefresh();
+        _ = RefreshOfflinePackageStatusSafeAsync();
     }
 
     private ListeningHistoryDisplayItem? FindListeningHistoryItem(Guid historyId)
@@ -2821,6 +3040,25 @@ public class MainViewModel : INotifyPropertyChanged
         (ResetAudioSettingsCommand as Command)?.ChangeCanExecute();
     }
 
+    private void RaiseOfflinePackageStateChanged()
+    {
+        OnPropertyChanged(nameof(CanClearOfflinePackage));
+        OnPropertyChanged(nameof(OfflineContentSummary));
+        OnPropertyChanged(nameof(OfflineMapSummary));
+        OnPropertyChanged(nameof(OfflineMapDetail));
+        OnPropertyChanged(nameof(OfflineAudioSummary));
+        OnPropertyChanged(nameof(OfflineAudioDetail));
+        UpdateOfflinePackageCommandStates();
+    }
+
+    private void UpdateOfflinePackageCommandStates()
+    {
+        OnPropertyChanged(nameof(CanDownloadOfflinePackage));
+        OnPropertyChanged(nameof(CanClearOfflinePackage));
+        (DownloadOfflinePackageCommand as Command)?.ChangeCanExecute();
+        (ClearOfflinePackageCommand as Command)?.ChangeCanExecute();
+    }
+
     private POI? GetAudioPreviewPoi()
     {
         return _selectedPoi ?? _pois.FirstOrDefault();
@@ -2944,6 +3182,33 @@ public class MainViewModel : INotifyPropertyChanged
         return normalized.Length <= 150
             ? normalized
             : $"{normalized[..147].TrimEnd()}...";
+    }
+
+    private static string FormatTimestamp(DateTimeOffset? timestamp, string emptyText)
+    {
+        return timestamp.HasValue
+            ? $"cập nhật {timestamp.Value.ToLocalTime():HH:mm dd/MM}"
+            : emptyText;
+    }
+
+    private static string FormatFileSize(long byteCount)
+    {
+        if (byteCount <= 0)
+        {
+            return "0 B";
+        }
+
+        string[] units = ["B", "KB", "MB", "GB"];
+        var size = (double)byteCount;
+        var unitIndex = 0;
+
+        while (size >= 1024 && unitIndex < units.Length - 1)
+        {
+            size /= 1024;
+            unitIndex++;
+        }
+
+        return $"{size:0.#} {units[unitIndex]}";
     }
 
     private readonly record struct PlaybackRequest(

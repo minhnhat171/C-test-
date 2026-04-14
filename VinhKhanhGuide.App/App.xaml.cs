@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Graphics;
 using VinhKhanhGuide.App.Services;
@@ -27,9 +28,28 @@ public partial class App : Application
 
     private void UpdateRootPage()
     {
-        MainPage = _authService.IsAuthenticated
-            ? _serviceProvider.GetRequiredService<AppShell>()
-            : CreateAuthRootPage();
+        if (!_authService.IsAuthenticated)
+        {
+            MainPage = CreateAuthRootPage();
+            return;
+        }
+
+        try
+        {
+            MainPage = _serviceProvider.GetRequiredService<AppShell>();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[App] Failed to create AppShell: {ex}");
+
+            var fallbackRoot = CreateAuthRootPage();
+            MainPage = fallbackRoot;
+
+            _ = fallbackRoot.CurrentPage.DisplayAlert(
+                "Không thể mở ứng dụng",
+                $"Có lỗi khi khởi tạo giao diện chính: {ex.Message}",
+                "OK");
+        }
     }
 
     private NavigationPage CreateAuthRootPage()

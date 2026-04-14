@@ -1199,6 +1199,112 @@
                                     StrokeShape="RoundRectangle 22">
                                 <VerticalStackLayout Spacing="14">
                                     <VerticalStackLayout Spacing="4">
+                                        <Label Text="Gói offline"
+                                               FontSize="18"
+                                               FontAttributes="Bold"
+                                               TextColor="#161616" />
+                                        <Label Text="Tải trước dữ liệu POI SQLite, tile bản đồ khu Vĩnh Khánh và audio asset đã được cấu hình để app chịu lỗi tốt hơn khi mất mạng."
+                                               FontSize="12"
+                                               TextColor="#6B7280" />
+                                    </VerticalStackLayout>
+
+                                    <Border BackgroundColor="#F7F4EF"
+                                            StrokeThickness="0"
+                                            Padding="14"
+                                            StrokeShape="RoundRectangle 18">
+                                        <VerticalStackLayout Spacing="12">
+                                            <VerticalStackLayout Spacing="4">
+                                                <Label Text="Dữ liệu nội dung"
+                                                       FontSize="13"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#374151" />
+                                                <Label Text="{Binding OfflineContentSummary}"
+                                                       FontSize="12"
+                                                       TextColor="#111827" />
+                                            </VerticalStackLayout>
+
+                                            <VerticalStackLayout Spacing="4">
+                                                <Label Text="Bản đồ ngoại tuyến"
+                                                       FontSize="13"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#374151" />
+                                                <Label Text="{Binding OfflineMapSummary}"
+                                                       FontSize="12"
+                                                       TextColor="#111827" />
+                                                <Label Text="{Binding OfflineMapDetail}"
+                                                       FontSize="12"
+                                                       TextColor="#6B7280" />
+                                            </VerticalStackLayout>
+
+                                            <VerticalStackLayout Spacing="4">
+                                                <Label Text="Audio ngoại tuyến"
+                                                       FontSize="13"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#374151" />
+                                                <Label Text="{Binding OfflineAudioSummary}"
+                                                       FontSize="12"
+                                                       TextColor="#111827" />
+                                                <Label Text="{Binding OfflineAudioDetail}"
+                                                       FontSize="12"
+                                                       TextColor="#6B7280" />
+                                            </VerticalStackLayout>
+                                        </VerticalStackLayout>
+                                    </Border>
+
+                                    <Border BackgroundColor="#FDEEEE"
+                                            Stroke="#E4B6B0"
+                                            StrokeThickness="1"
+                                            Padding="14,12"
+                                            StrokeShape="RoundRectangle 18"
+                                            IsVisible="{Binding HasOfflinePackageError}">
+                                        <Label Text="{Binding OfflinePackageErrorMessage}"
+                                               FontSize="13"
+                                               TextColor="#A53A32" />
+                                    </Border>
+
+                                    <Border BackgroundColor="#ECFDF3"
+                                            Stroke="#BBE3CB"
+                                            StrokeThickness="1"
+                                            Padding="14,12"
+                                            StrokeShape="RoundRectangle 18"
+                                            IsVisible="{Binding HasOfflinePackageSuccess}">
+                                        <Label Text="{Binding OfflinePackageSuccessMessage}"
+                                               FontSize="13"
+                                               TextColor="#166534" />
+                                    </Border>
+
+                                    <ActivityIndicator IsRunning="{Binding IsSyncingOfflinePackage}"
+                                                       IsVisible="{Binding IsSyncingOfflinePackage}"
+                                                       Color="#173A43" />
+
+                                    <Grid ColumnDefinitions="*,*"
+                                          ColumnSpacing="10">
+                                        <Button Text="Tải gói offline"
+                                                Command="{Binding DownloadOfflinePackageCommand}"
+                                                IsEnabled="{Binding CanDownloadOfflinePackage}"
+                                                BackgroundColor="#173A43"
+                                                TextColor="White"
+                                                CornerRadius="16"
+                                                Padding="12,10" />
+
+                                        <Button Grid.Column="1"
+                                                Text="Xóa gói"
+                                                Command="{Binding ClearOfflinePackageCommand}"
+                                                IsEnabled="{Binding CanClearOfflinePackage}"
+                                                BackgroundColor="#FFF2E7"
+                                                TextColor="#9A3412"
+                                                CornerRadius="16"
+                                                Padding="12,10" />
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border BackgroundColor="#FFFFFF"
+                                    StrokeThickness="0"
+                                    Padding="16"
+                                    StrokeShape="RoundRectangle 22">
+                                <VerticalStackLayout Spacing="14">
+                                    <VerticalStackLayout Spacing="4">
                                         <Label Text="Hồ sơ cá nhân"
                                                FontSize="18"
                                                FontAttributes="Bold"

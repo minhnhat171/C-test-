@@ -3,7 +3,6 @@ using VinhKhanhGuide.Core.Interfaces;
 using VinhKhanhGuide.Core.Models;
 #if ANDROID
 using Android.Media;
-using Microsoft.Maui.Storage;
 #endif
 
 namespace VinhKhanhGuide.App.Services;
@@ -13,9 +12,15 @@ public class NarrationService : INarrationService
     private readonly object _speechSync = new();
     private CancellationTokenSource? _activeSpeechCts;
     private readonly object _audioSync = new();
+    private readonly IAudioAssetCacheService _audioAssetCacheService;
 #if ANDROID
     private MediaPlayer? _activeAudioPlayer;
 #endif
+
+    public NarrationService(IAudioAssetCacheService audioAssetCacheService)
+    {
+        _audioAssetCacheService = audioAssetCacheService;
+    }
 
     public Task NarrateAsync(
         POI poi,
@@ -168,7 +173,7 @@ public class NarrationService : INarrationService
 #if ANDROID
     private async Task PlayAudioAsync(string audioAssetPath, CancellationToken cancellationToken)
     {
-        var resolvedSource = await ResolveAudioSourceAsync(audioAssetPath);
+        var resolvedSource = await _audioAssetCacheService.ResolveAsync(audioAssetPath, cancellationToken);
         var playbackCompleted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var player = new MediaPlayer();
         var audioAttributesBuilder = new AudioAttributes.Builder()
@@ -230,32 +235,6 @@ public class NarrationService : INarrationService
         {
             ReleaseAudioPlayer(player);
         }
-    }
-
-    private static async Task<string> ResolveAudioSourceAsync(string audioAssetPath)
-    {
-        if (Uri.TryCreate(audioAssetPath, UriKind.Absolute, out var sourceUri) &&
-            (sourceUri.Scheme == Uri.UriSchemeHttp ||
-             sourceUri.Scheme == Uri.UriSchemeHttps ||
-             sourceUri.Scheme == Uri.UriSchemeFile))
-        {
-            return audioAssetPath;
-        }
-
-        var normalizedPath = audioAssetPath.Trim().TrimStart('/', '\\');
-        var cachedFileName = normalizedPath
-            .Replace('/', '_')
-            .Replace('\\', '_');
-        var cachedFilePath = Path.Combine(FileSystem.CacheDirectory, cachedFileName);
-
-        if (!File.Exists(cachedFilePath))
-        {
-            await using var sourceStream = await FileSystem.OpenAppPackageFileAsync(normalizedPath);
-            await using var destinationStream = File.Create(cachedFilePath);
-            await sourceStream.CopyToAsync(destinationStream);
-        }
-
-        return cachedFilePath;
     }
 
     private void ReplaceActiveAudioPlayer(MediaPlayer nextPlayer)

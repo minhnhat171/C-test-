@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
+using System.Diagnostics;
 using VinhKhanhGuide.App.Models;
 using VinhKhanhGuide.App.Services;
 using VinhKhanhGuide.App.ViewModels;
@@ -62,6 +63,14 @@ public partial class MainPage : ContentPage
             InitializeMapsui();
             await _viewModel.InitializeAsync();
             RefreshMapPins(centerOnSelection: !_initialViewportSet);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[MainPage] OnAppearing initialization failed: {ex}");
+            await DisplayAlert(
+                "Không thể mở trang chính",
+                $"Có lỗi khi tải dữ liệu hoặc bản đồ: {ex.Message}",
+                "OK");
         }
         finally
         {
