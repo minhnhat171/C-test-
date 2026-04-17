@@ -12,6 +12,7 @@ using System.Diagnostics;
 using VinhKhanhGuide.App.Models;
 using VinhKhanhGuide.App.Services;
 using VinhKhanhGuide.App.ViewModels;
+using VinhKhanhGuide.App.Views;
 using VinhKhanhGuide.Core.Models;
 
 namespace VinhKhanhGuide.App;
@@ -127,6 +128,24 @@ public partial class MainPage : ContentPage
 
         RefreshMapPins(centerOnSelection: false);
         CenterMapOnEntrance(RestaurantMap, PreviewEntranceResolution);
+    }
+
+    private async void OnFeaturedDishSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (e.CurrentSelection.FirstOrDefault() is not FoodCategoryItem item)
+        {
+            return;
+        }
+
+        _viewModel.ShowFeaturedDishCategory(item.Key);
+
+        var page = _serviceProvider.GetRequiredService<FeaturedDishCategoryPage>();
+        await Navigation.PushAsync(page);
+
+        if (sender is CollectionView collectionView)
+        {
+            collectionView.SelectedItem = null;
+        }
     }
 
     private void OnOpenListeningHistoryClicked(object? sender, TappedEventArgs e)

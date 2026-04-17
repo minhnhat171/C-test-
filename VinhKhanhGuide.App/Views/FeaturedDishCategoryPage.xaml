@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="VinhKhanhGuide.App.Views.FeaturedDishCategoryPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Món nổi bật"
+    BackgroundColor="#FBF8F4"
+    Shell.NavBarIsVisible="True">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,24,20,28" Spacing="18">
+            <Border BackgroundColor="#173A43"
+                    StrokeThickness="0"
+                    Padding="18"
+                    StrokeShape="RoundRectangle 26">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{Binding SelectedFeaturedDishCategoryName, StringFormat='Nhóm món: {0}'}"
+                           FontSize="26"
+                           FontAttributes="Bold"
+                           TextColor="#FFF9F2" />
+
+                    <Label Text="{Binding SelectedFeaturedDishCategorySummary}"
+                           FontSize="13"
+                           TextColor="#D9EEE7"
+                           LineBreakMode="WordWrap" />
+
+                    <Border BackgroundColor="#FDE7D7"
+                            StrokeThickness="0"
+                            Padding="12,8"
+                            HorizontalOptions="Start"
+                            StrokeShape="RoundRectangle 16">
+                        <Label Text="{Binding SelectedFeaturedDishResultsText}"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               TextColor="#7C2D12" />
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Spacing="14"
+                                 BindableLayout.ItemsSource="{Binding SelectedFeaturedDishItems}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate>
+                        <Border BackgroundColor="#FFFFFF"
+                                StrokeThickness="0"
+                                Padding="14"
+                                StrokeShape="RoundRectangle 24">
+                            <VerticalStackLayout Spacing="12">
+                                <Border BackgroundColor="#F5F1EA"
+                                        StrokeThickness="0"
+                                        HeightRequest="220"
+                                        StrokeShape="RoundRectangle 20">
+                                    <Image Source="{Binding ImageSource}"
+                                           Aspect="AspectFill" />
+                                </Border>
+
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="10">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="{Binding Name}"
+                                               FontSize="20"
+                                               FontAttributes="Bold"
+                                               TextColor="#161616" />
+
+                                        <Label Text="{Binding ShortDescription}"
+                                               FontSize="13"
+                                               TextColor="#4B5563"
+                                               LineBreakMode="WordWrap" />
+                                    </VerticalStackLayout>
+
+                                    <Border Grid.Column="1"
+                                            BackgroundColor="#FFF2E7"
+                                            StrokeThickness="0"
+                                            Padding="10,6"
+                                            VerticalOptions="Start"
+                                            StrokeShape="RoundRectangle 14">
+                                        <Label Text="{Binding CategoryName}"
+                                               FontSize="11"
+                                               FontAttributes="Bold"
+                                               TextColor="#9A3412" />
+                                    </Border>
+                                </Grid>
+
+                                <Border BackgroundColor="#F6FBFA"
+                                        StrokeThickness="0"
+                                        Padding="12"
+                                        StrokeShape="RoundRectangle 18">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="Giá tham khảo"
+                                               FontSize="11"
+                                               FontAttributes="Bold"
+                                               TextColor="#2F5D62" />
+
+                                        <Label Text="{Binding StartingPriceLabel}"
+                                               FontSize="18"
+                                               FontAttributes="Bold"
+                                               TextColor="#173A43" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

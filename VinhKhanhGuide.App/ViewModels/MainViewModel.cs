@@ -48,6 +48,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly Dictionary<Guid, DateTimeOffset> _lastNarratedAt = new();
     private readonly HashSet<Guid> _insidePoiIds = [];
     private readonly List<string> _recentSearches = [];
+    private readonly IReadOnlyList<FeaturedDishItem> _featuredDishCatalog;
 
     private IReadOnlyList<POI> _pois = Array.Empty<POI>();
     private IReadOnlyList<TourDto> _tours = Array.Empty<TourDto>();
@@ -85,6 +86,9 @@ public class MainViewModel : INotifyPropertyChanged
     private string _selectedPoiNarrationPreview = string.Empty;
     private string _selectedPoiMapLink = string.Empty;
     private string _selectedPoiImageSource = string.Empty;
+    private string _selectedFeaturedDishCategoryName = "Món nổi bật";
+    private string _selectedFeaturedDishCategorySummary =
+        "Chạm vào Bò, Lẩu, Ốc hoặc Cua để xem danh sách món nổi bật theo từng nhóm.";
     private string _selectedLanguage = "vi";
     private string _selectedPlaybackMode = DefaultNarrationMode;
     private string _draftSelectedLanguage = "vi";
@@ -151,14 +155,45 @@ public class MainViewModel : INotifyPropertyChanged
         _listeningHistorySyncService = listeningHistorySyncService;
         _mapOfflineTileService = mapOfflineTileService;
         _geofenceEngine = geofenceEngine;
+        _featuredDishCatalog = CreateFeaturedDishCatalog();
 
         _locationService.LocationUpdated += OnLocationUpdated;
         _authService.SessionChanged += OnAuthSessionChanged;
 
-        FeaturedDishes.Add(new FoodCategoryItem { Icon = "🐚", Name = "Ốc" });
-        FeaturedDishes.Add(new FoodCategoryItem { Icon = "🥩", Name = "Bò nướng" });
-        FeaturedDishes.Add(new FoodCategoryItem { Icon = "🍲", Name = "Lẩu" });
-        FeaturedDishes.Add(new FoodCategoryItem { Icon = "🦀", Name = "Cua" });
+        FeaturedDishes.Add(new FoodCategoryItem
+        {
+            Key = "bo",
+            Icon = "🥩",
+            Name = "Bò",
+            Description = "Món bò nướng đậm vị, dễ chọn cho khách mới.",
+            DishCount = CountFeaturedDishes("bo")
+        });
+        FeaturedDishes.Add(new FoodCategoryItem
+        {
+            Key = "lau",
+            Icon = "🍲",
+            Name = "Lẩu",
+            Description = "Các món lẩu nóng hổi cho nhóm bạn hoặc gia đình.",
+            DishCount = CountFeaturedDishes("lau")
+        });
+        FeaturedDishes.Add(new FoodCategoryItem
+        {
+            Key = "oc",
+            Icon = "🐚",
+            Name = "Ốc",
+            Description = "Món ốc nổi bật với vị sốt và nướng quen thuộc.",
+            DishCount = CountFeaturedDishes("oc")
+        });
+        FeaturedDishes.Add(new FoodCategoryItem
+        {
+            Key = "cua",
+            Icon = "🦀",
+            Name = "Cua",
+            Description = "Các món cua đáng chú ý với mức giá mở đầu rõ ràng.",
+            DishCount = CountFeaturedDishes("cua")
+        });
+
+        ShowFeaturedDishCategory("bo");
 
         StartTrackingCommand = new Command(async () => await StartAsync(), () => !IsTracking);
         StopTrackingCommand = new Command(async () => await StopAsync(), () => IsTracking);
@@ -184,6 +219,7 @@ public class MainViewModel : INotifyPropertyChanged
     public event EventHandler? MapStateChanged;
 
     public ObservableCollection<FoodCategoryItem> FeaturedDishes { get; } = new();
+    public ObservableCollection<FeaturedDishItem> SelectedFeaturedDishItems { get; } = new();
     public ObservableCollection<PoiStatusItem> PoiStatuses { get; } = new();
     public ObservableCollection<PoiStatusItem> FilteredPoiStatuses { get; } = new();
     public ObservableCollection<SearchSuggestionItem> SearchSuggestions { get; } = new();
@@ -438,6 +474,23 @@ public class MainViewModel : INotifyPropertyChanged
         get => _selectedPoiImageSource;
         private set => SetProperty(ref _selectedPoiImageSource, value);
     }
+
+    public string SelectedFeaturedDishCategoryName
+    {
+        get => _selectedFeaturedDishCategoryName;
+        private set => SetProperty(ref _selectedFeaturedDishCategoryName, value);
+    }
+
+    public string SelectedFeaturedDishCategorySummary
+    {
+        get => _selectedFeaturedDishCategorySummary;
+        private set => SetProperty(ref _selectedFeaturedDishCategorySummary, value);
+    }
+
+    public string SelectedFeaturedDishResultsText =>
+        SelectedFeaturedDishItems.Count == 0
+            ? "Chưa có món nổi bật trong nhóm này."
+            : $"{SelectedFeaturedDishItems.Count} món đã được sắp xếp theo nhóm {SelectedFeaturedDishCategoryName}.";
 
     public string SelectedLanguage
     {
@@ -1635,6 +1688,22 @@ public class MainViewModel : INotifyPropertyChanged
         ClearSearch();
 
         await _authService.SignOutAsync();
+    }
+
+    public void ShowFeaturedDishCategory(string? categoryKey)
+    {
+        var normalizedCategory = NormalizeFeaturedDishCategoryKey(categoryKey);
+        var category = FeaturedDishes.FirstOrDefault(item =>
+                           string.Equals(item.Key, normalizedCategory, StringComparison.OrdinalIgnoreCase))
+                       ?? FeaturedDishes.First();
+        var dishes = _featuredDishCatalog
+            .Where(item => string.Equals(item.CategoryKey, category.Key, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        ReplaceCollection(SelectedFeaturedDishItems, dishes);
+        SelectedFeaturedDishCategoryName = category.Name;
+        SelectedFeaturedDishCategorySummary = category.Description;
+        OnPropertyChanged(nameof(SelectedFeaturedDishResultsText));
     }
 
     private void EnsurePoiRefreshLoopStarted()
@@ -3781,6 +3850,111 @@ public class MainViewModel : INotifyPropertyChanged
     {
         return SupportedLanguages.Any(item =>
             string.Equals(item.Code, languageCode, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private int CountFeaturedDishes(string categoryKey)
+    {
+        return _featuredDishCatalog.Count(item =>
+            string.Equals(item.CategoryKey, categoryKey, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static IReadOnlyList<FeaturedDishItem> CreateFeaturedDishCatalog()
+    {
+        return
+        [
+            new()
+            {
+                CategoryKey = "bo",
+                CategoryName = "Bò",
+                Name = "Sườn bò nướng",
+                StartingPrice = "89,000 VND",
+                ImageSource = "suon_bo_nuong.jpg",
+                ShortDescription = "Phần sườn bò nướng đậm vị, phù hợp cho khách thích món nướng."
+            },
+            new()
+            {
+                CategoryKey = "bo",
+                CategoryName = "Bò",
+                Name = "Bò nướng miếng",
+                StartingPrice = "79,000 VND",
+                ImageSource = "bo_nuong_mieng.jpg",
+                ShortDescription = "Bò nướng cắt miếng dễ dùng, hợp để gọi chia sẻ theo nhóm."
+            },
+            new()
+            {
+                CategoryKey = "bo",
+                CategoryName = "Bò",
+                Name = "Bò nướng lá lốt",
+                StartingPrice = "79,000 VND",
+                ImageSource = "bo_nuong_la_lot.jpg",
+                ShortDescription = "Món bò cuốn lá lốt thơm mùi đặc trưng, phù hợp khách thích vị truyền thống."
+            },
+            new()
+            {
+                CategoryKey = "lau",
+                CategoryName = "Lẩu",
+                Name = "Lẩu Thái",
+                StartingPrice = "199,000 VND",
+                ImageSource = "lau_thai.jpg",
+                ShortDescription = "Nước lẩu chua cay kiểu Thái, hợp nhóm khách thích vị đậm và nóng."
+            },
+            new()
+            {
+                CategoryKey = "lau",
+                CategoryName = "Lẩu",
+                Name = "Lẩu Hàn Quốc",
+                StartingPrice = "199,000 VND",
+                ImageSource = "lau_han_quoc.jpg",
+                ShortDescription = "Lẩu cay phong cách Hàn Quốc với topping phong phú và dễ gọi theo nhóm."
+            },
+            new()
+            {
+                CategoryKey = "oc",
+                CategoryName = "Ốc",
+                Name = "Ốc hương sốt trứng muối",
+                StartingPrice = "79,000 VND",
+                ImageSource = "oc_huong_sot_trung_muoi.jpg",
+                ShortDescription = "Ốc hương phủ sốt trứng muối béo mặn, là món nổi bật dễ thu hút khách mới."
+            },
+            new()
+            {
+                CategoryKey = "oc",
+                CategoryName = "Ốc",
+                Name = "Ốc nướng mỡ hành",
+                StartingPrice = "69,000 VND",
+                ImageSource = "oc_nuong_mo_hanh.jpg",
+                ShortDescription = "Ốc nướng mỡ hành quen vị, dễ ăn và có mức giá khởi điểm nhẹ hơn."
+            },
+            new()
+            {
+                CategoryKey = "cua",
+                CategoryName = "Cua",
+                Name = "Cua Hoàng đế",
+                StartingPrice = "299,000 VND",
+                ImageSource = "cua_hoang_de.jpg",
+                ShortDescription = "Món cua cao cấp nổi bật, phù hợp nhóm khách muốn trải nghiệm đặc biệt."
+            },
+            new()
+            {
+                CategoryKey = "cua",
+                CategoryName = "Cua",
+                Name = "Cua Cà Mau",
+                StartingPrice = "99,000 VND",
+                ImageSource = "cua_ca_mau.jpg",
+                ShortDescription = "Cua Cà Mau là lựa chọn dễ tiếp cận hơn với mức giá mở đầu rõ ràng."
+            }
+        ];
+    }
+
+    private static string NormalizeFeaturedDishCategoryKey(string? categoryKey)
+    {
+        return categoryKey?.Trim().ToLowerInvariant() switch
+        {
+            "lau" => "lau",
+            "oc" => "oc",
+            "cua" => "cua",
+            _ => "bo"
+        };
     }
 
     private string NormalizeLanguageCode(string? languageCode)

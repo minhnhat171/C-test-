@@ -396,13 +396,20 @@
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="Món nổi bật"
-                           FontSize="18"
-                           TextColor="#5D5D5D" />
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Món nổi bật"
+                               FontSize="18"
+                               TextColor="#5D5D5D" />
+
+                        <Label Text="Chạm vào Bò, Lẩu, Ốc hoặc Cua để mở trang danh sách món theo nhóm."
+                               FontSize="12"
+                               TextColor="#6B7280" />
+                    </VerticalStackLayout>
 
                     <CollectionView ItemsSource="{Binding FeaturedDishes}"
-                                    SelectionMode="None"
-                                    HeightRequest="110">
+                                    SelectionMode="Single"
+                                    SelectionChanged="OnFeaturedDishSelectionChanged"
+                                    HeightRequest="126">
                         <CollectionView.ItemsLayout>
                             <LinearItemsLayout Orientation="Horizontal" ItemSpacing="18" />
                         </CollectionView.ItemsLayout>
@@ -420,10 +427,19 @@
                                                HorizontalTextAlignment="Center"
                                                VerticalTextAlignment="Center" />
                                     </Border>
-                                    <Label Text="{Binding Name}"
-                                           HorizontalTextAlignment="Center"
-                                           FontSize="14"
-                                           TextColor="#2A2A2A" />
+
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="{Binding Name}"
+                                               HorizontalTextAlignment="Center"
+                                               FontSize="14"
+                                               FontAttributes="Bold"
+                                               TextColor="#2A2A2A" />
+
+                                        <Label Text="{Binding CountLabel}"
+                                               HorizontalTextAlignment="Center"
+                                               FontSize="11"
+                                               TextColor="#9A3412" />
+                                    </VerticalStackLayout>
                                 </VerticalStackLayout>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
