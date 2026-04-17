@@ -22,7 +22,6 @@ public class MainViewModel : INotifyPropertyChanged
     private const int MaxRecentSearches = 6;
     private const int MaxSearchSuggestions = 6;
     private const int MaxPinnedRecentSuggestions = 3;
-    private const string UserPreferenceKeyPrefix = "vinhkhanh.user.preferences.v1";
     private static readonly TimeSpan PoiRefreshInterval = TimeSpan.FromSeconds(8);
 
     public const double EntranceLatitude = 10.7614500;
@@ -3664,13 +3663,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     private string GetCurrentUserPreferencePrefix()
     {
-        var scope = _authService.CurrentSession?.ScopeKey;
-        if (string.IsNullOrWhiteSpace(scope))
-        {
-            scope = "guest";
-        }
-
-        return $"{UserPreferenceKeyPrefix}.{scope}";
+        return UserPreferenceScope.BuildAudioSettingsPrefix(_authService.CurrentSession?.ScopeKey);
     }
 
     private void ApplyAudioSettings(AudioSettingsState settings, bool shouldLog)

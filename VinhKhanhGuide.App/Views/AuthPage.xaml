@@ -75,7 +75,7 @@
                                        FontSize="11"
                                        FontAttributes="Bold"
                                        TextColor="#A96A45" />
-                                <Label Text="Mở app"
+                                <Label Text="Chọn ngôn ngữ"
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="#1C4748" />
@@ -94,7 +94,7 @@
                                        FontSize="11"
                                        FontAttributes="Bold"
                                        TextColor="#A96A45" />
-                                <Label Text="Bấm vào nhanh"
+                                <Label Text="Khám phá app"
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="#1C4748" />
@@ -123,6 +123,42 @@
                             </VerticalStackLayout>
                         </Border>
                     </Grid>
+
+                    <Border BackgroundColor="#F6FBFA"
+                            Stroke="#D9E8E6"
+                            StrokeThickness="1"
+                            Padding="16"
+                            StrokeShape="RoundRectangle 22">
+                        <VerticalStackLayout Spacing="10">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding LanguagePromptTitle}"
+                                       FontSize="18"
+                                       FontAttributes="Bold"
+                                       TextColor="#1B2A2F" />
+
+                                <Label Text="{Binding LanguagePromptSubtitle}"
+                                       FontSize="13"
+                                       TextColor="#5F7075" />
+                            </VerticalStackLayout>
+
+                            <Border BackgroundColor="#FFFFFF"
+                                    Stroke="#D9E8E6"
+                                    StrokeThickness="1"
+                                    Padding="12,2"
+                                    StrokeShape="RoundRectangle 16">
+                                <Picker Title="Select language"
+                                        TitleColor="#8B9A9F"
+                                        TextColor="#1B2A2F"
+                                        ItemsSource="{Binding SupportedLanguages}"
+                                        ItemDisplayBinding="{Binding Label}"
+                                        SelectedItem="{Binding SelectedLanguageOption}" />
+                            </Border>
+
+                            <Label Text="{Binding SelectedLanguageSummary}"
+                                   FontSize="12"
+                                   TextColor="#2F5D62" />
+                        </VerticalStackLayout>
+                    </Border>
 
                     <Border BackgroundColor="#FDEEEE"
                             Stroke="#E4B6B0"

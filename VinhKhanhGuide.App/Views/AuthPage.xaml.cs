@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Controls.Xaml;
 using Microsoft.Maui.Graphics;
+using VinhKhanhGuide.App.Models;
 using VinhKhanhGuide.App.ViewModels;
 
 namespace VinhKhanhGuide.App.Views;
@@ -133,11 +134,12 @@ public partial class AuthPage : ContentPage
                                     RowSpacing = 12,
                                     Children =
                                     {
-                                        CreateHeroStepCard("B1", "Mở app", 0, 0),
-                                        CreateHeroStepCard("B2", "Bấm vào nhanh", 0, 1),
+                                        CreateHeroStepCard("B1", "Chọn ngôn ngữ", 0, 0),
+                                        CreateHeroStepCard("B2", "Khám phá app", 0, 1),
                                         CreateHeroStepCard("B3", "Chọn box để nghe", 1, 0, columnSpan: 2, widthRequest: 172)
                                     }
                                 },
+                                CreateLanguagePickerPanel(),
                                 errorPanel,
                                 new Button
                                 {
@@ -188,6 +190,78 @@ public partial class AuthPage : ContentPage
         };
         border.SetBinding(IsVisibleProperty, visibleBinding);
         return border;
+    }
+
+    private static View CreateLanguagePickerPanel()
+    {
+        var promptTitle = new Label
+        {
+            FontSize = 18,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Color.FromArgb("#1B2A2F")
+        };
+        promptTitle.SetBinding(Label.TextProperty, nameof(AuthPageViewModel.LanguagePromptTitle));
+
+        var promptSubtitle = new Label
+        {
+            FontSize = 13,
+            TextColor = Color.FromArgb("#5F7075")
+        };
+        promptSubtitle.SetBinding(Label.TextProperty, nameof(AuthPageViewModel.LanguagePromptSubtitle));
+
+        var picker = new Picker
+        {
+            Title = "Select language",
+            TitleColor = Color.FromArgb("#8B9A9F"),
+            TextColor = Color.FromArgb("#1B2A2F"),
+            ItemDisplayBinding = new Binding(nameof(AudioSettingsOption.Label))
+        };
+        picker.SetBinding(Picker.ItemsSourceProperty, nameof(AuthPageViewModel.SupportedLanguages));
+        picker.SetBinding(Picker.SelectedItemProperty, nameof(AuthPageViewModel.SelectedLanguageOption));
+
+        var pickerBorder = new Border
+        {
+            BackgroundColor = Colors.White,
+            Stroke = Color.FromArgb("#D9E8E6"),
+            StrokeThickness = 1,
+            Padding = new Thickness(12, 2),
+            StrokeShape = new RoundRectangle { CornerRadius = 16 },
+            Content = picker
+        };
+
+        var summary = new Label
+        {
+            FontSize = 12,
+            TextColor = Color.FromArgb("#2F5D62")
+        };
+        summary.SetBinding(Label.TextProperty, nameof(AuthPageViewModel.SelectedLanguageSummary));
+
+        return new Border
+        {
+            BackgroundColor = Color.FromArgb("#F6FBFA"),
+            Stroke = Color.FromArgb("#D9E8E6"),
+            StrokeThickness = 1,
+            Padding = 16,
+            StrokeShape = new RoundRectangle { CornerRadius = 22 },
+            Content = new VerticalStackLayout
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new VerticalStackLayout
+                    {
+                        Spacing = 4,
+                        Children =
+                        {
+                            promptTitle,
+                            promptSubtitle
+                        }
+                    },
+                    pickerBorder,
+                    summary
+                }
+            }
+        };
     }
 
     private static Border CreateHeroStepCard(
