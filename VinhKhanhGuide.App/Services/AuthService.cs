@@ -14,6 +14,7 @@ public class AuthService : IAuthService
     private const string LegacyUsersPreferenceKey = "vinhkhanh.auth.users.v1";
     private const string SessionPreferenceKey = "vinhkhanh.auth.session.login.v2";
     private const string LegacySessionPreferenceKey = "vinhkhanh.auth.session.email.v1";
+    private const string GuestProfilePreferenceKey = "vinhkhanh.auth.guest-profile.v1";
     private const string DefaultAdminLogin = "user";
     private const string DefaultAdminPassword = "12345678";
     private const string DefaultAdminDisplayName = "Quản trị viên Vĩnh Khánh";
@@ -44,7 +45,7 @@ public class AuthService : IAuthService
         Preferences.Default.Remove(SessionPreferenceKey);
         Preferences.Default.Remove(LegacySessionPreferenceKey);
 
-        CurrentSession = CreateGuestSession();
+        CurrentSession = CreateGuestSession(LoadGuestProfile());
         SessionChanged?.Invoke(this, EventArgs.Empty);
 
         return Task.FromResult(AuthResult.Success(
@@ -157,9 +158,29 @@ public class AuthService : IAuthService
 
     public Task<AuthResult> UpdateCurrentUserProfileAsync(AccountProfileUpdateRequest request)
     {
-        if (CurrentSession is null || string.Equals(CurrentSession.Role, GuestRole, StringComparison.OrdinalIgnoreCase))
+        if (CurrentSession is null)
         {
-            return Task.FromResult(AuthResult.Failure("Chế độ khách tham quan chưa hỗ trợ cập nhật hồ sơ."));
+            return Task.FromResult(AuthResult.Failure("Không tìm thấy phiên người dùng hiện tại."));
+        }
+
+        if (string.Equals(CurrentSession.Role, GuestRole, StringComparison.OrdinalIgnoreCase))
+        {
+            var guestProfile = new GuestProfileRecord
+            {
+                FullName = request.FullName.Trim(),
+                Email = string.IsNullOrWhiteSpace(request.Email)
+                    ? string.Empty
+                    : NormalizeEmail(request.Email),
+                PhoneNumber = NormalizePhoneNumber(request.PhoneNumber)
+            };
+
+            SaveGuestProfile(guestProfile);
+            CurrentSession = CreateGuestSession(guestProfile);
+            SessionChanged?.Invoke(this, EventArgs.Empty);
+
+            return Task.FromResult(AuthResult.Success(
+                CurrentSession,
+                "Đã cập nhật thông tin khách tham quan trên thiết bị này."));
         }
 
         var users = LoadUsers();
@@ -241,15 +262,16 @@ public class AuthService : IAuthService
         SessionChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private static AuthSession CreateGuestSession()
+    private static AuthSession CreateGuestSession(GuestProfileRecord? guestProfile = null)
     {
+        var fullName = guestProfile?.FullName?.Trim() ?? string.Empty;
         return new AuthSession
         {
             UserId = Guid.Empty,
-            FullName = "Khách tham quan",
+            FullName = fullName,
             Username = "guest",
-            Email = string.Empty,
-            PhoneNumber = string.Empty,
+            Email = guestProfile?.Email ?? string.Empty,
+            PhoneNumber = guestProfile?.PhoneNumber ?? string.Empty,
             Role = GuestRole
         };
     }
@@ -310,6 +332,31 @@ public class AuthService : IAuthService
             string.Equals(user.Username, login, StringComparison.OrdinalIgnoreCase) ||
             (!string.IsNullOrWhiteSpace(user.Email) &&
              string.Equals(user.Email, login, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private GuestProfileRecord? LoadGuestProfile()
+    {
+        var json = Preferences.Default.Get(GuestProfilePreferenceKey, string.Empty);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<GuestProfileRecord>(json, JsonOptions);
+        }
+        catch
+        {
+            Preferences.Default.Remove(GuestProfilePreferenceKey);
+            return null;
+        }
+    }
+
+    private void SaveGuestProfile(GuestProfileRecord guestProfile)
+    {
+        var json = JsonSerializer.Serialize(guestProfile, JsonOptions);
+        Preferences.Default.Set(GuestProfilePreferenceKey, json);
     }
 
     private List<AuthUser> LoadUsers()
@@ -443,5 +490,12 @@ public class AuthService : IAuthService
     {
         var computedHash = ComputePasswordHash(password, salt);
         return string.Equals(computedHash, hash, StringComparison.Ordinal);
+    }
+
+    private sealed class GuestProfileRecord
+    {
+        public string FullName { get; init; } = string.Empty;
+        public string Email { get; init; } = string.Empty;
+        public string PhoneNumber { get; init; } = string.Empty;
     }
 }

@@ -14,7 +14,7 @@ public sealed class TourPackageItem
 
     public string MetaLabel => $"{StopCount} điểm dừng • {EstimatedMinutes} phút";
     public string StatusLabel => IsSelected
-        ? (IsCompleted ? "Đã hoàn tất" : "Đang dẫn GPS")
+        ? (IsCompleted ? "Đã hoàn tất" : "Đang chạy")
         : "Sẵn sàng";
-    public string ActionLabel => IsSelected ? "Tour đang chọn" : "Chạm để bắt đầu";
+    public string ActionLabel => IsSelected ? "Đang chọn" : "Bắt đầu";
 }

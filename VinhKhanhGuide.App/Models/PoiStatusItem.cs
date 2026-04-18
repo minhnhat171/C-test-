@@ -29,7 +29,8 @@ public class PoiStatusItem
     public string NearestLabel => IsNearest ? "POI gần nhất" : string.Empty;
     public string InRadiusBadge => IsInsideRadius ? "Đang ở gần" : string.Empty;
     public bool HasNarrationPreview => !string.IsNullOrWhiteSpace(NarrationPreview);
-    public string SpecialDishLabel => $"Món nổi bật: {SpecialDish}";
+    public bool HasSpecialDish => !string.IsNullOrWhiteSpace(SpecialDish);
+    public string SpecialDishLabel => SpecialDish;
     public string NarrationActionText => IsNarrationActive ? "Dừng thuyết minh" : "Nghe thuyết minh";
     public string NarrationStateText => IsNarrationActive ? "Đang phát thuyết minh" : "Sẵn sàng nghe";
     public string NarrationGuideText => IsNarrationActive
@@ -44,6 +45,6 @@ public class PoiStatusItem
 
     public string DistanceLabel =>
         double.IsNaN(DistanceMeters)
-            ? $"Khoảng cách: N/A | Bán kính: {TriggerRadiusMeters:F0}m"
-            : $"Khoảng cách: {DistanceMeters:F0}m | Bán kính: {TriggerRadiusMeters:F0}m";
+            ? $"Bán kính {TriggerRadiusMeters:F0}m"
+            : $"{DistanceMeters:F0}m • Bán kính {TriggerRadiusMeters:F0}m";
 }

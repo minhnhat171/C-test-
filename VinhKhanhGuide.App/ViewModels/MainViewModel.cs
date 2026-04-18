@@ -64,6 +64,7 @@ public class MainViewModel : INotifyPropertyChanged
     private int _narrationSessionId;
     private Guid? _lastAutoNarratedPoiId;
     private LocationDto? _lastLocation;
+    private LocationDto? _gpsOriginLocation;
     private Guid? _activeNarrationPoiId;
     private bool _hasLocationPermission;
     private bool _hasCheckedLocationPermission;
@@ -95,11 +96,11 @@ public class MainViewModel : INotifyPropertyChanged
     private string _draftSelectedPlaybackMode = DefaultNarrationMode;
     private bool _draftIsAutoNarrationEnabled = true;
     private string _searchQuery = string.Empty;
-    private string _currentUserDisplayName = "Khách tham quan";
-    private string _currentUserStatusLine = "Chế độ tham quan nhanh";
+    private string _currentUserDisplayName = "Bạn";
+    private string _currentUserStatusLine = "Đang hoạt động";
     private string _currentUserInitials = "VK";
-    private string _currentUserAccountLabel = "Khách tham quan";
-    private string _currentUserPasswordLabel = "Vào nhanh bằng nút truy cập";
+    private string _currentUserAccountLabel = "Chưa cập nhật";
+    private string _currentUserPasswordLabel = "Đang hoạt động";
     private string _accountProfileFullName = string.Empty;
     private string _accountProfileEmail = string.Empty;
     private string _accountProfilePhoneNumber = string.Empty;
@@ -266,6 +267,7 @@ public class MainViewModel : INotifyPropertyChanged
     public IReadOnlyList<POI> Pois => _pois;
     public IReadOnlyList<TourDto> Tours => _tours;
     public LocationDto? LastLocation => _lastLocation;
+    public LocationDto? GpsOriginLocation => _gpsOriginLocation;
     public Guid? SelectedPoiId => _selectedPoi?.Id;
     public bool IsSelectedPoiNarrating => _selectedPoi is not null && IsNarrating && _activeNarrationPoiId == _selectedPoi.Id;
     public string SelectedPoiNarrationActionText => IsSelectedPoiNarrating ? "Dừng thuyết minh" : "Nghe thuyết minh";
@@ -274,11 +276,21 @@ public class MainViewModel : INotifyPropertyChanged
     public bool HasActiveTourStops => ActiveTourStops.Count > 0;
     public bool IsActiveTourCompleted => HasActiveTour && GetCurrentActiveTourPoi() is null;
     public IReadOnlyList<PoiStatusItem> VisibleMapPoiStatuses => GetVisibleMapPoiStatuses();
+    public IReadOnlyList<LocationDto> ActiveTourRoutePoints => GetActiveTourStopIds()
+        .Select(poiId => _pois.FirstOrDefault(item => item.Id == poiId))
+        .Where(poi => poi is not null)
+        .Cast<POI>()
+        .Select(poi => new LocationDto
+        {
+            Latitude = poi.Latitude,
+            Longitude = poi.Longitude
+        })
+        .ToList();
     public string TourSectionSummary => !HasTours
-        ? "Chưa có tour nào từ WebAdmin."
+        ? "Chưa có tour khả dụng."
         : HasActiveTour
-            ? $"Đang theo tour {GetActiveTour()!.Name}. Khi chọn tour, app sẽ phát giới thiệu tour trước rồi mới theo GPS từng chặng."
-            : $"{TourPackages.Count} gói tour sẵn sàng. Chạm một tour để nghe giới thiệu và bắt đầu lộ trình.";
+            ? $"Đang theo dõi lộ trình {GetActiveTour()!.Name}."
+            : $"{TourPackages.Count} tour sẵn sàng.";
     public string ActiveTourName => GetActiveTour()?.Name ?? "Chưa chọn tour";
     public string ActiveTourSummary
     {
@@ -287,7 +299,7 @@ public class MainViewModel : INotifyPropertyChanged
             var activeTour = GetActiveTour();
             if (activeTour is null)
             {
-                return "Chọn một tour để app chỉ theo dõi POI đầu tiên, sau đó tự chuyển sang các điểm kế tiếp khi khách di chuyển đúng lộ trình.";
+                return "Chọn một tour để bắt đầu hành trình.";
             }
 
             var stopIds = GetActiveTourStopIds();
@@ -298,10 +310,10 @@ public class MainViewModel : INotifyPropertyChanged
 
             if (GetCurrentActiveTourPoi() is null)
             {
-                return $"Tour {activeTour.Name} đã hoàn tất {stopIds.Count}/{stopIds.Count} điểm dừng.";
+                return $"Hoàn tất {stopIds.Count}/{stopIds.Count} điểm dừng.";
             }
 
-            return $"Tour đang chạy {Math.Min(_activeTourStopIndex + 1, stopIds.Count)}/{stopIds.Count}. App chỉ tự phát đúng POI hiện tại của tour rồi mới mở chặng kế tiếp.";
+            return $"Đang chạy {Math.Min(_activeTourStopIndex + 1, stopIds.Count)}/{stopIds.Count} điểm dừng.";
         }
     }
     public string ActiveTourCurrentStopText
@@ -312,8 +324,8 @@ public class MainViewModel : INotifyPropertyChanged
             if (currentPoi is null)
             {
                 return HasActiveTour
-                    ? "Điểm hiện tại: tour đã hoàn tất."
-                    : "Điểm hiện tại: chưa chọn tour.";
+                    ? "Điểm hiện tại: đã hoàn tất."
+                    : "Điểm hiện tại: chưa chọn.";
             }
 
             return $"Điểm hiện tại: {currentPoi.Name}";
@@ -327,8 +339,8 @@ public class MainViewModel : INotifyPropertyChanged
             if (nextPoi is null)
             {
                 return HasActiveTour
-                    ? "Điểm kế tiếp: không còn, tour đã hoàn tất."
-                    : "Điểm kế tiếp: chọn tour để app xác định lộ trình.";
+                    ? "Điểm kế tiếp: không còn."
+                    : "Điểm kế tiếp: chọn tour.";
             }
 
             return $"Điểm kế tiếp: {nextPoi.Name}";
@@ -448,7 +460,15 @@ public class MainViewModel : INotifyPropertyChanged
     public string SelectedPoiDishText
     {
         get => _selectedPoiDishText;
-        private set => SetProperty(ref _selectedPoiDishText, value);
+        private set
+        {
+            if (!SetProperty(ref _selectedPoiDishText, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasSelectedPoiDish));
+        }
     }
 
     public string SelectedPoiStatusText
@@ -474,6 +494,8 @@ public class MainViewModel : INotifyPropertyChanged
         get => _selectedPoiImageSource;
         private set => SetProperty(ref _selectedPoiImageSource, value);
     }
+
+    public bool HasSelectedPoiDish => !string.IsNullOrWhiteSpace(SelectedPoiDishText);
 
     public string SelectedFeaturedDishCategoryName
     {
@@ -731,7 +753,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool CanManageAccountProfile => !IsGuestAccess();
+    public bool CanManageAccountProfile => _authService.CurrentSession is not null;
 
     public bool CanSaveAccountProfile => CanManageAccountProfile && !IsSavingAccountProfile;
 
@@ -768,8 +790,8 @@ public class MainViewModel : INotifyPropertyChanged
     public bool HasAccountSettingsSuccess => !string.IsNullOrWhiteSpace(AccountSettingsSuccessMessage);
 
     public string AccountSettingsAccessMessage => CanManageAccountProfile
-        ? "Bạn có thể cập nhật hồ sơ cá nhân ngay trên thiết bị này. Hệ thống sẽ kiểm tra dữ liệu trước khi lưu."
-        : "Bản hiện tại đang vào app ở chế độ khách tham quan. Luồng QR và tài khoản sẽ được nối lại ở bước sau.";
+        ? "Bạn có thể cập nhật hồ sơ cá nhân trực tiếp trên thiết bị này."
+        : "Chưa có hồ sơ người dùng để cập nhật.";
 
     public bool IsSavingAudioSettings
     {
@@ -1001,7 +1023,7 @@ public class MainViewModel : INotifyPropertyChanged
         : "Chưa có hoạt động nào được ghi lại";
 
     public string ListeningHistorySummary => HasListeningHistory
-        ? $"{ListeningHistory.Count} bản ghi nghe gần nhất"
+        ? $"{ListeningHistory.Count} lượt nghe gần nhất"
         : HasListeningHistoryLocalEntries
             ? $"{ListeningHistoryLocalEntries.Count} lượt nghe vừa ghi nhận"
             : "Chưa có bản ghi nghe nào";
@@ -1684,8 +1706,10 @@ public class MainViewModel : INotifyPropertyChanged
         _lastAutoNarratedPoiId = null;
         _activeTourId = null;
         _activeTourStopIndex = 0;
+        _gpsOriginLocation = null;
         HideSearchSuggestions();
         ClearSearch();
+        OnPropertyChanged(nameof(GpsOriginLocation));
 
         await _authService.SignOutAsync();
     }
@@ -1890,6 +1914,13 @@ public class MainViewModel : INotifyPropertyChanged
         _lastLocation = location;
         _hasCheckedLocationPermission = true;
         _hasLocationPermission = true;
+        _gpsOriginLocation ??= new LocationDto
+        {
+            Latitude = location.Latitude,
+            Longitude = location.Longitude,
+            AccuracyMeters = location.AccuracyMeters,
+            TimestampUtc = location.TimestampUtc
+        };
 
         var results = _pois.Count == 0
             ? Array.Empty<(POI Poi, double DistanceMeters, bool IsInside)>()
@@ -1944,6 +1975,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         RaiseMapStateChanged();
+        OnPropertyChanged(nameof(GpsOriginLocation));
     }
 
     private async Task ApplyFallbackMapStateAsync(string statusText, string locationText)
@@ -2273,7 +2305,7 @@ public class MainViewModel : INotifyPropertyChanged
                 : $"Tour {activeTour.Name}: sẵn sàng theo dõi {currentPoi.Name}";
         }
 
-        return IsTracking ? "GPS đang hoạt động" : "Sẵn sàng phát thuyết minh";
+        return IsTracking ? "GPS đang hoạt động" : "Sẵn sàng khám phá";
     }
 
     private async Task NarrateTourActivationAsync(TourDto tour)
@@ -2340,6 +2372,7 @@ public class MainViewModel : INotifyPropertyChanged
             .ToList();
         var firstStop = stopPois.FirstOrDefault();
         var nextStop = stopPois.Skip(1).FirstOrDefault();
+        var finalStop = stopPois.Count > 1 ? stopPois.LastOrDefault() : null;
         var stopSummary = stopPois.Count == 0
             ? string.Empty
             : string.Join(", ", stopPois.Take(4).Select(item => item.Name));
@@ -2347,30 +2380,40 @@ public class MainViewModel : INotifyPropertyChanged
         return NormalizeLanguageCode(languageCode) switch
         {
             "en" =>
-                $"You selected the tour {tour.Name}. {tour.Description} This route has {stopPois.Count} stops and is estimated at {tour.EstimatedMinutes} minutes. " +
-                $"The first stop is {firstStop?.Name ?? "not available"}. " +
-                $"{(nextStop is null ? "There is no second stop yet." : $"The next stop is {nextStop.Name}.")} " +
-                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"Main stops: {stopSummary}.")}",
+                $"You selected {tour.Name}. {tour.Description} " +
+                $"This tour includes {stopPois.Count} featured stops and should take about {tour.EstimatedMinutes} minutes. " +
+                $"The opening stop is {firstStop?.Name ?? "not available"}. " +
+                $"{(nextStop is null ? "There is no next stop yet." : $"After that, the route continues to {nextStop.Name}.")} " +
+                $"{(finalStop is null || ReferenceEquals(finalStop, nextStop) ? string.Empty : $"The final stop is {finalStop.Name}. ")}" +
+                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"Stops on this route: {stopSummary}.")}",
             "zh" =>
-                $"您已选择行程 {tour.Name}。{tour.Description} 此行程共有 {stopPois.Count} 个停靠点，预计 {tour.EstimatedMinutes} 分钟。" +
-                $"第一站是 {firstStop?.Name ?? "暂未设置"}。" +
-                $"{(nextStop is null ? "目前没有下一站。" : $"下一站是 {nextStop.Name}。")}" +
-                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $" 主要站点包括：{stopSummary}。")}",
+                $"您已选择 {tour.Name}。{tour.Description}" +
+                $" 此路线共有 {stopPois.Count} 个重点停靠点，预计约 {tour.EstimatedMinutes} 分钟。" +
+                $" 第一站是 {firstStop?.Name ?? "暂未设置"}。" +
+                $"{(nextStop is null ? "目前还没有下一站。" : $" 接下来会前往 {nextStop.Name}。")}" +
+                $"{(finalStop is null || ReferenceEquals(finalStop, nextStop) ? string.Empty : $" 最后一站是 {finalStop.Name}。")}" +
+                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $" 本次路线包括：{stopSummary}。")}",
             "ko" =>
-                $"{tour.Name} 투어를 선택했습니다. {tour.Description} 이 투어는 총 {stopPois.Count}개 경유지이며 예상 시간은 {tour.EstimatedMinutes}분입니다. " +
-                $"첫 번째 지점은 {firstStop?.Name ?? "설정되지 않았습니다"} 입니다. " +
-                $"{(nextStop is null ? "다음 지점은 아직 없습니다." : $"다음 지점은 {nextStop.Name} 입니다.")}" +
-                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $" 주요 지점: {stopSummary}.")}",
+                $"{tour.Name} 투어를 선택했습니다. {tour.Description} " +
+                $"이 투어는 주요 정차 지점 {stopPois.Count}곳으로 구성되어 있으며 예상 소요 시간은 약 {tour.EstimatedMinutes}분입니다. " +
+                $"출발 지점은 {firstStop?.Name ?? "설정되지 않았습니다"} 입니다. " +
+                $"{(nextStop is null ? "다음 지점은 아직 없습니다." : $"그다음에는 {nextStop.Name}(으)로 이동합니다.")} " +
+                $"{(finalStop is null || ReferenceEquals(finalStop, nextStop) ? string.Empty : $"마지막 지점은 {finalStop.Name} 입니다. ")}" +
+                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"이번 경로의 주요 지점은 {stopSummary} 입니다.")}",
             "fr" =>
-                $"Vous avez choisi le tour {tour.Name}. {tour.Description} Ce parcours comprend {stopPois.Count} étapes pour environ {tour.EstimatedMinutes} minutes. " +
+                $"Vous avez choisi {tour.Name}. {tour.Description} " +
+                $"Ce parcours comprend {stopPois.Count} étapes principales pour environ {tour.EstimatedMinutes} minutes. " +
                 $"La première étape est {firstStop?.Name ?? "non définie"}. " +
-                $"{(nextStop is null ? "Il n'y a pas encore d'étape suivante." : $"L'étape suivante est {nextStop.Name}.")}" +
-                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $" Étapes principales : {stopSummary}.")}",
+                $"{(nextStop is null ? "Il n'y a pas encore d'étape suivante." : $"Ensuite, l'application vous guidera vers {nextStop.Name}.")} " +
+                $"{(finalStop is null || ReferenceEquals(finalStop, nextStop) ? string.Empty : $"La dernière étape est {finalStop.Name}. ")}" +
+                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"Le parcours comprend : {stopSummary}.")}",
             _ =>
-                $"Bạn đã chọn tour {tour.Name}. {tour.Description} Tour này có {stopPois.Count} điểm dừng, thời lượng dự kiến {tour.EstimatedMinutes} phút. " +
-                $"Điểm bắt đầu là {firstStop?.Name ?? "chưa xác định"}. " +
-                $"{(nextStop is null ? "Hiện chưa có điểm kế tiếp." : $"Điểm kế tiếp là {nextStop.Name}.")} " +
-                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"Các điểm chính gồm {stopSummary}.")}"
+                $"Bạn đã chọn {tour.Name}. {tour.Description} " +
+                $"Tour gồm {stopPois.Count} điểm dừng nổi bật, thời lượng khoảng {tour.EstimatedMinutes} phút. " +
+                $"Điểm mở đầu là {firstStop?.Name ?? "chưa xác định"}. " +
+                $"{(nextStop is null ? "Hiện chưa có chặng kế tiếp." : $"Sau đó, ứng dụng sẽ dẫn bạn tới {nextStop.Name}.")} " +
+                $"{(finalStop is null || ReferenceEquals(finalStop, nextStop) ? string.Empty : $"Điểm kết của hành trình là {finalStop.Name}. ")}" +
+                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"Lộ trình hôm nay gồm {stopSummary}.")}"
         };
     }
 
@@ -2406,8 +2449,9 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void UpdateLocationSummary(LocationDto location, POI? nearestPoi, double? nearestDistanceMeters)
     {
-        LocationText =
-            $"Lat {location.Latitude:F6} | Lng {location.Longitude:F6} | Sai so {location.AccuracyMeters?.ToString("F0") ?? "?"}m";
+        LocationText = location.AccuracyMeters.HasValue
+            ? $"GPS đã cập nhật • sai số khoảng {location.AccuracyMeters.Value:F0}m"
+            : "GPS đã cập nhật vị trí hiện tại";
 
         var activeTour = GetActiveTour();
         var currentTourPoi = GetCurrentActiveTourPoi();
@@ -2427,8 +2471,8 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         NearestPoiText = nearestPoi is null
-            ? "Chua xac dinh quan gan nhat"
-            : $"Quan gan nhat: {nearestPoi.Name} ({nearestDistanceMeters?.ToString("F0") ?? "?"}m)";
+            ? "Chưa xác định điểm gần nhất"
+            : $"Quán gần nhất: {nearestPoi.Name} ({nearestDistanceMeters?.ToString("F0") ?? "?"}m)";
     }
 
     private void UpdateMapBadges()
@@ -2700,7 +2744,7 @@ public class MainViewModel : INotifyPropertyChanged
         SelectedPoiDescription = _selectedPoi.Description;
         SelectedPoiDishText = _selectedPoi.SpecialDish;
         SelectedPoiStatusText =
-            $"{distanceLabel} | Bán kính phát: {_selectedPoi.TriggerRadiusMeters:F0}m | Ưu tiên: P{_selectedPoi.Priority}";
+            $"{distanceLabel} • Bán kính phát {_selectedPoi.TriggerRadiusMeters:F0}m";
         SelectedPoiNarrationPreview = _selectedPoi.GetNarrationText(SelectedLanguage);
         SelectedPoiMapLink = _selectedPoi.MapLink;
         SelectedPoiImageSource = _selectedPoi.ImageSource;
@@ -3160,18 +3204,17 @@ public class MainViewModel : INotifyPropertyChanged
         var session = _authService.CurrentSession;
         var loginId = session?.LoginId ?? "guest";
         var isGuestAccess = IsGuestAccess(session);
+        var hasPersonalName = !string.IsNullOrWhiteSpace(session?.FullName);
 
-        CurrentUserDisplayName = isGuestAccess ? "Khách tham quan" : session!.FullName;
-        CurrentUserInitials = isGuestAccess ? "VK" : session!.Initials;
-        CurrentUserAccountLabel = isGuestAccess ? "Khách tham quan" : $"@{loginId}";
-        CurrentUserPasswordLabel = isGuestAccess
-            ? "Vào nhanh bằng nút truy cập"
-            : string.Equals(loginId, "user", StringComparison.OrdinalIgnoreCase)
-                ? "12345678 (mặc định)"
-                : "•••••••• (đã ẩn)";
+        CurrentUserDisplayName = hasPersonalName ? session!.FullName : "Bạn";
+        CurrentUserInitials = hasPersonalName ? session!.Initials : "VK";
+        CurrentUserAccountLabel = hasPersonalName ? session!.FullName : "Chưa cập nhật tên";
+        CurrentUserPasswordLabel = string.IsNullOrWhiteSpace(loginId)
+            ? "Đang hoạt động"
+            : $"@{loginId}";
         CurrentUserStatusLine = isGuestAccess
-            ? "Chế độ tham quan nhanh"
-            : $"{session!.RoleLabel} • @{loginId}";
+            ? "Đang hoạt động • Khách"
+            : $"Đang hoạt động • {session!.RoleLabel}";
         LoadAccountProfileEditor(clearFeedback: true);
         OnPropertyChanged(nameof(CanManageAccountProfile));
         OnPropertyChanged(nameof(CanSaveAccountProfile));
@@ -3214,13 +3257,6 @@ public class MainViewModel : INotifyPropertyChanged
 
     private async Task SaveAccountProfileAsync()
     {
-        if (!CanManageAccountProfile)
-        {
-            AccountSettingsErrorMessage = "Chế độ khách tham quan chưa hỗ trợ cập nhật hồ sơ.";
-            AccountSettingsSuccessMessage = string.Empty;
-            return;
-        }
-
         if (IsSavingAccountProfile)
         {
             return;
@@ -3330,7 +3366,7 @@ public class MainViewModel : INotifyPropertyChanged
             ApplyAudioSettings(settings, shouldLog: true);
             PersistUserPreferences();
 
-            AudioSettingsSuccessMessage = "Đã lưu cài đặt âm thanh cho toàn bộ ứng dụng.";
+            AudioSettingsSuccessMessage = "Đã lưu tùy chọn ngôn ngữ cho ứng dụng.";
         }
         finally
         {

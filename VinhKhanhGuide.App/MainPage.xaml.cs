@@ -1,14 +1,13 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using BruTile.Predefined;
 using Mapsui;
 using Mapsui.Tiling;
 using Mapsui.Tiling.Layers;
 using Mapsui.UI.Maui;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
-using System.Diagnostics;
 using VinhKhanhGuide.App.Models;
 using VinhKhanhGuide.App.Services;
 using VinhKhanhGuide.App.ViewModels;
@@ -92,14 +91,25 @@ public partial class MainPage : ContentPage
         _previewMapInitialized = true;
     }
 
-    private async void OnTopBellClicked(object? sender, EventArgs e)
+    private async void OnNarrateSelectedClicked(object? sender, EventArgs e)
     {
         await _viewModel.ToggleSelectedPoiNarrationAsync();
     }
 
-    private async void OnNarrateSelectedClicked(object? sender, EventArgs e)
+    private async void OnOpenSelectedPoiDetailClicked(object? sender, EventArgs e)
     {
-        await _viewModel.ToggleSelectedPoiNarrationAsync();
+        await OpenPoiDetailAsync();
+    }
+
+    private async void OnOpenPoiDetailClicked(object? sender, EventArgs e)
+    {
+        if (sender is not BindableObject bindable ||
+            bindable.BindingContext is not PoiStatusItem item)
+        {
+            return;
+        }
+
+        await OpenPoiDetailAsync(item.PoiId);
     }
 
     private async void OnPoiNarrationClicked(object? sender, EventArgs e)
@@ -117,8 +127,8 @@ public partial class MainPage : ContentPage
     private async void OnHomeClicked(object? sender, EventArgs e)
     {
         RestaurantSearchEntry.Unfocus();
-        HideSecondaryOverlays();
         await _viewModel.ResetHomeViewAsync();
+        await MainScrollView.ScrollToAsync(0, 0, true);
 
         if (_isFullScreenMapVisible)
         {
@@ -130,138 +140,26 @@ public partial class MainPage : ContentPage
         CenterMapOnEntrance(RestaurantMap, PreviewEntranceResolution);
     }
 
-    private async void OnFeaturedDishSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void OnHomeTapped(object? sender, TappedEventArgs e)
     {
-        if (e.CurrentSelection.FirstOrDefault() is not FoodCategoryItem item)
-        {
-            return;
-        }
-
-        _viewModel.ShowFeaturedDishCategory(item.Key);
-
-        var page = _serviceProvider.GetRequiredService<FeaturedDishCategoryPage>();
-        await Navigation.PushAsync(page);
-
-        if (sender is CollectionView collectionView)
-        {
-            collectionView.SelectedItem = null;
-        }
+        OnHomeClicked(sender, EventArgs.Empty);
     }
 
-    private void OnOpenListeningHistoryClicked(object? sender, TappedEventArgs e)
+    private async void OnOpenAccountPageClicked(object? sender, EventArgs e)
     {
-        RestaurantSearchEntry.Unfocus();
-        ListeningHistoryOverlay.IsVisible = true;
-        UserProfileOverlay.IsVisible = false;
-        _viewModel.RefreshListeningHistoryCommand.Execute(null);
-    }
-
-    private void OnCloseListeningHistoryClicked(object? sender, EventArgs e)
-    {
-        ListeningHistoryOverlay.IsVisible = false;
-    }
-
-    private async void OnListeningHistoryItemTapped(object? sender, TappedEventArgs e)
-    {
-        if (sender is not BindableObject bindable ||
-            bindable.BindingContext is not ListeningHistoryDisplayItem item)
+        if (_isFullScreenMapVisible)
         {
-            return;
+            _isFullScreenMapVisible = false;
+            FullScreenMapOverlay.IsVisible = false;
         }
 
-        await OpenListeningHistoryDetailAsync(item);
+        var accountPage = _serviceProvider.GetRequiredService<AccountPage>();
+        await Navigation.PushAsync(accountPage);
     }
 
-    private async void OnListeningHistoryDetailClicked(object? sender, EventArgs e)
+    private void OnOpenAccountPageTapped(object? sender, TappedEventArgs e)
     {
-        if (sender is not BindableObject bindable ||
-            bindable.BindingContext is not ListeningHistoryDisplayItem item)
-        {
-            return;
-        }
-
-        await OpenListeningHistoryDetailAsync(item);
-    }
-
-    private async void OnReplayListeningHistoryClicked(object? sender, EventArgs e)
-    {
-        if (sender is not BindableObject bindable ||
-            bindable.BindingContext is not ListeningHistoryDisplayItem item)
-        {
-            return;
-        }
-
-        await _viewModel.ReplayListeningHistoryAsync(item.Id);
-        RefreshMapPins(centerOnSelection: false);
-    }
-
-    private async void OnDeleteListeningHistoryClicked(object? sender, EventArgs e)
-    {
-        if (sender is not BindableObject bindable ||
-            bindable.BindingContext is not ListeningHistoryDisplayItem item)
-        {
-            return;
-        }
-
-        var confirmed = await DisplayAlert(
-            "Xóa bản ghi",
-            $"Bạn có muốn xóa bản ghi nghe của {item.PoiName} khỏi lịch sử không?",
-            "Xóa",
-            "Hủy");
-
-        if (!confirmed)
-        {
-            return;
-        }
-
-        var deleted = await _viewModel.DeleteListeningHistoryEntryAsync(item.Id);
-        if (!deleted)
-        {
-            await DisplayAlert("Thông báo", "Không thể xóa bản ghi lịch sử này.", "OK");
-        }
-    }
-
-    private void OnOpenUserProfileClicked(object? sender, TappedEventArgs e)
-    {
-        ShowUserProfileOverlay();
-    }
-
-    private void OnOpenAudioSettingsClicked(object? sender, EventArgs e)
-    {
-        ShowUserProfileOverlay();
-    }
-
-    private void OnCloseUserProfileClicked(object? sender, EventArgs e)
-    {
-        UserProfileOverlay.IsVisible = false;
-        _viewModel.ResetAudioSettingsDraft();
-    }
-
-    private async void OnOpenMapClicked(object? sender, EventArgs e)
-    {
-        if (string.IsNullOrWhiteSpace(_viewModel.SelectedPoiMapLink))
-        {
-            await DisplayAlert("Thông báo", "Quán hiện tại chưa có link chỉ đường.", "OK");
-            return;
-        }
-
-        await Browser.Default.OpenAsync(_viewModel.SelectedPoiMapLink, BrowserLaunchMode.SystemPreferred);
-    }
-
-    private void OnPoiSelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        if (e.CurrentSelection.FirstOrDefault() is not PoiStatusItem item)
-        {
-            return;
-        }
-
-        _viewModel.SelectPoi(item.PoiId);
-        RefreshMapPins(centerOnSelection: true);
-
-        if (sender is CollectionView collectionView)
-        {
-            collectionView.SelectedItem = null;
-        }
+        OnOpenAccountPageClicked(sender, EventArgs.Empty);
     }
 
     private void OnSearchFocused(object? sender, FocusEventArgs e)
@@ -287,6 +185,27 @@ public partial class MainPage : ContentPage
         RestaurantSearchEntry.Unfocus();
     }
 
+    private void OnSearchSuggestionTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not BindableObject bindable ||
+            bindable.BindingContext is not SearchSuggestionItem suggestion)
+        {
+            return;
+        }
+
+        _viewModel.ApplySearchSuggestion(suggestion);
+        _viewModel.HideSearchSuggestions();
+        RefreshMapPins(centerOnSelection: false);
+        RestaurantSearchEntry.Unfocus();
+    }
+
+    private void OnClearSearchClicked(object? sender, EventArgs e)
+    {
+        _viewModel.ClearSearch();
+        _viewModel.ShowSearchSuggestions();
+        RestaurantSearchEntry.Focus();
+    }
+
     private async void OnTourSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (e.CurrentSelection.FirstOrDefault() is not TourPackageItem item)
@@ -296,6 +215,7 @@ public partial class MainPage : ContentPage
 
         await _viewModel.ActivateTourAsync(item.TourId);
         RefreshMapPins(centerOnSelection: true);
+        FocusMapOnActiveRoute(RestaurantMap, PreviewEntranceResolution);
 
         if (sender is CollectionView collectionView)
         {
@@ -307,35 +227,28 @@ public partial class MainPage : ContentPage
     {
         await _viewModel.StopActiveTourAsync();
         RefreshMapPins(centerOnSelection: false);
+        FocusActiveMapOnGpsOrigin();
     }
 
-    private void OnSearchSuggestionTapped(object? sender, TappedEventArgs e)
+    private async void OnTourShortcutClicked(object? sender, EventArgs e)
     {
-        try
+        if (_viewModel.HasActiveTour && _viewModel.ActiveTourRoutePoints.Count > 0)
         {
-            if (sender is not BindableObject bindable ||
-                bindable.BindingContext is not SearchSuggestionItem suggestion)
-            {
-                return;
-            }
-
-            _viewModel.ApplySearchSuggestion(suggestion);
-            _viewModel.HideSearchSuggestions();
-
-            RefreshMapPins(centerOnSelection: false);
-            RestaurantSearchEntry.Unfocus();
+            OpenFullScreenMap(focusOnRoute: true);
+            return;
         }
-        catch
-        {
-            // tránh crash UI khi binding chưa sẵn sàng
-        }
+
+        await MainScrollView.ScrollToAsync(TourSectionAnchor, ScrollToPosition.Start, true);
     }
 
-    private void OnClearSearchClicked(object? sender, EventArgs e)
+    private void OnTourShortcutTapped(object? sender, TappedEventArgs e)
     {
-        _viewModel.ClearSearch();
-        _viewModel.ShowSearchSuggestions();
-        RestaurantSearchEntry.Focus();
+        OnTourShortcutClicked(sender, EventArgs.Empty);
+    }
+
+    private void OnOpenFullScreenMapClicked(object? sender, EventArgs e)
+    {
+        OpenFullScreenMap(focusOnRoute: _viewModel.HasActiveTour);
     }
 
     private void OnZoomInClicked(object? sender, EventArgs e)
@@ -351,6 +264,16 @@ public partial class MainPage : ContentPage
     private void OnCenterCurrentLocationClicked(object? sender, EventArgs e)
     {
         CenterMapOnCurrentLocation(RestaurantMap, PreviewCurrentLocationResolution, PreviewEntranceResolution);
+    }
+
+    private void OnGpsOriginClicked(object? sender, EventArgs e)
+    {
+        FocusActiveMapOnGpsOrigin();
+    }
+
+    private void OnGpsOriginTapped(object? sender, TappedEventArgs e)
+    {
+        OnGpsOriginClicked(sender, EventArgs.Empty);
     }
 
     private void OnFullScreenZoomInClicked(object? sender, EventArgs e)
@@ -472,7 +395,7 @@ public partial class MainPage : ContentPage
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(MainViewModel.SelectedLanguage))
+        if (e.PropertyName is nameof(MainViewModel.SelectedLanguage) or nameof(MainViewModel.GpsOriginLocation))
         {
             RefreshMapPins(centerOnSelection: false);
         }
@@ -499,6 +422,7 @@ public partial class MainPage : ContentPage
         }
 
         mapView.Pins.Clear();
+        mapView.Drawables.Clear();
 
         mapView.Pins.Add(CreateEntrancePin());
 
@@ -506,6 +430,8 @@ public partial class MainPage : ContentPage
         {
             mapView.Pins.Add(CreateUserPin(_viewModel.LastLocation));
         }
+
+        RefreshTourRoute(mapView);
 
         Pin? selectedPin = null;
 
@@ -541,6 +467,28 @@ public partial class MainPage : ContentPage
         }
     }
 
+    private void RefreshTourRoute(MapView mapView)
+    {
+        var routePoints = _viewModel.ActiveTourRoutePoints;
+        if (routePoints.Count < 2)
+        {
+            return;
+        }
+
+        var polyline = new Polyline
+        {
+            StrokeColor = Color.FromArgb("#2F80FF"),
+            StrokeWidth = 6
+        };
+
+        foreach (var point in routePoints)
+        {
+            polyline.Positions.Add(new Position(point.Latitude, point.Longitude));
+        }
+
+        mapView.Drawables.Add(polyline);
+    }
+
     private void EnsureFullScreenMapInitialized()
     {
         if (_fullScreenMapInitialized)
@@ -554,9 +502,8 @@ public partial class MainPage : ContentPage
         _fullScreenMapInitialized = true;
     }
 
-    private void OpenFullScreenMap()
+    private void OpenFullScreenMap(bool focusOnRoute = false)
     {
-        HideSecondaryOverlays();
         EnsureFullScreenMapInitialized();
         _isFullScreenMapVisible = true;
         FullScreenMapOverlay.IsVisible = true;
@@ -564,6 +511,11 @@ public partial class MainPage : ContentPage
 
         Dispatcher.Dispatch(() =>
         {
+            if (focusOnRoute && FocusMapOnActiveRoute(FullScreenRestaurantMap, FullScreenEntranceResolution))
+            {
+                return;
+            }
+
             CenterMapOnCurrentLocation(
                 FullScreenRestaurantMap,
                 FullScreenCurrentLocationResolution,
@@ -580,12 +532,7 @@ public partial class MainPage : ContentPage
             _viewModel.SelectPoi(poiId.Value);
         }
 
-        if (_viewModel.SelectedPoiId is null)
-        {
-            return;
-        }
-
-        if (_isNavigatingToPoiDetail)
+        if (_viewModel.SelectedPoiId is null || _isNavigatingToPoiDetail)
         {
             return;
         }
@@ -600,27 +547,13 @@ public partial class MainPage : ContentPage
                 FullScreenMapOverlay.IsVisible = false;
             }
 
-            var detailPage = _serviceProvider.GetRequiredService<Views.PoiDetailPage>();
+            var detailPage = _serviceProvider.GetRequiredService<PoiDetailPage>();
             await Navigation.PushAsync(detailPage);
         }
         finally
         {
             _isNavigatingToPoiDetail = false;
         }
-    }
-
-    private async Task OpenListeningHistoryDetailAsync(ListeningHistoryDisplayItem item)
-    {
-        var canOpen = await _viewModel.OpenListeningHistoryDetailAsync(item.Id);
-        if (!canOpen)
-        {
-            await DisplayAlert("Thông báo", "Không thể mở chi tiết từ bản ghi lịch sử này.", "OK");
-            return;
-        }
-
-        HideSecondaryOverlays();
-        RefreshMapPins(centerOnSelection: false);
-        await OpenPoiDetailAsync();
     }
 
     private static Mapsui.Map CreateMap()
@@ -679,12 +612,75 @@ public partial class MainPage : ContentPage
         CenterMapOnEntrance(mapView, fallbackResolution);
     }
 
+    private void FocusMapOnGpsOrigin(
+        MapView mapView,
+        double originResolution,
+        double fallbackResolution)
+    {
+        if (_viewModel.GpsOriginLocation is not null)
+        {
+            CenterOnPosition(
+                mapView,
+                new Position(_viewModel.GpsOriginLocation.Latitude, _viewModel.GpsOriginLocation.Longitude),
+                originResolution);
+            return;
+        }
+
+        CenterMapOnEntrance(mapView, fallbackResolution);
+    }
+
+    private void FocusActiveMapOnGpsOrigin()
+    {
+        if (_isFullScreenMapVisible && _fullScreenMapInitialized)
+        {
+            FocusMapOnGpsOrigin(
+                FullScreenRestaurantMap,
+                FullScreenCurrentLocationResolution,
+                FullScreenEntranceResolution);
+            return;
+        }
+
+        FocusMapOnGpsOrigin(
+            RestaurantMap,
+            PreviewCurrentLocationResolution,
+            PreviewEntranceResolution);
+    }
+
+    private bool FocusMapOnActiveRoute(MapView mapView, double fallbackResolution)
+    {
+        var routePoints = _viewModel.ActiveTourRoutePoints;
+        if (routePoints.Count == 0 || mapView.Map is null)
+        {
+            return false;
+        }
+
+        if (routePoints.Count == 1)
+        {
+            CenterOnPosition(
+                mapView,
+                new Position(routePoints[0].Latitude, routePoints[0].Longitude),
+                fallbackResolution);
+            return true;
+        }
+
+        var mapsuiPoints = routePoints
+            .Select(point => new Position(point.Latitude, point.Longitude).ToMapsui())
+            .ToList();
+        var minX = mapsuiPoints.Min(point => point.X);
+        var minY = mapsuiPoints.Min(point => point.Y);
+        var maxX = mapsuiPoints.Max(point => point.X);
+        var maxY = mapsuiPoints.Max(point => point.Y);
+
+        mapView.Map.Navigator.ZoomToBox(new MRect(minX, minY, maxX, maxY), MBoxFit.Fit, 350);
+        return true;
+    }
+
     private static Pin CreateEntrancePin()
     {
         return new Pin
         {
             Type = PinType.Pin,
-            Color = Colors.Black,
+            Color = Color.FromArgb("#102A43"),
             Position = new Position(MainViewModel.EntranceLatitude, MainViewModel.EntranceLongitude),
             Label = string.Empty,
             Address = string.Empty,
@@ -697,7 +693,7 @@ public partial class MainPage : ContentPage
         return new Pin
         {
             Type = PinType.Pin,
-            Color = Color.FromArgb("#2563EB"),
+            Color = Color.FromArgb("#2F80FF"),
             Position = new Position(location.Latitude, location.Longitude),
             Label = string.Empty,
             Address = string.Empty,
@@ -705,64 +701,35 @@ public partial class MainPage : ContentPage
         };
     }
 
-    private void HideSecondaryOverlays()
-    {
-        if (ListeningHistoryOverlay is not null)
-        {
-            ListeningHistoryOverlay.IsVisible = false;
-        }
-
-        if (UserProfileOverlay is not null)
-        {
-            UserProfileOverlay.IsVisible = false;
-        }
-    }
-
-    private void ShowUserProfileOverlay()
-    {
-        RestaurantSearchEntry.Unfocus();
-        UserProfileOverlay.IsVisible = true;
-        ListeningHistoryOverlay.IsVisible = false;
-        _viewModel.ResetAccountProfileEditor();
-        _viewModel.ResetAudioSettingsDraft();
-        _viewModel.RefreshListeningHistoryCommand.Execute(null);
-    }
-
     private Pin CreateRestaurantPin(PoiStatusItem poi)
     {
         var isSelected = _viewModel.SelectedPoiId == poi.PoiId;
-        var pin = new Pin
+        return new Pin
         {
             Type = PinType.Pin,
             Color = isSelected
-                ? Color.FromArgb("#173A43")
+                ? Color.FromArgb("#102A43")
                 : poi.IsActiveTourStop
-                ? Color.FromArgb("#0F766E")
-                : poi.IsCompletedTourStop
-                ? Color.FromArgb("#15803D")
-                : poi.IsInsideRadius
-                ? Color.FromArgb("#EA580C")
-                : poi.IsNearest
-                    ? Color.FromArgb("#B91C1C")
-                    : Color.FromArgb("#6B7280"),
+                    ? Color.FromArgb("#2F80FF")
+                    : poi.IsCompletedTourStop
+                        ? Color.FromArgb("#60A5FA")
+                        : poi.IsInsideRadius
+                            ? Color.FromArgb("#1D4ED8")
+                            : poi.IsNearest
+                                ? Color.FromArgb("#3B82F6")
+                                : Color.FromArgb("#94A3B8"),
             Position = new Position(poi.Latitude, poi.Longitude),
             Label = string.Empty,
             Address = string.Empty,
             Scale = isSelected
                 ? 0.52F
                 : poi.IsActiveTourStop
-                ? 0.48F
-                : poi.IsCompletedTourStop
-                ? 0.42F
-                : poi.IsInsideRadius
-                ? 0.44F
-                : poi.IsNearest
-                    ? 0.40F
-                    : 0.34F,
+                    ? 0.48F
+                    : poi.IsCompletedTourStop
+                        ? 0.42F
+                        : 0.38F,
             Tag = poi.PoiId
         };
-
-        return pin;
     }
 
     private void CenterOnPosition(MapView mapView, Position position, double resolution)
