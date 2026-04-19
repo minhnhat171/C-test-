@@ -39,6 +39,7 @@
     <MauiXaml Update="AppShell.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="MainPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Views\AuthPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Views\AccountPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Views\FeaturedDishCategoryPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Views\PoiDetailPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Resources\Styles\Colors.xaml" Generator="MSBuild:Compile" />

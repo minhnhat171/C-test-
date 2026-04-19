@@ -3,93 +3,113 @@
     x:Class="VinhKhanhGuide.App.Views.PoiDetailPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Chi tiết quán"
-    BackgroundColor="#FBF8F4"
+    Title="Chi tiết địa điểm"
+    BackgroundColor="#F4F8FF"
     Shell.NavBarIsVisible="True">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20,24,20,28" Spacing="18">
-            <Border BackgroundColor="#FFF2E7"
-                    StrokeThickness="0"
-                    Padding="18"
-                    StrokeShape="RoundRectangle 26">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="{Binding SelectedPoiName}"
-                           FontSize="26"
-                           FontAttributes="Bold"
-                           TextColor="#111827" />
+        <VerticalStackLayout Padding="20,20,20,28"
+                             Spacing="18">
+            <Border StrokeThickness="0"
+                    StrokeShape="RoundRectangle 30">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0"
+                                         EndPoint="1,1">
+                        <GradientStop Color="#2F80FF" Offset="0" />
+                        <GradientStop Color="#6AA8FF" Offset="1" />
+                    </LinearGradientBrush>
+                </Border.Background>
 
-                    <Label Text="{Binding SelectedPoiAddress}"
-                           FontSize="13"
-                           TextColor="#6B7280" />
+                <VerticalStackLayout Spacing="0">
+                    <Image Source="{Binding SelectedPoiImageSource}"
+                           HeightRequest="250"
+                           Aspect="AspectFill" />
 
-                    <Label Text="{Binding SelectedPoiStatusText}"
-                           FontSize="12"
-                           TextColor="#9A3412" />
+                    <VerticalStackLayout Padding="20"
+                                         Spacing="8">
+                        <Label Text="{Binding SelectedPoiName}"
+                               FontSize="28"
+                               FontAttributes="Bold"
+                               TextColor="White" />
+
+                        <Label Text="{Binding SelectedPoiAddress}"
+                               FontSize="15"
+                               TextColor="#EAF3FF" />
+
+                        <Border BackgroundColor="#FFFFFF"
+                                Padding="12,8"
+                                HorizontalOptions="Start"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 16">
+                            <Label Text="{Binding SelectedPoiStatusText}"
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   TextColor="#2F80FF" />
+                        </Border>
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
 
-            <Border BackgroundColor="#FFFFFF"
+            <Border BackgroundColor="White"
+                    Padding="18"
                     StrokeThickness="0"
-                    Padding="16"
                     StrokeShape="RoundRectangle 24">
                 <VerticalStackLayout Spacing="14">
-                    <Image Source="{Binding SelectedPoiImageSource}"
-                           HeightRequest="220"
-                           Aspect="AspectFill" />
-
-                    <Label Text="Giới thiệu"
-                           FontSize="14"
+                    <Label Text="Mô tả quán"
+                           FontSize="20"
                            FontAttributes="Bold"
-                           TextColor="#111827" />
+                           TextColor="#102A43" />
 
                     <Label Text="{Binding SelectedPoiDescription}"
-                           FontSize="14"
-                           TextColor="#374151"
+                           FontSize="16"
+                           TextColor="#486581"
                            LineBreakMode="WordWrap" />
 
-                    <Border BackgroundColor="#FFF8F1"
+                    <Border BackgroundColor="#F4F8FF"
+                            Padding="14"
                             StrokeThickness="0"
-                            Padding="14,12"
-                            StrokeShape="RoundRectangle 18">
+                            StrokeShape="RoundRectangle 18"
+                            IsVisible="{Binding HasSelectedPoiDish}">
                         <Label Text="{Binding SelectedPoiDishText}"
-                               FontSize="13"
-                               TextColor="#7C2D12" />
+                               FontSize="15"
+                               TextColor="#2F80FF" />
                     </Border>
                 </VerticalStackLayout>
             </Border>
 
-            <Border BackgroundColor="#FFFFFF"
+            <Border BackgroundColor="White"
+                    Padding="18"
                     StrokeThickness="0"
-                    Padding="16"
                     StrokeShape="RoundRectangle 24">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="Thuyết minh hiện tại"
-                           FontSize="14"
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="Thuyết minh"
+                           FontSize="20"
                            FontAttributes="Bold"
-                           TextColor="#111827" />
+                           TextColor="#102A43" />
 
                     <Label Text="{Binding SelectedPoiNarrationPreview}"
-                           FontSize="13"
-                           TextColor="#374151"
+                           FontSize="16"
+                           TextColor="#486581"
                            LineBreakMode="WordWrap" />
 
                     <Grid ColumnDefinitions="*,*"
                           ColumnSpacing="12">
                         <Button Text="{Binding SelectedPoiNarrationActionText}"
                                 Clicked="OnNarrateSelectedClicked"
-                                BackgroundColor="#173A43"
+                                BackgroundColor="#2F80FF"
                                 TextColor="White"
+                                FontSize="16"
                                 CornerRadius="18"
-                                HeightRequest="48" />
+                                HeightRequest="50" />
 
                         <Button Grid.Column="1"
                                 Text="Chỉ đường"
                                 Clicked="OnOpenMapClicked"
-                                BackgroundColor="#F1E7D9"
-                                TextColor="#1B2A2F"
+                                BackgroundColor="#E8F1FF"
+                                TextColor="#2F80FF"
+                                FontSize="16"
                                 CornerRadius="18"
-                                HeightRequest="48" />
+                                HeightRequest="50" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>
