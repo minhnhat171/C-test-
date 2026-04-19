@@ -5,6 +5,7 @@
 
     var maxDailyCount = Math.Max(1, Model.DailyListenPoints.Select(x => x.Count).DefaultIfEmpty(0).Max());
     var maxTopPoiCount = Math.Max(1, Model.TopPois.Select(x => x.Count).DefaultIfEmpty(0).Max());
+    var activeDevices = Model.ActiveDeviceStats.Devices;
     var syncLabel = Model.IsSyncOnline ? "Online" : "Offline";
     var syncSummary = Model.IsSyncOnline
         ? "Kênh đồng bộ đang hoạt động ổn định."
@@ -130,6 +131,7 @@
     .metric-card.metric-qr { background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); }
     .metric-card.metric-today { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); }
     .metric-card.metric-top { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
+    .metric-card.metric-live { background: linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 100%); }
 
     .metric-mark {
         position: relative;
@@ -492,6 +494,66 @@
         padding: 1rem 0;
     }
 
+    .active-device-panel {
+        overflow: hidden;
+    }
+
+    .active-device-list {
+        display: grid;
+        gap: 0.85rem;
+    }
+
+    .active-device-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: center;
+        padding: 1rem 1.1rem;
+        border-radius: 20px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.92));
+    }
+
+    .active-device-main {
+        min-width: 0;
+    }
+
+    .active-device-name {
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+
+    .active-device-meta {
+        margin-top: 0.28rem;
+        color: var(--dash-muted);
+        font-size: 0.88rem;
+    }
+
+    .active-device-status {
+        display: grid;
+        justify-items: end;
+        gap: 0.35rem;
+        color: var(--dash-muted);
+        font-size: 0.84rem;
+        white-space: nowrap;
+    }
+
+    .active-device-dot {
+        width: 0.72rem;
+        height: 0.72rem;
+        border-radius: 999px;
+        background: #10b981;
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.14);
+    }
+
+    .active-device-empty {
+        padding: 1.1rem;
+        border-radius: 20px;
+        border: 1px dashed rgba(148, 163, 184, 0.35);
+        color: var(--dash-muted);
+        background: rgba(248, 250, 252, 0.72);
+    }
+
     @@media (max-width: 1199.98px) {
         .dashboard-header {
             flex-direction: column;
@@ -520,6 +582,15 @@
         .history-head {
             flex-direction: column;
         }
+
+        .active-device-row {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .active-device-status {
+            justify-items: start;
+        }
     }
 </style>
 
@@ -545,6 +616,15 @@
     }
 
     <div class="row g-4 mb-4">
+        <div class="col-sm-6 col-xl-4 col-xxl-2">
+            <div class="metric-card metric-live">
+                <span class="metric-mark">Live</span>
+                <div class="metric-label">Thiet bi dang hoat dong</div>
+                <div class="metric-value" id="activeDeviceCount">@Model.ActiveDeviceCount</div>
+                <div class="metric-note" id="activeDeviceNote">Cap nhat realtime tu app</div>
+            </div>
+        </div>
+
         <div class="col-sm-6 col-xl-4 col-xxl-2">
             <div class="metric-card metric-poi">
                 <span class="metric-mark">POI</span>
@@ -597,6 +677,50 @@
                 <div class="metric-value-text">@Model.MostPlayedPoi</div>
                 <div class="metric-note">Tính theo toàn bộ lịch sử sử dụng</div>
             </div>
+        </div>
+    </div>
+
+    <div class="dashboard-panel active-device-panel mb-4">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">Thiet bi dang su dung app</h2>
+                <div class="panel-subtitle">Danh sach thiet bi con gui tin hieu heartbeat len VKFoodAPI.</div>
+            </div>
+            <span class="panel-chip" id="activeDevicePanelCount">@Model.ActiveDeviceCount thiet bi</span>
+        </div>
+
+        <div class="active-device-list" id="activeDeviceList">
+            @if (activeDevices.Any())
+            {
+                @foreach (var item in activeDevices)
+                {
+                    var shortDeviceId = item.DeviceId.Length > 8
+                        ? item.DeviceId[^8..].ToUpperInvariant()
+                        : item.DeviceId.ToUpperInvariant();
+                    var deviceName = string.IsNullOrWhiteSpace(item.UserDisplayName)
+                        ? item.UserCode
+                        : item.UserDisplayName;
+                    var deviceModel = string.IsNullOrWhiteSpace(item.DeviceModel)
+                        ? item.DevicePlatform
+                        : $"{item.DevicePlatform} - {item.DeviceModel}";
+
+                    <div class="active-device-row">
+                        <div class="active-device-main">
+                            <div class="active-device-name">@deviceName</div>
+                            <div class="active-device-meta">@deviceModel</div>
+                            <div class="active-device-meta">Device #@shortDeviceId</div>
+                        </div>
+                        <div class="active-device-status">
+                            <span class="active-device-dot"></span>
+                            <span>@item.LastSeenAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</span>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="active-device-empty">Chua co thiet bi nao dang su dung app.</div>
+            }
         </div>
     </div>
 
@@ -760,3 +884,143 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const statsUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("ActiveDevices", "Home")));
+            const eventsUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("ActiveDeviceEvents", "Home")));
+            const countEl = document.getElementById("activeDeviceCount");
+            const noteEl = document.getElementById("activeDeviceNote");
+            const panelCountEl = document.getElementById("activeDevicePanelCount");
+            const listEl = document.getElementById("activeDeviceList");
+            let pollingTimer = 0;
+
+            const escapeHtml = (value) => String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+
+            const shortDeviceId = (deviceId) => {
+                const value = String(deviceId ?? "").toUpperCase();
+                return value.length > 8 ? value.slice(-8) : value;
+            };
+
+            const formatTime = (value) => {
+                if (!value) {
+                    return "Vua cap nhat";
+                }
+
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) {
+                    return "Vua cap nhat";
+                }
+
+                return date.toLocaleString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit"
+                });
+            };
+
+            const renderDevices = (devices) => {
+                if (!listEl) {
+                    return;
+                }
+
+                if (!Array.isArray(devices) || devices.length === 0) {
+                    listEl.innerHTML = '<div class="active-device-empty">Chua co thiet bi nao dang su dung app.</div>';
+                    return;
+                }
+
+                listEl.innerHTML = devices.map((device) => {
+                    const name = device.userDisplayName || device.userCode || "Khach tham quan";
+                    const platform = device.devicePlatform || "App";
+                    const model = device.deviceModel ? `${platform} - ${device.deviceModel}` : platform;
+                    const version = device.appVersion ? `App ${device.appVersion}` : "";
+                    const meta = version ? `${model} | ${version}` : model;
+
+                    return `
+                        <div class="active-device-row">
+                            <div class="active-device-main">
+                                <div class="active-device-name">${escapeHtml(name)}</div>
+                                <div class="active-device-meta">${escapeHtml(meta)}</div>
+                                <div class="active-device-meta">Device #${escapeHtml(shortDeviceId(device.deviceId))}</div>
+                            </div>
+                            <div class="active-device-status">
+                                <span class="active-device-dot"></span>
+                                <span>${escapeHtml(formatTime(device.lastSeenAtUtc))}</span>
+                            </div>
+                        </div>`;
+                }).join("");
+            };
+
+            const updateStats = (stats) => {
+                const count = Number(stats?.activeDeviceCount ?? 0);
+                const devices = stats?.devices ?? [];
+
+                if (countEl) {
+                    countEl.textContent = count.toString();
+                }
+
+                if (noteEl) {
+                    noteEl.textContent = count === 1
+                        ? "1 thiet bi dang online"
+                        : `${count} thiet bi dang online`;
+                }
+
+                if (panelCountEl) {
+                    panelCountEl.textContent = count === 1
+                        ? "1 thiet bi"
+                        : `${count} thiet bi`;
+                }
+
+                renderDevices(devices);
+            };
+
+            const startPolling = () => {
+                if (pollingTimer || !statsUrl) {
+                    return;
+                }
+
+                const loadStats = async () => {
+                    try {
+                        const response = await fetch(statsUrl, { cache: "no-store" });
+                        if (!response.ok) {
+                            return;
+                        }
+
+                        updateStats(await response.json());
+                    } catch {
+                        // Keep the last visible value if the admin API is temporarily unavailable.
+                    }
+                };
+
+                loadStats();
+                pollingTimer = window.setInterval(loadStats, 2000);
+            };
+
+            if ("EventSource" in window && eventsUrl) {
+                const source = new EventSource(eventsUrl);
+                source.addEventListener("active-devices", (event) => {
+                    try {
+                        updateStats(JSON.parse(event.data));
+                    } catch {
+                        startPolling();
+                    }
+                });
+                source.onerror = () => {
+                    source.close();
+                    startPolling();
+                };
+            } else {
+                startPolling();
+            }
+        })();
+    </script>
+}

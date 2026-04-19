@@ -31,10 +31,20 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
-        builder.Services.AddSingleton(_ => new HttpClient
+        builder.Services.AddSingleton(_ =>
         {
-            BaseAddress = PoiApiEndpoint.CreateBaseUri(),
-            Timeout = TimeSpan.FromSeconds(8)
+            var client = new HttpClient
+            {
+                BaseAddress = PoiApiEndpoint.CreateBaseUri(),
+                Timeout = TimeSpan.FromSeconds(8)
+            };
+
+            if (client.BaseAddress.Host.EndsWith(".ngrok-free.dev", StringComparison.OrdinalIgnoreCase))
+            {
+                client.DefaultRequestHeaders.TryAddWithoutValidation("ngrok-skip-browser-warning", "true");
+            }
+
+            return client;
         });
 
         builder.Services.AddSingleton<IAuthService, AuthService>();
@@ -43,6 +53,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IAccountProfileValidationService, AccountProfileValidationService>();
         builder.Services.AddSingleton<IUsageHistoryService, UsageHistoryService>();
         builder.Services.AddSingleton<IListeningHistorySyncService, ListeningHistorySyncService>();
+        builder.Services.AddSingleton<IActiveDeviceTracker, ActiveDeviceTracker>();
         builder.Services.AddSingleton<ILocationService, LocationService>();
         builder.Services.AddSingleton<IMapOfflineTileService, MapOfflineTileService>();
         builder.Services.AddSingleton<IPoiOfflineStore, PoiOfflineStore>();

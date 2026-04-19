@@ -8,17 +8,20 @@ public class DashboardService
     private readonly PoiApiClient _poiApiClient;
     private readonly TourApiClient _tourApiClient;
     private readonly ListeningHistoryApiClient _listeningHistoryApiClient;
+    private readonly ActiveDeviceApiClient _activeDeviceApiClient;
     private readonly AppDataService _fallbackData;
 
     public DashboardService(
         PoiApiClient poiApiClient,
         TourApiClient tourApiClient,
         ListeningHistoryApiClient listeningHistoryApiClient,
+        ActiveDeviceApiClient activeDeviceApiClient,
         AppDataService fallbackData)
     {
         _poiApiClient = poiApiClient;
         _tourApiClient = tourApiClient;
         _listeningHistoryApiClient = listeningHistoryApiClient;
+        _activeDeviceApiClient = activeDeviceApiClient;
         _fallbackData = fallbackData;
     }
 
@@ -32,10 +35,15 @@ public class DashboardService
                 sortBy: "time_desc",
                 period: "all",
                 cancellationToken: cancellationToken);
+            var activeDevicesTask = GetActiveDeviceStatsAsync(cancellationToken);
 
-            await Task.WhenAll(poisTask, toursTask, historyTask);
+            await Task.WhenAll(poisTask, toursTask, historyTask, activeDevicesTask);
 
-            return BuildFromSharedData(poisTask.Result, historyTask.Result, toursTask.Result.Count);
+            return BuildFromSharedData(
+                poisTask.Result,
+                historyTask.Result,
+                toursTask.Result.Count,
+                activeDevicesTask.Result);
         }
         catch (Exception ex) when (
             ex is HttpRequestException ||
@@ -50,10 +58,32 @@ public class DashboardService
         }
     }
 
+    public async Task<ActiveDeviceStatsDto> GetActiveDeviceStatsAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await _activeDeviceApiClient.GetStatsAsync(cancellationToken);
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException ||
+            ex is TaskCanceledException ||
+            ex is InvalidOperationException)
+        {
+            return new ActiveDeviceStatsDto
+            {
+                ActiveDeviceCount = 0,
+                GeneratedAtUtc = DateTimeOffset.UtcNow,
+                ActiveThresholdUtc = DateTimeOffset.UtcNow,
+                Devices = []
+            };
+        }
+    }
+
     private static DashboardViewModel BuildFromSharedData(
         IReadOnlyList<PoiDto> pois,
         IReadOnlyList<ListeningHistoryEntryDto> history,
-        int totalTours)
+        int totalTours,
+        ActiveDeviceStatsDto activeDevices)
     {
         var dashboardGeneratedAt = DateTime.Now;
         var today = dashboardGeneratedAt.Date;
@@ -96,6 +126,8 @@ public class DashboardService
             QrListenRate = totalUsageLogs == 0 ? 0 : (int)Math.Round(localizedHistory.Count(x => IsQrTrigger(x.Item.TriggerType)) * 100.0 / totalUsageLogs),
             PublishedAudioCount = pois.Count(poi => poi.IsActive && CountAudioVariants(poi) > 0),
             ActivePoiCount = pois.Count(poi => poi.IsActive),
+            ActiveDeviceStats = activeDevices.Clone(),
+            ActiveDeviceCount = activeDevices.ActiveDeviceCount,
             IsSyncOnline = true,
             LastSyncedAt = dashboardGeneratedAt,
             DataSourceLabel = "VKFoodAPI",
@@ -183,6 +215,14 @@ public class DashboardService
             QrListenRate = totalUsageLogs == 0 ? 0 : (int)Math.Round(_fallbackData.UsageLogs.Count(x => x.TriggerType == "QR") * 100.0 / totalUsageLogs),
             PublishedAudioCount = _fallbackData.AudioGuides.Count(x => x.IsPublished),
             ActivePoiCount = _fallbackData.Pois.Count(x => x.IsActive),
+            ActiveDeviceStats = new ActiveDeviceStatsDto
+            {
+                ActiveDeviceCount = 0,
+                GeneratedAtUtc = DateTimeOffset.UtcNow,
+                ActiveThresholdUtc = DateTimeOffset.UtcNow,
+                Devices = []
+            },
+            ActiveDeviceCount = 0,
             IsSyncOnline = false,
             LastSyncedAt = lastSyncedAt,
             DataSourceLabel = "Du lieu mau",

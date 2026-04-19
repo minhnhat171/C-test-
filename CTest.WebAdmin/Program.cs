@@ -5,29 +5,17 @@ using Microsoft.AspNetCore.HttpOverrides;
 var builder = WebApplication.CreateBuilder(args);
 var poiApiBaseUrl = builder.Configuration["PoiApi:BaseUrl"] ?? "http://localhost:5287/";
 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<AppDataService>();
 builder.Services.Configure<QrCodeOptions>(builder.Configuration.GetSection("QrCode"));
-builder.Services.AddHttpClient<PoiApiClient>(client =>
-{
-    client.BaseAddress = new Uri(poiApiBaseUrl);
-    client.Timeout = TimeSpan.FromSeconds(10);
-});
-builder.Services.AddHttpClient<TourApiClient>(client =>
-{
-    client.BaseAddress = new Uri(poiApiBaseUrl);
-    client.Timeout = TimeSpan.FromSeconds(10);
-});
-builder.Services.AddHttpClient<AudioGuideApiClient>(client =>
-{
-    client.BaseAddress = new Uri(poiApiBaseUrl);
-    client.Timeout = TimeSpan.FromSeconds(10);
-});
-builder.Services.AddHttpClient<ListeningHistoryApiClient>(client =>
-{
-    client.BaseAddress = new Uri(poiApiBaseUrl);
-    client.Timeout = TimeSpan.FromSeconds(10);
-});
+builder.Services.AddHttpClient<PoiApiClient>(ConfigureSharedApiClient);
+builder.Services.AddHttpClient<TourApiClient>(ConfigureSharedApiClient);
+builder.Services.AddHttpClient<AudioGuideApiClient>(ConfigureSharedApiClient);
+builder.Services.AddHttpClient<ListeningHistoryApiClient>(ConfigureSharedApiClient);
+builder.Services.AddHttpClient<ActiveDeviceApiClient>(ConfigureSharedApiClient);
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<AudioGuideAdminService>();
 builder.Services.AddScoped<AudioGuideValidationService>();
@@ -59,3 +47,14 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+void ConfigureSharedApiClient(HttpClient client)
+{
+    client.BaseAddress = new Uri(poiApiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(10);
+
+    if (client.BaseAddress.Host.EndsWith(".ngrok-free.dev", StringComparison.OrdinalIgnoreCase))
+    {
+        client.DefaultRequestHeaders.TryAddWithoutValidation("ngrok-skip-browser-warning", "true");
+    }
+}

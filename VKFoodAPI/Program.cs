@@ -8,6 +8,8 @@ builder.Services.AddSingleton<AudioGuideRepository>();
 builder.Services.AddSingleton<TourRepository>();
 builder.Services.AddSingleton<ListeningHistoryRepository>();
 builder.Services.AddSingleton<UserManagementRepository>();
+builder.Services.AddSingleton<ActiveDeviceRepository>();
+builder.Services.AddHostedService<ActiveDevicePruningService>();
 
 builder.Services.AddCors(options =>
 {
