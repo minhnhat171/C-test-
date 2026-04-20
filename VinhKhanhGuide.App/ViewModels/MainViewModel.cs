@@ -16,7 +16,7 @@ using VinhKhanhGuide.Core.Models;
 
 namespace VinhKhanhGuide.App.ViewModels;
 
-public class MainViewModel : INotifyPropertyChanged
+public partial class MainViewModel : INotifyPropertyChanged
 {
     private const string DefaultNarrationMode = "tts";
     private const int MaxRecentSearches = 6;
@@ -36,6 +36,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly ISearchService _searchService;
     private readonly INarrationService _narrationService;
     private readonly IAuthService _authService;
+    private readonly IUserProfileSyncService _userProfileSyncService;
     private readonly IAudioSettingsService _audioSettingsService;
     private readonly IAudioAssetCacheService _audioAssetCacheService;
     private readonly IAccountProfileValidationService _accountProfileValidationService;
@@ -74,11 +75,11 @@ public class MainViewModel : INotifyPropertyChanged
     private string _tourDataSnapshot = string.Empty;
     private int? _activeTourId;
     private int _activeTourStopIndex;
-    private string _statusText = "Đang chờ khởi động GPS";
+    private string _statusText = "Sẵn sàng khám phá";
     private string _locationText = "Bạn đang xem cổng phố ẩm thực Vĩnh Khánh";
-    private string _nearestPoiText = "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
-    private string _mapModeBadgeText = "Đang tải bản đồ";
-    private string _mapPoiBadgeText = "0 POI";
+    private string _nearestPoiText = "Chọn tour, chọn quán hoặc mở bản đồ để nghe thuyết minh";
+    private string _mapModeBadgeText = "Đang mở bản đồ";
+    private string _mapPoiBadgeText = "0 quán";
     private string _selectedPoiName = "Ốc Oanh";
     private string _selectedPoiAddress = string.Empty;
     private string _selectedPoiDescription = string.Empty;
@@ -134,6 +135,7 @@ public class MainViewModel : INotifyPropertyChanged
         ISearchService searchService,
         INarrationService narrationService,
         IAuthService authService,
+        IUserProfileSyncService userProfileSyncService,
         IAudioSettingsService audioSettingsService,
         IAudioAssetCacheService audioAssetCacheService,
         IAccountProfileValidationService accountProfileValidationService,
@@ -149,6 +151,7 @@ public class MainViewModel : INotifyPropertyChanged
         _searchService = searchService;
         _narrationService = narrationService;
         _authService = authService;
+        _userProfileSyncService = userProfileSyncService;
         _audioSettingsService = audioSettingsService;
         _audioAssetCacheService = audioAssetCacheService;
         _accountProfileValidationService = accountProfileValidationService;
@@ -161,39 +164,7 @@ public class MainViewModel : INotifyPropertyChanged
         _locationService.LocationUpdated += OnLocationUpdated;
         _authService.SessionChanged += OnAuthSessionChanged;
 
-        FeaturedDishes.Add(new FoodCategoryItem
-        {
-            Key = "bo",
-            Icon = "🥩",
-            Name = "Bò",
-            Description = "Món bò nướng đậm vị, dễ chọn cho khách mới.",
-            DishCount = CountFeaturedDishes("bo")
-        });
-        FeaturedDishes.Add(new FoodCategoryItem
-        {
-            Key = "lau",
-            Icon = "🍲",
-            Name = "Lẩu",
-            Description = "Các món lẩu nóng hổi cho nhóm bạn hoặc gia đình.",
-            DishCount = CountFeaturedDishes("lau")
-        });
-        FeaturedDishes.Add(new FoodCategoryItem
-        {
-            Key = "oc",
-            Icon = "🐚",
-            Name = "Ốc",
-            Description = "Món ốc nổi bật với vị sốt và nướng quen thuộc.",
-            DishCount = CountFeaturedDishes("oc")
-        });
-        FeaturedDishes.Add(new FoodCategoryItem
-        {
-            Key = "cua",
-            Icon = "🦀",
-            Name = "Cua",
-            Description = "Các món cua đáng chú ý với mức giá mở đầu rõ ràng.",
-            DishCount = CountFeaturedDishes("cua")
-        });
-
+        RebuildFeaturedDishCategories();
         ShowFeaturedDishCategory("bo");
 
         StartTrackingCommand = new Command(async () => await StartAsync(), () => !IsTracking);
@@ -234,19 +205,19 @@ public class MainViewModel : INotifyPropertyChanged
     public IReadOnlyList<AudioSettingsOption> SupportedLanguages { get; } =
     [
         new() { Code = "vi", Label = "Tiếng Việt", Description = "Giọng tiếng Việt chuẩn cho khách nội địa." },
-        new() { Code = "en", Label = "English", Description = "Giọng đọc tiếng Anh với accent English." },
-        new() { Code = "zh", Label = "中文", Description = "Bản đọc tiếng Trung." },
-        new() { Code = "ko", Label = "한국어", Description = "Bản đọc tiếng Hàn." },
-        new() { Code = "fr", Label = "Français", Description = "Bản đọc tiếng Pháp." }
+        new() { Code = "en", Label = "English", Description = "English interface and narration for international visitors." },
+        new() { Code = "zh", Label = "中文", Description = "中文界面和中文讲解。" },
+        new() { Code = "ko", Label = "한국어", Description = "한국어 화면과 음성 안내." },
+        new() { Code = "fr", Label = "Français", Description = "Interface et narration en français." }
     ];
     public IReadOnlyList<AudioSettingsOption> SupportedPlaybackModes { get; } =
     [
-        new() { Code = "tts", Label = "TTS", Description = "Đọc bằng giọng máy theo ngôn ngữ đã chọn." },
-        new() { Code = "audio", Label = "Audio", Description = "Ưu tiên phát file audio thu sẵn nếu quán đã có asset." }
+        new() { Code = "tts", Label = "Giọng đọc tự động", Description = "Ứng dụng đọc thuyết minh theo ngôn ngữ đã chọn." },
+        new() { Code = "audio", Label = "Bản thu sẵn", Description = "Ưu tiên phát bản thu khi quán đã có nội dung." }
     ];
     public IReadOnlyList<string> ListeningHistoryPeriodOptions { get; } = ["Tất cả", "24 giờ qua", "7 ngày qua", "30 ngày qua"];
     public IReadOnlyList<string> ListeningHistorySortOptions { get; } = ["Mới nhất trước", "Cũ nhất trước"];
-    public IReadOnlyList<string> ListeningHistoryViewOptions { get; } = ["Dòng thời gian", "Xếp hạng POI"];
+    public IReadOnlyList<string> ListeningHistoryViewOptions { get; } = ["Dòng thời gian", "Xếp hạng quán"];
 
     public ICommand StartTrackingCommand { get; }
     public ICommand StopTrackingCommand { get; }
@@ -267,10 +238,13 @@ public class MainViewModel : INotifyPropertyChanged
     public IReadOnlyList<POI> Pois => _pois;
     public IReadOnlyList<TourDto> Tours => _tours;
     public LocationDto? LastLocation => _lastLocation;
-    public LocationDto? GpsOriginLocation => _gpsOriginLocation;
+    public LocationDto? GpsOriginLocation => EntranceLocation;
     public Guid? SelectedPoiId => _selectedPoi?.Id;
     public bool IsSelectedPoiNarrating => _selectedPoi is not null && IsNarrating && _activeNarrationPoiId == _selectedPoi.Id;
-    public string SelectedPoiNarrationActionText => IsSelectedPoiNarrating ? "Dừng thuyết minh" : "Nghe thuyết minh";
+    public string SelectedPoiNarrationActionText =>
+        GetLocalizedPoiNarrationActionText(IsSelectedPoiNarrating);
+    public string SelectedPoiNarrationStateText =>
+        GetLocalizedPoiNarrationStateText(IsSelectedPoiNarrating);
     public bool HasTours => TourPackages.Count > 0;
     public bool HasActiveTour => GetActiveTour() is not null;
     public bool HasActiveTourStops => ActiveTourStops.Count > 0;
@@ -287,11 +261,26 @@ public class MainViewModel : INotifyPropertyChanged
         })
         .ToList();
     public string TourSectionSummary => !HasTours
-        ? "Chưa có tour khả dụng."
+        ? LocalizeUi("Chưa có tour khả dụng.", "No tours available.", "暂无可用路线。", "이용 가능한 투어가 없습니다.", "Aucun parcours disponible.")
         : HasActiveTour
-            ? $"Đang theo dõi lộ trình {GetActiveTour()!.Name}."
-            : $"{TourPackages.Count} tour sẵn sàng.";
-    public string ActiveTourName => GetActiveTour()?.Name ?? "Chưa chọn tour";
+            ? LocalizeUi(
+                $"Đang dẫn {GetActiveTour()!.Name}. Xem điểm hiện tại bên dưới.",
+                $"Guiding {GetActiveTour()!.Name}. Check the current stop below.",
+                $"正在跟随 {GetActiveTour()!.Name} 路线。",
+                $"{GetActiveTour()!.Name} 경로를 추적 중입니다.",
+                $"Suivi de l'itinéraire {GetActiveTour()!.Name}.")
+            : LocalizeUi(
+                $"{TourPackages.Count} tour ngắn sẵn sàng cho khách mới.",
+                $"{TourPackages.Count} short tours ready for first-time visitors.",
+                $"{TourPackages.Count} 条路线已就绪。",
+                $"{TourPackages.Count}개 투어 준비 완료.",
+                $"{TourPackages.Count} parcours prêts.");
+    public string ActiveTourName => GetActiveTour()?.Name ?? LocalizeUi(
+        "Chưa chọn tour",
+        "No tour selected",
+        "尚未选择路线",
+        "선택된 투어 없음",
+        "Aucun parcours sélectionné");
     public string ActiveTourSummary
     {
         get
@@ -299,21 +288,41 @@ public class MainViewModel : INotifyPropertyChanged
             var activeTour = GetActiveTour();
             if (activeTour is null)
             {
-                return "Chọn một tour để bắt đầu hành trình.";
+                return LocalizeUi(
+                    "Chọn một tour để bắt đầu hành trình.",
+                    "Pick a tour to begin.",
+                    "请选择一条路线开始。",
+                    "투어를 선택해 시작하세요.",
+                    "Choisissez un parcours pour commencer.");
             }
 
             var stopIds = GetActiveTourStopIds();
             if (stopIds.Count == 0)
             {
-                return "Tour hiện tại không còn điểm dừng hợp lệ.";
+                return LocalizeUi(
+                    "Tour hiện tại không còn điểm dừng hợp lệ.",
+                    "This tour no longer has valid stops.",
+                    "当前路线已没有有效站点。",
+                    "현재 투어에 유효한 경유지가 없습니다.",
+                    "Ce parcours n'a plus d'étapes valides.");
             }
 
             if (GetCurrentActiveTourPoi() is null)
             {
-                return $"Hoàn tất {stopIds.Count}/{stopIds.Count} điểm dừng.";
+                return LocalizeUi(
+                    $"Hoàn tất {stopIds.Count}/{stopIds.Count} điểm dừng.",
+                    $"Completed {stopIds.Count}/{stopIds.Count} stops.",
+                    $"已完成 {stopIds.Count}/{stopIds.Count} 个站点。",
+                    $"{stopIds.Count}/{stopIds.Count}개 경유지 완료.",
+                    $"{stopIds.Count}/{stopIds.Count} étapes terminées.");
             }
 
-            return $"Đang chạy {Math.Min(_activeTourStopIndex + 1, stopIds.Count)}/{stopIds.Count} điểm dừng.";
+            return LocalizeUi(
+                $"Đang chạy {Math.Min(_activeTourStopIndex + 1, stopIds.Count)}/{stopIds.Count} điểm dừng.",
+                $"Running stop {Math.Min(_activeTourStopIndex + 1, stopIds.Count)}/{stopIds.Count}.",
+                $"当前进行到第 {Math.Min(_activeTourStopIndex + 1, stopIds.Count)}/{stopIds.Count} 站。",
+                $"{Math.Min(_activeTourStopIndex + 1, stopIds.Count)}/{stopIds.Count}번째 경유지 진행 중.",
+                $"Étape {Math.Min(_activeTourStopIndex + 1, stopIds.Count)}/{stopIds.Count} en cours.");
         }
     }
     public string ActiveTourCurrentStopText
@@ -324,11 +333,16 @@ public class MainViewModel : INotifyPropertyChanged
             if (currentPoi is null)
             {
                 return HasActiveTour
-                    ? "Điểm hiện tại: đã hoàn tất."
-                    : "Điểm hiện tại: chưa chọn.";
+                    ? LocalizeUi("Điểm hiện tại: đã hoàn tất.", "Current stop: completed.", "当前站点：已完成。", "현재 경유지: 완료됨.", "Étape actuelle : terminée.")
+                    : LocalizeUi("Điểm hiện tại: chưa chọn.", "Current stop: none selected.", "当前站点：未选择。", "현재 경유지: 선택 안 됨.", "Étape actuelle : non définie.");
             }
 
-            return $"Điểm hiện tại: {currentPoi.Name}";
+            return LocalizeUi(
+                $"Điểm hiện tại: {currentPoi.Name}",
+                $"Current stop: {currentPoi.Name}",
+                $"当前站点：{currentPoi.Name}",
+                $"현재 경유지: {currentPoi.Name}",
+                $"Étape actuelle : {currentPoi.Name}");
         }
     }
     public string ActiveTourNextStopText
@@ -339,11 +353,16 @@ public class MainViewModel : INotifyPropertyChanged
             if (nextPoi is null)
             {
                 return HasActiveTour
-                    ? "Điểm kế tiếp: không còn."
-                    : "Điểm kế tiếp: chọn tour.";
+                    ? LocalizeUi("Điểm kế tiếp: không còn.", "Next stop: none left.", "下一站：没有了。", "다음 경유지: 없음.", "Étape suivante : aucune.")
+                    : LocalizeUi("Điểm kế tiếp: chọn tour.", "Next stop: choose a tour.", "下一站：请先选择路线。", "다음 경유지: 투어를 선택하세요.", "Étape suivante : choisissez un parcours.");
             }
 
-            return $"Điểm kế tiếp: {nextPoi.Name}";
+            return LocalizeUi(
+                $"Điểm kế tiếp: {nextPoi.Name}",
+                $"Next stop: {nextPoi.Name}",
+                $"下一站：{nextPoi.Name}",
+                $"다음 경유지: {nextPoi.Name}",
+                $"Étape suivante : {nextPoi.Name}");
         }
     }
     public string HomeNarrationSummary
@@ -354,14 +373,14 @@ public class MainViewModel : INotifyPropertyChanged
             if (activeTour is not null)
             {
                 var currentPoi = GetCurrentActiveTourPoi();
-                if (currentPoi is null)
-                {
-                    return $"Tour {activeTour.Name} đã hoàn tất. Bạn có thể chọn tour khác hoặc quay về chế độ POI tự do.";
-                }
-
-                var totalStops = GetActiveTourStopIds().Count;
-                return $"Tour {activeTour.Name} đang theo chặng {Math.Min(_activeTourStopIndex + 1, totalStops)}/{totalStops}: {currentPoi.Name}. Khi người dùng vào đúng vùng GPS của chặng này, app sẽ phát rồi chuyển sang điểm kế tiếp.";
+            if (currentPoi is null)
+            {
+                return $"Tour {activeTour.Name} đã hoàn tất. Bạn có thể chọn tour khác hoặc tự do khám phá các quán gần đây.";
             }
+
+            var totalStops = GetActiveTourStopIds().Count;
+            return $"Tour {activeTour.Name} đang ở điểm {Math.Min(_activeTourStopIndex + 1, totalStops)}/{totalStops}: {currentPoi.Name}. Khi bạn đến gần, app sẽ phát thuyết minh và chuyển sang điểm tiếp theo.";
+        }
 
             var activePoi = _activeNarrationPoiId.HasValue
                 ? _pois.FirstOrDefault(item => item.Id == _activeNarrationPoiId.Value)
@@ -369,21 +388,31 @@ public class MainViewModel : INotifyPropertyChanged
 
             if (IsNarrating && activePoi is not null)
             {
-                return $"Đang phát Talk to Speech cho {activePoi.Name}. Bạn có thể bấm lại trên box quán để dừng.";
+                return $"Đang phát thuyết minh cho {activePoi.Name}. Bấm lại nút nghe để dừng.";
             }
 
             if (_pois.Count == 0)
             {
-                return "Khi có dữ liệu quán, mỗi quán sẽ hiện thành một box thông tin riêng để người dùng nghe giới thiệu ngay tại trang chủ.";
+                return "Khi có dữ liệu quán, bạn sẽ thấy danh sách địa điểm và có thể nghe thuyết minh ngay tại trang chủ.";
             }
 
-            return $"{CurrentUserDisplayName} có thể chủ động bấm \"Nghe thuyết minh\" trên từng box quán để tìm hiểu nội dung trước khi di chuyển tới nơi.";
+            return $"{CurrentUserDisplayName} có thể bấm \"Nghe thuyết minh\" trên từng quán để tìm hiểu trước khi ghé.";
         }
     }
 
     public string HomeNarrationAvailabilityText => _pois.Count == 0
-        ? "Đang chờ danh sách quán từ hệ thống quản trị."
-        : $"{_pois.Count} quán sẵn sàng phát Talk to Speech • Ngôn ngữ hiện tại: {SelectedLanguageDisplayName}";
+        ? LocalizeUi(
+            "Chưa có danh sách quán để hiển thị.",
+            "No places are available yet.",
+            "正在等待管理后台的地点列表。",
+            "관리 시스템의 매장 목록을 기다리는 중입니다.",
+            "En attente de la liste des lieux depuis l'admin.")
+        : LocalizeUi(
+            $"{_pois.Count} quán sẵn sàng nghe thuyết minh • Ngôn ngữ: {SelectedLanguageDisplayName}",
+            $"{_pois.Count} places ready to listen • Language: {SelectedLanguageDisplayName}",
+            $"{_pois.Count} 个地点可播放讲解 • 当前语言：{SelectedLanguageDisplayName}",
+            $"{_pois.Count}개 매장에서 안내 재생 가능 • 현재 언어: {SelectedLanguageDisplayName}",
+            $"{_pois.Count} lieux prêts pour la narration • Langue actuelle : {SelectedLanguageDisplayName}");
 
     public bool IsTracking
     {
@@ -397,10 +426,13 @@ public class MainViewModel : INotifyPropertyChanged
 
             _isTracking = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(CanStartTracking));
             (StartTrackingCommand as Command)?.ChangeCanExecute();
             (StopTrackingCommand as Command)?.ChangeCanExecute();
         }
     }
+
+    public bool CanStartTracking => !IsTracking;
 
     public bool IsNarrating
     {
@@ -416,6 +448,7 @@ public class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsSelectedPoiNarrating));
             OnPropertyChanged(nameof(SelectedPoiNarrationActionText));
+            OnPropertyChanged(nameof(SelectedPoiNarrationStateText));
             OnPropertyChanged(nameof(HomeNarrationSummary));
             (StopNarrationCommand as Command)?.ChangeCanExecute();
         }
@@ -511,8 +544,18 @@ public class MainViewModel : INotifyPropertyChanged
 
     public string SelectedFeaturedDishResultsText =>
         SelectedFeaturedDishItems.Count == 0
-            ? "Chưa có món nổi bật trong nhóm này."
-            : $"{SelectedFeaturedDishItems.Count} món đã được sắp xếp theo nhóm {SelectedFeaturedDishCategoryName}.";
+            ? LocalizeUi(
+                "Chưa có món nổi bật trong nhóm này.",
+                "No featured dishes in this group yet.",
+                "该分组暂时没有招牌菜。",
+                "이 그룹에는 아직 대표 메뉴가 없습니다.",
+                "Aucun plat phare dans cette catégorie pour le moment.")
+            : LocalizeUi(
+                $"{SelectedFeaturedDishItems.Count} món đã được sắp xếp theo nhóm {SelectedFeaturedDishCategoryName}.",
+                $"{SelectedFeaturedDishItems.Count} dishes arranged under {SelectedFeaturedDishCategoryName}.",
+                $"{SelectedFeaturedDishItems.Count} 道菜已归入 {SelectedFeaturedDishCategoryName} 分组。",
+                $"{SelectedFeaturedDishItems.Count}개 메뉴가 {SelectedFeaturedDishCategoryName} 그룹에 정리되었습니다.",
+                $"{SelectedFeaturedDishItems.Count} plats sont classés dans {SelectedFeaturedDishCategoryName}.");
 
     public string SelectedLanguage
     {
@@ -527,12 +570,21 @@ public class MainViewModel : INotifyPropertyChanged
 
             UpdateSelectedPoiDetails();
             RefreshNarrationPresentation();
+            RefreshFeaturedDishLocalization();
+            SyncCurrentUser();
+            RaiseLocalizedUiChanged();
+            if (!IsNarrating)
+            {
+                StatusText = BuildIdleStatusText();
+            }
+
             OnPropertyChanged(nameof(SelectedLanguageDisplayName));
             OnPropertyChanged(nameof(AudioSettingsSummary));
             OnPropertyChanged(nameof(HomeNarrationAvailabilityText));
             OnPropertyChanged(nameof(CurrentAudioSettingsSummary));
             OnPropertyChanged(nameof(AudioSettingsQuickActionText));
             OnPropertyChanged(nameof(HasPendingAudioSettingsChanges));
+            TriggerListeningHistoryRefresh();
             UpdateAudioSettingsCommandStates();
         }
     }
@@ -789,9 +841,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     public bool HasAccountSettingsSuccess => !string.IsNullOrWhiteSpace(AccountSettingsSuccessMessage);
 
-    public string AccountSettingsAccessMessage => CanManageAccountProfile
-        ? "Bạn có thể cập nhật hồ sơ cá nhân trực tiếp trên thiết bị này."
-        : "Chưa có hồ sơ người dùng để cập nhật.";
+    public string AccountSettingsAccessMessage => GetLocalizedAccountAccessMessage(CanManageAccountProfile);
 
     public bool IsSavingAudioSettings
     {
@@ -915,26 +965,26 @@ public class MainViewModel : INotifyPropertyChanged
 
     public string OfflineContentSummary =>
         _offlineContentStatus.HasSnapshot
-            ? $"{_offlineContentStatus.PoiCount} POI trong SQLite • {FormatTimestamp(_offlineContentStatus.LastSyncedAtUtc, "chưa có mốc đồng bộ")}"
-            : "Chưa có snapshot POI SQLite trên thiết bị.";
+            ? $"{_offlineContentStatus.PoiCount} quán đã lưu • {FormatTimestamp(_offlineContentStatus.LastSyncedAtUtc, "chưa có mốc cập nhật")}"
+            : "Chưa có dữ liệu quán để dùng khi mất mạng.";
 
     public string OfflineMapSummary =>
-        $"{_offlineMapStatus.CachedTileCount}/{_offlineMapStatus.PlannedTileCount} tile bản đồ khu Vĩnh Khánh • {FormatFileSize(_offlineMapStatus.CachedBytes)}";
+        $"{_offlineMapStatus.CachedTileCount}/{_offlineMapStatus.PlannedTileCount} phần bản đồ Vĩnh Khánh • {FormatFileSize(_offlineMapStatus.CachedBytes)}";
 
     public string OfflineMapDetail =>
         _offlineMapStatus.IsReady
-            ? "Các tile chính của khu vực luận văn đã sẵn sàng để dùng khi mất mạng."
-            : "App sẽ ưu tiên tile local trước. Các ô chưa tải sẽ không hiển thị khi mất mạng.";
+            ? "Bản đồ khu Vĩnh Khánh đã sẵn sàng để xem khi mạng yếu."
+            : "Một số phần bản đồ chưa tải xong, nên có thể chưa hiện khi mất mạng.";
 
     public string OfflineAudioSummary =>
         !_audioCacheStatus.HasPublishedAssets
-            ? "Hiện dữ liệu quán chưa công bố file audio thu sẵn."
-            : $"{_audioCacheStatus.CachedAssetCount}/{_audioCacheStatus.AvailableAssetCount} audio asset • {FormatFileSize(_audioCacheStatus.CachedBytes)}";
+            ? "Hiện các quán chưa có bản thu sẵn."
+            : $"{_audioCacheStatus.CachedAssetCount}/{_audioCacheStatus.AvailableAssetCount} bản thu • {FormatFileSize(_audioCacheStatus.CachedBytes)}";
 
     public string OfflineAudioDetail =>
         _audioCacheStatus.HasPublishedAssets
-            ? $"Audio offline gần nhất: {FormatTimestamp(_audioCacheStatus.LastPreparedAtUtc, "chưa có mốc tải gói")}."
-            : "Khi backend bổ sung `AudioAssetPath`, nút tải gói sẽ tải trước các file này xuống máy.";
+            ? $"Bản thu gần nhất: {FormatTimestamp(_audioCacheStatus.LastPreparedAtUtc, "chưa có mốc tải")}."
+            : "Khi có bản thu, app sẽ có thể lưu trước để nghe ổn định hơn.";
 
     public bool HasPendingAudioSettingsChanges =>
         !string.Equals(DraftSelectedLanguage, SelectedLanguage, StringComparison.OrdinalIgnoreCase) ||
@@ -951,8 +1001,18 @@ public class MainViewModel : INotifyPropertyChanged
 
     public string NarrationModeDescription =>
         string.Equals(SelectedPlaybackMode, "audio", StringComparison.OrdinalIgnoreCase)
-            ? "Ứng dụng sẽ ưu tiên phát file audio thu sẵn. Nếu quán chưa có file audio, hệ thống sẽ tự chuyển sang TTS để không bị gián đoạn."
-            : "Ứng dụng đang dùng Talk to Speech làm chế độ phát mặc định cho phần thuyết minh.";
+            ? LocalizeUi(
+                "Ứng dụng sẽ ưu tiên phát bản thu sẵn. Nếu quán chưa có bản thu, app sẽ dùng giọng đọc để không bị gián đoạn.",
+                "The app will prefer recorded audio. If one is missing, it will use voice narration automatically.",
+                "应用会优先播放预录音频；若没有音频文件，则会自动切换为语音讲解。",
+                "앱은 녹음된 오디오를 우선 재생하고, 없으면 자동 음성 안내로 전환합니다.",
+                "L'application privilégie l'audio enregistré puis utilise une voix de narration si besoin.")
+            : LocalizeUi(
+                "Ứng dụng đang dùng giọng đọc tự động cho phần thuyết minh.",
+                "The app is using automatic voice narration.",
+                "应用当前使用自动语音作为默认讲解方式。",
+                "앱은 현재 자동 음성 안내를 기본 모드로 사용합니다.",
+                "L'application utilise actuellement une voix de narration automatique.");
 
     public string DraftSelectedLanguageDisplayName => GetLanguageDisplayName(DraftSelectedLanguage);
 
@@ -974,14 +1034,28 @@ public class MainViewModel : INotifyPropertyChanged
 
     public string DraftPlaybackModeDescription =>
         string.Equals(DraftSelectedPlaybackMode, "audio", StringComparison.OrdinalIgnoreCase)
-            ? "Nghe bằng file audio thu sẵn nếu quán đã có asset."
-            : "Nghe bằng giọng đọc máy theo ngôn ngữ bạn chọn.";
+            ? LocalizeUi(
+                "Nghe bằng bản thu sẵn nếu quán đã có nội dung.",
+                "Use recorded audio when the place has it.",
+                "若地点已有音频资源，则播放预录音频。",
+                "매장에 오디오 파일이 있으면 녹음된 음성을 재생합니다.",
+                "Utilise l'audio enregistré lorsque le lieu dispose d'un fichier.")
+            : LocalizeUi(
+                "Nghe bằng giọng đọc máy theo ngôn ngữ bạn chọn.",
+                "Use synthesized speech in the selected language.",
+                "使用所选语言的语音讲解进行播放。",
+                "선택한 언어의 자동 음성으로 재생합니다.",
+                "Utilise une voix de synthèse dans la langue choisie.");
 
     public string CurrentAudioSettingsSummary =>
-        $"{NarrationModeDisplay} • {SelectedLanguageDisplayName} • {(IsAutoNarrationEnabled ? "Tự động phát" : "Chỉ phát thủ công")}";
+        $"{NarrationModeDisplay} • {SelectedLanguageDisplayName} • {(IsAutoNarrationEnabled
+            ? LocalizeUi("Tự động phát", "Auto play", "自动播放", "자동 재생", "Lecture auto")
+            : LocalizeUi("Chỉ phát thủ công", "Manual only", "仅手动播放", "수동 재생만", "Manuel uniquement"))}";
 
     public string DraftAudioSettingsSummary =>
-        $"{DraftPlaybackModeDisplay} • {DraftSelectedLanguageDisplayName} • {(DraftIsAutoNarrationEnabled ? "Tự động phát" : "Chỉ phát thủ công")}";
+        $"{DraftPlaybackModeDisplay} • {DraftSelectedLanguageDisplayName} • {(DraftIsAutoNarrationEnabled
+            ? LocalizeUi("Tự động phát", "Auto play", "自动播放", "자동 재생", "Lecture auto")
+            : LocalizeUi("Chỉ phát thủ công", "Manual only", "仅手动播放", "수동 재생만", "Manuel uniquement"))}";
 
     public string AudioSettingsQuickActionText =>
         $"{NarrationModeDisplay} • {SelectedLanguageDisplayName}";
@@ -1022,15 +1096,11 @@ public class MainViewModel : INotifyPropertyChanged
         ? $"{EventLogs.Count} hoạt động gần nhất của tài khoản hiện tại"
         : "Chưa có hoạt động nào được ghi lại";
 
-    public string ListeningHistorySummary => HasListeningHistory
-        ? $"{ListeningHistory.Count} lượt nghe gần nhất"
-        : HasListeningHistoryLocalEntries
-            ? $"{ListeningHistoryLocalEntries.Count} lượt nghe vừa ghi nhận"
-            : "Chưa có bản ghi nghe nào";
+    public string ListeningHistorySummary =>
+        GetLocalizedListeningHistorySummaryText(ListeningHistory.Count, ListeningHistoryLocalEntries.Count);
 
-    public string ListeningHistoryFallbackSummary => HasListeningHistoryLocalEntries
-        ? $"{ListeningHistoryLocalEntries.Count} lượt nghe đã được lưu cục bộ trên thiết bị này."
-        : "Các lượt nghe mới sẽ được lưu cục bộ trên thiết bị này.";
+    public string ListeningHistoryFallbackSummary =>
+        GetLocalizedListeningHistoryFallbackSummaryText(ListeningHistoryLocalEntries.Count);
 
     public string ViewHistorySummary => HasViewHistory
         ? $"{ViewHistory.Count} lượt xem gần nhất"
@@ -1039,7 +1109,9 @@ public class MainViewModel : INotifyPropertyChanged
     public string SelectedLanguageDisplayName => GetLanguageDisplayName(SelectedLanguage);
 
     public string AudioSettingsSummary =>
-        $"{(IsAutoNarrationEnabled ? "Tự động phát khi vào vùng" : "Chỉ phát thủ công")} • {SelectedLanguageDisplayName} • {NarrationModeDisplay}";
+        $"{(IsAutoNarrationEnabled
+            ? LocalizeUi("Tự động phát khi vào vùng", "Auto play in range", "进入范围时自动播放", "범위 진입 시 자동 재생", "Lecture auto à l'approche")
+            : LocalizeUi("Chỉ phát thủ công", "Manual only", "仅手动播放", "수동 재생만", "Manuel uniquement"))} • {SelectedLanguageDisplayName} • {NarrationModeDisplay}";
 
     public bool IsListeningHistoryLoading
     {
@@ -1063,9 +1135,8 @@ public class MainViewModel : INotifyPropertyChanged
 
     public bool HasListeningHistoryLoadError => !string.IsNullOrWhiteSpace(ListeningHistoryLoadError);
 
-    public string ListeningHistorySyncStatus => _lastListeningHistorySyncAt.HasValue
-        ? $"Đồng bộ lúc {_lastListeningHistorySyncAt.Value.ToLocalTime():HH:mm:ss}"
-        : "Chưa đồng bộ lịch sử nghe";
+    public string ListeningHistorySyncStatus =>
+        GetLocalizedListeningHistorySyncStatus(_lastListeningHistorySyncAt);
 
     public string SelectedListeningHistoryPeriod
     {
@@ -1128,7 +1199,12 @@ public class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        StatusText = "Đang tải danh sách quán...";
+        StatusText = LocalizeUi(
+            "Đang tải danh sách quán...",
+            "Loading places...",
+            "正在加载地点列表...",
+            "매장 목록을 불러오는 중...",
+            "Chargement des lieux...");
         await RefreshPoisIfChangedAsync(forceRefresh: true);
 
         if (enableLocationFlow)
@@ -1138,8 +1214,18 @@ public class MainViewModel : INotifyPropertyChanged
         else
         {
             await ApplyFallbackMapStateAsync(
-                "Che do QR: san sang phat thuyet minh",
-                "Dang mo noi dung tai diem dung xe buyt Khanh Hoi, Vinh Hoi, Xom Chieu. Khong can GPS.");
+                LocalizeUi(
+                    "Đã mở nội dung từ mã QR",
+                    "QR content is ready",
+                    "QR 模式：已准备好播放讲解",
+                    "QR 모드: 오디오 안내 준비 완료",
+                    "Mode QR : narration prête"),
+                LocalizeUi(
+                    "Bạn có thể nghe thuyết minh ngay, không cần bật vị trí.",
+                    "You can listen now without turning on location.",
+                    "您可以立即收听讲解，无需开启定位。",
+                    "위치를 켜지 않아도 바로 안내를 들을 수 있습니다.",
+                    "Vous pouvez écouter tout de suite, sans activer la position."));
         }
 
         await RefreshOfflinePackageStatusAsync();
@@ -1172,20 +1258,8 @@ public class MainViewModel : INotifyPropertyChanged
         IsTracking = false;
         _insidePoiIds.Clear();
         _lastAutoNarratedPoiId = null;
-        UpdateMapBadges();
-
-        if (_hasLocationPermission && _lastLocation is not null)
-        {
-            StatusText = HasActiveTour
-                ? $"{BuildIdleStatusText()} Vẫn giữ vị trí cuối cùng."
-                : "Đã dừng GPS, vẫn giữ vị trí cuối cùng";
-        }
-        else
-        {
-            StatusText = "Bản đồ đang dùng vị trí mặc định";
-        }
-
-        AddLog($"{NowLabel()} Dừng tracking GPS");
+        await ReturnToEntranceAsync(clearLiveLocation: true);
+        AddLog($"{NowLabel()} Dừng cập nhật vị trí");
     }
 
     private async Task InitializeMapFlowAsync()
@@ -1194,8 +1268,18 @@ public class MainViewModel : INotifyPropertyChanged
         if (!hasPermission)
         {
             await ApplyFallbackMapStateAsync(
-                "Bản đồ đang dùng vị trí mặc định",
-                "Chưa cấp quyền truy cập vị trí. App vẫn hiển thị bản đồ và các POI đang hoạt động.");
+                LocalizeUi(
+                    "Bản đồ đang mở tại đầu phố",
+                    "Map is centered at the entrance",
+                    "地图正在使用默认位置",
+                    "지도가 기본 위치를 사용 중입니다",
+                    "La carte utilise la position par défaut"),
+                LocalizeUi(
+                    "Bạn chưa bật quyền vị trí. Vẫn có thể xem bản đồ và chọn quán thủ công.",
+                    "Location is not enabled yet. You can still view the map and choose places manually.",
+                    "尚未开启定位权限，但仍可查看地图并手动选择店铺。",
+                    "위치 권한이 없어도 지도와 매장을 직접 선택할 수 있습니다.",
+                    "La position n'est pas activée. Vous pouvez tout de même choisir un lieu sur la carte."));
             return;
         }
 
@@ -1203,8 +1287,18 @@ public class MainViewModel : INotifyPropertyChanged
         if (currentLocation is null)
         {
             await ApplyFallbackMapStateAsync(
-                "Đã cấp quyền vị trí, đang chờ GPS",
-                "App đã có quyền vị trí nhưng chưa lấy được tọa độ hiện tại.");
+                LocalizeUi(
+                    "Đang tìm vị trí của bạn",
+                    "Finding your location",
+                    "正在查找您的位置",
+                    "내 위치를 찾는 중",
+                    "Recherche de votre position"),
+                LocalizeUi(
+                    "Quá trình định vị có thể mất vài giây. Bạn vẫn có thể chọn quán trên bản đồ.",
+                    "This can take a few seconds. You can still choose a place on the map.",
+                    "定位可能需要几秒钟。您仍可在地图上选择店铺。",
+                    "위치를 찾는 데 몇 초 걸릴 수 있습니다. 지도에서 매장을 선택할 수 있습니다.",
+                    "Cela peut prendre quelques secondes. Vous pouvez choisir un lieu sur la carte."));
             await StartTrackingCoreAsync(autoStart: true, requestPermissionIfNeeded: false);
             return;
         }
@@ -1239,16 +1333,36 @@ public class MainViewModel : INotifyPropertyChanged
         if (!hasPermission)
         {
             await ApplyFallbackMapStateAsync(
-                "Bản đồ đang dùng vị trí mặc định",
+                LocalizeUi(
+                    "Bản đồ đang mở tại đầu phố",
+                    "Map is centered at the entrance",
+                    "地图正在使用默认位置",
+                    "지도가 기본 위치를 사용 중입니다",
+                    "La carte utilise la position par défaut"),
                 requestPermissionIfNeeded
-                    ? "Chưa cấp quyền truy cập vị trí. App vẫn hiển thị các POI đang hoạt động."
-                    : "Chưa cấp quyền truy cập vị trí. App vẫn hiển thị bản đồ và các POI đang hoạt động.");
+                    ? LocalizeUi(
+                        "Bạn chưa bật quyền vị trí. Vẫn có thể xem các quán và nghe thuyết minh thủ công.",
+                        "Location is not enabled yet. You can still view places and listen manually.",
+                        "尚未开启定位权限，但仍可查看店铺并手动收听。",
+                        "위치 권한이 없어도 매장을 보고 직접 들을 수 있습니다.",
+                        "La position n'est pas activée. Vous pouvez voir les lieux et écouter manuellement.")
+                    : LocalizeUi(
+                        "Bạn chưa bật quyền vị trí. Vẫn có thể xem bản đồ và chọn quán thủ công.",
+                        "Location is not enabled yet. You can still view the map and choose places manually.",
+                        "尚未开启定位权限，但仍可查看地图并手动选择店铺。",
+                        "위치 권한이 없어도 지도와 매장을 직접 선택할 수 있습니다.",
+                        "La position n'est pas activée. Vous pouvez tout de même choisir un lieu sur la carte."));
             return;
         }
 
         try
         {
-            StatusText = "Đang khởi động GPS...";
+            StatusText = LocalizeUi(
+                "Đang tìm vị trí của bạn...",
+                "Finding your location...",
+                "正在查找您的位置...",
+                "내 위치를 찾는 중...",
+                "Recherche de votre position...");
 
             if (_lastLocation is null)
             {
@@ -1263,24 +1377,49 @@ public class MainViewModel : INotifyPropertyChanged
             IsTracking = true;
             UpdateMapBadges();
             StatusText = _lastLocation is null
-                ? "GPS đang hoạt động, chờ vị trí đầu tiên"
-                : "GPS đang hoạt động";
-            AddLog($"{NowLabel()} {(autoStart ? "Khởi động" : "Bật")} tracking GPS");
+                ? LocalizeUi(
+                    "Đã bật vị trí, đang chờ tín hiệu đầu tiên",
+                    "Location is on, waiting for the first signal",
+                    "已开启定位，正在等待第一个信号",
+                    "위치가 켜졌고 첫 신호를 기다리는 중입니다",
+                    "La position est activée, en attente du premier signal")
+                : LocalizeUi(
+                    "Đang dùng vị trí của bạn",
+                    "Using your location",
+                    "正在使用您的位置",
+                    "내 위치를 사용하는 중",
+                    "Utilisation de votre position");
+            AddLog($"{NowLabel()} {(autoStart ? "Khởi động" : "Bật")} cập nhật vị trí");
         }
         catch (Exception ex)
         {
             if (!await EnsureLocationPermissionAsync(requestIfNeeded: false))
             {
                 await ApplyFallbackMapStateAsync(
-                    "Bản đồ đang dùng vị trí mặc định",
-                    "Không thể theo dõi GPS vì quyền vị trí hiện chưa sẵn sàng.");
-                AddLog($"{NowLabel()} Lỗi GPS: {ex.Message}");
+                    LocalizeUi(
+                        "Bản đồ đang mở tại đầu phố",
+                        "Map is centered at the entrance",
+                        "地图正在使用默认位置",
+                        "지도가 기본 위치를 사용 중입니다",
+                        "La carte utilise la position par défaut"),
+                    LocalizeUi(
+                        "Chưa thể dùng vị trí. Hãy bật quyền vị trí trong cài đặt thiết bị rồi thử lại.",
+                        "Location is not ready yet. Enable location permission in device settings and try again.",
+                        "暂时无法使用定位。请在设备设置中开启定位权限后重试。",
+                        "아직 위치를 사용할 수 없습니다. 기기 설정에서 위치 권한을 켜고 다시 시도하세요.",
+                        "La position n'est pas prête. Activez l'autorisation dans les réglages puis réessayez."));
+                AddLog($"{NowLabel()} Lỗi vị trí: {ex.Message}");
                 return;
             }
 
-            StatusText = $"Không thể bật GPS: {ex.Message}";
+            StatusText = LocalizeUi(
+                "Chưa thể bật vị trí. Hãy kiểm tra quyền vị trí rồi thử lại.",
+                "Could not start location. Check location permission and try again.",
+                "暂时无法开启定位。请检查定位权限后重试。",
+                "위치를 켤 수 없습니다. 위치 권한을 확인하고 다시 시도하세요.",
+                "Impossible d'activer la position. Vérifiez l'autorisation puis réessayez.");
             UpdateMapBadges();
-            AddLog($"{NowLabel()} Lỗi GPS: {ex.Message}");
+            AddLog($"{NowLabel()} Lỗi vị trí: {ex.Message}");
         }
     }
 
@@ -1314,10 +1453,10 @@ public class MainViewModel : INotifyPropertyChanged
 
         if (_pois.Count == 0)
         {
-            LocationText = "Bạn đang xem cổng phố ẩm thực Vĩnh Khánh";
+            LocationText = GetDefaultEntranceLocationText();
             NearestPoiText = HasActiveTour
                 ? ActiveTourCurrentStopText
-                : "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
+                : GetDefaultPoiPromptText();
             StatusText = BuildIdleStatusText();
             UpdateMapBadges();
             RaiseMapStateChanged();
@@ -1327,10 +1466,10 @@ public class MainViewModel : INotifyPropertyChanged
         RefreshPoiList(Array.Empty<(POI Poi, double DistanceMeters, bool IsInside)>(), null);
         SetSelectedPoi(GetCurrentActiveTourPoi() ?? _pois.First(), false, null);
 
-        LocationText = "Bạn đang xem cổng phố ẩm thực Vĩnh Khánh";
+        LocationText = GetDefaultEntranceLocationText();
         NearestPoiText = HasActiveTour
             ? ActiveTourCurrentStopText
-            : "Chọn quán hoặc chạm bản đồ để nghe thuyết minh";
+            : GetDefaultPoiPromptText();
         StatusText = BuildIdleStatusText();
 
         UpdateMapBadges();
@@ -1342,7 +1481,12 @@ public class MainViewModel : INotifyPropertyChanged
         var tour = _tours.FirstOrDefault(item => item.Id == tourId && item.IsActive);
         if (tour is null)
         {
-            StatusText = "Không tìm thấy tour đang hoạt động";
+            StatusText = LocalizeUi(
+                "Không tìm thấy tour đang hoạt động",
+                "Could not find an active tour",
+                "找不到可用路线",
+                "활성 투어를 찾지 못했습니다",
+                "Impossible de trouver un parcours actif");
             return;
         }
 
@@ -1364,9 +1508,19 @@ public class MainViewModel : INotifyPropertyChanged
             SetSelectedPoi(currentPoi, false, EvaluateCurrentPoiStatuses());
         }
 
-        StatusText = currentPoi is null
-            ? $"Tour {tour.Name} chưa có POI hợp lệ để theo dõi"
-            : $"Đã chọn tour {tour.Name}. App sẽ theo GPS từ {currentPoi.Name}.";
+            StatusText = currentPoi is null
+                ? LocalizeUi(
+                $"Tour {tour.Name} chưa có điểm dừng khả dụng",
+                $"{tour.Name} does not have an available stop yet.",
+                $"{tour.Name} 暂时没有可跟踪的有效站点。",
+                $"{tour.Name} 투어에는 아직 유효한 경유지가 없습니다.",
+                $"{tour.Name} ne dispose pas encore d'étape valide à suivre.")
+            : LocalizeUi(
+                $"Đã bắt đầu {tour.Name}. Điểm đầu tiên: {currentPoi.Name}.",
+                $"{tour.Name} started. First stop: {currentPoi.Name}.",
+                $"已开始 {tour.Name}。第一站：{currentPoi.Name}。",
+                $"{tour.Name} 투어를 시작했습니다. 첫 지점: {currentPoi.Name}.",
+                $"{tour.Name} commencé. Première étape : {currentPoi.Name}.");
 
         AddLog($"{NowLabel()} Kích hoạt tour {tour.Name}");
         await NarrateTourActivationAsync(tour);
@@ -1397,15 +1551,13 @@ public class MainViewModel : INotifyPropertyChanged
         _activeTourStopIndex = 0;
         RefreshTourState();
         AddLog($"{NowLabel()} Tắt tour {activeTour.Name}");
-
-        if (_lastLocation is not null)
-        {
-            await ApplyLocationSnapshotAsync(_lastLocation, allowAutoNarrate: false);
-            return;
-        }
-
-        RefreshNarrationPresentation();
-        StatusText = "Đã quay về chế độ POI tự do";
+        await ReturnToEntranceAsync(clearLiveLocation: true);
+        StatusText = LocalizeUi(
+            "Đã dừng tour. Bạn có thể khám phá tự do.",
+            "Tour stopped. You can explore freely.",
+            "已返回自由探索模式",
+            "자유 탐색 모드로 돌아왔습니다",
+            "Retour au mode découverte libre");
     }
 
     public bool ExecuteSearch(string? query = null)
@@ -1452,7 +1604,12 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (poiId == Guid.Empty)
         {
-            StatusText = "Ma QR khong hop le";
+            StatusText = LocalizeUi(
+                "Mã QR này chưa mở được nội dung",
+                "This QR code cannot open content yet",
+                "二维码无效",
+                "QR 코드가 올바르지 않습니다",
+                "Code QR invalide");
             return false;
         }
 
@@ -1470,25 +1627,50 @@ public class MainViewModel : INotifyPropertyChanged
 
         if (poi is null)
         {
-            StatusText = "Khong tim thay POI tu ma QR nay";
+            StatusText = LocalizeUi(
+                "Mã QR này chưa liên kết với quán nào",
+                "This QR code is not linked to a place yet",
+                "未从此二维码找到地点",
+                "이 QR 코드에서 매장을 찾지 못했습니다",
+                "Aucun lieu trouvé depuis ce code QR");
             return false;
         }
 
         if (!poi.IsActive)
         {
-            StatusText = "POI nay hien dang tam khoa";
+            StatusText = LocalizeUi(
+                "Quán này hiện đang tạm khóa",
+                "This place is temporarily unavailable",
+                "此地点暂时不可用",
+                "이 매장은 현재 일시적으로 비활성화되어 있습니다",
+                "Ce lieu est temporairement indisponible");
             return false;
         }
 
         SetSelectedPoi(poi, true, null);
         StatusText = autoPlay
-            ? $"Dang mo QR cua {poi.Name}"
-            : $"Da mo QR cua {poi.Name}";
-        AddLog($"{NowLabel()} QR mo {poi.Name} (khong can GPS)");
+            ? LocalizeUi(
+                $"Đang mở thuyết minh của {poi.Name}",
+                $"Opening narration for {poi.Name}",
+                $"正在打开 {poi.Name} 的二维码内容",
+                $"{poi.Name}의 QR 콘텐츠를 여는 중",
+                $"Ouverture du QR de {poi.Name}")
+            : LocalizeUi(
+                $"Đã mở {poi.Name}",
+                $"Opened {poi.Name}",
+                $"已打开 {poi.Name} 的二维码内容",
+                $"{poi.Name}의 QR 콘텐츠를 열었습니다",
+                $"QR de {poi.Name} ouvert");
+        AddLog($"{NowLabel()} Mở {poi.Name} từ mã QR");
 
         if (!IsTracking)
         {
-            LocationText = "Che do QR tai diem dung xe buyt: Khong can GPS.";
+            LocationText = LocalizeUi(
+                "Bạn đang mở nội dung từ mã QR. Không cần bật vị trí.",
+                "You opened this from QR. Location is not required.",
+                "您通过二维码打开此内容，无需开启定位。",
+                "QR로 연 콘텐츠입니다. 위치는 필요하지 않습니다.",
+                "Vous avez ouvert ce contenu par QR. La position n'est pas nécessaire.");
         }
 
         if (!autoPlay)
@@ -1510,13 +1692,23 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (_selectedPoi is null)
         {
-            StatusText = "Chưa có quán được chọn";
+            StatusText = LocalizeUi(
+                "Chưa có quán được chọn",
+                "No place selected yet",
+                "尚未选择地点",
+                "아직 매장을 선택하지 않았습니다",
+                "Aucun lieu sélectionné");
             return;
         }
 
         if (IsCurrentNarration(_selectedPoi))
         {
-            StatusText = $"Nội dung của {_selectedPoi.Name} đang được phát";
+            StatusText = LocalizeUi(
+                $"Nội dung của {_selectedPoi.Name} đang được phát",
+                $"{_selectedPoi.Name} is already playing",
+                $"{_selectedPoi.Name} 正在播放",
+                $"{_selectedPoi.Name} 안내가 이미 재생 중입니다",
+                $"{_selectedPoi.Name} est déjà en lecture");
             AddLog($"{NowLabel()} Bỏ qua phát lại {_selectedPoi.Name} vì nội dung đang phát");
             return;
         }
@@ -1528,7 +1720,12 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (_selectedPoi is null)
         {
-            StatusText = "Chưa có quán được chọn";
+            StatusText = LocalizeUi(
+                "Chưa có quán được chọn",
+                "No place selected yet",
+                "尚未选择地点",
+                "아직 매장을 선택하지 않았습니다",
+                "Aucun lieu sélectionné");
             return;
         }
 
@@ -1572,7 +1769,12 @@ public class MainViewModel : INotifyPropertyChanged
         SetActiveNarrationPoiId(null);
         IsNarrating = false;
         StatusText = hadActiveNarration
-            ? "Đã dừng thuyết minh"
+            ? LocalizeUi(
+                "Đã dừng thuyết minh",
+                "Narration stopped",
+                "讲解已停止",
+                "오디오 안내가 중지되었습니다",
+                "Narration arrêtée")
             : BuildIdleStatusText();
         await MainThread.InvokeOnMainThreadAsync(() => RefreshNarrationPresentation());
 
@@ -1587,19 +1789,34 @@ public class MainViewModel : INotifyPropertyChanged
         var item = FindListeningHistoryItem(historyId);
         if (item is null)
         {
-            StatusText = "Không tìm thấy bản ghi lịch sử nghe";
+            StatusText = LocalizeUi(
+                "Không tìm thấy bản ghi lịch sử nghe",
+                "Listening history entry not found",
+                "未找到该收听记录",
+                "청취 기록을 찾지 못했습니다",
+                "Enregistrement d'écoute introuvable");
             return false;
         }
 
         var poi = await ResolvePoiForListeningHistoryAsync(item);
         if (poi is null)
         {
-            StatusText = "Không thể mở chi tiết quán từ bản ghi này";
+            StatusText = LocalizeUi(
+                "Không thể mở chi tiết quán từ bản ghi này",
+                "Could not open place details from this record",
+                "无法从该记录打开地点详情",
+                "이 기록으로 장소 상세를 열 수 없습니다",
+                "Impossible d'ouvrir les détails du lieu depuis cet enregistrement");
             return false;
         }
 
         SetSelectedPoi(poi, true, null);
-        StatusText = $"Đang xem lại lịch sử nghe của {item.PoiName}";
+        StatusText = LocalizeUi(
+            $"Đang xem lại lịch sử nghe của {item.PoiName}",
+            $"Reviewing listening history for {item.PoiName}",
+            $"正在查看 {item.PoiName} 的收听记录",
+            $"{item.PoiName} 청취 기록을 확인하는 중입니다",
+            $"Consultation de l'historique d'écoute de {item.PoiName}");
         return true;
     }
 
@@ -1608,14 +1825,24 @@ public class MainViewModel : INotifyPropertyChanged
         var item = FindListeningHistoryItem(historyId);
         if (item is null)
         {
-            StatusText = "Không tìm thấy bản ghi lịch sử nghe";
+            StatusText = LocalizeUi(
+                "Không tìm thấy bản ghi lịch sử nghe",
+                "Listening history entry not found",
+                "未找到该收听记录",
+                "청취 기록을 찾지 못했습니다",
+                "Enregistrement d'écoute introuvable");
             return;
         }
 
         if (string.IsNullOrWhiteSpace(item.NarrationSnapshot) &&
             string.IsNullOrWhiteSpace(item.AudioAssetPath))
         {
-            StatusText = "Bản ghi này chưa có nội dung để phát lại";
+            StatusText = LocalizeUi(
+                "Bản ghi này chưa có nội dung để phát lại",
+                "This record does not have replayable content yet",
+                "该记录暂时没有可重播内容",
+                "이 기록에는 아직 다시 재생할 내용이 없습니다",
+                "Cet enregistrement ne contient pas encore de contenu à rejouer");
             return;
         }
 
@@ -1624,12 +1851,18 @@ public class MainViewModel : INotifyPropertyChanged
             item.AudioAssetPath,
             allowAudioFallback: true);
         var narrationSessionId = Interlocked.Increment(ref _narrationSessionId);
+        var hasReplayError = false;
 
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
             SetActiveNarrationPoiId(item.PoiId == Guid.Empty ? null : item.PoiId);
             IsNarrating = true;
-            StatusText = $"Phát lại lịch sử: {item.PoiName}";
+            StatusText = LocalizeUi(
+                $"Phát lại lịch sử: {item.PoiName}",
+                $"Replaying history: {item.PoiName}",
+                $"正在重播：{item.PoiName}",
+                $"기록 재생 중: {item.PoiName}",
+                $"Relecture de l'historique : {item.PoiName}");
             RefreshNarrationPresentation();
         });
 
@@ -1649,11 +1882,17 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
+            hasReplayError = true;
             AddLog($"{NowLabel()} Lỗi phát lại lịch sử: {ex.Message}");
 
             if (narrationSessionId == Volatile.Read(ref _narrationSessionId))
             {
-                StatusText = $"Lỗi phát lại lịch sử: {ex.Message}";
+                StatusText = LocalizeUi(
+                    "Chưa thể nghe lại mục này. Hãy thử lại sau.",
+                    "Could not replay this item. Please try again later.",
+                    "暂时无法重播此项目，请稍后再试。",
+                    "이 항목을 다시 재생할 수 없습니다. 나중에 다시 시도하세요.",
+                    "Impossible de relire cet élément. Réessayez plus tard.");
             }
         }
         finally
@@ -1666,7 +1905,7 @@ public class MainViewModel : INotifyPropertyChanged
                     IsNarrating = false;
                     RefreshNarrationPresentation();
 
-                    if (!StatusText.StartsWith("Lỗi phát lại lịch sử:", StringComparison.Ordinal))
+                    if (!hasReplayError)
                     {
                         StatusText = BuildIdleStatusText();
                     }
@@ -1680,12 +1919,22 @@ public class MainViewModel : INotifyPropertyChanged
         var deleted = await _listeningHistorySyncService.DeleteAsync(historyId);
         if (!deleted)
         {
-            ListeningHistoryLoadError = "Không xóa được bản ghi lịch sử nghe này.";
+            ListeningHistoryLoadError = LocalizeUi(
+                "Không xóa được bản ghi lịch sử nghe này.",
+                "Could not delete this listening history entry.",
+                "无法删除这条收听记录。",
+                "이 청취 기록을 삭제할 수 없습니다.",
+                "Impossible de supprimer cet historique d'écoute.");
             return false;
         }
 
         await RefreshListeningHistoryAsync();
-        StatusText = "Đã cập nhật danh sách lịch sử nghe";
+        StatusText = LocalizeUi(
+            "Đã cập nhật danh sách lịch sử nghe",
+            "Listening history updated",
+            "收听记录已更新",
+            "청취 기록이 업데이트되었습니다",
+            "L'historique d'écoute a été mis à jour");
         return true;
     }
 
@@ -1717,17 +1966,20 @@ public class MainViewModel : INotifyPropertyChanged
     public void ShowFeaturedDishCategory(string? categoryKey)
     {
         var normalizedCategory = NormalizeFeaturedDishCategoryKey(categoryKey);
+        _selectedFeaturedDishCategoryKey = normalizedCategory;
         var category = FeaturedDishes.FirstOrDefault(item =>
                            string.Equals(item.Key, normalizedCategory, StringComparison.OrdinalIgnoreCase))
                        ?? FeaturedDishes.First();
         var dishes = _featuredDishCatalog
             .Where(item => string.Equals(item.CategoryKey, category.Key, StringComparison.OrdinalIgnoreCase))
+            .Select(LocalizeFeaturedDishItem)
             .ToList();
 
         ReplaceCollection(SelectedFeaturedDishItems, dishes);
         SelectedFeaturedDishCategoryName = category.Name;
         SelectedFeaturedDishCategorySummary = category.Description;
         OnPropertyChanged(nameof(SelectedFeaturedDishResultsText));
+        OnPropertyChanged(nameof(SelectedFeaturedDishCategoryHeaderText));
     }
 
     private void EnsurePoiRefreshLoopStarted()
@@ -1813,11 +2065,16 @@ public class MainViewModel : INotifyPropertyChanged
                 }
                 else if (_pois.Count == 0)
                 {
-                    NearestPoiText = "Chưa có POI đang hoạt động từ WebAdmin";
+                    NearestPoiText = LocalizeUi(
+                        "Chưa có quán nào sẵn sàng hiển thị",
+                        "No places are ready to show yet",
+                        "暂时没有可显示的店铺",
+                        "아직 표시할 매장이 없습니다",
+                        "Aucun lieu prêt à afficher");
                 }
                 else
                 {
-                    NearestPoiText = "Chạm marker để xem chi tiết quán";
+                    NearestPoiText = GetDefaultPoiPromptText();
                 }
 
                 ApplySelectedPoiAfterRefresh(
@@ -1830,7 +2087,7 @@ public class MainViewModel : INotifyPropertyChanged
             if (_isInitialized &&
                 (!string.IsNullOrWhiteSpace(previousSnapshot) || !string.IsNullOrWhiteSpace(previousTourSnapshot)))
             {
-                AddLog($"{NowLabel()} Dong bo du lieu moi tu WebAdmin ({_pois.Count} POI, {_tours.Count} tour)");
+                AddLog($"{NowLabel()} Cập nhật dữ liệu mới ({_pois.Count} quán, {_tours.Count} tour)");
             }
         }
         finally
@@ -1862,7 +2119,12 @@ public class MainViewModel : INotifyPropertyChanged
         if (candidate.Poi is not null)
         {
             SetSelectedPoi(candidate.Poi, true, results);
-            StatusText = $"Bạn vừa chạm vùng của {candidate.Poi.Name}";
+            StatusText = LocalizeUi(
+                $"Bạn vừa chạm vùng của {candidate.Poi.Name}",
+                $"You tapped inside {candidate.Poi.Name}'s area",
+                $"您刚点击了 {candidate.Poi.Name} 的范围内",
+                $"{candidate.Poi.Name} 영역 안을 눌렀습니다",
+                $"Vous avez touché la zone de {candidate.Poi.Name}");
             AddLog($"{NowLabel()} Chạm Mapsui trong bán kính {candidate.Poi.Name}");
             await NarratePoiAsync(candidate.Poi, false, candidate.DistanceMeters);
             return;
@@ -1872,7 +2134,12 @@ public class MainViewModel : INotifyPropertyChanged
         if (nearest.Poi is not null)
         {
             SetSelectedPoi(nearest.Poi, true, results);
-            StatusText = $"Bạn vừa chạm ngoài vùng quán. Gần nhất là {nearest.Poi.Name}";
+            StatusText = LocalizeUi(
+                $"Bạn vừa chạm ngoài vùng quán. Gần nhất là {nearest.Poi.Name}",
+                $"You tapped outside a place area. Nearest place: {nearest.Poi.Name}",
+                $"您点击的位置不在店铺范围内。最近地点：{nearest.Poi.Name}",
+                $"매장 영역 밖을 눌렀습니다. 가장 가까운 곳: {nearest.Poi.Name}",
+                $"Vous avez touché hors zone. Lieu le plus proche : {nearest.Poi.Name}");
             AddLog($"{NowLabel()} Chạm bản đồ gần {nearest.Poi.Name}");
         }
     }
@@ -1901,6 +2168,7 @@ public class MainViewModel : INotifyPropertyChanged
             SyncCurrentUser();
             LoadPersistedState();
             TriggerListeningHistoryRefresh();
+            _ = SyncCurrentUserProfileToAdminAsync();
         });
     }
 
@@ -1939,7 +2207,12 @@ public class MainViewModel : INotifyPropertyChanged
 
             if (_pois.Count == 0)
             {
-                NearestPoiText = "Chưa có POI đang hoạt động từ WebAdmin";
+                NearestPoiText = LocalizeUi(
+                    "Chưa có quán nào sẵn sàng hiển thị",
+                    "No places are ready to show yet",
+                    "暂时没有可显示的店铺",
+                    "아직 표시할 매장이 없습니다",
+                    "Aucun lieu prêt à afficher");
             }
             else if (!_hasUserSelectedPoi)
             {
@@ -1994,13 +2267,18 @@ public class MainViewModel : INotifyPropertyChanged
                 _selectedPoi = null;
                 _hasUserSelectedPoi = false;
                 ClearSelectedPoiDetails();
-                NearestPoiText = "Chưa có POI đang hoạt động từ WebAdmin";
+                NearestPoiText = LocalizeUi(
+                    "Chưa có quán nào sẵn sàng hiển thị",
+                    "No places are ready to show yet",
+                    "暂时没有可显示的店铺",
+                    "아직 표시할 매장이 없습니다",
+                    "Aucun lieu prêt à afficher");
             }
             else
             {
                 NearestPoiText = HasActiveTour
                     ? ActiveTourCurrentStopText
-                    : "Chạm marker để xem chi tiết quán";
+                    : GetDefaultPoiPromptText();
 
                 if (_selectedPoi is null)
                 {
@@ -2014,6 +2292,48 @@ public class MainViewModel : INotifyPropertyChanged
 
             StatusText = statusText;
             LocationText = locationText;
+            UpdateMapBadges();
+            RaiseMapStateChanged();
+        });
+    }
+
+    public async Task ReturnToEntranceAsync(bool clearLiveLocation)
+    {
+        if (clearLiveLocation)
+        {
+            _lastLocation = null;
+            _insidePoiIds.Clear();
+            _lastAutoNarratedPoiId = null;
+        }
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            var evaluated = clearLiveLocation
+                ? Array.Empty<(POI Poi, double DistanceMeters, bool IsInside)>()
+                : EvaluateCurrentPoiStatuses();
+            var nearest = evaluated.FirstOrDefault().Poi;
+
+            RefreshPoiList(evaluated, nearest?.Id);
+
+            if (_pois.Count == 0)
+            {
+                _selectedPoi = null;
+                ClearSelectedPoiDetails();
+                NearestPoiText = LocalizeUi(
+                    "Chưa có quán nào sẵn sàng hiển thị",
+                    "No places are ready to show yet",
+                    "暂时没有可显示的店铺",
+                    "아직 표시할 매장이 없습니다",
+                    "Aucun lieu prêt à afficher");
+            }
+            else
+            {
+                SetSelectedPoi(GetCurrentActiveTourPoi() ?? _pois.FirstOrDefault(), false, evaluated);
+                NearestPoiText = HasActiveTour ? ActiveTourCurrentStopText : GetDefaultPoiPromptText();
+            }
+
+            LocationText = GetDefaultEntranceLocationText();
+            StatusText = BuildIdleStatusText();
             UpdateMapBadges();
             RaiseMapStateChanged();
         });
@@ -2081,7 +2401,7 @@ public class MainViewModel : INotifyPropertyChanged
             }
 
             var stopNames = stopIds
-                .Select(poiId => _pois.FirstOrDefault(item => item.Id == poiId)?.Name ?? "POI không xác định")
+                .Select(poiId => _pois.FirstOrDefault(item => item.Id == poiId)?.Name ?? "Điểm dừng chưa xác định")
                 .ToList();
             var isSelected = _activeTourId == tour.Id;
 
@@ -2095,7 +2415,10 @@ public class MainViewModel : INotifyPropertyChanged
                 StopCount = stopIds.Count,
                 StopsSummary = string.Join(" • ", stopNames.Take(3)) + (stopNames.Count > 3 ? " ..." : string.Empty),
                 IsSelected = isSelected,
-                IsCompleted = isSelected && GetCurrentActiveTourPoi() is null
+                IsCompleted = isSelected && GetCurrentActiveTourPoi() is null,
+                MetaLabel = GetLocalizedTourMetaLabel(stopIds.Count, tour.EstimatedMinutes),
+                StatusLabel = GetLocalizedTourPackageStatusLabel(isSelected, isSelected && GetCurrentActiveTourPoi() is null),
+                ActionLabel = GetLocalizedTourPackageActionLabel(isSelected)
             });
         }
 
@@ -2126,7 +2449,11 @@ public class MainViewModel : INotifyPropertyChanged
                 Address = poi.Address,
                 IsCompleted = index < _activeTourStopIndex,
                 IsCurrent = index == _activeTourStopIndex && _activeTourStopIndex < activeStopIds.Count,
-                IsUpcoming = index > _activeTourStopIndex
+                IsUpcoming = index > _activeTourStopIndex,
+                OrderLabel = GetLocalizedTourStopOrderLabel(index + 1),
+                StatusLabel = GetLocalizedTourStopStatusLabel(
+                    index < _activeTourStopIndex,
+                    index == _activeTourStopIndex && _activeTourStopIndex < activeStopIds.Count)
             });
         }
 
@@ -2297,15 +2624,32 @@ public class MainViewModel : INotifyPropertyChanged
             var currentPoi = GetCurrentActiveTourPoi();
             if (currentPoi is null)
             {
-                return $"Tour {activeTour.Name} đã hoàn tất";
+                return LocalizeUi(
+                    $"Tour {activeTour.Name} đã hoàn tất",
+                    $"{activeTour.Name} tour completed",
+                    $"{activeTour.Name} 路线已完成",
+                    $"{activeTour.Name} 투어 완료",
+                    $"Parcours {activeTour.Name} terminé");
             }
 
             return IsTracking
-                ? $"Tour {activeTour.Name}: đang chờ {currentPoi.Name}"
-                : $"Tour {activeTour.Name}: sẵn sàng theo dõi {currentPoi.Name}";
+                ? LocalizeUi(
+                    $"Tour {activeTour.Name}: đang chờ {currentPoi.Name}",
+                    $"{activeTour.Name}: waiting for {currentPoi.Name}",
+                    $"{activeTour.Name}：正在等待 {currentPoi.Name}",
+                    $"{activeTour.Name}: {currentPoi.Name} 대기 중",
+                    $"{activeTour.Name} : en attente de {currentPoi.Name}")
+                : LocalizeUi(
+                    $"Tour {activeTour.Name}: sẵn sàng theo dõi {currentPoi.Name}",
+                    $"{activeTour.Name}: ready to track {currentPoi.Name}",
+                    $"{activeTour.Name}：已准备跟随 {currentPoi.Name}",
+                    $"{activeTour.Name}: {currentPoi.Name} 추적 준비 완료",
+                    $"{activeTour.Name} : prêt à suivre {currentPoi.Name}");
         }
 
-        return IsTracking ? "GPS đang hoạt động" : "Sẵn sàng khám phá";
+        return IsTracking
+            ? LocalizeUi("Đang dùng vị trí của bạn", "Using your location", "正在使用您的位置", "내 위치를 사용하는 중", "Utilisation de votre position")
+            : LocalizeUi("Sẵn sàng khám phá", "Ready to explore", "准备开始探索", "탐색 준비 완료", "Prêt à explorer");
     }
 
     private async Task NarrateTourActivationAsync(TourDto tour)
@@ -2318,7 +2662,12 @@ public class MainViewModel : INotifyPropertyChanged
         {
             SetActiveNarrationPoiId(null);
             IsNarrating = true;
-            StatusText = $"Đang giới thiệu tour: {tour.Name}";
+            StatusText = LocalizeUi(
+                $"Đang giới thiệu tour: {tour.Name}",
+                $"Introducing tour: {tour.Name}",
+                $"正在介绍路线：{tour.Name}",
+                $"투어 소개 중: {tour.Name}",
+                $"Présentation du parcours : {tour.Name}");
             RefreshNarrationPresentation();
         });
 
@@ -2332,11 +2681,16 @@ public class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             errorMessage = ex.Message;
-            AddLog($"{NowLabel()} Lỗi TTS tour: {ex.Message}");
+            AddLog($"{NowLabel()} Lỗi phát giới thiệu tour: {ex.Message}");
 
             if (sessionId == Volatile.Read(ref _narrationSessionId))
             {
-                StatusText = $"Không phát được giới thiệu tour: {ex.Message}";
+                StatusText = LocalizeUi(
+                    "Chưa thể phát giới thiệu tour. Bạn vẫn có thể xem lộ trình bên dưới.",
+                    "Could not play the tour intro. You can still view the route below.",
+                    "暂时无法播放路线介绍，您仍可查看下方路线。",
+                    "투어 소개를 재생할 수 없습니다. 아래에서 경로를 볼 수 있습니다.",
+                    "Impossible de lire l'introduction. Vous pouvez toujours voir le parcours ci-dessous.");
             }
         }
         finally
@@ -2349,7 +2703,7 @@ public class MainViewModel : INotifyPropertyChanged
                     IsNarrating = false;
                     RefreshNarrationPresentation();
 
-                    if (!StatusText.StartsWith("Không phát được giới thiệu tour:", StringComparison.Ordinal))
+                    if (string.IsNullOrWhiteSpace(errorMessage))
                     {
                         StatusText = BuildIdleStatusText();
                     }
@@ -2450,8 +2804,18 @@ public class MainViewModel : INotifyPropertyChanged
     private void UpdateLocationSummary(LocationDto location, POI? nearestPoi, double? nearestDistanceMeters)
     {
         LocationText = location.AccuracyMeters.HasValue
-            ? $"GPS đã cập nhật • sai số khoảng {location.AccuracyMeters.Value:F0}m"
-            : "GPS đã cập nhật vị trí hiện tại";
+            ? LocalizeUi(
+                $"Đã tìm thấy vị trí của bạn • sai số khoảng {location.AccuracyMeters.Value:F0}m",
+                $"Your location is available • accuracy about {location.AccuracyMeters.Value:F0}m",
+                $"当前位置：{location.Latitude:F5}, {location.Longitude:F5} • 误差约 {location.AccuracyMeters.Value:F0} 米",
+                $"현재 위치: {location.Latitude:F5}, {location.Longitude:F5} • 오차 약 {location.AccuracyMeters.Value:F0}m",
+                $"Position actuelle : {location.Latitude:F5}, {location.Longitude:F5} • précision d'environ {location.AccuracyMeters.Value:F0} m")
+            : LocalizeUi(
+                "Đã tìm thấy vị trí của bạn",
+                "Your location is available",
+                $"当前位置：{location.Latitude:F5}, {location.Longitude:F5}",
+                $"현재 위치: {location.Latitude:F5}, {location.Longitude:F5}",
+                $"Position actuelle : {location.Latitude:F5}, {location.Longitude:F5}");
 
         var activeTour = GetActiveTour();
         var currentTourPoi = GetCurrentActiveTourPoi();
@@ -2460,19 +2824,39 @@ public class MainViewModel : INotifyPropertyChanged
             var tourDistance = GetDistanceForPoi(currentTourPoi.Id);
             var totalStops = GetActiveTourStopIds().Count;
             NearestPoiText =
-                $"Tour {activeTour.Name}: chặng {Math.Min(_activeTourStopIndex + 1, totalStops)}/{totalStops} - {currentTourPoi.Name} ({tourDistance?.ToString("F0") ?? "?"}m)";
+                LocalizeUi(
+                    $"Tour {activeTour.Name}: chặng {Math.Min(_activeTourStopIndex + 1, totalStops)}/{totalStops} - {currentTourPoi.Name} ({tourDistance?.ToString("F0") ?? "?"}m)",
+                    $"{activeTour.Name}: stop {Math.Min(_activeTourStopIndex + 1, totalStops)}/{totalStops} - {currentTourPoi.Name} ({tourDistance?.ToString("F0") ?? "?"}m)",
+                    $"{activeTour.Name}：第 {Math.Min(_activeTourStopIndex + 1, totalStops)}/{totalStops} 站 - {currentTourPoi.Name} ({tourDistance?.ToString("F0") ?? "?"} 米)",
+                    $"{activeTour.Name}: {Math.Min(_activeTourStopIndex + 1, totalStops)}/{totalStops}번 - {currentTourPoi.Name} ({tourDistance?.ToString("F0") ?? "?"}m)",
+                    $"{activeTour.Name} : étape {Math.Min(_activeTourStopIndex + 1, totalStops)}/{totalStops} - {currentTourPoi.Name} ({tourDistance?.ToString("F0") ?? "?"} m)");
             return;
         }
 
         if (activeTour is not null)
         {
-            NearestPoiText = $"Tour {activeTour.Name} đã hoàn tất";
+            NearestPoiText = LocalizeUi(
+                $"Tour {activeTour.Name} đã hoàn tất",
+                $"{activeTour.Name} tour completed",
+                $"{activeTour.Name} 路线已完成",
+                $"{activeTour.Name} 투어 완료",
+                $"Parcours {activeTour.Name} terminé");
             return;
         }
 
         NearestPoiText = nearestPoi is null
-            ? "Chưa xác định điểm gần nhất"
-            : $"Quán gần nhất: {nearestPoi.Name} ({nearestDistanceMeters?.ToString("F0") ?? "?"}m)";
+            ? LocalizeUi(
+                "Chưa xác định điểm gần nhất",
+                "Nearest place not available yet",
+                "暂未识别最近地点",
+                "가장 가까운 장소를 아직 확인하지 못했습니다",
+                "Le lieu le plus proche n'est pas encore disponible")
+            : LocalizeUi(
+                $"Quán gần nhất: {nearestPoi.Name} ({nearestDistanceMeters?.ToString("F0") ?? "?"}m)",
+                $"Nearest place: {nearestPoi.Name} ({nearestDistanceMeters?.ToString("F0") ?? "?"}m)",
+                $"最近地点：{nearestPoi.Name}（{nearestDistanceMeters?.ToString("F0") ?? "?"} 米）",
+                $"가장 가까운 장소: {nearestPoi.Name} ({nearestDistanceMeters?.ToString("F0") ?? "?"}m)",
+                $"Lieu le plus proche : {nearestPoi.Name} ({nearestDistanceMeters?.ToString("F0") ?? "?"} m)");
     }
 
     private void UpdateMapBadges()
@@ -2480,18 +2864,34 @@ public class MainViewModel : INotifyPropertyChanged
         var visibleMapPoiCount = VisibleMapPoiStatuses.Count;
 
         MapPoiBadgeText = visibleMapPoiCount == 0
-            ? "0 POI"
+            ? LocalizeUi("Chưa có quán", "No places yet", "暂无店铺", "매장 없음", "Aucun lieu")
             : HasActiveTour
-                ? $"{visibleMapPoiCount} POI trong tour"
-                : $"{_pois.Count} POI hoạt động";
+                ? LocalizeUi(
+                    $"{visibleMapPoiCount} điểm trong tour",
+                    $"{visibleMapPoiCount} stops in tour",
+                    $"路线中 {visibleMapPoiCount} 个站点",
+                    $"투어 내 지점 {visibleMapPoiCount}개",
+                    $"{visibleMapPoiCount} étapes dans le parcours")
+                : LocalizeUi(
+                    $"{_pois.Count} quán đang hiển thị",
+                    $"{_pois.Count} places shown",
+                    $"显示 {_pois.Count} 家店铺",
+                    $"매장 {_pois.Count}개 표시 중",
+                    $"{_pois.Count} lieux affichés");
 
         MapModeBadgeText = IsTracking
-            ? HasActiveTour ? "GPS tour trực tiếp" : "GPS trực tiếp"
+            ? HasActiveTour
+                ? LocalizeUi("Đang dẫn tour", "Guiding tour", "正在引导路线", "투어 안내 중", "Guidage du parcours")
+                : LocalizeUi("Đang dùng vị trí", "Using location", "正在使用定位", "위치 사용 중", "Position active")
             : _lastLocation is not null
-                ? "Đã có vị trí"
+                ? LocalizeUi("Đã có vị trí", "Location ready", "已有定位", "위치 확보됨", "Position captée")
                 : _hasCheckedLocationPermission
-                    ? (_hasLocationPermission ? "Chờ GPS" : "Vị trí mặc định")
-                    : "Đang kiểm tra GPS";
+                    ? (!_hasLocationPermission
+                        ? LocalizeUi("Đầu phố", "Entrance", "默认位置", "기본 위치", "Position par défaut")
+                        : IsTracking
+                        ? LocalizeUi("Đang tìm vị trí", "Finding location", "正在查找位置", "위치 찾는 중", "Recherche de position")
+                        : LocalizeUi("Đầu phố", "Entrance", "默认位置", "기본 위치", "Position par défaut"))
+                    : LocalizeUi("Đang chuẩn bị bản đồ", "Preparing map", "正在准备地图", "지도 준비 중", "Préparation de la carte");
     }
 
     private bool ShouldAutoNarrate(POI poi)
@@ -2515,7 +2915,12 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (IsCurrentNarration(poi))
         {
-            StatusText = $"Nội dung của {poi.Name} đang được phát";
+            StatusText = LocalizeUi(
+                $"Nội dung của {poi.Name} đang được phát",
+                $"{poi.Name} is already playing",
+                $"{poi.Name} 正在播放",
+                $"{poi.Name} 안내가 이미 재생 중입니다",
+                $"{poi.Name} est déjà en lecture");
             return;
         }
 
@@ -2538,8 +2943,18 @@ public class MainViewModel : INotifyPropertyChanged
             SetActiveNarrationPoiId(poi.Id);
             IsNarrating = true;
             StatusText = autoTriggered
-                ? $"Tự động phát: {poi.Name}"
-                : $"Đang phát: {poi.Name}";
+                ? LocalizeUi(
+                    $"Tự động phát: {poi.Name}",
+                    $"Auto playing: {poi.Name}",
+                    $"自动播放：{poi.Name}",
+                    $"자동 재생: {poi.Name}",
+                    $"Lecture automatique : {poi.Name}")
+                : LocalizeUi(
+                    $"Đang phát: {poi.Name}",
+                    $"Playing: {poi.Name}",
+                    $"正在播放：{poi.Name}",
+                    $"재생 중: {poi.Name}",
+                    $"Lecture : {poi.Name}");
 
             if (syncSelectedPoi && !_hasUserSelectedPoi)
             {
@@ -2582,7 +2997,12 @@ public class MainViewModel : INotifyPropertyChanged
 
             if (narrationSessionId == Volatile.Read(ref _narrationSessionId))
             {
-                StatusText = $"Lỗi phát âm thanh: {ex.Message}";
+                StatusText = LocalizeUi(
+                    "Chưa thể phát thuyết minh. Hãy kiểm tra âm lượng hoặc thử lại.",
+                    "Could not play narration. Check volume or try again.",
+                    "暂时无法播放讲解，请检查音量或稍后再试。",
+                    "안내를 재생할 수 없습니다. 음량을 확인하거나 다시 시도하세요.",
+                    "Impossible de lire la narration. Vérifiez le volume ou réessayez.");
             }
         }
         finally
@@ -2615,7 +3035,12 @@ public class MainViewModel : INotifyPropertyChanged
                     RefreshNarrationPresentation();
                     StatusText = string.IsNullOrWhiteSpace(completedTourName)
                         ? BuildIdleStatusText()
-                        : $"Đã hoàn tất tour {completedTourName}";
+                        : LocalizeUi(
+                            $"Đã hoàn tất tour {completedTourName}",
+                            $"{completedTourName} tour completed",
+                            $"{completedTourName} 路线已完成",
+                            $"{completedTourName} 투어 완료",
+                            $"Parcours {completedTourName} terminé");
                 });
             }
 
@@ -2627,7 +3052,7 @@ public class MainViewModel : INotifyPropertyChanged
                     IsNarrating = false;
                     RefreshNarrationPresentation();
 
-                    if (!StatusText.StartsWith("Lỗi phát âm thanh:", StringComparison.Ordinal))
+                    if (string.IsNullOrWhiteSpace(errorMessage))
                     {
                         StatusText = BuildIdleStatusText();
                     }
@@ -2673,7 +3098,23 @@ public class MainViewModel : INotifyPropertyChanged
                 IsActiveTourStop = currentTourPoiId == poi.Id,
                 IsCompletedTourStop = completedTourPoiIds.Contains(poi.Id),
                 TourOrder = tourOrders.TryGetValue(poi.Id, out var tourOrder) ? tourOrder : null,
-                Priority = poi.Priority
+                Priority = poi.Priority,
+                PriorityLabel = $"P{poi.Priority}",
+                CodeLabel = GetLocalizedPoiCodeLabel(poi.Code),
+                StatusLabel = GetLocalizedPoiStatusLabel(hasDistance && evaluatedItem.IsInside),
+                NearestLabel = GetLocalizedPoiNearestLabel(nearestPoiId == poi.Id),
+                InRadiusBadge = GetLocalizedPoiInRadiusBadge(hasDistance && evaluatedItem.IsInside),
+                SpecialDishLabel = GetLocalizedSpecialDishLabel(poi.SpecialDish),
+                NarrationActionText = GetLocalizedPoiNarrationActionText(IsNarrating && _activeNarrationPoiId == poi.Id),
+                NarrationStateText = GetLocalizedPoiNarrationStateText(IsNarrating && _activeNarrationPoiId == poi.Id),
+                NarrationGuideText = GetLocalizedPoiNarrationGuideText(IsNarrating && _activeNarrationPoiId == poi.Id),
+                TourBadgeText = GetLocalizedTourBadgeText(
+                    currentTourPoiId == poi.Id || completedTourPoiIds.Contains(poi.Id),
+                    completedTourPoiIds.Contains(poi.Id),
+                    tourOrders.TryGetValue(poi.Id, out var resolvedTourOrder) ? resolvedTourOrder : null),
+                DistanceLabel = GetLocalizedPoiDistanceLabel(
+                    hasDistance ? evaluatedItem.DistanceMeters : double.NaN,
+                    poi.TriggerRadiusMeters)
             });
         }
 
@@ -2699,6 +3140,7 @@ public class MainViewModel : INotifyPropertyChanged
         UpdateSelectedPoiDetails(evaluated);
         OnPropertyChanged(nameof(IsSelectedPoiNarrating));
         OnPropertyChanged(nameof(SelectedPoiNarrationActionText));
+        OnPropertyChanged(nameof(SelectedPoiNarrationStateText));
 
         if (userInitiated)
         {
@@ -2736,15 +3178,30 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         var distanceLabel = distanceMeters.HasValue
-            ? $"Khoảng cách hiện tại: {distanceMeters.Value:F0}m"
-            : "Khoảng cách hiện tại: N/A";
+            ? LocalizeUi(
+                $"Khoảng cách hiện tại: {distanceMeters.Value:F0}m",
+                $"Current distance: {distanceMeters.Value:F0}m",
+                $"当前距离：{distanceMeters.Value:F0} 米",
+                $"현재 거리: {distanceMeters.Value:F0}m",
+                $"Distance actuelle : {distanceMeters.Value:F0} m")
+            : LocalizeUi(
+                "Khoảng cách: chưa xác định",
+                "Distance: not available yet",
+                "当前距离：暂未确定",
+                "현재 거리: 아직 알 수 없음",
+                "Distance : non disponible");
 
         SelectedPoiName = _selectedPoi.Name;
         SelectedPoiAddress = _selectedPoi.Address;
         SelectedPoiDescription = _selectedPoi.Description;
-        SelectedPoiDishText = _selectedPoi.SpecialDish;
+        SelectedPoiDishText = GetLocalizedSpecialDishLabel(_selectedPoi.SpecialDish);
         SelectedPoiStatusText =
-            $"{distanceLabel} • Bán kính phát {_selectedPoi.TriggerRadiusMeters:F0}m";
+            $"{distanceLabel} • {LocalizeUi(
+                $"Tự phát khi ở gần khoảng {_selectedPoi.TriggerRadiusMeters:F0}m",
+                $"Auto plays within about {_selectedPoi.TriggerRadiusMeters:F0}m",
+                $"触发半径 {_selectedPoi.TriggerRadiusMeters:F0} 米",
+                $"트리거 반경 {_selectedPoi.TriggerRadiusMeters:F0}m",
+                $"Rayon de déclenchement {_selectedPoi.TriggerRadiusMeters:F0} m")}";
         SelectedPoiNarrationPreview = _selectedPoi.GetNarrationText(SelectedLanguage);
         SelectedPoiMapLink = _selectedPoi.MapLink;
         SelectedPoiImageSource = _selectedPoi.ImageSource;
@@ -2752,8 +3209,18 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void ClearSelectedPoiDetails()
     {
-        SelectedPoiName = "Chưa có POI đang hoạt động";
-        SelectedPoiAddress = "Cập nhật POI trong WebAdmin để app hiển thị lại.";
+        SelectedPoiName = LocalizeUi(
+            "Chưa có quán nào để hiển thị",
+            "No places to show yet",
+            "暂无可显示的店铺",
+            "표시할 매장이 없습니다",
+            "Aucun lieu à afficher");
+        SelectedPoiAddress = LocalizeUi(
+            "Vui lòng thử lại sau hoặc kiểm tra kết nối mạng.",
+            "Please try again later or check your connection.",
+            "请稍后重试或检查网络连接。",
+            "나중에 다시 시도하거나 네트워크 연결을 확인하세요.",
+            "Réessayez plus tard ou vérifiez la connexion.");
         SelectedPoiDescription = string.Empty;
         SelectedPoiDishText = string.Empty;
         SelectedPoiStatusText = string.Empty;
@@ -2762,6 +3229,7 @@ public class MainViewModel : INotifyPropertyChanged
         SelectedPoiImageSource = string.Empty;
         OnPropertyChanged(nameof(IsSelectedPoiNarrating));
         OnPropertyChanged(nameof(SelectedPoiNarrationActionText));
+        OnPropertyChanged(nameof(SelectedPoiNarrationStateText));
     }
 
     private double? GetDistanceForPoi(Guid poiId)
@@ -2794,6 +3262,7 @@ public class MainViewModel : INotifyPropertyChanged
         _activeNarrationPoiId = poiId;
         OnPropertyChanged(nameof(IsSelectedPoiNarrating));
         OnPropertyChanged(nameof(SelectedPoiNarrationActionText));
+        OnPropertyChanged(nameof(SelectedPoiNarrationStateText));
         OnPropertyChanged(nameof(HomeNarrationSummary));
     }
 
@@ -2855,7 +3324,10 @@ public class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ActiveTourSummary));
         OnPropertyChanged(nameof(ActiveTourCurrentStopText));
         OnPropertyChanged(nameof(ActiveTourNextStopText));
+        OnPropertyChanged(nameof(TourPackagesHeight));
+        OnPropertyChanged(nameof(ActiveTourStopsHeight));
         OnPropertyChanged(nameof(HomeNarrationSummary));
+        OnPropertyChanged(nameof(HomePrimaryCtaText));
     }
 
     private void UpdateFilteredPoiStatuses()
@@ -2878,7 +3350,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         IsSearchResultEmpty = searchResult.HasKeyword && FilteredPoiStatuses.Count == 0;
         SearchResultStatusText = IsSearchResultEmpty
-            ? searchResult.EmptyStateMessage
+            ? GetSearchEmptyStateMessage(searchResult.Keyword)
             : string.Empty;
     }
 
@@ -2979,7 +3451,12 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            ListeningHistoryLoadError = $"Không tải được lịch sử nghe: {ex.Message}";
+            ListeningHistoryLoadError = LocalizeUi(
+                $"Không tải được lịch sử nghe: {ex.Message}",
+                $"Could not load listening history: {ex.Message}",
+                $"无法加载收听记录：{ex.Message}",
+                $"청취 기록을 불러올 수 없습니다: {ex.Message}",
+                $"Impossible de charger l'historique d'écoute : {ex.Message}");
         }
         finally
         {
@@ -3048,25 +3525,21 @@ public class MainViewModel : INotifyPropertyChanged
             .ToList();
     }
 
-    private static ListeningHistoryDisplayItem ToListeningHistoryDisplayItem(
+    private ListeningHistoryDisplayItem ToListeningHistoryDisplayItem(
         ListeningHistoryEntryDto item,
         POI? poi)
     {
         var startedAtLocal = item.StartedAtUtc.ToLocalTime();
         var triggerLabel = item.AutoTriggered || string.Equals(item.TriggerType, "GPS", StringComparison.OrdinalIgnoreCase)
-            ? "Tự động"
-            : "Thủ công";
-        var durationLabel = item.ListenSeconds > 0
-            ? $"{item.ListenSeconds} giây"
-            : "Đang ghi nhận";
+            ? GetLocalizedHistoryTriggerLabel(true)
+            : GetLocalizedHistoryTriggerLabel(false);
+        var durationLabel = GetLocalizedHistoryDurationLabel(item.ListenSeconds);
         var languageLabel = GetLanguageDisplayName(item.Language);
         var playbackModeLabel = GetPlaybackModeLabel(item.PlaybackMode);
 
-        var statusLabel = item.Completed
-            ? "Hoàn tất"
-            : string.IsNullOrWhiteSpace(item.ErrorMessage)
-                ? "Đang nghe / dừng sớm"
-                : "Dừng vì lỗi";
+        var statusLabel = GetLocalizedHistoryStatusLabel(
+            item.Completed,
+            !string.IsNullOrWhiteSpace(item.ErrorMessage));
 
         var statusAccentColor = item.Completed
             ? "#15803D"
@@ -3118,7 +3591,7 @@ public class MainViewModel : INotifyPropertyChanged
             PoiName = item.PoiName,
             Address = address,
             Description = string.IsNullOrWhiteSpace(description)
-                ? "Bản ghi này chưa có mô tả ngắn từ quán."
+                ? GetLocalizedHistoryDescriptionFallback()
                 : description,
             SpecialDish = specialDish,
             ImageSource = imageSource,
@@ -3178,12 +3651,12 @@ public class MainViewModel : INotifyPropertyChanged
         };
     }
 
-    private static string GetPlaybackModeLabel(string? playbackMode)
+    private string GetPlaybackModeLabel(string? playbackMode)
     {
         return playbackMode?.Trim().ToLowerInvariant() switch
         {
-            "audio" => "Audio",
-            _ => "TTS"
+            "audio" => LocalizeUi("Bản thu sẵn", "Recorded audio", "录音", "녹음 음성", "Audio enregistré"),
+            _ => LocalizeUi("Giọng đọc", "Voice narration", "语音讲解", "음성 안내", "Voix de narration")
         };
     }
 
@@ -3206,15 +3679,21 @@ public class MainViewModel : INotifyPropertyChanged
         var isGuestAccess = IsGuestAccess(session);
         var hasPersonalName = !string.IsNullOrWhiteSpace(session?.FullName);
 
-        CurrentUserDisplayName = hasPersonalName ? session!.FullName : "Bạn";
+        CurrentUserDisplayName = hasPersonalName
+            ? session!.FullName
+            : LocalizeUi("Bạn", "Guest", "访客", "방문객", "Visiteur");
         CurrentUserInitials = hasPersonalName ? session!.Initials : "VK";
-        CurrentUserAccountLabel = hasPersonalName ? session!.FullName : "Chưa cập nhật tên";
-        CurrentUserPasswordLabel = string.IsNullOrWhiteSpace(loginId)
-            ? "Đang hoạt động"
-            : $"@{loginId}";
+        CurrentUserAccountLabel = hasPersonalName
+            ? session!.FullName
+            : LocalizeUi("Chưa cập nhật tên", "Name not updated", "未更新姓名", "이름 미등록", "Nom non renseigné");
+        CurrentUserPasswordLabel = isGuestAccess
+            ? GetRoleLabel("guest")
+            : string.IsNullOrWhiteSpace(loginId)
+                ? AccountStatusValue
+                : $"@{loginId}";
         CurrentUserStatusLine = isGuestAccess
-            ? "Đang hoạt động • Khách"
-            : $"Đang hoạt động • {session!.RoleLabel}";
+            ? $"{AccountStatusValue} • {GetRoleLabel("guest")}"
+            : $"{AccountStatusValue} • {GetRoleLabel(session!.Role)}";
         LoadAccountProfileEditor(clearFeedback: true);
         OnPropertyChanged(nameof(CanManageAccountProfile));
         OnPropertyChanged(nameof(CanSaveAccountProfile));
@@ -3227,6 +3706,7 @@ public class MainViewModel : INotifyPropertyChanged
         (ResetAccountProfileCommand as Command)?.ChangeCanExecute();
         UpdateAudioSettingsCommandStates();
         OnPropertyChanged(nameof(HomeNarrationSummary));
+        RaiseLocalizedUiChanged();
     }
 
     public void ResetAccountProfileEditor()
@@ -3289,7 +3769,20 @@ public class MainViewModel : INotifyPropertyChanged
                 return;
             }
 
-            AccountSettingsSuccessMessage = result.Message;
+            var synced = await _userProfileSyncService.SyncCurrentUserAsync(GetPreferredLanguageLocaleCode(SelectedLanguage));
+            AccountSettingsSuccessMessage = synced
+                ? LocalizeUi(
+                    "Đã lưu thông tin khách.",
+                    "Visitor info saved.",
+                    "访客信息已保存。",
+                    "방문객 정보가 저장되었습니다.",
+                    "Informations visiteur enregistrées.")
+                : LocalizeUi(
+                    "Đã lưu trên thiết bị. Khi có mạng ổn định, app sẽ cập nhật lại.",
+                    "Saved on this device. The app will update again when the connection is stable.",
+                    "已保存在设备上，连接稳定后会再次更新。",
+                    "기기에 저장되었습니다. 연결이 안정되면 다시 업데이트됩니다.",
+                    "Enregistré sur cet appareil. L'app mettra à jour quand la connexion sera stable.");
             AddLog($"{NowLabel()} Cập nhật hồ sơ tài khoản");
         }
         finally
@@ -3332,11 +3825,12 @@ public class MainViewModel : INotifyPropertyChanged
                 playbackRequest.AudioAssetPath);
 
             AudioSettingsSuccessMessage =
-                $"Đã nghe thử {DraftPlaybackModeDisplay} bằng {DraftSelectedLanguageDisplayName}.";
+                $"Đã phát nghe thử bằng {DraftSelectedLanguageDisplayName}.";
         }
         catch (Exception ex)
         {
-            AudioSettingsErrorMessage = $"Không thể nghe thử cấu hình âm thanh: {ex.Message}";
+            AudioSettingsErrorMessage = "Chưa thể nghe thử lúc này. Hãy kiểm tra âm lượng hoặc thử lại sau.";
+            AddLog($"{NowLabel()} Lỗi nghe thử: {ex.Message}");
         }
         finally
         {
@@ -3344,11 +3838,11 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private Task SaveAudioSettingsAsync()
+    private async Task SaveAudioSettingsAsync()
     {
         if (!CanSaveAudioSettings)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         ClearAudioSettingsFeedback();
@@ -3365,15 +3859,16 @@ public class MainViewModel : INotifyPropertyChanged
 
             ApplyAudioSettings(settings, shouldLog: true);
             PersistUserPreferences();
-
-            AudioSettingsSuccessMessage = "Đã lưu tùy chọn ngôn ngữ cho ứng dụng.";
+            var synced = await _userProfileSyncService.SyncCurrentUserAsync(GetPreferredLanguageLocaleCode(DraftSelectedLanguage));
+            AudioSettingsSuccessMessage = synced
+                ? GetLocalizedLanguageSavedMessage()
+                : $"{GetLocalizedLanguageSavedMessage()} {LocalizeUi("App sẽ cập nhật lại khi kết nối ổn định.", "The app will update again when the connection is stable.", "连接稳定后会再次更新。", "연결이 안정되면 다시 업데이트됩니다.", "L'app mettra à jour quand la connexion sera stable.")}";
         }
         finally
         {
             IsSavingAudioSettings = false;
         }
 
-        return Task.CompletedTask;
     }
 
     private void LoadAccountProfileEditor(bool clearFeedback)
@@ -3425,22 +3920,22 @@ public class MainViewModel : INotifyPropertyChanged
             await RefreshOfflinePackageStatusAsync();
 
             var successMessage =
-                $"Đã cập nhật gói offline: SQLite {_offlineContentStatus.PoiCount} POI, map {mapResult.CachedTileCount}/{mapResult.PlannedTileCount} tile, audio {audioResult.CachedAssetCount}/{audioResult.AvailableAssetCount} asset.";
+                $"Đã lưu dữ liệu offline: {_offlineContentStatus.PoiCount} quán, bản đồ {mapResult.CachedTileCount}/{mapResult.PlannedTileCount}, bản thu {audioResult.CachedAssetCount}/{audioResult.AvailableAssetCount}.";
 
             var notes = new List<string>();
             if (mapResult.FailedTileCount > 0)
             {
-                notes.Add($"Map còn {mapResult.FailedTileCount} tile chưa tải được");
+                notes.Add($"Còn {mapResult.FailedTileCount} phần bản đồ chưa tải được");
             }
 
             if (audioResult.FailedAssetCount > 0)
             {
-                notes.Add($"Audio còn {audioResult.FailedAssetCount} asset chưa tải được");
+                notes.Add($"Còn {audioResult.FailedAssetCount} bản thu chưa tải được");
             }
 
             if (audioResult.AvailableAssetCount == 0)
             {
-                notes.Add("Dữ liệu quán hiện chưa có audio thu sẵn để tải");
+                notes.Add("Các quán hiện chưa có bản thu sẵn để tải");
             }
 
             OfflinePackageSuccessMessage = notes.Count == 0
@@ -3451,7 +3946,8 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            OfflinePackageErrorMessage = $"Không thể cập nhật gói offline: {ex.Message}";
+            OfflinePackageErrorMessage = "Chưa thể cập nhật dữ liệu offline. Hãy kiểm tra kết nối rồi thử lại.";
+            AddLog($"{NowLabel()} Lỗi cập nhật offline: {ex.Message}");
         }
         finally
         {
@@ -3476,12 +3972,18 @@ public class MainViewModel : INotifyPropertyChanged
             await _poiOfflineStore.ClearAsync();
             await RefreshOfflinePackageStatusAsync();
 
-            OfflinePackageSuccessMessage = "Đã xóa gói offline trên thiết bị.";
+            OfflinePackageSuccessMessage = LocalizeUi(
+                "Đã xóa gói offline trên thiết bị.",
+                "Offline package cleared on this device.",
+                "已清除此设备上的离线包。",
+                "이 기기의 오프라인 패키지를 삭제했습니다.",
+                "Le pack hors ligne a été supprimé de cet appareil.");
             AddLog($"{NowLabel()} Xóa gói offline trên thiết bị");
         }
         catch (Exception ex)
         {
-            OfflinePackageErrorMessage = $"Không thể xóa gói offline: {ex.Message}";
+            OfflinePackageErrorMessage = "Chưa thể xóa dữ liệu offline. Vui lòng thử lại.";
+            AddLog($"{NowLabel()} Lỗi xóa offline: {ex.Message}");
         }
         finally
         {
@@ -3582,7 +4084,7 @@ public class MainViewModel : INotifyPropertyChanged
         {
             Id = poiId == Guid.Empty ? Guid.NewGuid() : poiId,
             Code = string.IsNullOrWhiteSpace(item.PoiCode) ? basePoi?.Code ?? string.Empty : item.PoiCode,
-            Name = string.IsNullOrWhiteSpace(item.PoiName) ? basePoi?.Name ?? "POI lịch sử" : item.PoiName,
+            Name = string.IsNullOrWhiteSpace(item.PoiName) ? basePoi?.Name ?? "Quán đã nghe" : item.PoiName,
             Category = basePoi?.Category ?? "Ẩm thực",
             Address = string.IsNullOrWhiteSpace(item.Address) ? basePoi?.Address ?? string.Empty : item.Address,
             Description = string.IsNullOrWhiteSpace(item.Description)
@@ -3664,6 +4166,8 @@ public class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HasListeningHistoryRanking));
         OnPropertyChanged(nameof(ListeningHistoryFallbackSummary));
         OnPropertyChanged(nameof(ListeningHistorySummary));
+        OnPropertyChanged(nameof(ListeningHistoryPreviewItems));
+        OnPropertyChanged(nameof(HasListeningHistoryPreview));
         (ClearListeningHistoryCommand as Command)?.ChangeCanExecute();
         (RefreshListeningHistoryCommand as Command)?.ChangeCanExecute();
     }
@@ -3875,11 +4379,11 @@ public class MainViewModel : INotifyPropertyChanged
             ? new PlaybackRequest(
                 "tts",
                 null,
-                "Nội dung này chưa có file audio, hệ thống tạm dùng TTS để tiếp tục phát.")
+                "Quán này chưa có bản thu sẵn, app sẽ dùng giọng đọc để tiếp tục.")
             : new PlaybackRequest(
                 "audio",
                 null,
-                "Cấu hình Audio đang được chọn nhưng nội dung hiện tại chưa có file audio để nghe thử.");
+                "Quán này chưa có bản thu sẵn để nghe thử. Hãy chọn giọng đọc hoặc thử quán khác.");
     }
 
     private bool IsSupportedLanguage(string? languageCode)

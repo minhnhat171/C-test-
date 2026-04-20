@@ -8,6 +8,7 @@ public class DashboardService
     private readonly PoiApiClient _poiApiClient;
     private readonly TourApiClient _tourApiClient;
     private readonly ListeningHistoryApiClient _listeningHistoryApiClient;
+    private readonly UserManagementApiClient _userManagementApiClient;
     private readonly ActiveDeviceApiClient _activeDeviceApiClient;
     private readonly AppDataService _fallbackData;
 
@@ -15,12 +16,14 @@ public class DashboardService
         PoiApiClient poiApiClient,
         TourApiClient tourApiClient,
         ListeningHistoryApiClient listeningHistoryApiClient,
+        UserManagementApiClient userManagementApiClient,
         ActiveDeviceApiClient activeDeviceApiClient,
         AppDataService fallbackData)
     {
         _poiApiClient = poiApiClient;
         _tourApiClient = tourApiClient;
         _listeningHistoryApiClient = listeningHistoryApiClient;
+        _userManagementApiClient = userManagementApiClient;
         _activeDeviceApiClient = activeDeviceApiClient;
         _fallbackData = fallbackData;
     }
@@ -35,14 +38,16 @@ public class DashboardService
                 sortBy: "time_desc",
                 period: "all",
                 cancellationToken: cancellationToken);
+            var usersTask = _userManagementApiClient.GetUsersAsync(cancellationToken);
             var activeDevicesTask = GetActiveDeviceStatsAsync(cancellationToken);
 
-            await Task.WhenAll(poisTask, toursTask, historyTask, activeDevicesTask);
+            await Task.WhenAll(poisTask, toursTask, historyTask, usersTask, activeDevicesTask);
 
             return BuildFromSharedData(
                 poisTask.Result,
                 historyTask.Result,
                 toursTask.Result.Count,
+                usersTask.Result,
                 activeDevicesTask.Result);
         }
         catch (Exception ex) when (
@@ -83,6 +88,7 @@ public class DashboardService
         IReadOnlyList<PoiDto> pois,
         IReadOnlyList<ListeningHistoryEntryDto> history,
         int totalTours,
+        IReadOnlyList<AdminUserSummaryDto> users,
         ActiveDeviceStatsDto activeDevices)
     {
         var dashboardGeneratedAt = DateTime.Now;
@@ -142,6 +148,21 @@ public class DashboardService
                 })
                 .ToList(),
             TopPois = topPois,
+            RecentUsers = users
+                .OrderByDescending(item => item.LastActiveAtUtc ?? DateTimeOffset.MinValue)
+                .ThenBy(item => item.DisplayName)
+                .Take(6)
+                .Select(item => new DashboardRecentUserItem
+                {
+                    DisplayName = item.DisplayName,
+                    Email = item.Email,
+                    PhoneNumber = item.PhoneNumber,
+                    PreferredLanguage = item.PreferredLanguage,
+                    Role = item.Role,
+                    Status = item.Status,
+                    LastActiveAtUtc = item.LastActiveAtUtc
+                })
+                .ToList(),
             RecentLogs = localizedHistory
                 .Take(8)
                 .Select((entry, index) => new UsageLog
@@ -229,6 +250,7 @@ public class DashboardService
             DataSourceDescription = "Dashboard dang dung du lieu noi bo cua WebAdmin nen co the chua giong voi du lieu dang hien co trong app.",
             DailyListenPoints = dailyListenPoints,
             TopPois = topPois,
+            RecentUsers = new List<DashboardRecentUserItem>(),
             RecentLogs = _fallbackData.UsageLogs.OrderByDescending(x => x.StartedAt).Take(8).ToList()
         };
     }

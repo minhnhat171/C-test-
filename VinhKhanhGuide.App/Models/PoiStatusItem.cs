@@ -22,29 +22,18 @@ public class PoiStatusItem
     public bool IsCompletedTourStop { get; set; }
     public int? TourOrder { get; set; }
     public int Priority { get; set; }
-
-    public string PriorityLabel => $"P{Priority}";
-    public string CodeLabel => string.IsNullOrWhiteSpace(Code) ? "Chưa có mã" : $"Mã: {Code}";
-    public string StatusLabel => IsInsideRadius ? "Trong vùng geofence" : "Ngoài vùng";
-    public string NearestLabel => IsNearest ? "POI gần nhất" : string.Empty;
-    public string InRadiusBadge => IsInsideRadius ? "Đang ở gần" : string.Empty;
+    public string PriorityLabel { get; set; } = string.Empty;
+    public string CodeLabel { get; set; } = string.Empty;
+    public string StatusLabel { get; set; } = string.Empty;
+    public string NearestLabel { get; set; } = string.Empty;
+    public string InRadiusBadge { get; set; } = string.Empty;
     public bool HasNarrationPreview => !string.IsNullOrWhiteSpace(NarrationPreview);
     public bool HasSpecialDish => !string.IsNullOrWhiteSpace(SpecialDish);
-    public string SpecialDishLabel => SpecialDish;
-    public string NarrationActionText => IsNarrationActive ? "Dừng thuyết minh" : "Nghe thuyết minh";
-    public string NarrationStateText => IsNarrationActive ? "Đang phát thuyết minh" : "Sẵn sàng nghe";
-    public string NarrationGuideText => IsNarrationActive
-        ? "Phần Talk to Speech của quán này đang phát."
-        : "Bấm để nghe phần Talk to Speech ngay tại trang chủ.";
+    public string SpecialDishLabel { get; set; } = string.Empty;
+    public string NarrationActionText { get; set; } = string.Empty;
+    public string NarrationStateText { get; set; } = string.Empty;
+    public string NarrationGuideText { get; set; } = string.Empty;
     public bool HasTourBadge => IsActiveTourStop || IsCompletedTourStop;
-    public string TourBadgeText => !HasTourBadge
-        ? string.Empty
-        : IsCompletedTourStop
-            ? $"Chặng {TourOrder ?? 0} đã xong"
-            : $"Chặng {TourOrder ?? 0} đang dẫn";
-
-    public string DistanceLabel =>
-        double.IsNaN(DistanceMeters)
-            ? $"Bán kính {TriggerRadiusMeters:F0}m"
-            : $"{DistanceMeters:F0}m • Bán kính {TriggerRadiusMeters:F0}m";
+    public string TourBadgeText { get; set; } = string.Empty;
+    public string DistanceLabel { get; set; } = string.Empty;
 }

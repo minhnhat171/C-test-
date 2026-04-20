@@ -6,6 +6,8 @@ public sealed class AdminUserSummaryDto
     public string UserCode { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public string PreferredLanguage { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
     public string Status { get; set; } = "offline";
     public bool IsOnline { get; set; }
@@ -24,6 +26,8 @@ public sealed class AdminUserSummaryDto
             UserCode = UserCode,
             DisplayName = DisplayName,
             Email = Email,
+            PhoneNumber = PhoneNumber,
+            PreferredLanguage = PreferredLanguage,
             Role = Role,
             Status = Status,
             IsOnline = IsOnline,
@@ -35,6 +39,18 @@ public sealed class AdminUserSummaryDto
             TotalListenSeconds = TotalListenSeconds
         };
     }
+}
+
+public sealed class AdminUserProfileUpsertRequest
+{
+    public Guid? Id { get; set; }
+    public string UserCode { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public string PreferredLanguage { get; set; } = string.Empty;
+    public string DevicePlatform { get; set; } = string.Empty;
 }
 
 public sealed class AdminUserDetailDto

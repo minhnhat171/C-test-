@@ -16,6 +16,7 @@ builder.Services.AddHttpClient<PoiApiClient>(ConfigureSharedApiClient);
 builder.Services.AddHttpClient<TourApiClient>(ConfigureSharedApiClient);
 builder.Services.AddHttpClient<AudioGuideApiClient>(ConfigureSharedApiClient);
 builder.Services.AddHttpClient<ListeningHistoryApiClient>(ConfigureSharedApiClient);
+builder.Services.AddHttpClient<UserManagementApiClient>(ConfigureSharedApiClient);
 builder.Services.AddHttpClient<ActiveDeviceApiClient>(ConfigureSharedApiClient);
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<AudioGuideAdminService>();

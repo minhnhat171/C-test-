@@ -84,11 +84,13 @@ public partial class App : Application
 
         try
         {
-            var shell = _serviceProvider.GetRequiredService<AppShell>();
-            if (!ReferenceEquals(MainPage, shell))
+            if (MainPage is AppShell)
             {
-                MainPage = shell;
+                return;
             }
+
+            var shell = _serviceProvider.GetRequiredService<AppShell>();
+            MainPage = shell;
         }
         catch (Exception ex)
         {
@@ -166,8 +168,8 @@ public partial class App : Application
             if (!opened)
             {
                 await shell.DisplayAlert(
-                    "Khong mo duoc QR",
-                    "Khong tim thay noi dung POI cho ma QR nay.",
+                    "Chưa mở được mã QR",
+                    "Mã QR này chưa liên kết với nội dung thuyết minh.",
                     "OK");
                 return;
             }
@@ -212,7 +214,7 @@ public partial class App : Application
     {
         return new NavigationPage(_serviceProvider.GetRequiredService<AuthPage>())
         {
-            BarBackgroundColor = Color.FromArgb("#215C57"),
+            BarBackgroundColor = Color.FromArgb("#2F80FF"),
             BarTextColor = Colors.White
         };
     }

@@ -46,4 +46,11 @@ public class UserManagementController : ControllerBase
         var location = _repository.GetUserLocation(id);
         return location is null ? NotFound() : Ok(location);
     }
+
+    [HttpPost("profile-sync")]
+    public ActionResult<AdminUserDetailDto> UpsertProfile([FromBody] AdminUserProfileUpsertRequest request)
+    {
+        var detail = _repository.UpsertProfile(request);
+        return Ok(detail);
+    }
 }

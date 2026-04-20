@@ -12,6 +12,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <NullabilityInfoContextSupport>true</NullabilityInfoContextSupport>
+    <_MauiForceXamlCForDebug>true</_MauiForceXamlCForDebug>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(TargetFramework)' == 'net8.0-android'">
@@ -22,10 +23,10 @@
   <ItemGroup>
     <MauiIcon Include="Resources\AppIcon\appicon.svg"
               ForegroundFile="Resources\AppIcon\appiconfg.svg"
-              Color="#215C57" />
+              Color="#2F80FF" />
 
     <MauiSplashScreen Include="Resources\Splash\splash.svg"
-                      Color="#215C57"
+                      Color="#2F80FF"
                       BaseSize="128,128" />
 
     <MauiImage Include="Resources\Images\**\*" />
@@ -37,7 +38,7 @@
   <ItemGroup>
     <MauiXaml Update="App.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="AppShell.xaml" Generator="MSBuild:Compile" />
-    <MauiXaml Update="MainPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Views\MainPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Views\AuthPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Views\AccountPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Views\FeaturedDishCategoryPage.xaml" Generator="MSBuild:Compile" />

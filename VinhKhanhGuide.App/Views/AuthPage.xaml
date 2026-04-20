@@ -3,152 +3,73 @@
     x:Class="VinhKhanhGuide.App.Views.AuthPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    BackgroundColor="#F4EFE7"
+    BackgroundColor="#F4F8FF"
     NavigationPage.HasNavigationBar="False"
     Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <VerticalStackLayout Padding="22,32,22,26" Spacing="18">
+        <VerticalStackLayout Padding="22,36,22,28" Spacing="18">
 
             <Border StrokeThickness="0"
                     Padding="22"
                     StrokeShape="RoundRectangle 34">
                 <Border.Background>
                     <LinearGradientBrush EndPoint="1,1">
-                        <GradientStop Color="#173A43" Offset="0.0" />
-                        <GradientStop Color="#215C57" Offset="0.55" />
-                        <GradientStop Color="#3C7E6C" Offset="1.0" />
+                        <GradientStop Color="#2F80FF" Offset="0.0" />
+                        <GradientStop Color="#5A9CFF" Offset="0.55" />
+                        <GradientStop Color="#8CC0FF" Offset="1.0" />
                     </LinearGradientBrush>
                 </Border.Background>
 
-                <VerticalStackLayout Spacing="12">
+                <VerticalStackLayout Spacing="10">
                     <Label Text="VinhKhanh"
                            FontSize="30"
                            FontAttributes="Bold"
-                           TextColor="#FFF9F2" />
+                           TextColor="White" />
 
-                    <Label Text="Bản hiện tại dành cho du khách vào nhanh để trải nghiệm ngay giao diện chính, chọn box quán và nghe thuyết minh."
-                           FontSize="15"
-                           LineHeight="1.25"
-                           TextColor="#E9F3EF" />
+                    <Label Text="{Binding WelcomeTitle}"
+                           FontSize="22"
+                           FontAttributes="Bold"
+                           TextColor="White" />
 
-                    <Border BackgroundColor="#F5EBDD"
-                            StrokeThickness="0"
-                            Padding="14,10"
-                            StrokeShape="RoundRectangle 18">
-                        <Label Text="Luồng quét QR là hướng đúng và mình đã chừa chỗ để nối ở prompt sau."
-                               FontSize="13"
-                               TextColor="#1C4748" />
-                    </Border>
+                    <Label Text="{Binding HeroDescription}"
+                           FontSize="14"
+                           LineHeight="1.2"
+                           TextColor="#EAF3FF" />
                 </VerticalStackLayout>
             </Border>
 
-            <Border BackgroundColor="#FFFDFC"
-                    Stroke="#E4D8CC"
+            <Border BackgroundColor="White"
+                    Stroke="#D8E8FF"
                     StrokeThickness="1"
                     Padding="20"
                     StrokeShape="RoundRectangle 30">
                 <VerticalStackLayout Spacing="16">
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="{Binding WelcomeTitle}"
-                               FontSize="24"
+                        <Label Text="{Binding LanguagePromptTitle}"
+                               FontSize="22"
                                FontAttributes="Bold"
-                               TextColor="#1B2A2F" />
+                               TextColor="#102A43" />
 
-                        <Label Text="{Binding WelcomeSubtitle}"
+                        <Label Text="{Binding LanguagePromptSubtitle}"
                                FontSize="13"
-                               TextColor="#67757A" />
+                               TextColor="#5E7491" />
                     </VerticalStackLayout>
 
-                    <Grid ColumnDefinitions="*,*"
-                          RowDefinitions="Auto,Auto"
-                          ColumnSpacing="12"
-                          RowSpacing="12">
-                        <Border Padding="16,14"
-                                BackgroundColor="#F5EBDD"
-                                Stroke="#E4D5C4"
-                                StrokeThickness="1"
-                                HeightRequest="88"
-                                StrokeShape="RoundRectangle 22">
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="B1"
-                                       FontSize="11"
-                                       FontAttributes="Bold"
-                                       TextColor="#A96A45" />
-                                <Label Text="Chọn ngôn ngữ"
-                                       FontSize="14"
-                                       FontAttributes="Bold"
-                                       TextColor="#1C4748" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Border Grid.Column="1"
-                                Padding="16,14"
-                                BackgroundColor="#F5EBDD"
-                                Stroke="#E4D5C4"
-                                StrokeThickness="1"
-                                HeightRequest="88"
-                                StrokeShape="RoundRectangle 22">
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="B2"
-                                       FontSize="11"
-                                       FontAttributes="Bold"
-                                       TextColor="#A96A45" />
-                                <Label Text="Khám phá app"
-                                       FontSize="14"
-                                       FontAttributes="Bold"
-                                       TextColor="#1C4748" />
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <Border Grid.Row="1"
-                                Grid.ColumnSpan="2"
-                                Padding="16,14"
-                                BackgroundColor="#F5EBDD"
-                                Stroke="#E4D5C4"
-                                StrokeThickness="1"
-                                HeightRequest="88"
-                                WidthRequest="172"
-                                HorizontalOptions="Center"
-                                StrokeShape="RoundRectangle 22">
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="B3"
-                                       FontSize="11"
-                                       FontAttributes="Bold"
-                                       TextColor="#A96A45" />
-                                <Label Text="Chọn box để nghe"
-                                       FontSize="14"
-                                       FontAttributes="Bold"
-                                       TextColor="#1C4748" />
-                            </VerticalStackLayout>
-                        </Border>
-                    </Grid>
-
-                    <Border BackgroundColor="#F6FBFA"
-                            Stroke="#D9E8E6"
+                    <Border BackgroundColor="#F8FBFF"
+                            Stroke="#DCEBFF"
                             StrokeThickness="1"
                             Padding="16"
                             StrokeShape="RoundRectangle 22">
                         <VerticalStackLayout Spacing="10">
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="{Binding LanguagePromptTitle}"
-                                       FontSize="18"
-                                       FontAttributes="Bold"
-                                       TextColor="#1B2A2F" />
-
-                                <Label Text="{Binding LanguagePromptSubtitle}"
-                                       FontSize="13"
-                                       TextColor="#5F7075" />
-                            </VerticalStackLayout>
-
                             <Border BackgroundColor="#FFFFFF"
-                                    Stroke="#D9E8E6"
+                                    Stroke="#DCEBFF"
                                     StrokeThickness="1"
                                     Padding="12,2"
                                     StrokeShape="RoundRectangle 16">
-                                <Picker Title="Select language"
-                                        TitleColor="#8B9A9F"
-                                        TextColor="#1B2A2F"
+                                <Picker Title="{Binding LanguagePickerPlaceholder}"
+                                        TitleColor="#8AA1BF"
+                                        TextColor="#102A43"
                                         ItemsSource="{Binding SupportedLanguages}"
                                         ItemDisplayBinding="{Binding Label}"
                                         SelectedItem="{Binding SelectedLanguageOption}" />
@@ -156,25 +77,25 @@
 
                             <Label Text="{Binding SelectedLanguageSummary}"
                                    FontSize="12"
-                                   TextColor="#2F5D62" />
+                                   TextColor="#486581" />
                         </VerticalStackLayout>
                     </Border>
 
-                    <Border BackgroundColor="#FDEEEE"
-                            Stroke="#E4B6B0"
+                    <Border BackgroundColor="#FFF1F2"
+                            Stroke="#F9CBD3"
                             StrokeThickness="1"
                             Padding="14,12"
                             StrokeShape="RoundRectangle 18"
                             IsVisible="{Binding HasErrorMessage}">
                         <Label Text="{Binding ErrorMessage}"
                                FontSize="13"
-                               TextColor="#A53A32" />
+                               TextColor="#BE123C" />
                     </Border>
 
                     <Button Text="{Binding EnterAppButtonText}"
                             Command="{Binding EnterAppCommand}"
                             IsEnabled="{Binding IsNotBusy}"
-                            BackgroundColor="#C6672F"
+                            BackgroundColor="#2F80FF"
                             TextColor="White"
                             FontAttributes="Bold"
                             CornerRadius="18"
@@ -182,11 +103,7 @@
 
                     <ActivityIndicator IsRunning="{Binding IsBusy}"
                                        IsVisible="{Binding IsBusy}"
-                                       Color="#215C57" />
-
-                    <Label Text="{Binding WelcomeHint}"
-                           FontSize="12"
-                           TextColor="#6C7A7F" />
+                                       Color="#2F80FF" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

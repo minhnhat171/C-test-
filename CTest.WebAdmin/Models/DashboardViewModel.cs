@@ -32,6 +32,7 @@ public class DashboardViewModel
     public List<DashboardDailyListenPoint> DailyListenPoints { get; set; } = new();
     public List<DashboardTopPoiItem> TopPois { get; set; } = new();
     public List<UsageLog> RecentLogs { get; set; } = new();
+    public List<DashboardRecentUserItem> RecentUsers { get; set; } = new();
 }
 
 public class DashboardDailyListenPoint
@@ -45,4 +46,15 @@ public class DashboardTopPoiItem
 {
     public string Name { get; set; } = string.Empty;
     public int Count { get; set; }
+}
+
+public class DashboardRecentUserItem
+{
+    public string DisplayName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public string PreferredLanguage { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public DateTimeOffset? LastActiveAtUtc { get; set; }
 }

@@ -105,6 +105,69 @@ public class UserManagementRepository
         }
     }
 
+    public AdminUserDetailDto UpsertProfile(AdminUserProfileUpsertRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        lock (_syncRoot)
+        {
+            var normalizedRequest = NormalizeUpsertRequest(request);
+            var existingIndex = _profiles.FindIndex(profile =>
+                (normalizedRequest.Id.HasValue && normalizedRequest.Id.Value != Guid.Empty && profile.Id == normalizedRequest.Id.Value) ||
+                (!string.IsNullOrWhiteSpace(normalizedRequest.UserCode) &&
+                 string.Equals(profile.UserCode, normalizedRequest.UserCode, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(normalizedRequest.Email) &&
+                 string.Equals(profile.Email, normalizedRequest.Email, StringComparison.OrdinalIgnoreCase)));
+            var existingProfile = _profiles.FirstOrDefault(profile =>
+                (normalizedRequest.Id.HasValue && normalizedRequest.Id.Value != Guid.Empty && profile.Id == normalizedRequest.Id.Value) ||
+                (!string.IsNullOrWhiteSpace(normalizedRequest.UserCode) &&
+                 string.Equals(profile.UserCode, normalizedRequest.UserCode, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(normalizedRequest.Email) &&
+                 string.Equals(profile.Email, normalizedRequest.Email, StringComparison.OrdinalIgnoreCase)));
+
+            if (existingProfile is null)
+            {
+                existingProfile = NormalizeProfile(new UserProfileRecord
+                {
+                    Id = normalizedRequest.Id ?? Guid.Empty,
+                    UserCode = normalizedRequest.UserCode,
+                    DisplayName = normalizedRequest.DisplayName,
+                    Email = normalizedRequest.Email,
+                    Role = normalizedRequest.Role,
+                    PhoneNumber = normalizedRequest.PhoneNumber,
+                    PreferredLanguage = normalizedRequest.PreferredLanguage,
+                    DevicePlatform = normalizedRequest.DevicePlatform,
+                    CreatedAtUtc = DateTimeOffset.UtcNow
+                });
+
+                _profiles.Add(existingProfile);
+            }
+            else
+            {
+                existingProfile.UserCode = normalizedRequest.UserCode;
+                existingProfile.DisplayName = normalizedRequest.DisplayName;
+                existingProfile.Email = normalizedRequest.Email;
+                existingProfile.Role = normalizedRequest.Role;
+                existingProfile.PhoneNumber = normalizedRequest.PhoneNumber;
+                existingProfile.PreferredLanguage = normalizedRequest.PreferredLanguage;
+                existingProfile.DevicePlatform = normalizedRequest.DevicePlatform;
+            }
+
+            existingProfile = NormalizeProfile(existingProfile);
+            if (existingIndex >= 0)
+            {
+                _profiles[existingIndex] = existingProfile;
+            }
+
+            SaveProfilesUnsafe();
+
+            return BuildSnapshotsUnsafe()
+                .First(snapshot => snapshot.Summary.Id == existingProfile.Id)
+                .Detail
+                .Clone();
+        }
+    }
+
     private List<UserSnapshot> BuildSnapshotsUnsafe()
     {
         var profiles = _profiles
@@ -257,12 +320,16 @@ public class UserManagementRepository
                 UserCode = userCode ?? string.Empty,
                 DisplayName = displayName ?? "Unknown user",
                 Email = email ?? string.Empty,
+                PhoneNumber = phoneNumber,
+                PreferredLanguage = preferredLanguage,
                 Role = role,
                 Status = status,
                 IsOnline = isOnline,
                 LastActiveAtUtc = lastActiveAtUtc,
                 LastPoiName = lastPoiName,
-                DevicePlatform = latestEntry?.DevicePlatform?.Trim() ?? string.Empty,
+                DevicePlatform = !string.IsNullOrWhiteSpace(latestEntry?.DevicePlatform)
+                    ? latestEntry!.DevicePlatform.Trim()
+                    : profile?.DevicePlatform?.Trim() ?? string.Empty,
                 TotalSessions = totalSessions,
                 CompletedSessions = completedSessions,
                 TotalListenSeconds = totalListenSeconds
@@ -284,7 +351,9 @@ public class UserManagementRepository
                     .Max(),
                 PreferredLanguage = preferredLanguage,
                 PhoneNumber = phoneNumber,
-                DevicePlatform = latestEntry?.DevicePlatform?.Trim() ?? string.Empty,
+                DevicePlatform = !string.IsNullOrWhiteSpace(latestEntry?.DevicePlatform)
+                    ? latestEntry!.DevicePlatform.Trim()
+                    : profile?.DevicePlatform?.Trim() ?? string.Empty,
                 LastTriggerType = latestEntry?.TriggerType?.Trim() ?? string.Empty,
                 LastSource = latestEntry?.Source?.Trim() ?? string.Empty,
                 LastPoiName = lastPoiName,
@@ -460,10 +529,44 @@ public class UserManagementRepository
         normalized.PreferredLanguage = string.IsNullOrWhiteSpace(normalized.PreferredLanguage)
             ? "vi-VN"
             : normalized.PreferredLanguage;
+        normalized.DevicePlatform ??= string.Empty;
         normalized.CreatedAtUtc = normalized.CreatedAtUtc == default
             ? DateTimeOffset.UtcNow
             : normalized.CreatedAtUtc;
         return normalized;
+    }
+
+    private static AdminUserProfileUpsertRequest NormalizeUpsertRequest(AdminUserProfileUpsertRequest request)
+    {
+        var userCode = NormalizeLookup(request.UserCode);
+        var email = NormalizeLookup(request.Email);
+        var displayName = request.DisplayName?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(userCode))
+        {
+            userCode = !string.IsNullOrWhiteSpace(email)
+                ? email
+                : CreateDeterministicGuid($"{displayName}|{request.PhoneNumber}").ToString("N")[..12];
+        }
+
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            displayName = userCode;
+        }
+
+        return new AdminUserProfileUpsertRequest
+        {
+            Id = request.Id,
+            UserCode = userCode,
+            DisplayName = displayName,
+            Email = email,
+            Role = string.IsNullOrWhiteSpace(request.Role) ? "Guest" : request.Role.Trim(),
+            PhoneNumber = request.PhoneNumber?.Trim() ?? string.Empty,
+            PreferredLanguage = string.IsNullOrWhiteSpace(request.PreferredLanguage)
+                ? "vi-VN"
+                : request.PreferredLanguage.Trim(),
+            DevicePlatform = request.DevicePlatform?.Trim() ?? string.Empty
+        };
     }
 
     private static string NormalizeLookup(string? value)
@@ -551,6 +654,7 @@ public class UserManagementRepository
         public string Role { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
         public string PreferredLanguage { get; set; } = string.Empty;
+        public string DevicePlatform { get; set; } = string.Empty;
         public DateTimeOffset CreatedAtUtc { get; set; }
 
         public UserProfileRecord Clone()
@@ -564,6 +668,7 @@ public class UserManagementRepository
                 Role = Role,
                 PhoneNumber = PhoneNumber,
                 PreferredLanguage = PreferredLanguage,
+                DevicePlatform = DevicePlatform,
                 CreatedAtUtc = CreatedAtUtc
             };
         }
