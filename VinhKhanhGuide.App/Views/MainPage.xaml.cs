@@ -8,14 +8,15 @@ using Mapsui.UI.Maui;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Controls.Xaml;
 using VinhKhanhGuide.App.Models;
 using VinhKhanhGuide.App.Services;
 using VinhKhanhGuide.App.ViewModels;
-using VinhKhanhGuide.App.Views;
 using VinhKhanhGuide.Core.Models;
 
-namespace VinhKhanhGuide.App;
+namespace VinhKhanhGuide.App.Views;
 
+[XamlCompilation(XamlCompilationOptions.Compile)]
 public partial class MainPage : ContentPage
 {
     private static readonly TimeSpan PreviewMapDoubleTapThreshold = TimeSpan.FromMilliseconds(450);
@@ -226,6 +227,7 @@ public partial class MainPage : ContentPage
     private async void OnStopActiveTourClicked(object? sender, EventArgs e)
     {
         await _viewModel.StopActiveTourAsync();
+        _hasCenteredOnFirstLiveLocation = false;
         RefreshMapPins(centerOnSelection: false);
         FocusActiveMapOnGpsOrigin();
     }
@@ -246,6 +248,11 @@ public partial class MainPage : ContentPage
         OnTourShortcutClicked(sender, EventArgs.Empty);
     }
 
+    private async void OnHistoryShortcutTapped(object? sender, TappedEventArgs e)
+    {
+        await MainScrollView.ScrollToAsync(HistorySectionAnchor, ScrollToPosition.Start, true);
+    }
+
     private void OnOpenFullScreenMapClicked(object? sender, EventArgs e)
     {
         OpenFullScreenMap(focusOnRoute: _viewModel.HasActiveTour);
@@ -264,6 +271,22 @@ public partial class MainPage : ContentPage
     private void OnCenterCurrentLocationClicked(object? sender, EventArgs e)
     {
         CenterMapOnCurrentLocation(RestaurantMap, PreviewCurrentLocationResolution, PreviewEntranceResolution);
+    }
+
+    private async void OnStartTrackingClicked(object? sender, EventArgs e)
+    {
+        _hasCenteredOnFirstLiveLocation = false;
+        await _viewModel.StartAsync();
+        RefreshMapPins(centerOnSelection: false);
+        CenterMapOnCurrentLocation(RestaurantMap, PreviewCurrentLocationResolution, PreviewEntranceResolution);
+    }
+
+    private async void OnStopTrackingClicked(object? sender, EventArgs e)
+    {
+        await _viewModel.StopAsync();
+        _hasCenteredOnFirstLiveLocation = false;
+        RefreshMapPins(centerOnSelection: false);
+        FocusActiveMapOnGpsOrigin();
     }
 
     private void OnGpsOriginClicked(object? sender, EventArgs e)
@@ -556,6 +579,45 @@ public partial class MainPage : ContentPage
         }
     }
 
+    private async void OnFeaturedDishCategoryTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not BindableObject bindable ||
+            bindable.BindingContext is not FoodCategoryItem item)
+        {
+            return;
+        }
+
+        _viewModel.ShowFeaturedDishCategory(item.Key);
+        var featuredPage = _serviceProvider.GetRequiredService<FeaturedDishCategoryPage>();
+        await Navigation.PushAsync(featuredPage);
+    }
+
+    private async void OnListeningHistoryPreviewTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not BindableObject bindable ||
+            bindable.BindingContext is not ListeningHistoryDisplayItem item)
+        {
+            return;
+        }
+
+        var canOpen = await _viewModel.OpenListeningHistoryDetailAsync(item.Id);
+        if (!canOpen)
+        {
+            await DisplayAlert(
+                _viewModel.ListeningHistorySectionTitle,
+                GetLocalizedCommonMessage(
+                    "Không thể mở lại nội dung từ lịch sử nghe này.",
+                    "Could not reopen this listening history item.",
+                    "无法重新打开这条收听记录。",
+                    "이 청취 기록을 다시 열 수 없습니다.",
+                    "Impossible de rouvrir cet élément d'historique."),
+                GetLocalizedCommonMessage("OK", "OK", "好的", "확인", "OK"));
+            return;
+        }
+
+        await OpenPoiDetailAsync();
+    }
+
     private static Mapsui.Map CreateMap()
     {
         var map = new Mapsui.Map();
@@ -735,5 +797,17 @@ public partial class MainPage : ContentPage
     private void CenterOnPosition(MapView mapView, Position position, double resolution)
     {
         mapView.Map?.Navigator.CenterOnAndZoomTo(position.ToMapsui(), resolution, 350);
+    }
+
+    private string GetLocalizedCommonMessage(string vi, string en, string zh, string ko, string fr)
+    {
+        return _viewModel.SelectedLanguage switch
+        {
+            "en" => en,
+            "zh" => zh,
+            "ko" => ko,
+            "fr" => fr,
+            _ => vi
+        };
     }
 }

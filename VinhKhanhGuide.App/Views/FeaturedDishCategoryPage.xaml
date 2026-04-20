@@ -3,7 +3,8 @@
     x:Class="VinhKhanhGuide.App.Views.FeaturedDishCategoryPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Món nổi bật"
+    x:Name="FeaturedDishPageRoot"
+    Title="{Binding FeaturedDishPageTitle}"
     BackgroundColor="#FBF8F4"
     Shell.NavBarIsVisible="True">
 
@@ -14,7 +15,7 @@
                     Padding="18"
                     StrokeShape="RoundRectangle 26">
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="{Binding SelectedFeaturedDishCategoryName, StringFormat='Nhóm món: {0}'}"
+                    <Label Text="{Binding SelectedFeaturedDishCategoryHeaderText}"
                            FontSize="26"
                            FontAttributes="Bold"
                            TextColor="#FFF9F2" />
@@ -86,7 +87,7 @@
                                         Padding="12"
                                         StrokeShape="RoundRectangle 18">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="Giá tham khảo"
+                                        <Label Text="{Binding Source={x:Reference FeaturedDishPageRoot}, Path=BindingContext.FeaturedDishPriceTitle}"
                                                FontSize="11"
                                                FontAttributes="Bold"
                                                TextColor="#2F5D62" />

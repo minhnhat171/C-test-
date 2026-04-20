@@ -11,10 +11,7 @@ public sealed class TourPackageItem
     public string StopsSummary { get; set; } = string.Empty;
     public bool IsSelected { get; set; }
     public bool IsCompleted { get; set; }
-
-    public string MetaLabel => $"{StopCount} điểm dừng • {EstimatedMinutes} phút";
-    public string StatusLabel => IsSelected
-        ? (IsCompleted ? "Đã hoàn tất" : "Đang chạy")
-        : "Sẵn sàng";
-    public string ActionLabel => IsSelected ? "Đang chọn" : "Bắt đầu";
+    public string MetaLabel { get; set; } = string.Empty;
+    public string StatusLabel { get; set; } = string.Empty;
+    public string ActionLabel { get; set; } = string.Empty;
 }

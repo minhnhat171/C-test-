@@ -9,11 +9,6 @@ public sealed class TourStopProgressItem
     public bool IsCompleted { get; set; }
     public bool IsCurrent { get; set; }
     public bool IsUpcoming { get; set; }
-
-    public string OrderLabel => $"Chặng {Order}";
-    public string StatusLabel => IsCompleted
-        ? "Đã phát"
-        : IsCurrent
-            ? "Đang theo dõi"
-            : "Chờ tới lượt";
+    public string OrderLabel { get; set; } = string.Empty;
+    public string StatusLabel { get; set; } = string.Empty;
 }

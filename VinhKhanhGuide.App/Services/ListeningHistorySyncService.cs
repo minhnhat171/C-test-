@@ -43,8 +43,8 @@ public class ListeningHistorySyncService : IListeningHistorySyncService
                 PoiSpecialDish = poi.SpecialDish,
                 PoiImageSource = poi.ImageSource,
                 PoiMapLink = poi.MapLink,
-                UserCode = session?.Email ?? "guest",
-                UserDisplayName = session?.FullName ?? "Khach",
+                UserCode = session?.UserCode ?? "guest",
+                UserDisplayName = string.IsNullOrWhiteSpace(session?.FullName) ? "Khách tham quan" : session!.FullName,
                 UserEmail = session?.Email ?? string.Empty,
                 TriggerType = autoTriggered ? "GPS" : "APP",
                 Language = string.IsNullOrWhiteSpace(language) ? "vi" : language!.Trim(),
@@ -203,8 +203,8 @@ public class ListeningHistorySyncService : IListeningHistorySyncService
         }
 
         var userCode = !string.IsNullOrWhiteSpace(session.Email)
-            ? session.Email.Trim()
-            : session.LoginId;
+            ? session.UserCode.Trim()
+            : session.UserCode;
 
         var userEmail = string.IsNullOrWhiteSpace(session.Email)
             ? null

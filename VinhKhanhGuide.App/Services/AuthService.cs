@@ -15,6 +15,7 @@ public class AuthService : IAuthService
     private const string SessionPreferenceKey = "vinhkhanh.auth.session.login.v2";
     private const string LegacySessionPreferenceKey = "vinhkhanh.auth.session.email.v1";
     private const string GuestProfilePreferenceKey = "vinhkhanh.auth.guest-profile.v1";
+    private const string GuestUserCodePreferenceKey = "vinhkhanh.auth.guest-user-code.v1";
     private const string DefaultAdminLogin = "user";
     private const string DefaultAdminPassword = "12345678";
     private const string DefaultAdminDisplayName = "Quản trị viên Vĩnh Khánh";
@@ -262,12 +263,13 @@ public class AuthService : IAuthService
         SessionChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private static AuthSession CreateGuestSession(GuestProfileRecord? guestProfile = null)
+    private AuthSession CreateGuestSession(GuestProfileRecord? guestProfile = null)
     {
         var fullName = guestProfile?.FullName?.Trim() ?? string.Empty;
         return new AuthSession
         {
             UserId = Guid.Empty,
+            UserCode = GetOrCreateGuestUserCode(),
             FullName = fullName,
             Username = "guest",
             Email = guestProfile?.Email ?? string.Empty,
@@ -281,12 +283,28 @@ public class AuthService : IAuthService
         return new AuthSession
         {
             UserId = user.Id,
+            UserCode = string.IsNullOrWhiteSpace(user.Username)
+                ? NormalizeEmail(user.Email)
+                : user.Username,
             FullName = user.FullName,
             Username = user.Username,
             Email = user.Email,
             PhoneNumber = user.PhoneNumber,
             Role = user.Role
         };
+    }
+
+    private static string GetOrCreateGuestUserCode()
+    {
+        var existing = Preferences.Default.Get(GuestUserCodePreferenceKey, string.Empty);
+        if (!string.IsNullOrWhiteSpace(existing))
+        {
+            return existing.Trim().ToLowerInvariant();
+        }
+
+        var generated = $"guest-{Guid.NewGuid():N}"[..14];
+        Preferences.Default.Set(GuestUserCodePreferenceKey, generated);
+        return generated;
     }
 
     private static string NormalizeEmail(string email)

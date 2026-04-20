@@ -409,6 +409,41 @@
         padding: 1.4rem 1.4rem 0;
     }
 
+    .user-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+    }
+
+    .user-card {
+        padding: 1rem;
+        border-radius: 20px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        background: #f8fbff;
+    }
+
+    .user-name {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .user-meta {
+        margin-top: 0.35rem;
+        color: #64748b;
+        font-size: 0.88rem;
+        line-height: 1.45;
+    }
+
+    .user-status-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-top: 0.8rem;
+        font-size: 0.8rem;
+        color: #334155;
+    }
+
     .history-table {
         margin-bottom: 0;
         --bs-table-bg: transparent;
@@ -758,5 +793,38 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    <div class="dashboard-panel mt-4">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">Khách hàng gần đây</h2>
+                <div class="panel-subtitle">Tên, liên hệ và ngôn ngữ ưu tiên được đồng bộ từ app sang Web admin.</div>
+            </div>
+            <span class="panel-chip">@Model.RecentUsers.Count hồ sơ</span>
+        </div>
+
+        @if (Model.RecentUsers.Any())
+        {
+            <div class="user-grid">
+                @foreach (var user in Model.RecentUsers)
+                {
+                    <div class="user-card">
+                        <div class="user-name">@user.DisplayName</div>
+                        <div class="user-meta">@(!string.IsNullOrWhiteSpace(user.Email) ? user.Email : "Chưa có email")</div>
+                        <div class="user-meta">@(!string.IsNullOrWhiteSpace(user.PhoneNumber) ? user.PhoneNumber : "Chưa có số điện thoại")</div>
+                        <div class="user-meta">Ngôn ngữ ưu tiên: @(string.IsNullOrWhiteSpace(user.PreferredLanguage) ? "N/A" : user.PreferredLanguage)</div>
+                        <div class="user-status-line">
+                            <span>@user.Role</span>
+                            <span>@(user.LastActiveAtUtc?.ToLocalTime().ToString("dd/MM HH:mm") ?? "Chưa hoạt động")</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">Chưa có hồ sơ khách hàng nào được đồng bộ từ ứng dụng.</div>
+        }
     </div>
 </div>

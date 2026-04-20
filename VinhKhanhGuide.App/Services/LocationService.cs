@@ -15,6 +15,8 @@ public class LocationService : ILocationService
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan MaxLastKnownLocationAge = TimeSpan.FromMinutes(5);
+    private const double MaxAcceptedAccuracyMeters = 5000;
 
     public event EventHandler<LocationDto>? LocationUpdated;
 
@@ -75,10 +77,21 @@ public class LocationService : ILocationService
         try
         {
             var request = new GeolocationRequest(GeolocationAccuracy.Best, RequestTimeout);
-            var location = await Geolocation.Default.GetLocationAsync(request, cancellationToken)
-                ?? await Geolocation.Default.GetLastKnownLocationAsync();
+            var location = await Geolocation.Default.GetLocationAsync(request, cancellationToken);
+            if (IsUsableLocation(location))
+            {
+                return ToDto(location);
+            }
 
-            return ToDto(location);
+            var lastKnownLocation = await Geolocation.Default.GetLastKnownLocationAsync();
+            if (lastKnownLocation is not null &&
+                IsUsableLocation(lastKnownLocation) &&
+                IsRecentLocation(lastKnownLocation, MaxLastKnownLocationAge))
+            {
+                return ToDto(lastKnownLocation);
+            }
+
+            return null;
         }
         catch (System.OperationCanceledException)
         {
@@ -242,7 +255,18 @@ public class LocationService : ILocationService
             Latitude = location.Latitude,
             Longitude = location.Longitude,
             AccuracyMeters = location.Accuracy,
-            TimestampUtc = DateTimeOffset.UtcNow
+            TimestampUtc = location.Timestamp.ToUniversalTime()
         };
+    }
+
+    private static bool IsUsableLocation(Location? location)
+    {
+        return location is not null &&
+               (location.Accuracy is null || location.Accuracy <= MaxAcceptedAccuracyMeters);
+    }
+
+    private static bool IsRecentLocation(Location location, TimeSpan maxAge)
+    {
+        return DateTimeOffset.UtcNow - location.Timestamp.ToUniversalTime() <= maxAge;
     }
 }

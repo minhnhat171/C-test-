@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 using VinhKhanhGuide.App.Services;
 using VinhKhanhGuide.App.ViewModels;
+using VinhKhanhGuide.App.Views;
 using VinhKhanhGuide.Core.Interfaces;
 
 namespace VinhKhanhGuide.App;
@@ -38,6 +39,7 @@ public static class MauiProgram
         });
 
         builder.Services.AddSingleton<IAuthService, AuthService>();
+        builder.Services.AddSingleton<IUserProfileSyncService, UserProfileSyncService>();
         builder.Services.AddSingleton<IAudioSettingsService, AudioSettingsService>();
         builder.Services.AddSingleton<IAudioAssetCacheService, AudioAssetCacheService>();
         builder.Services.AddSingleton<IAccountProfileValidationService, AccountProfileValidationService>();
@@ -55,8 +57,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<GeofenceEngine>();
 
         builder.Services.AddSingleton<MainViewModel>();
-        builder.Services.AddSingleton<MainPage>();
-        builder.Services.AddSingleton<AppShell>();
+        builder.Services.AddTransient<MainPage>();
+        builder.Services.AddTransient<AppShell>();
         builder.Services.AddTransient<AuthPageViewModel>();
         builder.Services.AddTransient<Views.AuthPage>();
         builder.Services.AddTransient<Views.AccountPage>();

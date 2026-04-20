@@ -34,7 +34,7 @@
     "Address": "383 Vĩnh Khánh, P. Khánh Hội, Q.4",
     "Description": "Ốc Thảo là quán hải sản bình dân quen thuộc, lên món nhanh và rất phù hợp làm điểm khởi đầu để làm quen không khí phố ẩm thực Vĩnh Khánh.",
     "SpecialDish": "Ốc móng tay xào rau muống, nghêu hấp sả, hàu nướng phô mai",
-    "NarrationText": "Trần Lê Minh Nhật",
+    "NarrationText": "Ốc Thảo là quán ăn được nhiều người biết đến trên phố Vĩnh Khánh. Quán bắt đầu từ một xe ốc nhỏ và dần phát triển thành địa điểm hải sản được nhiều thực khách yêu thích. Điểm hấp dẫn của quán nằm ở nguyên liệu tươi, cách chế biến vừa miệng và mức giá khá hợp lý. Một số món đặc trưng bạn có thể thử là ốc móng tay xào rau muống, nghêu hấp sả và hàu nướng phô mai. Đây là lựa chọn phù hợp cho những ai yêu thích hải sản ngon theo phong cách bình dân.",
     "MapLink": "https://maps.google.com/?q=10.7616799,106.7023636",
     "AudioAssetPath": "",
     "Priority": 12,
@@ -44,7 +44,7 @@
     "CooldownMinutes": 6,
     "IsActive": true,
     "NarrationTranslations": {
-      "vi": "Trần Lê Minh Nhật",
+      "vi": "Ốc Thảo là quán ăn được nhiều người biết đến trên phố Vĩnh Khánh. Quán bắt đầu từ một xe ốc nhỏ và dần phát triển thành địa điểm hải sản được nhiều thực khách yêu thích. Điểm hấp dẫn của quán nằm ở nguyên liệu tươi, cách chế biến vừa miệng và mức giá khá hợp lý. Một số món đặc trưng bạn có thể thử là ốc móng tay xào rau muống, nghêu hấp sả và hàu nướng phô mai. Đây là lựa chọn phù hợp cho những ai yêu thích hải sản ngon theo phong cách bình dân.",
       "en": "You are at the first demo stop, Ốc Thảo. This seafood spot is a friendly starting point on Vinh Khanh Food Street, known for fresh dishes and quick service.",
       "zh": "您正在第一站 Ốc Thảo。这里是体验永庆美食街夜晚氛围的轻松起点，以海鲜新鲜、上菜快而受到欢迎。",
       "ko": "지금 첫 번째 정차 지점인 Ốc Thảo에 도착했습니다. 이곳은 빈칸 음식 거리의 분위기를 가장 편하게 시작하기 좋은 해산물 식당입니다.",
