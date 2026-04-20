@@ -209,7 +209,7 @@
     }
 </style>
 
-<div class="audio-page">
+<div class="audio-page" data-audio-base-url="@Model.ApiBaseUrl">
     <div class="audio-head">
         <div>
             <h1>Quản lý Audio / TTS</h1>
@@ -311,7 +311,12 @@
                                         }
                                         <button type="button"
                                                 class="btn btn-outline-dark btn-sm rounded-pill js-audio-preview"
-                                                data-script="@item.Script">
+                                                data-script="@item.Script"
+                                                data-file-path="@item.FilePath"
+                                                data-language-code="@item.LanguageCode"
+                                                data-voice-type="@item.VoiceType"
+                                                data-source-type="@item.SourceType"
+                                                data-poi-name="@item.PoiName">
                                             Nghe thử
                                         </button>
                                         @if (item.AudioId.HasValue)
@@ -364,7 +369,7 @@
 
                         <div>
                             <label asp-for="Editor.LanguageCode" class="form-label">Ngôn ngữ</label>
-                            <select asp-for="Editor.LanguageCode" class="form-select">
+                            <select asp-for="Editor.LanguageCode" class="form-select" id="audioLanguageCode">
                                 <option value="vi">Tiếng Việt</option>
                                 <option value="en">Tiếng Anh</option>
                                 <option value="zh">Tiếng Trung</option>
@@ -383,7 +388,7 @@
 
                         <div>
                             <label asp-for="Editor.VoiceType" class="form-label">Giọng đọc</label>
-                            <select asp-for="Editor.VoiceType" class="form-select">
+                            <select asp-for="Editor.VoiceType" class="form-select" id="audioVoiceType">
                                 <option value="female">Nữ</option>
                                 <option value="male">Nam</option>
                                 <option value="neutral">Trung tính</option>
@@ -404,7 +409,7 @@
 
                         <div class="full d-none" id="audioFileGroup">
                             <label asp-for="Editor.FilePath" class="form-label">Đường dẫn file audio</label>
-                            <input asp-for="Editor.FilePath" class="form-control" />
+                            <input asp-for="Editor.FilePath" class="form-control" id="audioFilePath" />
                             <span asp-validation-for="Editor.FilePath" class="text-danger small"></span>
                         </div>
 
@@ -439,8 +444,162 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="@Url.Content("~/js/narration-player.js")"></script>
     <script>
         (() => {
+            window.__vkWebNarrationEnhanced = true;
+
+            const audioPage = document.querySelector(".audio-page");
+            const apiBaseUrl = audioPage?.dataset.audioBaseUrl || window.location.origin;
+            const scriptInput = document.getElementById("audioScript");
+            const fileInput = document.getElementById("audioFilePath");
+            const languageSelect = document.getElementById("audioLanguageCode");
+            const voiceSelect = document.getElementById("audioVoiceType");
+            const sourceType = document.getElementById("audioSourceType");
+            const ttsGroup = document.getElementById("ttsScriptGroup");
+            const fileGroup = document.getElementById("audioFileGroup");
+            const previewButton = document.getElementById("previewSpeechButton");
+            const estimateButton = document.getElementById("estimateTtsButton");
+            const estimatedSeconds = document.getElementById("audioEstimatedSeconds");
+            const poiSelect = document.getElementById("audioPoiId");
+            const previewPoi = document.getElementById("audioPreviewPoi");
+            const previewSummary = document.getElementById("audioPreviewSummary");
+            const narrationPlayer = window.VinhKhanhNarrationPlayer?.createPlayer({
+                onStatus: (message) => {
+                    if (previewSummary) {
+                        previewSummary.textContent = message;
+                    }
+                }
+            });
+
+            const actionRow = previewButton?.parentElement;
+            let stopButton = document.getElementById("stopPreviewButton");
+
+            if (!stopButton && actionRow && estimateButton) {
+                stopButton = document.createElement("button");
+                stopButton.type = "button";
+                stopButton.id = "stopPreviewButton";
+                stopButton.className = "btn btn-outline-secondary rounded-pill px-4";
+                stopButton.textContent = "Dung nghe thu";
+                actionRow.insertBefore(stopButton, estimateButton);
+            }
+
+            const getDefaultSummary = () => sourceType?.value === "file"
+                ? "Ban ghi hien dung file audio. Web se uu tien phat dung file nay giong app neu file truy cap duoc."
+                : "Ban ghi hien dung TTS. Web se doc theo locale va giong phu hop voi ngon ngu dang chon.";
+
+            const setSummary = (message) => {
+                if (previewSummary) {
+                    previewSummary.textContent = message;
+                }
+            };
+
+            const syncSourceMode = () => {
+                const isFile = sourceType?.value === "file";
+                ttsGroup?.classList.toggle("d-none", isFile);
+                fileGroup?.classList.toggle("d-none", !isFile);
+                setSummary(getDefaultSummary());
+            };
+
+            const syncPoiLabel = () => {
+                if (!previewPoi || !poiSelect) {
+                    return;
+                }
+
+                previewPoi.textContent = poiSelect.options[poiSelect.selectedIndex]?.text || "Chua chon POI";
+            };
+
+            const previewEditor = () => {
+                if (!narrationPlayer) {
+                    setSummary("Web chua tai duoc bo phat narration.");
+                    return;
+                }
+
+                syncPoiLabel();
+                narrationPlayer.play({
+                    playbackMode: sourceType?.value === "file" ? "audio" : "tts",
+                    audioAssetPath: fileInput?.value?.trim() || "",
+                    narrationText: scriptInput?.value?.trim() || "",
+                    languageCode: languageSelect?.value || "vi",
+                    voiceType: voiceSelect?.value || "female",
+                    allowAudioFallback: false,
+                    baseUrl: apiBaseUrl,
+                    messages: {
+                        playingAudio: "Dang phat dung file audio da luu...",
+                        audioEnded: "Da phat xong file audio mau.",
+                        audioUnavailable: "Ban ghi nay chua co file audio hop le de preview tren web.",
+                        audioFailed: "Khong phat duoc file audio nay tren web.",
+                        playingTts: "Dang doc preview TTS theo tuy chon hien tai...",
+                        ttsEnded: "Da doc xong preview TTS.",
+                        ttsFailed: "Khong the phat preview TTS. Thu bam lai mot lan nua.",
+                        unsupportedTts: "Trinh duyet nay khong ho tro TTS preview.",
+                        empty: "Hay nhap script truoc khi nghe thu."
+                    }
+                });
+            };
+
+            sourceType?.addEventListener("change", syncSourceMode);
+            poiSelect?.addEventListener("change", syncPoiLabel);
+            scriptInput?.addEventListener("input", () => setSummary(getDefaultSummary()));
+            fileInput?.addEventListener("input", () => setSummary(getDefaultSummary()));
+            languageSelect?.addEventListener("change", () => setSummary(getDefaultSummary()));
+            voiceSelect?.addEventListener("change", () => setSummary(getDefaultSummary()));
+            previewButton?.addEventListener("click", previewEditor);
+            stopButton?.addEventListener("click", () => narrationPlayer?.stop("Da dung nghe thu."));
+
+            estimateButton?.addEventListener("click", () => {
+                const words = (scriptInput?.value || "").trim().split(/\s+/).filter(Boolean).length;
+                if (words > 0 && estimatedSeconds) {
+                    estimatedSeconds.value = Math.max(15, Math.ceil(words / 2.5));
+                }
+            });
+
+            document.querySelectorAll(".js-audio-preview").forEach((button) => {
+                button.addEventListener("click", () => {
+                    if (!narrationPlayer) {
+                        setSummary("Web chua tai duoc bo phat narration.");
+                        return;
+                    }
+
+                    if (previewPoi) {
+                        previewPoi.textContent = button.dataset.poiName || previewPoi.textContent;
+                    }
+
+                    narrationPlayer.play({
+                        playbackMode: button.dataset.sourceType === "file" ? "audio" : "tts",
+                        audioAssetPath: button.dataset.filePath || "",
+                        narrationText: button.dataset.script || "",
+                        languageCode: button.dataset.languageCode || "vi",
+                        voiceType: button.dataset.voiceType || "female",
+                        allowAudioFallback: false,
+                        baseUrl: apiBaseUrl,
+                        messages: {
+                            playingAudio: "Dang phat file audio da publish cho POI nay...",
+                            audioEnded: "Da nghe xong ban ghi mau cua POI.",
+                            audioUnavailable: "POI nay chua co file audio hop le de phat tren web.",
+                            audioFailed: "Khong phat duoc file audio da luu cho POI nay.",
+                            playingTts: "Dang doc preview TTS cua POI...",
+                            ttsEnded: "Da doc xong preview POI.",
+                            ttsFailed: "Khong the doc preview TTS cua POI nay.",
+                            unsupportedTts: "Trinh duyet nay khong ho tro TTS preview.",
+                            empty: "POI nay chua co noi dung de nghe thu."
+                        }
+                    });
+                });
+            });
+
+            window.addEventListener("beforeunload", () => narrationPlayer?.stop());
+
+            syncSourceMode();
+            syncPoiLabel();
+        })();
+    </script>
+    <script>
+        (() => {
+            if (window.__vkWebNarrationEnhanced) {
+                return;
+            }
+
             const scriptInput = document.getElementById("audioScript");
             const sourceType = document.getElementById("audioSourceType");
             const ttsGroup = document.getElementById("ttsScriptGroup");

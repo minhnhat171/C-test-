@@ -4,6 +4,8 @@ using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Storage;
 using VinhKhanhGuide.Core.Contracts;
+using VinhKhanhGuide.Core.Interfaces;
+using VinhKhanhGuide.Core.Models;
 
 namespace VinhKhanhGuide.App.Services;
 
@@ -11,23 +13,32 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
 {
     private const string DeviceIdPreferenceKey = "vinhkhanh.active_device.id.v1";
     private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(8);
+    private static readonly TimeSpan MaxCachedLocationAge = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan LocationRefreshInterval = TimeSpan.FromSeconds(20);
 
     private readonly HttpClient _httpClient;
     private readonly IAuthService _authService;
+    private readonly ILocationService _locationService;
     private readonly ILogger<ActiveDeviceTracker> _logger;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly object _syncRoot = new();
+    private readonly object _locationSyncRoot = new();
     private CancellationTokenSource? _heartbeatCancellation;
     private Task? _heartbeatTask;
+    private LocationDto? _lastKnownLocation;
+    private DateTimeOffset _lastLocationRefreshAttemptUtc = DateTimeOffset.MinValue;
 
     public ActiveDeviceTracker(
         HttpClient httpClient,
         IAuthService authService,
+        ILocationService locationService,
         ILogger<ActiveDeviceTracker> logger)
     {
         _httpClient = httpClient;
         _authService = authService;
+        _locationService = locationService;
         _logger = logger;
+        _locationService.LocationUpdated += OnLocationUpdated;
     }
 
     public Task StartAsync(CancellationToken cancellationToken = default)
@@ -98,7 +109,7 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
 
         try
         {
-            var request = BuildHeartbeatRequest();
+            var request = await BuildHeartbeatRequestAsync(cancellationToken);
             var response = await _httpClient.PostAsJsonAsync(
                 "api/analytics/active-devices/heartbeat",
                 request,
@@ -138,7 +149,7 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
         }
     }
 
-    private ActiveDeviceHeartbeatRequest BuildHeartbeatRequest()
+    private async Task<ActiveDeviceHeartbeatRequest> BuildHeartbeatRequestAsync(CancellationToken cancellationToken)
     {
         var session = _authService.CurrentSession;
         var userCode = session?.LoginId;
@@ -153,7 +164,7 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
             displayName = "Khach tham quan";
         }
 
-        return new ActiveDeviceHeartbeatRequest
+        var request = new ActiveDeviceHeartbeatRequest
         {
             DeviceId = GetOrCreateDeviceId(),
             UserCode = userCode,
@@ -164,6 +175,17 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
             AppVersion = AppInfo.Current.VersionString,
             SentAtUtc = DateTimeOffset.UtcNow
         };
+
+        var location = await GetLocationSnapshotAsync(cancellationToken);
+        if (location is not null)
+        {
+            request.Latitude = location.Latitude;
+            request.Longitude = location.Longitude;
+            request.AccuracyMeters = location.AccuracyMeters;
+            request.LocationTimestampUtc = location.TimestampUtc;
+        }
+
+        return request;
     }
 
     private static string BuildDeviceModel()
@@ -195,5 +217,92 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
         deviceId = Guid.NewGuid().ToString("N");
         Preferences.Default.Set(DeviceIdPreferenceKey, deviceId);
         return deviceId;
+    }
+
+    private async Task<LocationDto?> GetLocationSnapshotAsync(CancellationToken cancellationToken)
+    {
+        var cachedLocation = GetFreshCachedLocation();
+        if (cachedLocation is not null)
+        {
+            return cachedLocation;
+        }
+
+        var nowUtc = DateTimeOffset.UtcNow;
+        {
+            lock (_locationSyncRoot)
+            {
+                if (nowUtc - _lastLocationRefreshAttemptUtc < LocationRefreshInterval)
+                {
+                    return null;
+                }
+
+                _lastLocationRefreshAttemptUtc = nowUtc;
+            }
+        }
+
+        try
+        {
+            var hasPermission = await _locationService.EnsurePermissionAsync(requestIfNeeded: false);
+            if (!hasPermission)
+            {
+                return null;
+            }
+
+            var location = await _locationService.GetCurrentLocationAsync(cancellationToken);
+            if (location is null)
+            {
+                return null;
+            }
+
+            CacheLocation(location);
+            return CloneLocation(location);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogDebug(ex, "Could not capture device location for heartbeat.");
+            return null;
+        }
+    }
+
+    private LocationDto? GetFreshCachedLocation()
+    {
+        lock (_locationSyncRoot)
+        {
+            if (_lastKnownLocation is null)
+            {
+                return null;
+            }
+
+            if (DateTimeOffset.UtcNow - _lastKnownLocation.TimestampUtc > MaxCachedLocationAge)
+            {
+                return null;
+            }
+
+            return CloneLocation(_lastKnownLocation);
+        }
+    }
+
+    private void OnLocationUpdated(object? sender, LocationDto location)
+    {
+        CacheLocation(location);
+    }
+
+    private void CacheLocation(LocationDto location)
+    {
+        lock (_locationSyncRoot)
+        {
+            _lastKnownLocation = CloneLocation(location);
+        }
+    }
+
+    private static LocationDto CloneLocation(LocationDto location)
+    {
+        return new LocationDto
+        {
+            Latitude = location.Latitude,
+            Longitude = location.Longitude,
+            AccuracyMeters = location.AccuracyMeters,
+            TimestampUtc = location.TimestampUtc
+        };
     }
 }

@@ -219,6 +219,9 @@ public class QrScanViewModel
     public string Description { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public string NarrationText { get; set; } = string.Empty;
+    public string AudioAssetPath { get; set; } = string.Empty;
+    public Dictionary<string, string> NarrationByLanguage { get; set; } =
+        new(StringComparer.OrdinalIgnoreCase);
     public string MapLink { get; set; } = string.Empty;
     public string SpecialDish { get; set; } = string.Empty;
     public string PublicUrl { get; set; } = string.Empty;

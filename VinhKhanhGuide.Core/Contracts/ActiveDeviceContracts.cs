@@ -10,6 +10,10 @@ public sealed class ActiveDeviceHeartbeatRequest
     public string DeviceModel { get; set; } = string.Empty;
     public string AppVersion { get; set; } = string.Empty;
     public DateTimeOffset SentAtUtc { get; set; } = DateTimeOffset.UtcNow;
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public double? AccuracyMeters { get; set; }
+    public DateTimeOffset? LocationTimestampUtc { get; set; }
 }
 
 public sealed class ActiveDeviceDisconnectRequest
@@ -31,6 +35,10 @@ public sealed class ActiveDeviceSessionDto
     public DateTimeOffset LastSeenAtUtc { get; set; }
     public int SecondsSinceLastSeen { get; set; }
     public bool IsActive { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public double? AccuracyMeters { get; set; }
+    public DateTimeOffset? LocationTimestampUtc { get; set; }
 
     public ActiveDeviceSessionDto Clone()
     {
@@ -46,7 +54,11 @@ public sealed class ActiveDeviceSessionDto
             ConnectedAtUtc = ConnectedAtUtc,
             LastSeenAtUtc = LastSeenAtUtc,
             SecondsSinceLastSeen = SecondsSinceLastSeen,
-            IsActive = IsActive
+            IsActive = IsActive,
+            Latitude = Latitude,
+            Longitude = Longitude,
+            AccuracyMeters = AccuracyMeters,
+            LocationTimestampUtc = LocationTimestampUtc
         };
     }
 }

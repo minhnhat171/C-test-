@@ -6,6 +6,13 @@
     var maxDailyCount = Math.Max(1, Model.DailyListenPoints.Select(x => x.Count).DefaultIfEmpty(0).Max());
     var maxTopPoiCount = Math.Max(1, Model.TopPois.Select(x => x.Count).DefaultIfEmpty(0).Max());
     var activeDevices = Model.ActiveDeviceStats.Devices;
+    var locatedActiveDevices = activeDevices
+        .Where(item => item.Latitude.HasValue && item.Longitude.HasValue)
+        .ToList();
+    var latestLocationAt = locatedActiveDevices.Any()
+        ? locatedActiveDevices.Max(item => item.LocationTimestampUtc ?? item.LastSeenAtUtc)
+        : (DateTimeOffset?)null;
+    var jsonOptions = new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web);
     var syncLabel = Model.IsSyncOnline ? "Online" : "Offline";
     var syncSummary = Model.IsSyncOnline
         ? "Kênh đồng bộ đang hoạt động ổn định."
@@ -14,6 +21,8 @@
         ? $"Hôm nay ghi nhận {Model.TodayListenCount} lượt sử dụng. {Model.MostPlayedPoi} đang dẫn đầu về tần suất nghe."
         : "Hôm nay chưa có lượt sử dụng mới. Dashboard sẽ tự động cập nhật khi dữ liệu phát sinh.";
 }
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
 <style>
     .dashboard-shell {
@@ -589,6 +598,123 @@
         background: rgba(248, 250, 252, 0.72);
     }
 
+    .active-device-location {
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    .live-heatmap-panel {
+        padding-bottom: 1.25rem;
+    }
+
+    .heatmap-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .heatmap-toolbar-actions {
+        display: flex;
+        align-items: center;
+    }
+
+    .heatmap-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 0.9rem;
+    }
+
+    .heatmap-stat {
+        min-width: 140px;
+    }
+
+    .heatmap-stat-label {
+        display: block;
+        color: var(--dash-muted);
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .heatmap-stat-value {
+        display: block;
+        margin-top: 0.3rem;
+        font-size: 1.08rem;
+        font-weight: 800;
+        color: var(--dash-ink);
+    }
+
+    .heatmap-map-shell {
+        position: relative;
+        overflow: hidden;
+        border-radius: 24px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        background: #dbeafe;
+    }
+
+    #activeDeviceHeatmapMap {
+        width: 100%;
+        height: 420px;
+    }
+
+    .heatmap-empty-state,
+    .heatmap-legend {
+        position: absolute;
+        z-index: 500;
+        border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12);
+        backdrop-filter: blur(10px);
+    }
+
+    .heatmap-empty-state {
+        top: 1rem;
+        left: 1rem;
+        max-width: 340px;
+        padding: 0.95rem 1rem;
+        color: #334155;
+        line-height: 1.55;
+    }
+
+    .heatmap-empty-state.is-hidden {
+        display: none;
+    }
+
+    .heatmap-legend {
+        right: 1rem;
+        bottom: 1rem;
+        padding: 0.8rem 0.9rem;
+    }
+
+    .heatmap-gradient {
+        width: 144px;
+        height: 10px;
+        margin-top: 0.55rem;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #38bdf8 0%, #2563eb 38%, #7c3aed 72%, #ef4444 100%);
+    }
+
+    .heatmap-legend-scale {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 0.45rem;
+        color: var(--dash-muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    .heatmap-note {
+        margin-top: 0.9rem;
+        color: var(--dash-muted);
+        font-size: 0.88rem;
+    }
+
     @@media (max-width: 1199.98px) {
         .dashboard-header {
             flex-direction: column;
@@ -596,6 +722,10 @@
 
         .sync-pill {
             white-space: normal;
+        }
+
+        .heatmap-toolbar {
+            flex-direction: column;
         }
     }
 
@@ -625,6 +755,15 @@
 
         .active-device-status {
             justify-items: start;
+        }
+
+        #activeDeviceHeatmapMap {
+            height: 320px;
+        }
+
+        .heatmap-empty-state {
+            right: 1rem;
+            max-width: none;
         }
     }
 </style>
@@ -744,6 +883,20 @@
                             <div class="active-device-name">@deviceName</div>
                             <div class="active-device-meta">@deviceModel</div>
                             <div class="active-device-meta">Device #@shortDeviceId</div>
+                            @if (item.Latitude.HasValue && item.Longitude.HasValue)
+                            {
+                                <div class="active-device-meta active-device-location">
+                                    @item.Latitude.Value.ToString("0.000000"), @item.Longitude.Value.ToString("0.000000")
+                                    @if (item.AccuracyMeters.HasValue)
+                                    {
+                                        <span>| +/-@item.AccuracyMeters.Value.ToString("0") m</span>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="active-device-meta">Chua co GPS hien tai</div>
+                            }
                         </div>
                         <div class="active-device-status">
                             <span class="active-device-dot"></span>
@@ -757,6 +910,51 @@
                 <div class="active-device-empty">Chua co thiet bi nao dang su dung app.</div>
             }
         </div>
+    </div>
+
+    <div class="dashboard-panel live-heatmap-panel mb-4">
+        <div class="heatmap-toolbar">
+            <div>
+                <h2 class="panel-title">Heatmap vi tri nguoi dung online</h2>
+                <div class="panel-subtitle">GPS duoc gui kem heartbeat cua app, uu tien vi tri moi nhat cua tung thiet bi dang online.</div>
+
+                <div class="heatmap-summary">
+                    <div class="heatmap-stat">
+                        <span class="heatmap-stat-label">Co toa do</span>
+                        <span class="heatmap-stat-value" id="heatmapLocatedCount">@locatedActiveDevices.Count</span>
+                    </div>
+                    <div class="heatmap-stat">
+                        <span class="heatmap-stat-label">Chua gui GPS</span>
+                        <span class="heatmap-stat-value" id="heatmapMissingCount">@(Math.Max(0, activeDevices.Count - locatedActiveDevices.Count))</span>
+                    </div>
+                    <div class="heatmap-stat">
+                        <span class="heatmap-stat-label">Cap nhat cuoi</span>
+                        <span class="heatmap-stat-value" id="heatmapUpdatedAt">@(latestLocationAt?.ToLocalTime().ToString("HH:mm:ss dd/MM") ?? "Chua co")</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="heatmap-toolbar-actions">
+                <button type="button" class="btn btn-outline-dark rounded-pill px-4" id="heatmapRecenterButton">Can giua cum online</button>
+            </div>
+        </div>
+
+        <div class="heatmap-map-shell">
+            <div id="activeDeviceHeatmapMap"></div>
+            <div class="heatmap-empty-state @(locatedActiveDevices.Any() ? "is-hidden" : null)" id="heatmapEmptyState">
+                Chua co thiet bi online nao gui GPS. Heatmap se sang len ngay khi app da duoc cap quyen vi tri va gui heartbeat kem toa do.
+            </div>
+            <div class="heatmap-legend">
+                <div class="heatmap-stat-label">Mat do online</div>
+                <div class="heatmap-gradient"></div>
+                <div class="heatmap-legend-scale">
+                    <span>Thap</span>
+                    <span>Cao</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="heatmap-note">Lop mau cho thay cum nguoi dung, marker nho giup xem nhanh user nao dang nam o dau va do chinh xac GPS hien co.</div>
     </div>
 
     <div class="row g-4 mb-4">
@@ -954,16 +1152,31 @@
 </div>
 
 @section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script>
         (() => {
+            const initialStats = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ActiveDeviceStats, jsonOptions));
             const statsUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("ActiveDevices", "Home")));
             const eventsUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("ActiveDeviceEvents", "Home")));
             const countEl = document.getElementById("activeDeviceCount");
             const noteEl = document.getElementById("activeDeviceNote");
             const panelCountEl = document.getElementById("activeDevicePanelCount");
             const listEl = document.getElementById("activeDeviceList");
+            const heatmapLocatedCountEl = document.getElementById("heatmapLocatedCount");
+            const heatmapMissingCountEl = document.getElementById("heatmapMissingCount");
+            const heatmapUpdatedAtEl = document.getElementById("heatmapUpdatedAt");
+            const heatmapEmptyStateEl = document.getElementById("heatmapEmptyState");
+            const heatmapRecenterButton = document.getElementById("heatmapRecenterButton");
             let pollingTimer = 0;
             let isLoadingStats = false;
+            let lastStats = initialStats;
+            let heatmapMap = null;
+            let heatLayer = null;
+            let heatmapMarkers = null;
+            let heatmapUserMoved = false;
+
+            const defaultCenter = [10.76145, 106.70282];
 
             const escapeHtml = (value) => String(value ?? "")
                 .replaceAll("&", "&amp;")
@@ -997,6 +1210,178 @@
                 });
             };
 
+            const hasLocation = (device) =>
+                Number.isFinite(Number(device?.latitude)) &&
+                Number.isFinite(Number(device?.longitude));
+
+            const formatCoordinate = (value) => {
+                const coordinate = Number(value);
+                return Number.isFinite(coordinate) ? coordinate.toFixed(6) : "--";
+            };
+
+            const formatAccuracy = (value) => {
+                const accuracy = Number(value);
+                return Number.isFinite(accuracy) && accuracy > 0
+                    ? ` | +/-${accuracy.toFixed(0)} m`
+                    : "";
+            };
+
+            const ensureHeatmapMap = () => {
+                if (heatmapMap || typeof L === "undefined") {
+                    return;
+                }
+
+                const mapElement = document.getElementById("activeDeviceHeatmapMap");
+                if (!mapElement) {
+                    return;
+                }
+
+                heatmapMap = L.map(mapElement, {
+                    zoomControl: true,
+                    attributionControl: true
+                }).setView(defaultCenter, 17);
+
+                L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                    attribution: "&copy; OpenStreetMap"
+                }).addTo(heatmapMap);
+
+                if (typeof L.heatLayer === "function") {
+                    heatLayer = L.heatLayer([], {
+                        radius: 32,
+                        blur: 28,
+                        maxZoom: 19,
+                        minOpacity: 0.35,
+                        gradient: {
+                            0.2: "#38bdf8",
+                            0.45: "#2563eb",
+                            0.7: "#7c3aed",
+                            1.0: "#ef4444"
+                        }
+                    }).addTo(heatmapMap);
+                }
+
+                heatmapMarkers = L.layerGroup().addTo(heatmapMap);
+                heatmapMap.on("dragstart zoomstart", () => {
+                    heatmapUserMoved = true;
+                });
+
+                window.setTimeout(() => {
+                    heatmapMap?.invalidateSize();
+                }, 60);
+            };
+
+            const recenterHeatmap = (devices) => {
+                if (!heatmapMap || typeof L === "undefined") {
+                    return;
+                }
+
+                const locatedDevices = Array.isArray(devices)
+                    ? devices.filter(hasLocation)
+                    : [];
+
+                if (locatedDevices.length === 0) {
+                    heatmapMap.setView(defaultCenter, 17);
+                    return;
+                }
+
+                if (locatedDevices.length === 1) {
+                    heatmapMap.setView([
+                        Number(locatedDevices[0].latitude),
+                        Number(locatedDevices[0].longitude)
+                    ], 18);
+                    return;
+                }
+
+                const bounds = L.latLngBounds(locatedDevices.map((device) => [
+                    Number(device.latitude),
+                    Number(device.longitude)
+                ]));
+
+                heatmapMap.fitBounds(bounds.pad(0.25), { maxZoom: 18 });
+            };
+
+            const updateHeatmap = (devices) => {
+                ensureHeatmapMap();
+
+                const locatedDevices = Array.isArray(devices)
+                    ? devices.filter(hasLocation)
+                    : [];
+                const missingCount = Math.max(0, Number(devices?.length ?? 0) - locatedDevices.length);
+
+                if (heatmapLocatedCountEl) {
+                    heatmapLocatedCountEl.textContent = locatedDevices.length.toString();
+                }
+
+                if (heatmapMissingCountEl) {
+                    heatmapMissingCountEl.textContent = missingCount.toString();
+                }
+
+                const latestLocationValue = locatedDevices.reduce((latest, device) => {
+                    const candidate = device.locationTimestampUtc || device.lastSeenAtUtc;
+                    if (!candidate) {
+                        return latest;
+                    }
+
+                    if (!latest) {
+                        return candidate;
+                    }
+
+                    return new Date(candidate) > new Date(latest) ? candidate : latest;
+                }, null);
+
+                if (heatmapUpdatedAtEl) {
+                    heatmapUpdatedAtEl.textContent = latestLocationValue
+                        ? formatTime(latestLocationValue)
+                        : "Chua co";
+                }
+
+                if (heatmapEmptyStateEl) {
+                    heatmapEmptyStateEl.classList.toggle("is-hidden", locatedDevices.length > 0);
+                }
+
+                if (!heatmapMap || !heatmapMarkers) {
+                    return;
+                }
+
+                if (heatLayer) {
+                    heatLayer.setLatLngs(locatedDevices.map((device) => {
+                        const accuracy = Number(device.accuracyMeters);
+                        const weight = Number.isFinite(accuracy) && accuracy > 0
+                            ? Math.max(0.35, 1 - Math.min(accuracy, 120) / 180)
+                            : 0.75;
+                        return [Number(device.latitude), Number(device.longitude), weight];
+                    }));
+                }
+
+                heatmapMarkers.clearLayers();
+
+                locatedDevices.forEach((device) => {
+                    const marker = L.circleMarker(
+                        [Number(device.latitude), Number(device.longitude)],
+                        {
+                            radius: 7,
+                            weight: 2,
+                            color: "#ffffff",
+                            fillColor: "#0f172a",
+                            fillOpacity: 0.92
+                        });
+
+                    const name = device.userDisplayName || device.userCode || "Khach tham quan";
+                    const popup = `
+                        <div class="fw-semibold">${escapeHtml(name)}</div>
+                        <div>${escapeHtml(formatCoordinate(device.latitude))}, ${escapeHtml(formatCoordinate(device.longitude))}</div>
+                        <div>${escapeHtml(formatTime(device.locationTimestampUtc || device.lastSeenAtUtc))}${escapeHtml(formatAccuracy(device.accuracyMeters))}</div>
+                        <div>Device #${escapeHtml(shortDeviceId(device.deviceId))}</div>`;
+
+                    marker.bindPopup(popup);
+                    marker.addTo(heatmapMarkers);
+                });
+
+                if (!heatmapUserMoved) {
+                    recenterHeatmap(locatedDevices);
+                }
+            };
+
             const renderDevices = (devices) => {
                 if (!listEl) {
                     return;
@@ -1013,6 +1398,9 @@
                     const model = device.deviceModel ? `${platform} - ${device.deviceModel}` : platform;
                     const version = device.appVersion ? `App ${device.appVersion}` : "";
                     const meta = version ? `${model} | ${version}` : model;
+                    const locationMeta = hasLocation(device)
+                        ? `${formatCoordinate(device.latitude)}, ${formatCoordinate(device.longitude)}${formatAccuracy(device.accuracyMeters)}`
+                        : "Chua co GPS hien tai";
 
                     return `
                         <div class="active-device-row">
@@ -1020,6 +1408,7 @@
                                 <div class="active-device-name">${escapeHtml(name)}</div>
                                 <div class="active-device-meta">${escapeHtml(meta)}</div>
                                 <div class="active-device-meta">Device #${escapeHtml(shortDeviceId(device.deviceId))}</div>
+                                <div class="active-device-meta active-device-location">${escapeHtml(locationMeta)}</div>
                             </div>
                             <div class="active-device-status">
                                 <span class="active-device-dot"></span>
@@ -1050,6 +1439,7 @@
                 }
 
                 renderDevices(devices);
+                updateHeatmap(devices);
             };
 
             const loadStats = async () => {
@@ -1065,7 +1455,8 @@
                         return;
                     }
 
-                    updateStats(await response.json());
+                    lastStats = await response.json();
+                    updateStats(lastStats);
                 } catch {
                     // Keep the last visible value if the admin API is temporarily unavailable.
                 } finally {
@@ -1082,13 +1473,16 @@
                 pollingTimer = window.setInterval(loadStats, 3000);
             };
 
+            ensureHeatmapMap();
+            updateStats(lastStats);
             startPolling();
 
             if ("EventSource" in window && eventsUrl) {
                 const source = new EventSource(eventsUrl);
                 source.addEventListener("active-devices", (event) => {
                     try {
-                        updateStats(JSON.parse(event.data));
+                        lastStats = JSON.parse(event.data);
+                        updateStats(lastStats);
                     } catch {
                         startPolling();
                     }
@@ -1100,12 +1494,23 @@
 
             document.addEventListener("visibilitychange", () => {
                 if (!document.hidden) {
+                    heatmapMap?.invalidateSize();
                     void loadStats();
                 }
             });
 
             window.addEventListener("focus", () => {
+                heatmapMap?.invalidateSize();
                 void loadStats();
+            });
+
+            window.addEventListener("resize", () => {
+                heatmapMap?.invalidateSize();
+            });
+
+            heatmapRecenterButton?.addEventListener("click", () => {
+                heatmapUserMoved = false;
+                recenterHeatmap(lastStats?.devices ?? []);
             });
         })();
     </script>

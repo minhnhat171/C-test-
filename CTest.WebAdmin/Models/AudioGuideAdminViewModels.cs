@@ -3,6 +3,7 @@ namespace CTest.WebAdmin.Models;
 public class AudioGuideManagementPageViewModel
 {
     public string LoadErrorMessage { get; set; } = string.Empty;
+    public string ApiBaseUrl { get; set; } = string.Empty;
     public Guid? ScopePoiId { get; set; }
     public string ScopePoiName { get; set; } = string.Empty;
     public string ScopePoiCode { get; set; } = string.Empty;
@@ -54,10 +55,12 @@ public class AudioGuidePoiCoverageItemViewModel
     public Guid? AudioId { get; set; }
     public string LanguageCode { get; set; } = "vi";
     public string LanguageLabel { get; set; } = string.Empty;
+    public string VoiceType { get; set; } = "female";
     public string VoiceLabel { get; set; } = string.Empty;
     public string SourceType { get; set; } = "tts";
     public string SourceLabel { get; set; } = string.Empty;
     public string Script { get; set; } = string.Empty;
+    public string FilePath { get; set; } = string.Empty;
     public int AudioCount { get; set; }
     public string AvailableLanguageLabels { get; set; } = string.Empty;
     public bool HasSelectedLanguageAudio { get; set; }

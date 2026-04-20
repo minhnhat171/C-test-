@@ -83,6 +83,7 @@ public class ActiveDeviceRepository
             device.LastSeenAtUtc = nowUtc;
             device.IsActive = true;
             device.SecondsSinceLastSeen = 0;
+            UpdateLocationUnsafe(device, request);
 
             SaveUnsafe();
             stats = BuildStatsUnsafe(nowUtc);
@@ -210,7 +211,29 @@ public class ActiveDeviceRepository
         normalized.LastSeenAtUtc = normalized.LastSeenAtUtc == default
             ? DateTimeOffset.MinValue
             : normalized.LastSeenAtUtc;
+        normalized.LocationTimestampUtc = normalized.LocationTimestampUtc == default
+            ? null
+            : normalized.LocationTimestampUtc;
         return normalized;
+    }
+
+    private static void UpdateLocationUnsafe(ActiveDeviceSessionDto device, ActiveDeviceHeartbeatRequest request)
+    {
+        if (!HasValidLocation(request.Latitude, request.Longitude))
+        {
+            return;
+        }
+
+        device.Latitude = request.Latitude;
+        device.Longitude = request.Longitude;
+        device.AccuracyMeters = request.AccuracyMeters is > 0 ? request.AccuracyMeters : null;
+        device.LocationTimestampUtc = request.LocationTimestampUtc ?? request.SentAtUtc;
+    }
+
+    private static bool HasValidLocation(double? latitude, double? longitude)
+    {
+        return latitude is >= -90 and <= 90 &&
+               longitude is >= -180 and <= 180;
     }
 
     private static string NormalizeDeviceId(string? deviceId)

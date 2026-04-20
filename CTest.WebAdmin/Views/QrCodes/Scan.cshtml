@@ -6,6 +6,7 @@
         ? Model.Description
         : Model.NarrationText;
     var shouldAutoOpenApp = Model.AutoOpenApp && !string.IsNullOrWhiteSpace(Model.AppLaunchUrl);
+    var hasAudioAsset = !string.IsNullOrWhiteSpace(Model.AudioAssetPath);
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -118,6 +119,29 @@
             text-transform: uppercase;
         }
 
+        .scan-control-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .scan-control {
+            display: grid;
+            gap: 8px;
+        }
+
+        .scan-select {
+            width: 100%;
+            min-height: 48px;
+            border: 1px solid rgba(194, 65, 12, 0.16);
+            border-radius: 16px;
+            background: #fff7ed;
+            color: var(--ink);
+            font: inherit;
+            padding: 0 14px;
+        }
+
         .scan-text {
             margin: 0;
             line-height: 1.8;
@@ -208,7 +232,9 @@
                 padding: 18px;
             }
 
+            .scan-control-grid,
             .scan-actions {
+                grid-template-columns: 1fr;
                 display: grid;
             }
 
@@ -230,6 +256,28 @@
             <div class="scan-body">
                 <section class="scan-panel">
                     <p class="scan-panel-label">Nghe thuyet minh</p>
+
+                    <div class="scan-control-grid">
+                        <label class="scan-control">
+                            <span class="scan-meta-label">Ngon ngu</span>
+                            <select class="scan-select" id="languageSelect">
+                                <option value="vi">Tieng Viet</option>
+                                <option value="en">English</option>
+                                <option value="zh">Chinese</option>
+                                <option value="ko">Korean</option>
+                                <option value="fr">Francais</option>
+                            </select>
+                        </label>
+
+                        <label class="scan-control">
+                            <span class="scan-meta-label">Che do nghe</span>
+                            <select class="scan-select" id="playbackModeSelect">
+                                <option value="tts">Giong doc tu dong</option>
+                                <option value="audio">Ban thu san</option>
+                            </select>
+                        </label>
+                    </div>
+
                     <div class="scan-actions">
                         @if (shouldAutoOpenApp)
                         {
@@ -248,10 +296,16 @@
                         }
                         <a class="scan-btn scan-btn-secondary" href="/download-app">Tai ung dung</a>
                     </div>
+
+                    <p class="scan-note" id="playbackHint">
+                        @(hasAudioAsset
+                            ? "POI nay da co ban thu san. Neu chon che do audio, web se uu tien phat cung nguon audio ma app dang dung."
+                            : "POI nay chua co ban thu san. Neu chon che do audio, web se tu dong roi ve TTS giong app.")
+                    </p>
                     <p class="scan-note" id="speechStatus">
                         @(shouldAutoOpenApp
-                            ? "Trang se thu mo app de phat TTS ngay. Neu app chua mo duoc, Web se tu phat lam du phong."
-                            : "Trang se thu doc noi dung tu dong sau khi mo.")
+                            ? "Trang se thu mo app truoc. Neu app chua mo duoc, web se phat theo tuy chon dang chon."
+                            : "Trang se thu phat noi dung theo tuy chon dang chon sau khi mo.")
                     </p>
                     @if (shouldAutoOpenApp)
                     {
@@ -261,7 +315,7 @@
 
                 <section class="scan-panel">
                     <p class="scan-panel-label">Noi dung thuyet minh</p>
-                    <p class="scan-text">@narrationText</p>
+                    <p class="scan-text" id="scanNarrationText">@narrationText</p>
                 </section>
 
                 @if (Model.TourStops.Count > 0)
@@ -316,77 +370,176 @@
         </section>
     </main>
 
+    <script src="@Url.Content("~/js/narration-player.js")"></script>
     <script>
         (() => {
-            const narrationText = @Html.Raw(JsonSerializer.Serialize(narrationText));
+            const fallbackNarrationText = @Html.Raw(JsonSerializer.Serialize(narrationText));
+            const narrationByLanguage = @Html.Raw(JsonSerializer.Serialize(Model.NarrationByLanguage));
+            const audioAssetPath = @Html.Raw(JsonSerializer.Serialize(Model.AudioAssetPath));
             const appLaunchUrl = @Html.Raw(JsonSerializer.Serialize(Model.AppLaunchUrl));
             const autoOpenApp = @Html.Raw(JsonSerializer.Serialize(shouldAutoOpenApp));
-            const status = document.getElementById("speechStatus");
+            const hasAudioAsset = @Html.Raw(JsonSerializer.Serialize(hasAudioAsset));
+            const storageKeys = {
+                language: "vk-web-language",
+                playbackMode: "vk-web-playback-mode"
+            };
+            const narrationTextElement = document.getElementById("scanNarrationText");
+            const playbackHint = document.getElementById("playbackHint");
+            const speechStatus = document.getElementById("speechStatus");
+            const languageSelect = document.getElementById("languageSelect");
+            const playbackModeSelect = document.getElementById("playbackModeSelect");
             const openAppBtn = document.getElementById("openAppBtn");
             const speakBtn = document.getElementById("speakBtn");
             const stopBtn = document.getElementById("stopBtn");
+            const narrationPlayer = window.VinhKhanhNarrationPlayer?.createPlayer({
+                onStatus: (message) => {
+                    if (speechStatus) {
+                        speechStatus.textContent = message;
+                    }
+                }
+            });
             let fallbackTimer = 0;
 
+            const normalizeLanguage = (value) =>
+                window.VinhKhanhNarrationPlayer?.normalizeLanguageCode(value) || "vi";
+
+            const normalizePlaybackMode = (value) =>
+                window.VinhKhanhNarrationPlayer?.normalizePlaybackMode(value) || "tts";
+
             const updateStatus = (message) => {
-                if (status) {
-                    status.textContent = message;
+                if (speechStatus) {
+                    speechStatus.textContent = message;
                 }
             };
 
-            const stopSpeaking = () => {
-                if (!("speechSynthesis" in window)) {
-                    updateStatus("Trinh duyet nay khong ho tro doc tu dong.");
+            const resolveNarrationText = (languageCode) => {
+                const normalizedLanguage = normalizeLanguage(languageCode);
+                if (narrationByLanguage && narrationByLanguage[normalizedLanguage]) {
+                    return narrationByLanguage[normalizedLanguage];
+                }
+
+                return fallbackNarrationText;
+            };
+
+            const persistSelections = () => {
+                try {
+                    window.localStorage.setItem(storageKeys.language, normalizeLanguage(languageSelect?.value));
+                    window.localStorage.setItem(storageKeys.playbackMode, normalizePlaybackMode(playbackModeSelect?.value));
+                } catch (error) {
+                }
+            };
+
+            const restoreSelections = () => {
+                try {
+                    const storedLanguage = normalizeLanguage(window.localStorage.getItem(storageKeys.language));
+                    const storedPlaybackMode = normalizePlaybackMode(window.localStorage.getItem(storageKeys.playbackMode));
+
+                    if (languageSelect) {
+                        languageSelect.value = storedLanguage;
+                    }
+
+                    if (playbackModeSelect) {
+                        playbackModeSelect.value = storedPlaybackMode;
+                    }
+                } catch (error) {
+                    if (languageSelect) {
+                        languageSelect.value = "vi";
+                    }
+
+                    if (playbackModeSelect) {
+                        playbackModeSelect.value = "tts";
+                    }
+                }
+            };
+
+            const syncNarrationText = () => {
+                if (narrationTextElement) {
+                    narrationTextElement.textContent = resolveNarrationText(languageSelect?.value);
+                }
+            };
+
+            const syncPlaybackHint = () => {
+                if (!playbackHint) {
                     return;
                 }
 
-                window.speechSynthesis.cancel();
-                updateStatus("Da dung phat thuyet minh.");
+                if (normalizePlaybackMode(playbackModeSelect?.value) === "audio") {
+                    playbackHint.textContent = hasAudioAsset
+                        ? "Web dang uu tien ban thu san cung nguon audio voi app."
+                        : "Diem nay chua co ban thu san, web se tu dong roi ve TTS neu ban bam nghe.";
+                    return;
+                }
+
+                playbackHint.textContent = "Web dang dung TTS theo ngon ngu da chon, giong voi logic fallback ben app.";
             };
 
-            const speak = () => {
+            const stopSpeaking = (message) => {
                 if (fallbackTimer) {
                     window.clearTimeout(fallbackTimer);
                     fallbackTimer = 0;
                 }
 
-                if (!narrationText || !narrationText.trim()) {
-                    updateStatus("Chua co noi dung thuyet minh de phat.");
+                if (!narrationPlayer) {
+                    updateStatus(message || "Da dung phat thuyet minh.");
                     return;
                 }
 
-                if (!("speechSynthesis" in window)) {
-                    updateStatus("Trinh duyet nay khong ho tro speech synthesis.");
+                narrationPlayer.stop(message || "Da dung phat thuyet minh.");
+            };
+
+            const playOnWeb = () => {
+                if (fallbackTimer) {
+                    window.clearTimeout(fallbackTimer);
+                    fallbackTimer = 0;
+                }
+
+                persistSelections();
+                syncNarrationText();
+                syncPlaybackHint();
+
+                if (!narrationPlayer) {
+                    updateStatus("Web chua tai duoc bo phat narration.");
                     return;
                 }
 
-                window.speechSynthesis.cancel();
-
-                const utterance = new SpeechSynthesisUtterance(narrationText);
-                utterance.lang = "vi-VN";
-                utterance.rate = 1;
-                utterance.onstart = () => updateStatus("Dang phat thuyet minh...");
-                utterance.onend = () => updateStatus("Da phat xong. Ban co the bam Nghe ngay de nghe lai.");
-                utterance.onerror = () => updateStatus("Khong the phat tu dong. Thu bam Nghe ngay mot lan nua.");
-
-                window.speechSynthesis.speak(utterance);
+                narrationPlayer.play({
+                    playbackMode: playbackModeSelect?.value || "tts",
+                    audioAssetPath: audioAssetPath || "",
+                    narrationText: resolveNarrationText(languageSelect?.value),
+                    languageCode: languageSelect?.value || "vi",
+                    voiceType: "neutral",
+                    allowAudioFallback: true,
+                    baseUrl: window.location.origin,
+                    messages: {
+                        playingAudio: "Dang phat ban thu san giong app...",
+                        audioEnded: "Da phat xong. Ban co the bam nghe lai bat cu luc nao.",
+                        audioFallback: hasAudioAsset
+                            ? "Web khong mo duoc file audio nay. Dang chuyen sang TTS du phong."
+                            : "Diem nay chua co ban thu san. Web dang chuyen sang TTS giong app.",
+                        audioUnavailable: "Diem nay chua co ban thu san de phat tren web.",
+                        audioFailed: "Khong phat duoc ban thu san nay tren web.",
+                        playingTts: "Dang doc thuyet minh tren web...",
+                        ttsEnded: "Da doc xong. Ban co the bam nghe lai de nghe tiep.",
+                        ttsFailed: "Khong the phat TTS. Thu bam nghe lai mot lan nua.",
+                        unsupportedTts: "Trinh duyet nay khong ho tro TTS.",
+                        empty: "Chua co noi dung thuyet minh de phat."
+                    }
+                });
             };
 
             const openApp = () => {
                 if (!autoOpenApp || !appLaunchUrl) {
-                    speak();
+                    playOnWeb();
                     return;
                 }
 
+                stopSpeaking();
                 updateStatus("Dang chuyen qua app tren dien thoai...");
-
-                if (fallbackTimer) {
-                    window.clearTimeout(fallbackTimer);
-                }
 
                 fallbackTimer = window.setTimeout(() => {
                     if (!document.hidden) {
-                        updateStatus("Chua mo duoc app. Web dang phat noi dung du phong.");
-                        speak();
+                        updateStatus("Chua mo duoc app. Web dang phat theo tuy chon hien tai.");
+                        playOnWeb();
                     }
                 }, 1800);
 
@@ -394,27 +547,43 @@
             };
 
             document.addEventListener("visibilitychange", () => {
-                if (document.hidden && fallbackTimer) {
-                    window.clearTimeout(fallbackTimer);
-                    fallbackTimer = 0;
-                    updateStatus("Da chuyen sang app. Neu dien thoai hoi xac nhan, hay chon Mo.");
-
-                    if ("speechSynthesis" in window) {
-                        window.speechSynthesis.cancel();
-                    }
+                if (!document.hidden || !fallbackTimer) {
+                    return;
                 }
+
+                window.clearTimeout(fallbackTimer);
+                fallbackTimer = 0;
+                narrationPlayer?.stop();
+                updateStatus("Da chuyen sang app. Neu dien thoai hoi xac nhan, hay chon Mo.");
+            });
+
+            languageSelect?.addEventListener("change", () => {
+                persistSelections();
+                syncNarrationText();
+                syncPlaybackHint();
+                stopSpeaking("Da cap nhat ngon ngu. Bam nghe lai de ap dung.");
+            });
+
+            playbackModeSelect?.addEventListener("change", () => {
+                persistSelections();
+                syncPlaybackHint();
+                stopSpeaking("Da cap nhat che do nghe. Bam nghe lai de ap dung.");
             });
 
             openAppBtn?.addEventListener("click", openApp);
-            speakBtn?.addEventListener("click", speak);
-            stopBtn?.addEventListener("click", stopSpeaking);
+            speakBtn?.addEventListener("click", playOnWeb);
+            stopBtn?.addEventListener("click", () => stopSpeaking("Da dung phat thuyet minh."));
 
-            window.addEventListener("beforeunload", stopSpeaking);
+            window.addEventListener("beforeunload", () => narrationPlayer?.stop());
+
+            restoreSelections();
+            syncNarrationText();
+            syncPlaybackHint();
 
             if (autoOpenApp) {
                 window.setTimeout(openApp, 400);
             } else {
-                window.setTimeout(speak, 600);
+                window.setTimeout(playOnWeb, 600);
             }
         })();
     </script>

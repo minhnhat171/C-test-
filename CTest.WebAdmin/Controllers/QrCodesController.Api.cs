@@ -2,26 +2,33 @@ using System.Globalization;
 using CTest.WebAdmin.Models;
 using CTest.WebAdmin.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using QRCoder;
+using VinhKhanhGuide.Core.Configuration;
 using VinhKhanhGuide.Core.Contracts;
+using VinhKhanhGuide.Core.Mappings;
 
 namespace CTest.WebAdmin.Controllers;
 
 public class QrCodesController : Controller
 {
+    private static readonly string[] SupportedNarrationLanguages = ["vi", "en", "zh", "ko", "fr"];
     private readonly PoiApiClient _poiApiClient;
     private readonly TourApiClient _tourApiClient;
     private readonly QrCodeOptions _qrCodeOptions;
+    private readonly Uri _poiApiBaseUri;
 
     public QrCodesController(
         PoiApiClient poiApiClient,
         TourApiClient tourApiClient,
-        IOptions<QrCodeOptions> qrCodeOptions)
+        IOptions<QrCodeOptions> qrCodeOptions,
+        IConfiguration configuration)
     {
         _poiApiClient = poiApiClient;
         _tourApiClient = tourApiClient;
         _qrCodeOptions = qrCodeOptions.Value;
+        _poiApiBaseUri = PoiApiDefaults.CreateBaseUri(configuration["PoiApi:BaseUrl"]);
     }
 
     public async Task<IActionResult> Index(
@@ -236,6 +243,10 @@ public class QrCodesController : Controller
             Description = target.Description,
             Address = target.Address,
             NarrationText = target.NarrationText,
+            AudioAssetPath = target.AudioAssetPath,
+            NarrationByLanguage = new Dictionary<string, string>(
+                target.NarrationByLanguage,
+                StringComparer.OrdinalIgnoreCase),
             MapLink = target.MapLink,
             SpecialDish = target.SpecialDish,
             PublicUrl = BuildPublicQrUrl(target.TargetType, target.TargetId),
@@ -249,6 +260,12 @@ public class QrCodesController : Controller
     private QrTargetDescriptor BuildPoiTarget(PoiDto poi)
     {
         var targetId = poi.Id.ToString();
+        var domainPoi = poi.ToDomain();
+        var narrationByLanguage = BuildPoiNarrationByLanguage(domainPoi);
+        var primaryNarration = narrationByLanguage.TryGetValue("vi", out var vietnameseNarration) &&
+                               !string.IsNullOrWhiteSpace(vietnameseNarration)
+            ? vietnameseNarration
+            : domainPoi.GetNarrationText();
 
         return new QrTargetDescriptor
         {
@@ -263,7 +280,9 @@ public class QrCodesController : Controller
             Address = poi.Address,
             ActivationType = GetPoiActivationType(poi),
             Status = poi.IsActive ? "San sang" : "Tam khoa",
-            NarrationText = string.IsNullOrWhiteSpace(poi.NarrationText) ? poi.Description : poi.NarrationText,
+            NarrationText = string.IsNullOrWhiteSpace(primaryNarration) ? poi.Description : primaryNarration,
+            AudioAssetPath = ResolvePublicAudioPath(poi.AudioAssetPath),
+            NarrationByLanguage = narrationByLanguage,
             MapLink = poi.MapLink,
             SpecialDish = poi.SpecialDish,
             DetailUrl = Url.Action("Details", "Pois", new { id = poi.Id }) ?? string.Empty,
@@ -280,6 +299,7 @@ public class QrCodesController : Controller
     {
         var tourStops = ResolveTourStops(tour.PoiIds, poiLookup);
         var targetId = tour.Id.ToString(CultureInfo.InvariantCulture);
+        var narrationText = BuildTourNarration(tour, tourStops);
         var routeSummary = tourStops.Count == 0
             ? "Chưa có điểm dừng hợp lệ"
             : string.Join(" -> ", tourStops);
@@ -295,7 +315,9 @@ public class QrCodesController : Controller
             Address = string.Empty,
             ActivationType = "QR dieu huong tour",
             Status = tour.IsActive && tour.IsQrEnabled ? "San sang" : "Tam khoa",
-            NarrationText = BuildTourNarration(tour, tourStops),
+            NarrationText = narrationText,
+            AudioAssetPath = string.Empty,
+            NarrationByLanguage = BuildFlatNarrationByLanguage(narrationText),
             MapLink = string.Empty,
             SpecialDish = string.Empty,
             DetailUrl = Url.Action("Edit", "Tours", new { id = tour.Id }) ?? $"{Url.Action("Index", "Tours") ?? "/Tours"}#tour-{tour.Id}",
@@ -343,6 +365,54 @@ public class QrCodesController : Controller
             : $"Cac diem dung chinh: {string.Join(", ", tourStops)}.";
 
         return $"{tour.Description} Thoi luong du kien {tour.EstimatedMinutes} phut. {stopSummary}";
+    }
+
+    private static Dictionary<string, string> BuildPoiNarrationByLanguage(
+        VinhKhanhGuide.Core.Models.POI poi)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var languageCode in SupportedNarrationLanguages)
+        {
+            var narration = poi.GetNarrationText(languageCode);
+            if (!string.IsNullOrWhiteSpace(narration))
+            {
+                result[languageCode] = narration;
+            }
+        }
+
+        return result;
+    }
+
+    private static Dictionary<string, string> BuildFlatNarrationByLanguage(string narrationText)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var languageCode in SupportedNarrationLanguages)
+        {
+            result[languageCode] = narrationText;
+        }
+
+        return result;
+    }
+
+    private string ResolvePublicAudioPath(string? audioAssetPath)
+    {
+        var trimmed = audioAssetPath?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            return string.Empty;
+        }
+
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var absoluteUri))
+        {
+            return string.Equals(absoluteUri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(absoluteUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+                ? absoluteUri.ToString()
+                : trimmed;
+        }
+
+        return new Uri(_poiApiBaseUri, trimmed.TrimStart('/')).ToString();
     }
 
     private string BuildPublicQrUrl(string targetType, string targetId)
@@ -412,6 +482,9 @@ public class QrCodesController : Controller
         public string ActivationType { get; init; } = string.Empty;
         public string Status { get; init; } = string.Empty;
         public string NarrationText { get; init; } = string.Empty;
+        public string AudioAssetPath { get; init; } = string.Empty;
+        public IReadOnlyDictionary<string, string> NarrationByLanguage { get; init; } =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public string MapLink { get; init; } = string.Empty;
         public string SpecialDish { get; init; } = string.Empty;
         public string DetailUrl { get; init; } = string.Empty;

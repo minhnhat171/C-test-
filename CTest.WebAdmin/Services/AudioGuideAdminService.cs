@@ -1,4 +1,6 @@
 using CTest.WebAdmin.Models;
+using Microsoft.Extensions.Configuration;
+using VinhKhanhGuide.Core.Configuration;
 using VinhKhanhGuide.Core.Contracts;
 
 namespace CTest.WebAdmin.Services;
@@ -16,13 +18,16 @@ public class AudioGuideAdminService
 
     private readonly AudioGuideApiClient _audioGuideApiClient;
     private readonly PoiApiClient _poiApiClient;
+    private readonly string _poiApiBaseUrl;
 
     public AudioGuideAdminService(
         AudioGuideApiClient audioGuideApiClient,
-        PoiApiClient poiApiClient)
+        PoiApiClient poiApiClient,
+        IConfiguration configuration)
     {
         _audioGuideApiClient = audioGuideApiClient;
         _poiApiClient = poiApiClient;
+        _poiApiBaseUrl = PoiApiDefaults.CreateBaseUri(configuration["PoiApi:BaseUrl"]).ToString();
     }
 
     public async Task<AudioGuideManagementPageViewModel> LoadManagementPageAsync(
@@ -36,6 +41,8 @@ public class AudioGuideAdminService
 
         try
         {
+            vm.ApiBaseUrl = _poiApiBaseUrl;
+
             var poisTask = _poiApiClient.GetPoisAsync(cancellationToken);
             var audioGuidesTask = _audioGuideApiClient.GetAudioGuidesAsync(cancellationToken);
 
@@ -279,6 +286,9 @@ public class AudioGuideAdminService
                     AudioId = selectedLanguageGuide?.Id,
                     LanguageCode = selectedLanguageCode,
                     LanguageLabel = AudioGuideAdminMappings.GetLanguageLabel(selectedLanguageCode),
+                    VoiceType = selectedLanguageGuide is null
+                        ? "female"
+                        : AudioGuideAdminMappings.NormalizeVoiceType(selectedLanguageGuide.VoiceType),
                     VoiceLabel = selectedLanguageGuide is null
                         ? "TTS mac dinh"
                         : AudioGuideAdminMappings.GetVoiceLabel(selectedLanguageGuide.VoiceType),
@@ -289,6 +299,7 @@ public class AudioGuideAdminService
                         ? "Can tao TTS"
                         : AudioGuideAdminMappings.GetSourceLabel(selectedLanguageGuide.SourceType),
                     Script = selectedLanguageGuide?.Script ?? ResolveDefaultScript(poi, selectedLanguageCode),
+                    FilePath = selectedLanguageGuide?.FilePath ?? string.Empty,
                     AudioCount = poiAudioGuides.Count,
                     AvailableLanguageLabels = languageLabels.Count == 0
                         ? "Chua co"
