@@ -85,7 +85,7 @@ public class MapPoisController : Controller
         {
             return new MapPoiManagementViewModel
             {
-                LoadErrorMessage = "Khong the ket noi VKFoodAPI. Trang Map POI chi hoat dong khi API dang chay.",
+                LoadErrorMessage = "Khong the ket noi VKFoodAPI. Trang Map Analytics chi hoat dong khi API dang chay.",
                 SelectedPoiId = editorOverride?.Id ?? poiId ?? Guid.Empty,
                 Editor = editorOverride ?? new PoiEditorViewModel
                 {

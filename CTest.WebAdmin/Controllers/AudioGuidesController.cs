@@ -18,15 +18,15 @@ public class AudioGuidesController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(
+    public IActionResult Index(
         Guid? audioId,
         Guid? poiId,
         string? languageCode,
-        bool createNew = false,
-        CancellationToken cancellationToken = default)
+        bool createNew = false)
     {
-        var vm = await _audioGuideService.LoadManagementPageAsync(audioId, poiId, languageCode, createNew, cancellationToken);
-        return View("Manage", vm);
+        return poiId.HasValue
+            ? RedirectToAction("Edit", "Pois", new { id = poiId.Value })
+            : RedirectToAction("Index", "Pois");
     }
 
     [HttpPost]

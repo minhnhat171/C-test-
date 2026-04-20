@@ -7,6 +7,7 @@
     "Role": "User",
     "PhoneNumber": "0901000001",
     "PreferredLanguage": "vi-VN",
+    "DevicePlatform": "",
     "CreatedAtUtc": "2025-12-13T16:56:24.571253+00:00"
   },
   {
@@ -17,6 +18,7 @@
     "Role": "User",
     "PhoneNumber": "0901000002",
     "PreferredLanguage": "en-US",
+    "DevicePlatform": "",
     "CreatedAtUtc": "2026-01-13T16:56:24.5713645+00:00"
   },
   {
@@ -27,6 +29,7 @@
     "Role": "Contributor",
     "PhoneNumber": "0901000003",
     "PreferredLanguage": "en-US",
+    "DevicePlatform": "",
     "CreatedAtUtc": "2026-02-13T16:56:24.5713685+00:00"
   },
   {
@@ -37,6 +40,18 @@
     "Role": "User",
     "PhoneNumber": "0901000004",
     "PreferredLanguage": "vi-VN",
+    "DevicePlatform": "",
     "CreatedAtUtc": "2026-03-13T16:56:24.5713698+00:00"
+  },
+  {
+    "Id": "5434a117-ed2d-c47d-fc50-d3cfe956f8e1",
+    "UserCode": "guest-2cba497f",
+    "DisplayName": "duy khoa",
+    "Email": "123@gmail.com",
+    "Role": "guest",
+    "PhoneNumber": "0123456789",
+    "PreferredLanguage": "en-US",
+    "DevicePlatform": "Android",
+    "CreatedAtUtc": "2026-04-20T17:29:31.0522285+00:00"
   }
 ]

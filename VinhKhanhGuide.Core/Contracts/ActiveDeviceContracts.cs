@@ -63,12 +63,34 @@ public sealed class ActiveDeviceSessionDto
     }
 }
 
+public sealed class ActiveDeviceRoutePointDto
+{
+    public string AnonymousRouteId { get; set; } = string.Empty;
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public double? AccuracyMeters { get; set; }
+    public DateTimeOffset RecordedAtUtc { get; set; }
+
+    public ActiveDeviceRoutePointDto Clone()
+    {
+        return new ActiveDeviceRoutePointDto
+        {
+            AnonymousRouteId = AnonymousRouteId,
+            Latitude = Latitude,
+            Longitude = Longitude,
+            AccuracyMeters = AccuracyMeters,
+            RecordedAtUtc = RecordedAtUtc
+        };
+    }
+}
+
 public sealed class ActiveDeviceStatsDto
 {
     public int ActiveDeviceCount { get; set; }
     public DateTimeOffset GeneratedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset ActiveThresholdUtc { get; set; } = DateTimeOffset.UtcNow;
     public List<ActiveDeviceSessionDto> Devices { get; set; } = [];
+    public List<ActiveDeviceRoutePointDto> RoutePoints { get; set; } = [];
 
     public ActiveDeviceStatsDto Clone()
     {
@@ -77,7 +99,8 @@ public sealed class ActiveDeviceStatsDto
             ActiveDeviceCount = ActiveDeviceCount,
             GeneratedAtUtc = GeneratedAtUtc,
             ActiveThresholdUtc = ActiveThresholdUtc,
-            Devices = Devices.Select(device => device.Clone()).ToList()
+            Devices = Devices.Select(device => device.Clone()).ToList(),
+            RoutePoints = RoutePoints.Select(point => point.Clone()).ToList()
         };
     }
 }

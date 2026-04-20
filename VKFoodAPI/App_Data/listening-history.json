@@ -430,5 +430,32 @@
     "ListenSeconds": 3,
     "Completed": false,
     "ErrorMessage": ""
+  },
+  {
+    "Id": "fd79aa99-0218-48c6-a394-838a4644b98b",
+    "PoiId": "11111111-1111-1111-1111-111111111102",
+    "PoiCode": "VK-FOOD-02",
+    "PoiName": "Ốc Thảo",
+    "PoiAddress": "383 Vĩnh Khánh, P. Khánh Hội, Q.4",
+    "PoiDescription": "Ốc Thảo là quán hải sản bình dân quen thuộc, lên món nhanh và rất phù hợp làm điểm khởi đầu để làm quen không khí phố ẩm thực Vĩnh Khánh.",
+    "PoiSpecialDish": "Ốc móng tay xào rau muống, nghêu hấp sả, hàu nướng phô mai",
+    "PoiImageSource": "octhao.png",
+    "PoiMapLink": "https://maps.google.com/?q=10.7616799,106.7023636",
+    "UserCode": "guest-2cba497f",
+    "UserDisplayName": "duy khoa",
+    "UserEmail": "123@gmail.com",
+    "TriggerType": "APP",
+    "Language": "en",
+    "PlaybackMode": "tts",
+    "NarrationSnapshot": "You are near Oc Thao on Vinh Khanh Food Street. The address is 383 Vinh Khanh, Ward Khanh Hoi, Q.4. Recommended dishes include razor clams with morning glory, lemongrass steamed clams, and cheese grilled oysters.",
+    "AudioAssetPath": "",
+    "Source": "app",
+    "DevicePlatform": "Android",
+    "AutoTriggered": false,
+    "StartedAtUtc": "2026-04-20T17:31:16.0768342+00:00",
+    "CompletedAtUtc": "2026-04-20T17:31:32.2611983+00:00",
+    "ListenSeconds": 16,
+    "Completed": true,
+    "ErrorMessage": ""
   }
 ]

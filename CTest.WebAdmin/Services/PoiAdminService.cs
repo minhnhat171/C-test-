@@ -7,13 +7,19 @@ public class PoiAdminService
 {
     private readonly PoiApiClient _poiApiClient;
     private readonly AudioGuideApiClient _audioGuideApiClient;
+    private readonly ListeningHistoryApiClient _listeningHistoryApiClient;
+    private readonly ActiveDeviceApiClient _activeDeviceApiClient;
 
     public PoiAdminService(
         PoiApiClient poiApiClient,
-        AudioGuideApiClient audioGuideApiClient)
+        AudioGuideApiClient audioGuideApiClient,
+        ListeningHistoryApiClient listeningHistoryApiClient,
+        ActiveDeviceApiClient activeDeviceApiClient)
     {
         _poiApiClient = poiApiClient;
         _audioGuideApiClient = audioGuideApiClient;
+        _listeningHistoryApiClient = listeningHistoryApiClient;
+        _activeDeviceApiClient = activeDeviceApiClient;
     }
 
     public async Task<PoiManagementViewModel> LoadManagementPageAsync(
@@ -97,12 +103,33 @@ public class PoiAdminService
             ? count
             : 0;
 
-        return new MapPoiManagementViewModel
+        var vm = new MapPoiManagementViewModel
         {
             Pois = items,
             SelectedPoiId = selectedPoi?.Id ?? Guid.Empty,
             Editor = selectedPoi?.ToEditorViewModel(relatedAudioCount) ?? new PoiEditorViewModel()
         };
+
+        try
+        {
+            var historyTask = _listeningHistoryApiClient.GetListeningHistoryAsync(
+                sortBy: "time_desc",
+                period: "all",
+                cancellationToken: cancellationToken);
+            var activeDevicesTask = _activeDeviceApiClient.GetStatsAsync(cancellationToken);
+
+            await Task.WhenAll(historyTask, activeDevicesTask);
+            ApplyMapAnalytics(vm, historyTask.Result, activeDevicesTask.Result);
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException ||
+            ex is TaskCanceledException ||
+            ex is InvalidOperationException)
+        {
+            vm.AnalyticsLoadErrorMessage = "Khong the tai du lieu analytics tu VKFoodAPI. Map van cho phep chinh sua POI.";
+        }
+
+        return vm;
     }
 
     public async Task<IReadOnlyList<PoiListItemViewModel>> LoadValidationSnapshotAsync(
@@ -181,6 +208,54 @@ public class PoiAdminService
         return deleted
             ? PoiOperationResult.Success("Đã xóa POI khỏi nguồn dữ liệu dùng chung.", id)
             : PoiOperationResult.Missing("Không tìm thấy POI để xóa.");
+    }
+
+    private static void ApplyMapAnalytics(
+        MapPoiManagementViewModel vm,
+        IReadOnlyList<ListeningHistoryEntryDto> history,
+        ActiveDeviceStatsDto activeDevices)
+    {
+        var orderedHistory = history
+            .OrderByDescending(item => item.StartedAtUtc)
+            .ToList();
+
+        vm.ActiveDeviceStats = activeDevices.Clone();
+        vm.TotalListenSessions = orderedHistory.Count;
+        vm.AverageListenSeconds = orderedHistory.Count == 0
+            ? 0
+            : orderedHistory.Average(item => item.ListenSeconds);
+        vm.TopListeningPois = orderedHistory
+            .GroupBy(item => new { item.PoiId, item.PoiCode, PoiName = ResolvePoiName(item) })
+            .Select(group => new PoiListeningRankingItemViewModel
+            {
+                PoiId = group.Key.PoiId,
+                PoiCode = group.Key.PoiCode,
+                PoiName = group.Key.PoiName,
+                ListenCount = group.Count(),
+                CompletedCount = group.Count(item => item.Completed),
+                TotalListenSeconds = group.Sum(item => item.ListenSeconds),
+                LastStartedAtUtc = group.Max(item => (DateTimeOffset?)item.StartedAtUtc)
+            })
+            .OrderByDescending(item => item.ListenCount)
+            .ThenByDescending(item => item.TotalListenSeconds)
+            .ThenBy(item => item.PoiName)
+            .Take(5)
+            .ToList();
+    }
+
+    private static string ResolvePoiName(ListeningHistoryEntryDto item)
+    {
+        if (!string.IsNullOrWhiteSpace(item.PoiName))
+        {
+            return item.PoiName;
+        }
+
+        if (!string.IsNullOrWhiteSpace(item.PoiCode))
+        {
+            return item.PoiCode;
+        }
+
+        return "POI khong xac dinh";
     }
 }
 

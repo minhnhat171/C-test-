@@ -171,7 +171,7 @@
             <h1>Quản lý POI</h1>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a asp-controller="MapPois" asp-action="Index" class="btn btn-outline-dark btn-lg rounded-pill px-4">Map POI</a>
+            <a asp-controller="MapPois" asp-action="Index" class="btn btn-outline-dark btn-lg rounded-pill px-4">Map Analytics</a>
             <a asp-action="Create" class="btn btn-primary btn-lg rounded-pill px-4">+ Thêm POI</a>
         </div>
     </div>
@@ -242,8 +242,7 @@
                             </td>
                             <td class="text-end">
                                 <div class="poi-actions">
-                                    <a asp-controller="AudioGuides" asp-action="Index" asp-route-poiId="@item.Id" class="btn btn-outline-info poi-action-btn">Audio (@item.RelatedAudioCount)</a>
-                                    <a asp-controller="MapPois" asp-action="Index" asp-route-poiId="@item.Id" class="btn btn-outline-secondary poi-action-btn">Map</a>
+                                    <a asp-controller="MapPois" asp-action="Index" asp-route-poiId="@item.Id" class="btn btn-outline-secondary poi-action-btn">Map Analytics</a>
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark poi-action-btn">Xem</a>
                                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary poi-action-btn">Sửa</a>
                                     <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedTargetType="poi" asp-route-selectedTargetId="@item.Id" class="btn btn-outline-success poi-action-btn">Tạo QR</a>

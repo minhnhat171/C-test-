@@ -108,6 +108,15 @@
             font-size: 0.95rem;
         }
 
+        .sidebar-brand p {
+            font-size: 0;
+        }
+
+        .sidebar-brand p::after {
+            content: "Quan ly POI, Map Analytics, QR va lich su nghe tren cung mot bang dieu khien ro rang, hien dai.";
+            font-size: 0.95rem;
+        }
+
         .sidebar-section-label {
             padding: 0 0.45rem;
             color: rgba(255, 255, 255, 0.62);
@@ -355,12 +364,12 @@
                         </a>
                         <a class="@SidebarLinkClass("MapPois")" asp-controller="MapPois" asp-action="Index">
                             <span class="sidebar-link-copy">
-                                <span class="sidebar-link-label">Map POI</span>
-                                <span class="sidebar-link-meta">Ban do, marker va radius</span>
+                                <span class="sidebar-link-label">Map Analytics</span>
+                                <span class="sidebar-link-meta">Ban do, heatmap va ranking</span>
                             </span>
                             <span class="sidebar-link-tag">03</span>
                         </a>
-                        <a class="@SidebarLinkClass("AudioGuides")" asp-controller="AudioGuides" asp-action="Index">
+                        <a class="@SidebarLinkClass("AudioGuides") d-none" asp-controller="AudioGuides" asp-action="Index">
                             <span class="sidebar-link-copy">
                                 <span class="sidebar-link-label">Audio / TTS</span>
                                 <span class="sidebar-link-meta">Kịch bản và file phát</span>
@@ -389,7 +398,7 @@
                             <span class="sidebar-link-tag">06</span>
                         </a>
                 <a class="nav-link text-white" asp-controller="Pois" asp-action="Index">Quản lý POI</a>
-                <a class="nav-link text-white" asp-controller="AudioGuides" asp-action="Index">Audio / TTS</a>
+                <a class="nav-link text-white d-none" asp-controller="AudioGuides" asp-action="Index">Audio / TTS</a>
                 <a class="nav-link text-white" asp-controller="QrCodes" asp-action="Index">QR code</a>
                 <a class="nav-link text-white" asp-controller="Tours" asp-action="Index">Tour</a>
                 <a class="nav-link text-white" asp-controller="UsageLogs" asp-action="Index">Lịch sử sử dụng</a>

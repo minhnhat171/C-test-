@@ -1,3 +1,5 @@
+using VinhKhanhGuide.Core.Contracts;
+
 namespace CTest.WebAdmin.Models;
 
 public class PoiManagementViewModel
@@ -60,9 +62,14 @@ public class PoiEditorViewModel
 public class MapPoiManagementViewModel
 {
     public string LoadErrorMessage { get; set; } = string.Empty;
+    public string AnalyticsLoadErrorMessage { get; set; } = string.Empty;
     public List<PoiListItemViewModel> Pois { get; set; } = new();
     public Guid SelectedPoiId { get; set; }
     public PoiEditorViewModel Editor { get; set; } = new();
+    public ActiveDeviceStatsDto ActiveDeviceStats { get; set; } = new();
+    public List<PoiListeningRankingItemViewModel> TopListeningPois { get; set; } = new();
+    public int TotalListenSessions { get; set; }
+    public double AverageListenSeconds { get; set; }
 
     public bool HasSelection => Editor.Id != Guid.Empty;
 }
