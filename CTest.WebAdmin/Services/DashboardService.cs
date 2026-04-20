@@ -89,6 +89,67 @@ public class DashboardService
         }
     }
 
+    public async Task<DashboardUsageSnapshotViewModel> GetUsageSnapshotAsync(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var history = await _listeningHistoryApiClient.GetListeningHistoryAsync(
+                sortBy: "time_desc",
+                period: "all",
+                cancellationToken: cancellationToken);
+
+            var localizedHistory = history
+                .Select(item => new
+                {
+                    Item = item,
+                    LocalStartedAt = item.StartedAtUtc.ToLocalTime()
+                })
+                .OrderByDescending(x => x.LocalStartedAt)
+                .ToList();
+
+            var today = DateTime.Now.Date;
+            var mostPlayedPoi = localizedHistory
+                .GroupBy(x => ResolvePoiName(x.Item))
+                .OrderByDescending(group => group.Count())
+                .ThenBy(group => group.Key)
+                .Select(group => group.Key)
+                .FirstOrDefault() ?? "Chua co du lieu";
+
+            return new DashboardUsageSnapshotViewModel
+            {
+                TodayListenCount = localizedHistory.Count(x => x.LocalStartedAt.Date == today),
+                MostPlayedPoi = mostPlayedPoi,
+                RecentLogs = localizedHistory
+                    .Take(8)
+                    .Select((entry, index) => new UsageLog
+                    {
+                        Id = index + 1,
+                        UserCode = ResolveUserLabel(entry.Item),
+                        TriggerType = NormalizeTriggerType(entry.Item.TriggerType),
+                        PoiName = ResolvePoiName(entry.Item),
+                        Language = string.IsNullOrWhiteSpace(entry.Item.Language) ? "vi" : entry.Item.Language,
+                        StartedAt = entry.LocalStartedAt.DateTime,
+                        ListenSeconds = entry.Item.ListenSeconds,
+                        Completed = entry.Item.Completed
+                    })
+                    .ToList()
+            };
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException ||
+            ex is TaskCanceledException ||
+            ex is InvalidOperationException)
+        {
+            return new DashboardUsageSnapshotViewModel
+            {
+                TodayListenCount = 0,
+                MostPlayedPoi = "Chua co du lieu",
+                RecentLogs = new List<UsageLog>()
+            };
+        }
+    }
+
     private static DashboardViewModel BuildFromSharedData(
         IReadOnlyList<PoiDto> pois,
         IReadOnlyList<AudioGuideDto> audioGuides,

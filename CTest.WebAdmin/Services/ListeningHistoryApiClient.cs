@@ -38,6 +38,39 @@ public class ListeningHistoryApiClient
             ?? [];
     }
 
+    public async Task<ListeningHistoryEntryDto?> CreateAsync(
+        ListeningHistoryCreateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _httpClient.PostAsJsonAsync(
+            "api/analytics/listening-history",
+            request,
+            cancellationToken);
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<ListeningHistoryEntryDto>(cancellationToken: cancellationToken);
+    }
+
+    public async Task<bool> UpdateAsync(
+        Guid id,
+        ListeningHistoryUpdateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _httpClient.PutAsJsonAsync(
+            $"api/analytics/listening-history/{id}",
+            request,
+            cancellationToken);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return true;
+    }
+
     private static string BuildRequestUri(string path, params (string Key, string? Value)[] queryParts)
     {
         var queryString = string.Join(

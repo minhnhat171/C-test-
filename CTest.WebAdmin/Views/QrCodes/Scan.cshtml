@@ -7,6 +7,9 @@
         : Model.NarrationText;
     var shouldAutoOpenApp = Model.AutoOpenApp && !string.IsNullOrWhiteSpace(Model.AppLaunchUrl);
     var hasAudioAsset = !string.IsNullOrWhiteSpace(Model.AudioAssetPath);
+    var analyticsPoiId = Guid.Empty;
+    var canTrackListeningHistory = string.Equals(Model.TargetType, "poi", StringComparison.OrdinalIgnoreCase) &&
+                                   Guid.TryParse(Model.TargetId, out analyticsPoiId);
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -379,7 +382,13 @@
             const appLaunchUrl = @Html.Raw(JsonSerializer.Serialize(Model.AppLaunchUrl));
             const autoOpenApp = @Html.Raw(JsonSerializer.Serialize(shouldAutoOpenApp));
             const hasAudioAsset = @Html.Raw(JsonSerializer.Serialize(hasAudioAsset));
+            const canTrackListeningHistory = @Html.Raw(JsonSerializer.Serialize(canTrackListeningHistory));
+            const poiId = @Html.Raw(JsonSerializer.Serialize(canTrackListeningHistory ? analyticsPoiId : Guid.Empty));
+            const heartbeatUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("WebHeartbeat", "QrCodes")));
+            const disconnectUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("WebDisconnect", "QrCodes")));
+            const listeningHistoryUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("CreateListeningHistory", "QrCodes")));
             const storageKeys = {
+                deviceId: "vk-web-device-id",
                 language: "vk-web-language",
                 playbackMode: "vk-web-playback-mode"
             };
@@ -392,13 +401,28 @@
             const speakBtn = document.getElementById("speakBtn");
             const stopBtn = document.getElementById("stopBtn");
             const narrationPlayer = window.VinhKhanhNarrationPlayer?.createPlayer({
-                onStatus: (message) => {
+                onStatus: (message, state) => {
                     if (speechStatus) {
                         speechStatus.textContent = message;
                     }
+
+                    if (state === "ended") {
+                        void finalizeListeningSession(true);
+                    } else if (state === "error") {
+                        void finalizeListeningSession(false, message);
+                    }
                 }
             });
+            const heartbeatIntervalMs = 8000;
+            const browserPlatform = "Web";
+            const browserModel = [
+                navigator.platform || "Browser",
+                navigator.language || ""
+            ].filter(Boolean).join(" | ");
+            const appVersion = "web-qr";
             let fallbackTimer = 0;
+            let heartbeatTimer = 0;
+            let currentListeningSession = null;
 
             const normalizeLanguage = (value) =>
                 window.VinhKhanhNarrationPlayer?.normalizeLanguageCode(value) || "vi";
@@ -409,6 +433,175 @@
             const updateStatus = (message) => {
                 if (speechStatus) {
                     speechStatus.textContent = message;
+                }
+            };
+
+            const buildDeviceId = () => {
+                try {
+                    const storedDeviceId = window.localStorage.getItem(storageKeys.deviceId);
+                    if (storedDeviceId) {
+                        return storedDeviceId;
+                    }
+
+                    const createdDeviceId = (window.crypto?.randomUUID?.() || `web-${Date.now()}-${Math.random().toString(16).slice(2)}`)
+                        .replaceAll("-", "")
+                        .toLowerCase();
+                    window.localStorage.setItem(storageKeys.deviceId, createdDeviceId);
+                    return createdDeviceId;
+                } catch (error) {
+                    return `web${Date.now().toString(16)}${Math.random().toString(16).slice(2, 10)}`;
+                }
+            };
+
+            const browserDeviceId = buildDeviceId();
+            const visitorSuffix = browserDeviceId.slice(-6).toUpperCase();
+            const visitorCode = `web-${visitorSuffix}`;
+            const visitorName = `Khach web ${visitorSuffix}`;
+
+            const postJson = async (url, payload, options = {}) => {
+                if (!url) {
+                    return null;
+                }
+
+                const response = await fetch(url, {
+                    method: options.method || "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload),
+                    cache: "no-store",
+                    credentials: "same-origin",
+                    keepalive: options.keepalive === true
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                if (options.expectJson === false || response.status === 204) {
+                    return null;
+                }
+
+                return await response.json();
+            };
+
+            const sendHeartbeat = async () => {
+                try {
+                    await postJson(heartbeatUrl, {
+                        deviceId: browserDeviceId,
+                        userCode: visitorCode,
+                        userDisplayName: visitorName,
+                        userEmail: "",
+                        devicePlatform: browserPlatform,
+                        deviceModel: browserModel,
+                        appVersion: appVersion,
+                        sentAtUtc: new Date().toISOString()
+                    }, { expectJson: false });
+                } catch (error) {
+                }
+            };
+
+            const startHeartbeat = () => {
+                if (heartbeatTimer) {
+                    return;
+                }
+
+                void sendHeartbeat();
+                heartbeatTimer = window.setInterval(() => {
+                    void sendHeartbeat();
+                }, heartbeatIntervalMs);
+            };
+
+            const disconnectHeartbeat = async (keepalive) => {
+                if (heartbeatTimer) {
+                    window.clearInterval(heartbeatTimer);
+                    heartbeatTimer = 0;
+                }
+
+                try {
+                    await postJson(disconnectUrl, {
+                        deviceId: browserDeviceId,
+                        disconnectedAtUtc: new Date().toISOString()
+                    }, { expectJson: false, keepalive: keepalive === true });
+                } catch (error) {
+                }
+            };
+
+            const startListeningSession = async () => {
+                if (!canTrackListeningHistory || !poiId || !listeningHistoryUrl) {
+                    currentListeningSession = null;
+                    return;
+                }
+
+                const session = {
+                    historyId: null,
+                    startedAtMs: Date.now(),
+                    finalized: false,
+                    createTask: null
+                };
+
+                currentListeningSession = session;
+
+                session.createTask = (async () => {
+                    try {
+                    const response = await postJson(listeningHistoryUrl, {
+                        poiId: poiId,
+                        poiCode: @Html.Raw(JsonSerializer.Serialize(Model.TargetCode)),
+                        poiName: @Html.Raw(JsonSerializer.Serialize(Model.TargetName)),
+                        poiAddress: @Html.Raw(JsonSerializer.Serialize(Model.Address)),
+                        poiDescription: @Html.Raw(JsonSerializer.Serialize(Model.Description)),
+                        poiSpecialDish: @Html.Raw(JsonSerializer.Serialize(Model.SpecialDish)),
+                        poiImageSource: "",
+                        poiMapLink: @Html.Raw(JsonSerializer.Serialize(Model.MapLink)),
+                        userCode: visitorCode,
+                        userDisplayName: visitorName,
+                        userEmail: "",
+                        triggerType: "QR",
+                        language: languageSelect?.value || "vi",
+                        playbackMode: playbackModeSelect?.value || "tts",
+                        narrationSnapshot: resolveNarrationText(languageSelect?.value),
+                        audioAssetPath: audioAssetPath || "",
+                        source: "web",
+                        devicePlatform: browserPlatform,
+                        autoTriggered: false,
+                        startedAtUtc: new Date(session.startedAtMs).toISOString()
+                    });
+
+                        session.historyId = response?.id || null;
+                    } catch (error) {
+                    }
+                })();
+
+                await session.createTask;
+            };
+
+            const finalizeListeningSession = async (completed, errorMessage) => {
+                const session = currentListeningSession;
+                if (!session || session.finalized) {
+                    return;
+                }
+
+                session.finalized = true;
+                currentListeningSession = null;
+
+                if (session.createTask) {
+                    await session.createTask;
+                }
+
+                if (!session.historyId) {
+                    return;
+                }
+
+                const listenSeconds = Math.max(1, Math.round((Date.now() - session.startedAtMs) / 1000));
+
+                try {
+                    await postJson(`${listeningHistoryUrl}/${encodeURIComponent(session.historyId)}`, {
+                        listenSeconds: listenSeconds,
+                        completed: completed === true,
+                        completedAtUtc: new Date().toISOString(),
+                        errorMessage: errorMessage || ""
+                    }, { method: "PUT", expectJson: false, keepalive: true });
+                } catch (error) {
                 }
             };
 
@@ -479,6 +672,8 @@
                     fallbackTimer = 0;
                 }
 
+                void finalizeListeningSession(false);
+
                 if (!narrationPlayer) {
                     updateStatus(message || "Da dung phat thuyet minh.");
                     return;
@@ -502,10 +697,20 @@
                     return;
                 }
 
+                const currentNarrationText = resolveNarrationText(languageSelect?.value);
+                const currentPlaybackMode = playbackModeSelect?.value || "tts";
+                if (!currentNarrationText && !audioAssetPath) {
+                    updateStatus("Chua co noi dung thuyet minh de phat.");
+                    return;
+                }
+
+                void finalizeListeningSession(false);
+                void startListeningSession();
+
                 narrationPlayer.play({
-                    playbackMode: playbackModeSelect?.value || "tts",
+                    playbackMode: currentPlaybackMode,
                     audioAssetPath: audioAssetPath || "",
-                    narrationText: resolveNarrationText(languageSelect?.value),
+                    narrationText: currentNarrationText,
                     languageCode: languageSelect?.value || "vi",
                     voiceType: "neutral",
                     allowAudioFallback: true,
@@ -553,6 +758,7 @@
 
                 window.clearTimeout(fallbackTimer);
                 fallbackTimer = 0;
+                void finalizeListeningSession(false);
                 narrationPlayer?.stop();
                 updateStatus("Da chuyen sang app. Neu dien thoai hoi xac nhan, hay chon Mo.");
             });
@@ -574,11 +780,22 @@
             speakBtn?.addEventListener("click", playOnWeb);
             stopBtn?.addEventListener("click", () => stopSpeaking("Da dung phat thuyet minh."));
 
-            window.addEventListener("beforeunload", () => narrationPlayer?.stop());
+            window.addEventListener("beforeunload", () => {
+                narrationPlayer?.stop();
+                void finalizeListeningSession(false);
+                void disconnectHeartbeat(true);
+            });
+
+            window.addEventListener("pagehide", () => {
+                narrationPlayer?.stop();
+                void finalizeListeningSession(false);
+                void disconnectHeartbeat(true);
+            });
 
             restoreSelections();
             syncNarrationText();
             syncPlaybackHint();
+            startHeartbeat();
 
             if (autoOpenApp) {
                 window.setTimeout(openApp, 400);

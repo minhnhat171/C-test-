@@ -18,4 +18,34 @@ public class ActiveDeviceApiClient
             "api/analytics/active-devices",
             cancellationToken) ?? new ActiveDeviceStatsDto();
     }
+
+    public async Task<ActiveDeviceStatsDto> HeartbeatAsync(
+        ActiveDeviceHeartbeatRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _httpClient.PostAsJsonAsync(
+            "api/analytics/active-devices/heartbeat",
+            request,
+            cancellationToken);
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<ActiveDeviceStatsDto>(cancellationToken: cancellationToken)
+            ?? new ActiveDeviceStatsDto();
+    }
+
+    public async Task<ActiveDeviceStatsDto> DisconnectAsync(
+        ActiveDeviceDisconnectRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _httpClient.PostAsJsonAsync(
+            "api/analytics/active-devices/disconnect",
+            request,
+            cancellationToken);
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<ActiveDeviceStatsDto>(cancellationToken: cancellationToken)
+            ?? new ActiveDeviceStatsDto();
+    }
 }

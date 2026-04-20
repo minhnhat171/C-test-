@@ -795,7 +795,7 @@
                 <span class="metric-mark">Live</span>
                 <div class="metric-label">Thiet bi dang hoat dong</div>
                 <div class="metric-value" id="activeDeviceCount">@Model.ActiveDeviceCount</div>
-                <div class="metric-note" id="activeDeviceNote">Cap nhat realtime tu app</div>
+                <div class="metric-note" id="activeDeviceNote">Cap nhat realtime tu web va app</div>
             </div>
         </div>
 
@@ -839,7 +839,7 @@
             <div class="metric-card metric-today">
                 <span class="metric-mark">Today</span>
                 <div class="metric-label">Số lượt sử dụng hôm nay</div>
-                <div class="metric-value">@Model.TodayListenCount</div>
+                <div class="metric-value" id="todayListenCountValue">@Model.TodayListenCount</div>
                 <div class="metric-note">@DateTime.Today.ToString("dd/MM/yyyy")</div>
             </div>
         </div>
@@ -848,7 +848,7 @@
             <div class="metric-card metric-top">
                 <span class="metric-mark">Top</span>
                 <div class="metric-label">POI được nghe nhiều nhất</div>
-                <div class="metric-value-text">@Model.MostPlayedPoi</div>
+                <div class="metric-value-text" id="mostPlayedPoiValue">@Model.MostPlayedPoi</div>
                 <div class="metric-note">Tính theo toàn bộ lịch sử sử dụng</div>
             </div>
         </div>
@@ -857,8 +857,8 @@
     <div class="dashboard-panel active-device-panel mb-4">
         <div class="panel-header">
             <div>
-                <h2 class="panel-title">Thiet bi dang su dung app</h2>
-                <div class="panel-subtitle">Danh sach thiet bi con gui tin hieu heartbeat len VKFoodAPI.</div>
+                <h2 class="panel-title">Thiet bi dang hoat dong</h2>
+                <div class="panel-subtitle">Danh sach thiet bi web va app van con gui heartbeat len VKFoodAPI.</div>
             </div>
             <span class="panel-chip" id="activeDevicePanelCount">@Model.ActiveDeviceCount thiet bi</span>
         </div>
@@ -907,7 +907,7 @@
             }
             else
             {
-                <div class="active-device-empty">Chua co thiet bi nao dang su dung app.</div>
+                <div class="active-device-empty">Chua co thiet bi nao dang hoat dong.</div>
             }
         </div>
     </div>
@@ -916,7 +916,7 @@
         <div class="heatmap-toolbar">
             <div>
                 <h2 class="panel-title">Heatmap vi tri nguoi dung online</h2>
-                <div class="panel-subtitle">GPS duoc gui kem heartbeat cua app, uu tien vi tri moi nhat cua tung thiet bi dang online.</div>
+                <div class="panel-subtitle">GPS duoc gui kem heartbeat cua web va app, uu tien vi tri moi nhat cua tung thiet bi dang online.</div>
 
                 <div class="heatmap-summary">
                     <div class="heatmap-stat">
@@ -1157,12 +1157,23 @@
     <script>
         (() => {
             const initialStats = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ActiveDeviceStats, jsonOptions));
+            const initialUsageSnapshot = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
+            {
+                todayListenCount = Model.TodayListenCount,
+                mostPlayedPoi = Model.MostPlayedPoi,
+                recentLogs = Model.RecentLogs
+            }, jsonOptions));
             const statsUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("ActiveDevices", "Home")));
             const eventsUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("ActiveDeviceEvents", "Home")));
+            const usageHistorySnapshotUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("UsageHistorySnapshot", "Home")));
             const countEl = document.getElementById("activeDeviceCount");
             const noteEl = document.getElementById("activeDeviceNote");
             const panelCountEl = document.getElementById("activeDevicePanelCount");
             const listEl = document.getElementById("activeDeviceList");
+            const todayListenCountEl = document.getElementById("todayListenCountValue");
+            const mostPlayedPoiEl = document.getElementById("mostPlayedPoiValue");
+            const recentHistoryCountEl = document.querySelector(".history-panel .panel-chip");
+            const recentHistoryBodyEl = document.querySelector(".history-panel tbody");
             const heatmapLocatedCountEl = document.getElementById("heatmapLocatedCount");
             const heatmapMissingCountEl = document.getElementById("heatmapMissingCount");
             const heatmapUpdatedAtEl = document.getElementById("heatmapUpdatedAt");
@@ -1170,7 +1181,9 @@
             const heatmapRecenterButton = document.getElementById("heatmapRecenterButton");
             let pollingTimer = 0;
             let isLoadingStats = false;
+            let isLoadingUsageSnapshot = false;
             let lastStats = initialStats;
+            let lastUsageSnapshot = initialUsageSnapshot;
             let heatmapMap = null;
             let heatLayer = null;
             let heatmapMarkers = null;
@@ -1224,6 +1237,25 @@
                 return Number.isFinite(accuracy) && accuracy > 0
                     ? ` | +/-${accuracy.toFixed(0)} m`
                     : "";
+            };
+
+            const formatHistoryTime = (value) => {
+                if (!value) {
+                    return "--";
+                }
+
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) {
+                    return "--";
+                }
+
+                return date.toLocaleString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
             };
 
             const ensureHeatmapMap = () => {
@@ -1388,7 +1420,7 @@
                 }
 
                 if (!Array.isArray(devices) || devices.length === 0) {
-                    listEl.innerHTML = '<div class="active-device-empty">Chua co thiet bi nao dang su dung app.</div>';
+                    listEl.innerHTML = '<div class="active-device-empty">Chua co thiet bi nao dang hoat dong.</div>';
                     return;
                 }
 
@@ -1415,6 +1447,59 @@
                                 <span>${escapeHtml(formatTime(device.lastSeenAtUtc))}</span>
                             </div>
                         </div>`;
+                }).join("");
+            };
+
+            const renderUsageHistory = (snapshot) => {
+                const logs = Array.isArray(snapshot?.recentLogs) ? snapshot.recentLogs : [];
+                const todayListenCount = Number(snapshot?.todayListenCount ?? 0);
+                const mostPlayedPoi = snapshot?.mostPlayedPoi || "Chua co du lieu";
+
+                if (todayListenCountEl) {
+                    todayListenCountEl.textContent = todayListenCount.toString();
+                }
+
+                if (mostPlayedPoiEl) {
+                    mostPlayedPoiEl.textContent = mostPlayedPoi;
+                }
+
+                if (recentHistoryCountEl) {
+                    recentHistoryCountEl.textContent = `${logs.length} phien gan nhat`;
+                }
+
+                if (!recentHistoryBodyEl) {
+                    return;
+                }
+
+                if (logs.length === 0) {
+                    recentHistoryBodyEl.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Chua co lich su su dung de hien thi.</td></tr>';
+                    return;
+                }
+
+                recentHistoryBodyEl.innerHTML = logs.map((item) => {
+                    const triggerType = String(item?.triggerType || "GPS").toUpperCase();
+                    const triggerClass = triggerType === "QR"
+                        ? "qr"
+                        : (triggerType === "APP" ? "app" : "gps");
+                    const completed = item?.completed === true;
+                    const listenSeconds = Number(item?.listenSeconds ?? 0);
+
+                    return `
+                        <tr>
+                            <td><span class="user-pill">${escapeHtml(item?.userCode || "Khach web")}</span></td>
+                            <td class="fw-semibold">${escapeHtml(item?.poiName || "POI khong xac dinh")}</td>
+                            <td>
+                                <span class="trigger-pill ${triggerClass}">${escapeHtml(triggerType)}</span>
+                            </td>
+                            <td>${escapeHtml(item?.language || "vi")}</td>
+                            <td>${escapeHtml(formatHistoryTime(item?.startedAt))}</td>
+                            <td>${escapeHtml(Number.isFinite(listenSeconds) ? `${Math.max(0, Math.round(listenSeconds))} giay` : "0 giay")}</td>
+                            <td>
+                                <span class="status-badge ${completed ? "done" : "pending"}">
+                                    ${completed ? "Hoan tat" : "Dang nghe"}
+                                </span>
+                            </td>
+                        </tr>`;
                 }).join("");
             };
 
@@ -1464,17 +1549,44 @@
                 }
             };
 
+            const loadUsageSnapshot = async () => {
+                if (!usageHistorySnapshotUrl || isLoadingUsageSnapshot) {
+                    return;
+                }
+
+                isLoadingUsageSnapshot = true;
+
+                try {
+                    const response = await fetch(usageHistorySnapshotUrl, { cache: "no-store" });
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    lastUsageSnapshot = await response.json();
+                    renderUsageHistory(lastUsageSnapshot);
+                } catch {
+                    // Keep the current usage snapshot if the admin API is temporarily unavailable.
+                } finally {
+                    isLoadingUsageSnapshot = false;
+                }
+            };
+
             const startPolling = () => {
                 if (pollingTimer) {
                     return;
                 }
 
-                loadStats();
-                pollingTimer = window.setInterval(loadStats, 3000);
+                void loadStats();
+                void loadUsageSnapshot();
+                pollingTimer = window.setInterval(() => {
+                    void loadStats();
+                    void loadUsageSnapshot();
+                }, 3000);
             };
 
             ensureHeatmapMap();
             updateStats(lastStats);
+            renderUsageHistory(lastUsageSnapshot);
             startPolling();
 
             if ("EventSource" in window && eventsUrl) {
@@ -1496,12 +1608,14 @@
                 if (!document.hidden) {
                     heatmapMap?.invalidateSize();
                     void loadStats();
+                    void loadUsageSnapshot();
                 }
             });
 
             window.addEventListener("focus", () => {
                 heatmapMap?.invalidateSize();
                 void loadStats();
+                void loadUsageSnapshot();
             });
 
             window.addEventListener("resize", () => {

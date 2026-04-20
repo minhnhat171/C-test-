@@ -99,6 +99,13 @@ public class HomeController : Controller
     }
 
     [HttpGet]
+    public async Task<IActionResult> UsageHistorySnapshot(CancellationToken cancellationToken = default)
+    {
+        var snapshot = await _dashboardService.GetUsageSnapshotAsync(cancellationToken);
+        return Json(snapshot);
+    }
+
+    [HttpGet]
     public async Task ActiveDeviceEvents(CancellationToken cancellationToken = default)
     {
         Response.Headers.CacheControl = "no-cache";

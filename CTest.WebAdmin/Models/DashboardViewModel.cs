@@ -35,6 +35,13 @@ public class DashboardViewModel
     public List<DashboardRecentUserItem> RecentUsers { get; set; } = new();
 }
 
+public class DashboardUsageSnapshotViewModel
+{
+    public int TodayListenCount { get; set; }
+    public string MostPlayedPoi { get; set; } = string.Empty;
+    public List<UsageLog> RecentLogs { get; set; } = new();
+}
+
 public class DashboardDailyListenPoint
 {
     public DateTime Date { get; set; }

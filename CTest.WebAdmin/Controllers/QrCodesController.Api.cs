@@ -16,17 +16,23 @@ public class QrCodesController : Controller
     private static readonly string[] SupportedNarrationLanguages = ["vi", "en", "zh", "ko", "fr"];
     private readonly PoiApiClient _poiApiClient;
     private readonly TourApiClient _tourApiClient;
+    private readonly ListeningHistoryApiClient _listeningHistoryApiClient;
+    private readonly ActiveDeviceApiClient _activeDeviceApiClient;
     private readonly QrCodeOptions _qrCodeOptions;
     private readonly Uri _poiApiBaseUri;
 
     public QrCodesController(
         PoiApiClient poiApiClient,
         TourApiClient tourApiClient,
+        ListeningHistoryApiClient listeningHistoryApiClient,
+        ActiveDeviceApiClient activeDeviceApiClient,
         IOptions<QrCodeOptions> qrCodeOptions,
         IConfiguration configuration)
     {
         _poiApiClient = poiApiClient;
         _tourApiClient = tourApiClient;
+        _listeningHistoryApiClient = listeningHistoryApiClient;
+        _activeDeviceApiClient = activeDeviceApiClient;
         _qrCodeOptions = qrCodeOptions.Value;
         _poiApiBaseUri = PoiApiDefaults.CreateBaseUri(configuration["PoiApi:BaseUrl"]);
     }
@@ -114,6 +120,108 @@ public class QrCodesController : Controller
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
                 "He thong tam thoi khong ket noi duoc du lieu target. Thu lai sau.");
+        }
+    }
+
+    [HttpPost("/qr/analytics/listening-history")]
+    public async Task<ActionResult<object>> CreateListeningHistory(
+        [FromBody] ListeningHistoryCreateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var created = await _listeningHistoryApiClient.CreateAsync(request, cancellationToken);
+            if (created is null)
+            {
+                return StatusCode(
+                    StatusCodes.Status502BadGateway,
+                    "He thong chua tao duoc lich su nghe tu VKFoodAPI.");
+            }
+
+            return Ok(new { id = created.Id });
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException ||
+            ex is TaskCanceledException ||
+            ex is InvalidOperationException)
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                "He thong tam thoi chua ghi nhan duoc lich su nghe tren web.");
+        }
+    }
+
+    [HttpPut("/qr/analytics/listening-history/{id:guid}")]
+    public async Task<IActionResult> UpdateListeningHistory(
+        Guid id,
+        [FromBody] ListeningHistoryUpdateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var updated = await _listeningHistoryApiClient.UpdateAsync(id, request, cancellationToken);
+            return updated ? NoContent() : NotFound();
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException ||
+            ex is TaskCanceledException ||
+            ex is InvalidOperationException)
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                "He thong tam thoi chua cap nhat duoc lich su nghe tren web.");
+        }
+    }
+
+    [HttpPost("/qr/analytics/active-devices/heartbeat")]
+    public async Task<IActionResult> WebHeartbeat(
+        [FromBody] ActiveDeviceHeartbeatRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.DeviceId))
+        {
+            return BadRequest("DeviceId is required.");
+        }
+
+        try
+        {
+            await _activeDeviceApiClient.HeartbeatAsync(request, cancellationToken);
+            return NoContent();
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException ||
+            ex is TaskCanceledException ||
+            ex is InvalidOperationException)
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                "He thong tam thoi chua ghi nhan duoc thiet bi web dang hoat dong.");
+        }
+    }
+
+    [HttpPost("/qr/analytics/active-devices/disconnect")]
+    public async Task<IActionResult> WebDisconnect(
+        [FromBody] ActiveDeviceDisconnectRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.DeviceId))
+        {
+            return BadRequest("DeviceId is required.");
+        }
+
+        try
+        {
+            await _activeDeviceApiClient.DisconnectAsync(request, cancellationToken);
+            return NoContent();
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException ||
+            ex is TaskCanceledException ||
+            ex is InvalidOperationException)
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                "He thong tam thoi chua danh dau duoc thiet bi web da ngung hoat dong.");
         }
     }
 
