@@ -31,7 +31,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Ứng dụng cần vị trí để tự động phát thuyết minh khi bạn đến gần điểm ẩm thực Vĩnh Khánh.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Ứng dụng cần vị trí nền để tiếp tục theo dõi tour và kích hoạt nội dung khi bạn di chuyển giữa các POI.</string>
+	<string>Ứng dụng cần vị trí nền để dẫn tour và tự phát thuyết minh khi bạn đến gần các quán.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

@@ -87,6 +87,17 @@
                            FontAttributes="Bold"
                            TextColor="#102A43" />
 
+                    <Border BackgroundColor="#E8F1FF"
+                            Padding="12,8"
+                            HorizontalOptions="Start"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 16">
+                        <Label Text="{Binding SelectedPoiNarrationStateText}"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               TextColor="#2F80FF" />
+                    </Border>
+
                     <Label Text="{Binding SelectedPoiNarrationPreview}"
                            FontSize="16"
                            TextColor="#486581"

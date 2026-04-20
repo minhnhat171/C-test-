@@ -72,7 +72,7 @@ public class AuthPageViewModel : INotifyPropertyChanged
         "zh" => "游客可以在进入主界面前先选择语言，语音讲解也会自动跟随这个选择。",
         "ko" => "방문객은 메인 화면에 들어가기 전에 언어를 먼저 고를 수 있고, 음성 안내도 그 선택을 따라갑니다.",
         "fr" => "Les visiteurs peuvent choisir leur langue avant d'entrer dans l'interface principale. La narration suivra automatiquement ce choix.",
-        _ => "Du khách có thể chọn ngôn ngữ phù hợp trước khi vào giao diện chính. Talk to Speech bên trong sẽ tự đổi theo lựa chọn này."
+        _ => "Du khách có thể chọn ngôn ngữ phù hợp trước khi vào app. Phần thuyết minh sẽ đổi theo lựa chọn này."
     };
 
     public string WelcomeHint => SelectedLanguage switch
@@ -86,20 +86,20 @@ public class AuthPageViewModel : INotifyPropertyChanged
 
     public string HeroDescription => SelectedLanguage switch
     {
-        "en" => "Pick a language once and the whole app, including TTS, will follow it.",
-        "zh" => "先选语言，进入后整套界面和 TTS 会一起切换。",
-        "ko" => "언어를 먼저 고르면 앱 화면과 TTS가 함께 바뀝니다.",
-        "fr" => "Choisissez la langue une fois, puis l'interface et le TTS suivront.",
-        _ => "Chọn ngôn ngữ một lần để toàn bộ giao diện và TTS đổi theo."
+        "en" => "Pick a language once and the guide will speak in that language.",
+        "zh" => "先选择语言，导览讲解会随之切换。",
+        "ko" => "언어를 먼저 고르면 안내 음성이 그 언어로 재생됩니다.",
+        "fr" => "Choisissez la langue une fois, puis le guide parlera dans cette langue.",
+        _ => "Chọn ngôn ngữ một lần để app và thuyết minh đổi theo."
     };
 
     public string HeroNote => SelectedLanguage switch
     {
-        "en" => "The QR entry flow is still reserved and ready for the next prompt.",
-        "zh" => "二维码进入流程已经预留好，下一步可以继续接上。",
-        "ko" => "QR 진입 흐름도 다음 단계에서 바로 연결할 수 있도록 자리를 남겨 두었습니다.",
-        "fr" => "Le flux d'entrée par QR est déjà réservé pour l'étape suivante.",
-        _ => "Luồng quét QR là hướng đúng và mình đã chừa chỗ để nối ở prompt sau."
+        "en" => "You can start with a tour, a nearby place, or a QR code.",
+        "zh" => "您可以从路线、附近店铺或二维码开始。",
+        "ko" => "투어, 가까운 매장, QR 코드 중 원하는 방식으로 시작할 수 있습니다.",
+        "fr" => "Vous pouvez commencer par un parcours, un lieu proche ou un QR code.",
+        _ => "Bạn có thể bắt đầu bằng tour, quán gần bạn hoặc mã QR."
     };
 
     public string StepOneTitle => SelectedLanguage switch
@@ -126,7 +126,7 @@ public class AuthPageViewModel : INotifyPropertyChanged
         "zh" => "点击收听",
         "ko" => "터치해 듣기",
         "fr" => "Touchez pour écouter",
-        _ => "Chọn box để nghe"
+        _ => "Bấm để nghe"
     };
 
     public string LanguagePickerPlaceholder => SelectedLanguage switch
@@ -158,11 +158,11 @@ public class AuthPageViewModel : INotifyPropertyChanged
 
     public string LanguagePromptSubtitle => SelectedLanguage switch
     {
-        "en" => "The app UI and TTS will switch together.",
-        "zh" => "界面与 TTS 会一起切换。",
-        "ko" => "앱 UI와 TTS가 함께 전환됩니다.",
-        "fr" => "L'interface et le TTS changeront ensemble.",
-        _ => "Giao diện và TTS sẽ đổi cùng lúc."
+        "en" => "The interface and narration will switch together.",
+        "zh" => "界面与语音讲解会一起切换。",
+        "ko" => "화면과 음성 안내가 함께 바뀝니다.",
+        "fr" => "L'interface et la narration changeront ensemble.",
+        _ => "Giao diện và thuyết minh sẽ đổi cùng lúc."
     };
 
     public string SelectedLanguage
@@ -205,11 +205,11 @@ public class AuthPageViewModel : INotifyPropertyChanged
 
     public string SelectedLanguageSummary => SelectedLanguage switch
     {
-        "en" => $"{GetSelectedLanguageDescription(SelectedLanguage)} TTS inside the app will also switch to {SelectedLanguageDisplayName}.",
-        "zh" => $"{GetSelectedLanguageDescription(SelectedLanguage)} App 内的 TTS 也会同步切换为 {SelectedLanguageDisplayName}。",
-        "ko" => $"{GetSelectedLanguageDescription(SelectedLanguage)} 앱 안의 TTS도 {SelectedLanguageDisplayName}(으)로 함께 바뀝니다.",
-        "fr" => $"{GetSelectedLanguageDescription(SelectedLanguage)} Le TTS dans l'application passera aussi en {SelectedLanguageDisplayName}.",
-        _ => $"{GetSelectedLanguageDescription(SelectedLanguage)} TTS bên trong app cũng sẽ tự đổi theo {SelectedLanguageDisplayName}."
+        "en" => $"{GetSelectedLanguageDescription(SelectedLanguage)} Narration will also switch to {SelectedLanguageDisplayName}.",
+        "zh" => $"{GetSelectedLanguageDescription(SelectedLanguage)} 讲解也会同步切换为 {SelectedLanguageDisplayName}。",
+        "ko" => $"{GetSelectedLanguageDescription(SelectedLanguage)} 음성 안내도 {SelectedLanguageDisplayName}(으)로 함께 바뀝니다.",
+        "fr" => $"{GetSelectedLanguageDescription(SelectedLanguage)} La narration passera aussi en {SelectedLanguageDisplayName}.",
+        _ => $"{GetSelectedLanguageDescription(SelectedLanguage)} Phần thuyết minh cũng sẽ tự đổi theo {SelectedLanguageDisplayName}."
     };
 
     public string ErrorMessage

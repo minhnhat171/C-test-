@@ -168,8 +168,8 @@ public partial class App : Application
             if (!opened)
             {
                 await shell.DisplayAlert(
-                    "Khong mo duoc QR",
-                    "Khong tim thay noi dung POI cho ma QR nay.",
+                    "Chưa mở được mã QR",
+                    "Mã QR này chưa liên kết với nội dung thuyết minh.",
                     "OK");
                 return;
             }

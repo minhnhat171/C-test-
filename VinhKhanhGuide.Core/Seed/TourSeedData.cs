@@ -30,7 +30,7 @@ public static class TourSeedData
                 Id = 2,
                 Code = "VK-TOUR-02",
                 Name = "Tour Hải Sản Buổi Tối",
-                Description = "Chuỗi điểm dừng thiên về hải sản, phù hợp để app dẫn tuần tự theo GPS.",
+                Description = "Lộ trình buổi tối cho khách thích hải sản, đi qua các quán nổi bật theo thứ tự dễ theo dõi.",
                 EstimatedMinutes = 70,
                 IsActive = true,
                 IsQrEnabled = true,

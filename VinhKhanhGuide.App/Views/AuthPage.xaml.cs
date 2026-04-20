@@ -178,7 +178,7 @@ public partial class AuthPage : ContentPage
 
         var picker = new Picker
         {
-            Title = "Select language",
+            Title = "Chọn ngôn ngữ",
             TitleColor = Color.FromArgb("#8AA1BF"),
             TextColor = Color.FromArgb("#102A43"),
             ItemDisplayBinding = new Binding(nameof(AudioSettingsOption.Label))

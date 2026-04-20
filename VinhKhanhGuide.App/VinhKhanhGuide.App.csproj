@@ -12,6 +12,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <NullabilityInfoContextSupport>true</NullabilityInfoContextSupport>
+    <_MauiForceXamlCForDebug>true</_MauiForceXamlCForDebug>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(TargetFramework)' == 'net8.0-android'">

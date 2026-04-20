@@ -42,6 +42,11 @@
                                 <Label Text="{Binding CurrentUserStatusLine}"
                                        FontSize="16"
                                        TextColor="#EAF3FF" />
+
+                                <Label Text="{Binding HomeIntroText}"
+                                       FontSize="15"
+                                       TextColor="#EAF3FF"
+                                       LineBreakMode="WordWrap" />
                             </VerticalStackLayout>
 
                             <Button Grid.Column="1"
@@ -89,198 +94,27 @@
                                 </Border>
                             </Grid>
                         </Border>
-                    </VerticalStackLayout>
-                </Border>
 
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="{Binding SearchSectionTitle}"
-                           FontSize="22"
-                           FontAttributes="Bold"
-                           TextColor="#102A43" />
+                        <Border BackgroundColor="#102A43"
+                                StrokeThickness="0"
+                                Padding="16"
+                                StrokeShape="RoundRectangle 24">
+                            <VerticalStackLayout Spacing="12">
+                                <Button Text="{Binding HomePrimaryCtaText}"
+                                        Clicked="OnTourShortcutClicked"
+                                        BackgroundColor="#FFFFFF"
+                                        TextColor="#102A43"
+                                        FontAttributes="Bold"
+                                        FontSize="18"
+                                        HeightRequest="52"
+                                        CornerRadius="18" />
 
-                    <Border BackgroundColor="#FFFFFF"
-                            Padding="18,6"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 24">
-                        <Grid ColumnDefinitions="Auto,*,Auto"
-                              ColumnSpacing="12">
-                            <Label Text="⌕"
-                                   FontSize="20"
-                                   TextColor="#7B8BA3"
-                                   VerticalTextAlignment="Center" />
-
-                            <Entry x:Name="RestaurantSearchEntry"
-                                   Grid.Column="1"
-                                   Text="{Binding SearchQuery}"
-                                   Placeholder="{Binding SearchPlaceholderText}"
-                                   Completed="OnSearchCompleted"
-                                   Focused="OnSearchFocused"
-                                   Unfocused="OnSearchUnfocused"
-                                   ReturnType="Search"
-                                   BackgroundColor="Transparent"
-                                   FontSize="17"
-                                   TextColor="#102A43"
-                                   PlaceholderColor="#92A4BD"
-                                   VerticalTextAlignment="Center" />
-
-                            <Button Grid.Column="2"
-                                    Text="✕"
-                                    Clicked="OnClearSearchClicked"
-                                    IsVisible="{Binding HasSearchQuery}"
-                                    BackgroundColor="#E8F1FF"
-                                    TextColor="#2F80FF"
-                                    WidthRequest="34"
-                                    HeightRequest="34"
-                                    CornerRadius="17"
-                                    Padding="0"
-                                    VerticalOptions="Center" />
-                        </Grid>
-                    </Border>
-
-                    <Border BackgroundColor="#FFFFFF"
-                            Padding="12"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 22"
-                            IsVisible="{Binding IsSearchSuggestionsVisible}">
-                        <VerticalStackLayout Spacing="6"
-                                             BindableLayout.ItemsSource="{Binding SearchSuggestions}">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate>
-                                    <Border BackgroundColor="#F8FBFF"
-                                            Padding="12,10"
-                                            StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 18">
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer Tapped="OnSearchSuggestionTapped" />
-                                        </Border.GestureRecognizers>
-
-                                        <Grid ColumnDefinitions="Auto,*"
-                                              ColumnSpacing="10">
-                                            <Label Text="{Binding LeadingIcon}"
-                                                   FontSize="18"
-                                                   TextColor="#5E7491"
-                                                   VerticalTextAlignment="Center" />
-
-                                            <VerticalStackLayout Grid.Column="1"
-                                                                 Spacing="2">
-                                                <Label Text="{Binding Text}"
-                                                       FontSize="15"
-                                                       TextColor="#102A43" />
-                                                <Label Text="{Binding SupportingText}"
-                                                       FontSize="13"
-                                                       TextColor="#6B7C93"
-                                                       LineBreakMode="TailTruncation" />
-                                            </VerticalStackLayout>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <Label Text="{Binding SearchResultStatusText}"
-                           FontSize="14"
-                           TextColor="#7B8BA3"
-                           IsVisible="{Binding IsSearchResultEmpty}" />
-                </VerticalStackLayout>
-
-                <Border BackgroundColor="#FFFFFF"
-                        Padding="0"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 30">
-                    <VerticalStackLayout Spacing="0">
-                        <Grid Padding="18,18,18,12"
-                              ColumnDefinitions="*,Auto"
-                              ColumnSpacing="12">
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="{Binding MapSectionTitle}"
-                                       FontSize="22"
-                                       FontAttributes="Bold"
-                                       TextColor="#102A43" />
-                                <Label Text="{Binding MapPoiBadgeText}"
+                                <Label Text="{Binding HomePrimaryCtaHintText}"
                                        FontSize="14"
-                                       TextColor="#6B7C93" />
+                                       TextColor="#DCEBFF"
+                                       LineBreakMode="WordWrap" />
                             </VerticalStackLayout>
-
-                            <Button Grid.Column="1"
-                                    Text="{Binding MapOpenLargeText}"
-                                    Clicked="OnOpenFullScreenMapClicked"
-                                    BackgroundColor="#E8F1FF"
-                                    TextColor="#2F80FF"
-                                    FontSize="15"
-                                    CornerRadius="16"
-                                    Padding="14,8" />
-                        </Grid>
-
-                        <Grid>
-                            <mapsui:MapView x:Name="RestaurantMap"
-                                            HeightRequest="250"
-                                            IsZoomButtonVisible="False"
-                                            IsNorthingButtonVisible="False"
-                                            IsMyLocationButtonVisible="False"
-                                            RotationLock="True" />
-
-                            <VerticalStackLayout Spacing="8"
-                                                 HorizontalOptions="End"
-                                                 VerticalOptions="End"
-                                                 Margin="0,0,14,14">
-                                <Button Text="+"
-                                        Clicked="OnZoomInClicked"
-                                        BackgroundColor="#FFFFFF"
-                                        TextColor="#2F80FF"
-                                        FontSize="22"
-                                        WidthRequest="42"
-                                        HeightRequest="42"
-                                        CornerRadius="21" />
-
-                                <Button Text="-"
-                                        Clicked="OnZoomOutClicked"
-                                        BackgroundColor="#FFFFFF"
-                                        TextColor="#2F80FF"
-                                        FontSize="22"
-                                        WidthRequest="42"
-                                        HeightRequest="42"
-                                        CornerRadius="21" />
-
-                                <Button Text="◎"
-                                        Clicked="OnCenterCurrentLocationClicked"
-                                        BackgroundColor="#FFFFFF"
-                                        TextColor="#2F80FF"
-                                        FontSize="20"
-                                        WidthRequest="42"
-                                        HeightRequest="42"
-                                        CornerRadius="21" />
-                            </VerticalStackLayout>
-                        </Grid>
-
-                        <Grid Padding="18,14,18,18"
-                              ColumnDefinitions="*,*,*"
-                              ColumnSpacing="10">
-                            <Button Text="{Binding StartGpsButtonText}"
-                                    Clicked="OnStartTrackingClicked"
-                                    IsEnabled="{Binding CanStartTracking}"
-                                    BackgroundColor="#2F80FF"
-                                    TextColor="White"
-                                    FontSize="15"
-                                    CornerRadius="18" />
-
-                            <Button Grid.Column="1"
-                                    Text="{Binding StopGpsButtonText}"
-                                    Clicked="OnStopTrackingClicked"
-                                    IsEnabled="{Binding IsTracking}"
-                                    BackgroundColor="#E8F1FF"
-                                    TextColor="#2F80FF"
-                                    FontSize="15"
-                                    CornerRadius="18" />
-
-                            <Button Grid.Column="2"
-                                    Text="{Binding GoToEntranceButtonText}"
-                                    Clicked="OnGpsOriginClicked"
-                                    BackgroundColor="#102A43"
-                                    TextColor="White"
-                                    FontSize="15"
-                                    CornerRadius="18" />
-                        </Grid>
+                        </Border>
                     </VerticalStackLayout>
                 </Border>
 
@@ -546,6 +380,198 @@
                     </Border>
                 </VerticalStackLayout>
 
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding SearchSectionTitle}"
+                           FontSize="22"
+                           FontAttributes="Bold"
+                           TextColor="#102A43" />
+
+                    <Border BackgroundColor="#FFFFFF"
+                            Padding="18,6"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 24">
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="12">
+                            <Label Text="⌕"
+                                   FontSize="20"
+                                   TextColor="#7B8BA3"
+                                   VerticalTextAlignment="Center" />
+
+                            <Entry x:Name="RestaurantSearchEntry"
+                                   Grid.Column="1"
+                                   Text="{Binding SearchQuery}"
+                                   Placeholder="{Binding SearchPlaceholderText}"
+                                   Completed="OnSearchCompleted"
+                                   Focused="OnSearchFocused"
+                                   Unfocused="OnSearchUnfocused"
+                                   ReturnType="Search"
+                                   BackgroundColor="Transparent"
+                                   FontSize="17"
+                                   TextColor="#102A43"
+                                   PlaceholderColor="#92A4BD"
+                                   VerticalTextAlignment="Center" />
+
+                            <Button Grid.Column="2"
+                                    Text="✕"
+                                    Clicked="OnClearSearchClicked"
+                                    IsVisible="{Binding HasSearchQuery}"
+                                    BackgroundColor="#E8F1FF"
+                                    TextColor="#2F80FF"
+                                    WidthRequest="34"
+                                    HeightRequest="34"
+                                    CornerRadius="17"
+                                    Padding="0"
+                                    VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+
+                    <Border BackgroundColor="#FFFFFF"
+                            Padding="12"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 22"
+                            IsVisible="{Binding IsSearchSuggestionsVisible}">
+                        <VerticalStackLayout Spacing="6"
+                                             BindableLayout.ItemsSource="{Binding SearchSuggestions}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BackgroundColor="#F8FBFF"
+                                            Padding="12,10"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 18">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnSearchSuggestionTapped" />
+                                        </Border.GestureRecognizers>
+
+                                        <Grid ColumnDefinitions="Auto,*"
+                                              ColumnSpacing="10">
+                                            <Label Text="{Binding LeadingIcon}"
+                                                   FontSize="18"
+                                                   TextColor="#5E7491"
+                                                   VerticalTextAlignment="Center" />
+
+                                            <VerticalStackLayout Grid.Column="1"
+                                                                 Spacing="2">
+                                                <Label Text="{Binding Text}"
+                                                       FontSize="15"
+                                                       TextColor="#102A43" />
+                                                <Label Text="{Binding SupportingText}"
+                                                       FontSize="13"
+                                                       TextColor="#6B7C93"
+                                                       LineBreakMode="TailTruncation" />
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label Text="{Binding SearchResultStatusText}"
+                           FontSize="14"
+                           TextColor="#7B8BA3"
+                           IsVisible="{Binding IsSearchResultEmpty}" />
+                </VerticalStackLayout>
+
+                <Border BackgroundColor="#FFFFFF"
+                        Padding="0"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 30">
+                    <VerticalStackLayout Spacing="0">
+                        <Grid Padding="18,18,18,12"
+                              ColumnDefinitions="*,Auto"
+                              ColumnSpacing="12">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding MapSectionTitle}"
+                                       FontSize="22"
+                                       FontAttributes="Bold"
+                                       TextColor="#102A43" />
+                                <Label Text="{Binding MapPoiBadgeText}"
+                                       FontSize="14"
+                                       TextColor="#6B7C93" />
+                            </VerticalStackLayout>
+
+                            <Button Grid.Column="1"
+                                    Text="{Binding MapOpenLargeText}"
+                                    Clicked="OnOpenFullScreenMapClicked"
+                                    BackgroundColor="#E8F1FF"
+                                    TextColor="#2F80FF"
+                                    FontSize="15"
+                                    CornerRadius="16"
+                                    Padding="14,8" />
+                        </Grid>
+
+                        <Grid>
+                            <mapsui:MapView x:Name="RestaurantMap"
+                                            HeightRequest="250"
+                                            IsZoomButtonVisible="False"
+                                            IsNorthingButtonVisible="False"
+                                            IsMyLocationButtonVisible="False"
+                                            RotationLock="True" />
+
+                            <VerticalStackLayout Spacing="8"
+                                                 HorizontalOptions="End"
+                                                 VerticalOptions="End"
+                                                 Margin="0,0,14,14">
+                                <Button Text="+"
+                                        Clicked="OnZoomInClicked"
+                                        BackgroundColor="#FFFFFF"
+                                        TextColor="#2F80FF"
+                                        FontSize="22"
+                                        WidthRequest="42"
+                                        HeightRequest="42"
+                                        CornerRadius="21" />
+
+                                <Button Text="-"
+                                        Clicked="OnZoomOutClicked"
+                                        BackgroundColor="#FFFFFF"
+                                        TextColor="#2F80FF"
+                                        FontSize="22"
+                                        WidthRequest="42"
+                                        HeightRequest="42"
+                                        CornerRadius="21" />
+
+                                <Button Text="◎"
+                                        Clicked="OnCenterCurrentLocationClicked"
+                                        BackgroundColor="#FFFFFF"
+                                        TextColor="#2F80FF"
+                                        FontSize="20"
+                                        WidthRequest="42"
+                                        HeightRequest="42"
+                                        CornerRadius="21" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <Grid Padding="18,14,18,18"
+                              ColumnDefinitions="*,*,*"
+                              ColumnSpacing="10">
+                            <Button Text="{Binding StartGpsButtonText}"
+                                    Clicked="OnStartTrackingClicked"
+                                    IsEnabled="{Binding CanStartTracking}"
+                                    BackgroundColor="#2F80FF"
+                                    TextColor="White"
+                                    FontSize="15"
+                                    CornerRadius="18" />
+
+                            <Button Grid.Column="1"
+                                    Text="{Binding StopGpsButtonText}"
+                                    Clicked="OnStopTrackingClicked"
+                                    IsEnabled="{Binding IsTracking}"
+                                    BackgroundColor="#E8F1FF"
+                                    TextColor="#2F80FF"
+                                    FontSize="15"
+                                    CornerRadius="18" />
+
+                            <Button Grid.Column="2"
+                                    Text="{Binding GoToEntranceButtonText}"
+                                    Clicked="OnGpsOriginClicked"
+                                    BackgroundColor="#102A43"
+                                    TextColor="White"
+                                    FontSize="15"
+                                    CornerRadius="18" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
                 <Border BackgroundColor="#FFFFFF"
                         Padding="18"
                         StrokeThickness="0"
@@ -581,6 +607,11 @@
                                 <Label Text="{Binding SelectedPoiStatusText}"
                                        FontSize="14"
                                        TextColor="#4F7096"
+                                       LineBreakMode="WordWrap" />
+                                <Label Text="{Binding SelectedPoiNarrationStateText}"
+                                       FontSize="13"
+                                       FontAttributes="Bold"
+                                       TextColor="#2F80FF"
                                        LineBreakMode="WordWrap" />
                             </VerticalStackLayout>
                         </Grid>
@@ -916,8 +947,8 @@
                     Padding="10"
                     StrokeThickness="0"
                     StrokeShape="RoundRectangle 30">
-                <Grid ColumnDefinitions="*,*,*,*"
-                      ColumnSpacing="10">
+                <Grid ColumnDefinitions="*,*,*,*,*"
+                      ColumnSpacing="8">
                     <Border BackgroundColor="#F4F8FF"
                             Padding="8"
                             StrokeThickness="0"
@@ -947,17 +978,17 @@
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 22">
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnGpsOriginTapped" />
+                            <TapGestureRecognizer Tapped="OnOpenFullScreenMapTapped" />
                         </Border.GestureRecognizers>
 
                         <VerticalStackLayout Spacing="4"
                                              HorizontalOptions="Center"
                                              VerticalOptions="Center">
-                            <Image Source="gps_origin_icon.svg"
+                            <Image Source="map_pin.png"
                                    HeightRequest="24"
                                    WidthRequest="24"
                                    Aspect="AspectFit" />
-                            <Label Text="{Binding EntranceNavigationLabel}"
+                            <Label Text="{Binding MapNavigationLabel}"
                                    FontSize="11"
                                    FontAttributes="Bold"
                                    HorizontalTextAlignment="Center"
@@ -966,6 +997,30 @@
                     </Border>
 
                     <Border Grid.Column="2"
+                            BackgroundColor="#F4F8FF"
+                            Padding="8"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 22">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnTourShortcutTapped" />
+                        </Border.GestureRecognizers>
+
+                        <VerticalStackLayout Spacing="4"
+                                             HorizontalOptions="Center"
+                                             VerticalOptions="Center">
+                            <Image Source="tour_route_icon.svg"
+                                   HeightRequest="24"
+                                   WidthRequest="24"
+                                   Aspect="AspectFit" />
+                            <Label Text="{Binding TourNavigationLabel}"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center"
+                                   TextColor="#2F80FF" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="3"
                             BackgroundColor="#F4F8FF"
                             Padding="8"
                             StrokeThickness="0"
@@ -989,7 +1044,7 @@
                         </VerticalStackLayout>
                     </Border>
 
-                    <Border Grid.Column="3"
+                    <Border Grid.Column="4"
                             BackgroundColor="#F4F8FF"
                             Padding="8"
                             StrokeThickness="0"
@@ -1005,7 +1060,7 @@
                                    HeightRequest="24"
                                    WidthRequest="24"
                                    Aspect="AspectFit" />
-                            <Label Text="{Binding AccountNavigationLabel}"
+                            <Label Text="{Binding SettingsNavigationLabel}"
                                    FontSize="11"
                                    FontAttributes="Bold"
                                    HorizontalTextAlignment="Center"

@@ -14,7 +14,7 @@ public sealed class ListeningHistoryDisplayItem
     public string Language { get; init; } = string.Empty;
     public string LanguageLabel { get; init; } = string.Empty;
     public string PlaybackMode { get; init; } = "tts";
-    public string PlaybackModeLabel { get; init; } = "TTS";
+    public string PlaybackModeLabel { get; init; } = "Giọng đọc";
     public string NarrationSnapshot { get; init; } = string.Empty;
     public string AudioAssetPath { get; init; } = string.Empty;
     public string NarrationPreview { get; init; } = string.Empty;
@@ -32,7 +32,7 @@ public sealed class ListeningHistoryDisplayItem
     public bool HasAddress => !string.IsNullOrWhiteSpace(Address);
     public bool HasNarrationPreview => !string.IsNullOrWhiteSpace(NarrationPreview);
     public bool CanReplay => !string.IsNullOrWhiteSpace(NarrationSnapshot) || !string.IsNullOrWhiteSpace(AudioAssetPath);
-    public string ReplayActionText => PlaybackModeLabel == "Audio" ? "Phát lại Audio" : "Phát lại TTS";
+    public string ReplayActionText => "Nghe lại";
 
     public override string ToString()
     {

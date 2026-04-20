@@ -258,6 +258,11 @@ public partial class MainPage : ContentPage
         OpenFullScreenMap(focusOnRoute: _viewModel.HasActiveTour);
     }
 
+    private void OnOpenFullScreenMapTapped(object? sender, TappedEventArgs e)
+    {
+        OnOpenFullScreenMapClicked(sender, EventArgs.Empty);
+    }
+
     private void OnZoomInClicked(object? sender, EventArgs e)
     {
         ZoomMap(GetActiveMapView(), zoomIn: true);

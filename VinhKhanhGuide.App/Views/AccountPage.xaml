@@ -220,6 +220,48 @@
                            FontAttributes="Bold"
                            TextColor="#163B6D" />
 
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{Binding PlaybackModePickerTitle}"
+                               FontSize="15"
+                               FontAttributes="Bold"
+                               TextColor="#163B6D" />
+                        <Border BackgroundColor="#F4F8FF"
+                                Padding="14,6"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 18">
+                            <Picker Title="{Binding PlaybackModePickerTitle}"
+                                    ItemsSource="{Binding SupportedPlaybackModes}"
+                                    ItemDisplayBinding="{Binding Label}"
+                                    SelectedItem="{Binding DraftSelectedPlaybackModeOption}" />
+                        </Border>
+                        <Label Text="{Binding DraftPlaybackModeDescription}"
+                               FontSize="13"
+                               TextColor="#6B7C93"
+                               LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+
+                    <Border BackgroundColor="#F4F8FF"
+                            Padding="14"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 18">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="12">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding AutoNarrationLabel}"
+                                       FontSize="15"
+                                       FontAttributes="Bold"
+                                       TextColor="#163B6D" />
+                                <Label Text="{Binding DraftAudioSettingsSummary}"
+                                       FontSize="13"
+                                       TextColor="#6B7C93" />
+                            </VerticalStackLayout>
+
+                            <Switch Grid.Column="1"
+                                    IsToggled="{Binding DraftIsAutoNarrationEnabled}"
+                                    VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+
                     <Border BackgroundColor="#FFF1F2"
                             Padding="14,12"
                             StrokeThickness="0"
@@ -242,23 +284,31 @@
 
                     <Grid ColumnDefinitions="*,*"
                           ColumnSpacing="10">
-                        <Button Text="{Binding SaveLanguageButtonText}"
+                        <Button Text="{Binding PreviewAudioButtonText}"
+                                Command="{Binding PreviewAudioSettingsCommand}"
+                                IsEnabled="{Binding CanPreviewAudioSettings}"
+                                BackgroundColor="#E8F1FF"
+                                TextColor="#2F80FF"
+                                FontSize="16"
+                                CornerRadius="18" />
+
+                        <Button Grid.Column="1"
+                                Text="{Binding SaveLanguageButtonText}"
                                 Command="{Binding SaveAudioSettingsCommand}"
                                 IsEnabled="{Binding CanSaveAudioSettings}"
                                 BackgroundColor="#2F80FF"
                                 TextColor="White"
                                 FontSize="16"
                                 CornerRadius="18" />
-
-                        <Button Grid.Column="1"
-                                Text="{Binding RestoreButtonText}"
-                                Command="{Binding ResetAudioSettingsCommand}"
-                                IsEnabled="{Binding CanResetAudioSettings}"
-                                BackgroundColor="#E8F1FF"
-                                TextColor="#2F80FF"
-                                FontSize="16"
-                                CornerRadius="18" />
                     </Grid>
+
+                    <Button Text="{Binding RestoreButtonText}"
+                            Command="{Binding ResetAudioSettingsCommand}"
+                            IsEnabled="{Binding CanResetAudioSettings}"
+                            BackgroundColor="#F4F8FF"
+                            TextColor="#2F80FF"
+                            FontSize="16"
+                            CornerRadius="18" />
                 </VerticalStackLayout>
             </Border>
 

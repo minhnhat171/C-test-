@@ -21,74 +21,92 @@ public partial class MainViewModel
         $"{CurrentUserDisplayName}님, 안녕하세요",
         $"Bonjour, {CurrentUserDisplayName}");
 
-    public string SearchSectionTitle => LocalizeUi("Tìm kiếm", "Search", "搜索", "검색", "Recherche");
+    public string HomeIntroText => LocalizeUi(
+        "Nghe thuyết minh, xem bản đồ và chọn tour ngắn để khám phá phố ẩm thực Vĩnh Khánh dễ hơn.",
+        "Listen to stories, view the map, and pick a short route through Vinh Khanh Food Street.",
+        "收听讲解、查看地图，并选择短路线轻松探索永庆美食街。",
+        "해설을 듣고 지도를 보며 짧은 코스로 빈칸 음식 거리를 둘러보세요.",
+        "Écoutez les récits, consultez la carte et choisissez un court parcours dans la rue Vinh Khanh.");
+    public string HomePrimaryCtaText => HasActiveTour
+        ? LocalizeUi("Xem tour đang chạy", "View Active Tour", "查看进行中的路线", "진행 중인 투어 보기", "Voir le parcours en cours")
+        : LocalizeUi("Bắt đầu tour", "Start a Tour", "开始路线", "투어 시작", "Commencer un parcours");
+    public string HomePrimaryCtaHintText => LocalizeUi(
+        "Gợi ý nhanh: chọn tour, đi theo điểm dừng, rồi bấm nghe thuyết minh.",
+        "Quick guide: choose a tour, follow each stop, then tap to listen.",
+        "快速提示：选择路线，跟随站点，然后点击收听。",
+        "빠른 안내: 투어를 고르고 정류지를 따라간 뒤 눌러 들어보세요.",
+        "Guide rapide : choisissez un parcours, suivez les étapes, puis lancez l'écoute.");
+    public string SearchSectionTitle => LocalizeUi("Tìm quán", "Find a Place", "查找店铺", "매장 찾기", "Trouver un lieu");
     public string SearchPlaceholderText => LocalizeUi(
-        "Tìm quán hoặc tour",
-        "Search restaurants or tours",
-        "搜索餐厅或路线",
-        "식당 또는 투어 검색",
-        "Rechercher un restaurant ou un parcours");
+        "Nhập tên quán hoặc món muốn thử",
+        "Search by place or dish",
+        "输入店铺或菜品",
+        "매장 또는 메뉴 검색",
+        "Rechercher un lieu ou un plat");
     public string MapSectionTitle => LocalizeUi("Bản đồ khám phá", "Explore Map", "探索地图", "탐색 지도", "Carte d'exploration");
-    public string MapOpenLargeText => LocalizeUi("Mở lớn", "Expand", "放大查看", "크게 보기", "Agrandir");
-    public string StartGpsButtonText => LocalizeUi("Bật GPS", "Turn On GPS", "开启 GPS", "GPS 켜기", "Activer le GPS");
-    public string StopGpsButtonText => LocalizeUi("Tắt GPS", "Turn Off GPS", "关闭 GPS", "GPS 끄기", "Couper le GPS");
-    public string GoToEntranceButtonText => LocalizeUi("40 Vĩnh Khánh", "40 Vinh Khanh", "40 永庆街", "40 Vinh Khanh", "40 Vinh Khanh");
-    public string TourSectionTitle => LocalizeUi("Tour", "Tours", "路线导览", "투어", "Parcours");
-    public string ActiveTourBadgeText => LocalizeUi("Tour đang chạy", "Tour Active", "路线进行中", "진행 중인 투어", "Parcours en cours");
-    public string CurrentStopTitle => LocalizeUi("Chặng hiện tại", "Current Stop", "当前站点", "현재 경유지", "Étape actuelle");
-    public string NextStopTitle => LocalizeUi("Chặng kế tiếp", "Next Stop", "下一站", "다음 경유지", "Étape suivante");
+    public string MapOpenLargeText => LocalizeUi("Mở bản đồ", "Open Map", "打开地图", "지도 열기", "Ouvrir la carte");
+    public string StartGpsButtonText => LocalizeUi("Vị trí của tôi", "My Location", "我的位置", "내 위치", "Ma position");
+    public string StopGpsButtonText => LocalizeUi("Dừng vị trí", "Stop Location", "停止定位", "위치 중지", "Arrêter la position");
+    public string GoToEntranceButtonText => LocalizeUi("Đầu phố", "Entrance", "入口", "입구", "Entrée");
+    public string TourSectionTitle => LocalizeUi("Tour gợi ý", "Suggested Tours", "推荐路线", "추천 투어", "Parcours suggérés");
+    public string ActiveTourBadgeText => LocalizeUi("Đang dẫn tour", "Tour in Progress", "路线进行中", "투어 진행 중", "Parcours en cours");
+    public string CurrentStopTitle => LocalizeUi("Điểm hiện tại", "Current Stop", "当前站点", "현재 지점", "Étape actuelle");
+    public string NextStopTitle => LocalizeUi("Điểm tiếp theo", "Next Stop", "下一站", "다음 지점", "Étape suivante");
     public string ViewRouteButtonText => LocalizeUi("Xem lộ trình", "View Route", "查看路线", "경로 보기", "Voir l'itinéraire");
     public string StopTourButtonText => LocalizeUi("Dừng tour", "Stop Tour", "结束路线", "투어 중지", "Arrêter le parcours");
-    public string SelectedPoiSectionTitle => LocalizeUi("Điểm đang xem", "Selected Place", "当前查看地点", "현재 보는 장소", "Lieu consulté");
-    public string SelectedPoiDetailButtonText => LocalizeUi("Chi tiết", "Details", "详情", "상세 보기", "Détails");
-    public string PoiListTitle => LocalizeUi("Danh sách quán", "Places", "店铺列表", "매장 목록", "Lieux");
-    public string FeaturedSectionTitle => LocalizeUi("Món ăn nổi bật", "Featured Dishes", "招牌菜", "추천 메뉴", "Plats phares");
+    public string SelectedPoiSectionTitle => LocalizeUi("Quán đang xem", "Current Place", "当前店铺", "현재 매장", "Lieu sélectionné");
+    public string SelectedPoiDetailButtonText => LocalizeUi("Xem chi tiết", "View Details", "查看详情", "상세 보기", "Voir les détails");
+    public string PoiListTitle => LocalizeUi("Quán trên phố Vĩnh Khánh", "Places on Vinh Khanh", "永庆街店铺", "빈칸 거리 매장", "Lieux de Vinh Khanh");
+    public string FeaturedSectionTitle => LocalizeUi("Món nên thử", "Dishes to Try", "推荐菜品", "추천 메뉴", "Plats à essayer");
     public string FeaturedSectionSummary => LocalizeUi(
-        "Giữ bố cục 4 nhóm món quen thuộc, đổi tông màu để dễ nhìn hơn và chạm vào để xem chi tiết như flow cũ.",
-        "The classic four dish groups stay in place with a cleaner color treatment. Tap a group to open its details.",
-        "保留原来的四个招牌菜分组，只调整色彩，并可点击查看旧流程中的详情。",
-        "기존의 4개 대표 메뉴 그룹은 유지하고 색감만 정리했습니다. 탭하면 이전 흐름처럼 상세를 볼 수 있습니다.",
-        "Les quatre familles de plats restent en place avec une nouvelle palette. Touchez une famille pour voir ses détails comme avant.");
+        "Chọn nhanh theo nhóm món để tìm quán phù hợp khẩu vị.",
+        "Browse by dish type to find a place that fits your taste.",
+        "按菜品类型快速找到合口味的店铺。",
+        "메뉴 종류별로 취향에 맞는 매장을 찾아보세요.",
+        "Parcourez par type de plat pour trouver une adresse à votre goût.");
     public string ListeningHistorySectionTitle => LocalizeUi("Lịch sử nghe", "Listening History", "收听记录", "청취 기록", "Historique d'écoute");
     public string ListeningHistorySectionSummary => LocalizeUi(
-        "Lưu lại những nội dung vừa nghe để khách quay lại nhanh mà không bị rối.",
-        "Keeps the latest listened items easy to revisit without feeling crowded.",
-        "用更简洁的方式保留最近收听内容，方便回看而不打扰用户。",
-        "최근 들은 내용을 부담 없이 다시 열 수 있도록 간결하게 정리했습니다.",
-        "Conserve les écoutes récentes dans une vue compacte et facile à reprendre.");
-    public string ListeningHistorySeeAllText => LocalizeUi("Xem đầy đủ", "View All", "查看全部", "전체 보기", "Tout afficher");
+        "Những quán bạn đã nghe sẽ nằm ở đây để mở lại nhanh.",
+        "Places you listened to will appear here for quick return.",
+        "已收听的店铺会显示在这里，方便再次打开。",
+        "들은 매장은 여기에서 다시 열 수 있습니다.",
+        "Les lieux écoutés apparaissent ici pour les retrouver vite.");
+    public string ListeningHistorySeeAllText => LocalizeUi("Xem tất cả", "View All", "查看全部", "전체 보기", "Tout afficher");
     public string ListeningHistoryEmptyStateText => LocalizeUi(
-        "Chưa có lượt nghe nào. Khi khách bắt đầu nghe, lịch sử sẽ xuất hiện gọn gàng ở đây.",
-        "No listening history yet. Recent plays will appear here in a compact list.",
-        "暂时没有收听记录。开始收听后，记录会简洁地显示在这里。",
-        "아직 청취 기록이 없습니다. 재생이 시작되면 여기에 간결하게 표시됩니다.",
-        "Aucun historique pour le moment. Les écoutes récentes apparaîtront ici dans une vue compacte.");
+        "Bạn chưa nghe thuyết minh quán nào. Bấm “Nghe thuyết minh” ở một quán để bắt đầu hành trình.",
+        "No listening history yet. Tap “Listen” on a place to start your journey.",
+        "暂时还没有收听记录。请在店铺页点击“收听讲解”开始。",
+        "아직 청취 기록이 없습니다. 매장에서 “안내 듣기”를 눌러 시작하세요.",
+        "Aucun historique pour le moment. Touchez “Écouter” sur un lieu pour commencer.");
     public string HomeNavigationLabel => LocalizeUi("Trang chủ", "Home", "首页", "홈", "Accueil");
-    public string EntranceNavigationLabel => LocalizeUi("40 Vĩnh Khánh", "40 Vinh Khanh", "40 永庆街", "40 Vinh Khanh", "40 Vinh Khanh");
+    public string MapNavigationLabel => LocalizeUi("Bản đồ", "Map", "地图", "지도", "Carte");
+    public string TourNavigationLabel => LocalizeUi("Tour", "Tour", "路线", "투어", "Parcours");
+    public string EntranceNavigationLabel => LocalizeUi("Đầu phố", "Entrance", "入口", "입구", "Entrée");
     public string HistoryNavigationLabel => LocalizeUi("Lịch sử", "History", "历史", "기록", "Historique");
-    public string AccountNavigationLabel => LocalizeUi("Tài khoản", "Account", "账户", "계정", "Compte");
-    public string FullScreenMapTitle => LocalizeUi("Bản đồ lộ trình", "Route Map", "路线地图", "경로 지도", "Carte de l'itinéraire");
+    public string AccountNavigationLabel => LocalizeUi("Cài đặt", "Settings", "设置", "설정", "Paramètres");
+    public string SettingsNavigationLabel => AccountNavigationLabel;
+    public string FullScreenMapTitle => LocalizeUi("Bản đồ Vĩnh Khánh", "Vinh Khanh Map", "永庆地图", "빈칸 지도", "Carte Vinh Khanh");
     public string FullScreenMapSubtitle => LocalizeUi(
         "Chạm vào ghim để xem chi tiết quán",
         "Tap a pin to open place details",
         "点击图钉查看地点详情",
         "핀을 눌러 매장 상세를 확인하세요",
         "Touchez une épingle pour ouvrir les détails du lieu");
-    public string StopListeningButtonText => LocalizeUi("Dừng nghe", "Stop Audio", "停止收听", "재생 중지", "Arrêter l'écoute");
+    public string StopListeningButtonText => LocalizeUi("Dừng nghe", "Stop", "停止收听", "재생 중지", "Arrêter");
 
-    public string AccountPageTitle => LocalizeUi("Tài khoản", "Account", "账户", "계정", "Compte");
+    public string AccountPageTitle => LocalizeUi("Cài đặt", "Settings", "设置", "설정", "Paramètres");
     public string AccountStatusTitle => LocalizeUi("Trạng thái", "Status", "状态", "상태", "Statut");
-    public string AccountStatusValue => LocalizeUi("Đang hoạt động", "Active", "运行中", "활성 상태", "Actif");
-    public string PersonalInfoSectionTitle => LocalizeUi("Thông tin cá nhân", "Personal Information", "个人信息", "개인 정보", "Informations personnelles");
+    public string AccountStatusValue => LocalizeUi("Sẵn sàng", "Ready", "已准备好", "준비됨", "Prêt");
+    public string PersonalInfoSectionTitle => LocalizeUi("Thông tin khách", "Visitor Info", "访客信息", "방문객 정보", "Infos visiteur");
     public string FullNameLabel => LocalizeUi("Họ và tên", "Full Name", "姓名", "이름", "Nom complet");
     public string FullNamePlaceholder => LocalizeUi("Nhập họ và tên", "Enter full name", "输入姓名", "이름 입력", "Saisir le nom complet");
     public string EmailLabel => LocalizeUi("Email", "Email", "电子邮箱", "이메일", "E-mail");
     public string EmailPlaceholder => LocalizeUi("Nhập email", "Enter email", "输入邮箱", "이메일 입력", "Saisir l'e-mail");
     public string PhoneLabel => LocalizeUi("Số điện thoại", "Phone Number", "电话号码", "전화번호", "Numéro de téléphone");
     public string PhonePlaceholder => LocalizeUi("Nhập số điện thoại", "Enter phone number", "输入电话号码", "전화번호 입력", "Saisir le numéro de téléphone");
-    public string SaveProfileButtonText => LocalizeUi("Lưu thông tin", "Save Profile", "保存资料", "정보 저장", "Enregistrer");
+    public string SaveProfileButtonText => LocalizeUi("Lưu thay đổi", "Save Changes", "保存更改", "변경 저장", "Enregistrer");
     public string ResetButtonText => LocalizeUi("Đặt lại", "Reset", "重置", "초기화", "Réinitialiser");
-    public string LanguageSectionTitle => LocalizeUi("Ngôn ngữ và TTS", "Language & TTS", "语言与 TTS", "언어 및 TTS", "Langue et TTS");
+    public string LanguageSectionTitle => LocalizeUi("Ngôn ngữ và giọng đọc", "Language & Voice", "语言与语音", "언어 및 음성", "Langue et voix");
     public string LanguageSectionSummary => LocalizeUi(
         "Khi đổi ngôn ngữ, giao diện và phần thuyết minh sẽ đổi theo cùng lúc.",
         "Changing the language updates both the interface and narration together.",
@@ -99,10 +117,13 @@ public partial class MainViewModel
     public string SaveLanguageButtonText => LocalizeUi("Lưu ngôn ngữ", "Save Language", "保存语言", "언어 저장", "Enregistrer la langue");
     public string RestoreButtonText => LocalizeUi("Khôi phục", "Restore", "恢复", "복원", "Restaurer");
     public string RefreshButtonText => LocalizeUi("Làm mới", "Refresh", "刷新", "새로 고침", "Actualiser");
+    public string PlaybackModePickerTitle => LocalizeUi("Cách nghe", "Listening Mode", "收听方式", "듣기 방식", "Mode d'écoute");
+    public string PreviewAudioButtonText => LocalizeUi("Nghe thử", "Preview", "试听", "미리 듣기", "Essayer");
+    public string AutoNarrationLabel => LocalizeUi("Tự phát khi bạn đến gần quán", "Play automatically when you are nearby", "靠近店铺时自动播放", "매장 근처에서 자동 재생", "Lecture automatique à proximité");
 
     public string PoiDetailPageTitle => LocalizeUi("Chi tiết địa điểm", "Place Details", "地点详情", "장소 상세", "Détails du lieu");
     public string PoiDescriptionSectionTitle => LocalizeUi("Mô tả quán", "About This Place", "地点介绍", "장소 소개", "À propos du lieu");
-    public string PoiNarrationSectionTitle => LocalizeUi("Thuyết minh", "Narration", "语音讲解", "오디오 안내", "Narration");
+    public string PoiNarrationSectionTitle => LocalizeUi("Nghe thuyết minh", "Listen to the Story", "收听讲解", "안내 듣기", "Écouter le récit");
     public string PoiDirectionButtonText => LocalizeUi("Chỉ đường", "Directions", "导航", "길찾기", "Itinéraire");
 
     public string FeaturedDishPageTitle => LocalizeUi("Món nổi bật", "Featured Dishes", "招牌菜", "추천 메뉴", "Plats phares");
@@ -163,7 +184,7 @@ public partial class MainViewModel
             "admin" => LocalizeUi("Quản trị viên", "Administrator", "管理员", "관리자", "Administrateur"),
             "poi_owner" => LocalizeUi("Chủ quán", "Venue Owner", "店主", "매장 관리자", "Propriétaire"),
             "guest" => LocalizeUi("Khách tham quan", "Guest Visitor", "访客", "방문객", "Visiteur"),
-            _ => LocalizeUi("Khách khám phá", "Explorer", "探索用户", "탐험 사용자", "Explorateur")
+            _ => LocalizeUi("Khách tham quan", "Visitor", "访客", "방문객", "Visiteur")
         };
     }
 
@@ -180,8 +201,8 @@ public partial class MainViewModel
     private string GetDefaultPoiPromptText()
     {
         return LocalizeUi(
-            "Chọn quán hoặc chạm bản đồ để nghe thuyết minh",
-            "Select a place or tap the map to start narration",
+            "Chọn tour, chọn quán hoặc mở bản đồ để bắt đầu nghe thuyết minh",
+            "Choose a tour, pick a place, or open the map to start listening",
             "选择店铺或点击地图开始收听讲解",
             "매장을 선택하거나 지도를 눌러 오디오 안내를 들으세요",
             "Choisissez un lieu ou touchez la carte pour lancer la narration");
@@ -222,8 +243,8 @@ public partial class MainViewModel
     private string GetLocalizedTourPackageActionLabel(bool isSelected)
     {
         return isSelected
-            ? LocalizeUi("Đang chọn", "Selected", "已选择", "선택됨", "Sélectionné")
-            : LocalizeUi("Bắt đầu", "Start", "开始", "시작", "Démarrer");
+            ? LocalizeUi("Đang chạy", "In Progress", "进行中", "진행 중", "En cours")
+            : LocalizeUi("Bắt đầu tour", "Start Tour", "开始路线", "투어 시작", "Démarrer le parcours");
     }
 
     private string GetLocalizedTourStopOrderLabel(int order)
@@ -240,12 +261,12 @@ public partial class MainViewModel
     {
         if (isCompleted)
         {
-            return LocalizeUi("Đã phát", "Played", "已播放", "재생 완료", "Déjà lu");
+            return LocalizeUi("Đã nghe", "Listened", "已收听", "청취 완료", "Écouté");
         }
 
         return isCurrent
-            ? LocalizeUi("Đang theo dõi", "Tracking", "跟踪中", "추적 중", "En suivi")
-            : LocalizeUi("Chờ tới lượt", "Upcoming", "等待中", "대기 중", "À venir");
+            ? LocalizeUi("Điểm đang dẫn", "Current stop", "当前站点", "현재 지점", "Étape actuelle")
+            : LocalizeUi("Sắp tới", "Coming up", "即将到达", "다음 예정", "À venir");
     }
 
     private string GetLocalizedPoiCodeLabel(string code)
@@ -261,14 +282,14 @@ public partial class MainViewModel
     private string GetLocalizedPoiStatusLabel(bool isInsideRadius)
     {
         return isInsideRadius
-            ? LocalizeUi("Trong vùng geofence", "Inside geofence", "位于触发范围内", "지오펜스 범위 안", "Dans la zone de déclenchement")
-            : LocalizeUi("Ngoài vùng", "Outside area", "不在范围内", "범위 밖", "Hors zone");
+            ? LocalizeUi("Bạn đang ở gần quán này", "You are near this place", "您就在这家店附近", "이 매장 근처에 있습니다", "Vous êtes près de ce lieu")
+            : LocalizeUi("Chưa ở gần quán này", "Not nearby yet", "还未靠近这家店", "아직 근처가 아닙니다", "Pas encore à proximité");
     }
 
     private string GetLocalizedPoiNearestLabel(bool isNearest)
     {
         return isNearest
-            ? LocalizeUi("POI gần nhất", "Nearest POI", "最近的 POI", "가장 가까운 POI", "POI le plus proche")
+            ? LocalizeUi("Quán gần bạn nhất", "Nearest place", "最近的店铺", "가장 가까운 매장", "Lieu le plus proche")
             : string.Empty;
     }
 
@@ -312,13 +333,13 @@ public partial class MainViewModel
     {
         return isNarrationActive
             ? LocalizeUi(
-                "Phần Talk to Speech của quán này đang phát.",
+                "Thuyết minh của quán này đang phát.",
                 "This place is currently playing narration.",
                 "该地点的语音讲解正在播放。",
                 "이 매장의 오디오 안내가 재생 중입니다.",
                 "La narration de ce lieu est en cours.")
             : LocalizeUi(
-                "Bấm để nghe phần Talk to Speech ngay tại trang chủ.",
+                "Bấm để nghe thuyết minh ngay tại trang chủ.",
                 "Tap to hear the narration right from the home screen.",
                 "点击即可在首页直接收听讲解。",
                 "홈 화면에서 바로 오디오 안내를 들을 수 있습니다.",
@@ -352,14 +373,14 @@ public partial class MainViewModel
     {
         return double.IsNaN(distanceMeters)
             ? LocalizeUi(
-                $"Bán kính {triggerRadiusMeters:F0}m",
-                $"Radius {triggerRadiusMeters:F0}m",
+                $"Tự phát khi ở gần khoảng {triggerRadiusMeters:F0}m",
+                $"Auto plays within about {triggerRadiusMeters:F0}m",
                 $"半径 {triggerRadiusMeters:F0} 米",
                 $"반경 {triggerRadiusMeters:F0}m",
                 $"Rayon {triggerRadiusMeters:F0} m")
             : LocalizeUi(
-                $"{distanceMeters:F0}m • Bán kính {triggerRadiusMeters:F0}m",
-                $"{distanceMeters:F0}m • Radius {triggerRadiusMeters:F0}m",
+                $"{distanceMeters:F0}m từ bạn • tự phát khoảng {triggerRadiusMeters:F0}m",
+                $"{distanceMeters:F0}m away • auto plays around {triggerRadiusMeters:F0}m",
                 $"{distanceMeters:F0} 米 • 半径 {triggerRadiusMeters:F0} 米",
                 $"{distanceMeters:F0}m • 반경 {triggerRadiusMeters:F0}m",
                 $"{distanceMeters:F0} m • Rayon {triggerRadiusMeters:F0} m");
@@ -381,7 +402,7 @@ public partial class MainViewModel
                 $"{listenSeconds} 秒",
                 $"{listenSeconds}초",
                 $"{listenSeconds} s")
-            : LocalizeUi("Đang ghi nhận", "Recording", "记录中", "기록 중", "En cours");
+            : LocalizeUi("Vừa nghe", "Just listened", "刚刚收听", "방금 청취", "Écouté récemment");
     }
 
     private string GetLocalizedHistoryStatusLabel(bool completed, bool hasError)
@@ -392,7 +413,7 @@ public partial class MainViewModel
         }
 
         return hasError
-            ? LocalizeUi("Dừng vì lỗi", "Stopped on error", "因错误停止", "오류로 중지", "Arrêt sur erreur")
+            ? LocalizeUi("Chưa phát hết", "Not completed", "未完成", "완료되지 않음", "Non terminé")
             : LocalizeUi("Dừng sớm", "Stopped early", "提前结束", "중간 종료", "Arrêt anticipé");
     }
 
@@ -421,28 +442,28 @@ public partial class MainViewModel
         if (localCount > 0)
         {
             return LocalizeUi(
-                $"{localCount} lượt nghe vừa ghi nhận",
-                $"{localCount} recently captured plays",
+                $"{localCount} lượt nghe vừa lưu trên máy",
+                $"{localCount} recent listens saved on this device",
                 $"{localCount} 条刚记录的播放",
                 $"방금 기록된 청취 {localCount}건",
                 $"{localCount} écoutes tout juste enregistrées");
         }
 
-        return LocalizeUi("Chưa có bản ghi nghe nào", "No listening history yet", "暂无收听记录", "청취 기록 없음", "Aucun historique d'écoute");
+        return LocalizeUi("Chưa có lượt nghe nào", "No listening history yet", "暂无收听记录", "청취 기록 없음", "Aucun historique d'écoute");
     }
 
     private string GetLocalizedListeningHistoryFallbackSummaryText(int localCount)
     {
         return localCount > 0
             ? LocalizeUi(
-                $"{localCount} lượt nghe đã được lưu cục bộ trên thiết bị này.",
-                $"{localCount} listens are stored locally on this device.",
+                $"{localCount} lượt nghe đã lưu trên thiết bị này.",
+                $"{localCount} listens are saved on this device.",
                 $"此设备上已本地保存 {localCount} 条收听记录。",
                 $"이 기기에 {localCount}개의 청취 기록이 저장되어 있습니다.",
                 $"{localCount} écoutes sont stockées localement sur cet appareil.")
             : LocalizeUi(
-                "Các lượt nghe mới sẽ được lưu cục bộ trên thiết bị này.",
-                "New listens will also be saved locally on this device.",
+                "Các lượt nghe mới sẽ được lưu trên thiết bị này.",
+                "New listens will be saved on this device.",
                 "新的收听记录也会保存在这台设备上。",
                 "새 청취 기록은 이 기기에 함께 저장됩니다.",
                 "Les nouvelles écoutes seront aussi enregistrées localement sur cet appareil.");
@@ -452,26 +473,26 @@ public partial class MainViewModel
     {
         return syncedAt.HasValue
             ? LocalizeUi(
-                $"Đồng bộ lúc {syncedAt.Value.ToLocalTime():HH:mm:ss}",
-                $"Synced at {syncedAt.Value.ToLocalTime():HH:mm:ss}",
+                $"Cập nhật lúc {syncedAt.Value.ToLocalTime():HH:mm}",
+                $"Updated at {syncedAt.Value.ToLocalTime():HH:mm}",
                 $"同步时间 {syncedAt.Value.ToLocalTime():HH:mm:ss}",
                 $"{syncedAt.Value.ToLocalTime():HH:mm:ss} 동기화",
                 $"Synchronisé à {syncedAt.Value.ToLocalTime():HH:mm:ss}")
-            : LocalizeUi("Chưa đồng bộ lịch sử nghe", "History not synced yet", "历史尚未同步", "기록이 아직 동기화되지 않음", "Historique non synchronisé");
+            : LocalizeUi("Lịch sử sẽ hiện sau lượt nghe đầu tiên", "History appears after your first listen", "首次收听后会显示历史", "첫 청취 후 기록이 표시됩니다", "L'historique apparaîtra après la première écoute");
     }
 
     private string GetLocalizedAccountAccessMessage(bool canManage)
     {
         return canManage
             ? LocalizeUi(
-                "Bạn có thể cập nhật hồ sơ cá nhân trực tiếp trên thiết bị này.",
+                "Bạn có thể thêm tên để app chào đúng hơn. Có thể bỏ qua nếu chỉ muốn khám phá nhanh.",
                 "You can update the visitor profile directly on this device.",
                 "您可以直接在此设备上更新访客资料。",
                 "이 기기에서 바로 방문자 정보를 수정할 수 있습니다.",
                 "Vous pouvez mettre à jour le profil directement sur cet appareil.")
             : LocalizeUi(
-                "Chưa có hồ sơ người dùng để cập nhật.",
-                "There is no user profile to update yet.",
+                "Bạn vẫn có thể dùng app ở chế độ khách.",
+                "You can still use the app as a guest.",
                 "暂时没有可更新的用户资料。",
                 "아직 수정할 사용자 정보가 없습니다.",
                 "Aucun profil utilisateur à mettre à jour pour le moment.");
@@ -480,8 +501,8 @@ public partial class MainViewModel
     private string GetLocalizedLanguageSavedMessage()
     {
         return LocalizeUi(
-            "Đã lưu tùy chọn ngôn ngữ cho ứng dụng.",
-            "Language preference saved for the app.",
+            "Đã lưu ngôn ngữ và cách nghe.",
+            "Language and listening mode saved.",
             "应用语言偏好已保存。",
             "앱 언어 설정이 저장되었습니다.",
             "La langue de l'application a été enregistrée.");
@@ -502,6 +523,9 @@ public partial class MainViewModel
     private void RaiseLocalizedUiChanged()
     {
         OnPropertyChanged(nameof(GreetingText));
+        OnPropertyChanged(nameof(HomeIntroText));
+        OnPropertyChanged(nameof(HomePrimaryCtaText));
+        OnPropertyChanged(nameof(HomePrimaryCtaHintText));
         OnPropertyChanged(nameof(SearchSectionTitle));
         OnPropertyChanged(nameof(SearchPlaceholderText));
         OnPropertyChanged(nameof(MapSectionTitle));
@@ -525,9 +549,12 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(ListeningHistorySeeAllText));
         OnPropertyChanged(nameof(ListeningHistoryEmptyStateText));
         OnPropertyChanged(nameof(HomeNavigationLabel));
+        OnPropertyChanged(nameof(MapNavigationLabel));
+        OnPropertyChanged(nameof(TourNavigationLabel));
         OnPropertyChanged(nameof(EntranceNavigationLabel));
         OnPropertyChanged(nameof(HistoryNavigationLabel));
         OnPropertyChanged(nameof(AccountNavigationLabel));
+        OnPropertyChanged(nameof(SettingsNavigationLabel));
         OnPropertyChanged(nameof(FullScreenMapTitle));
         OnPropertyChanged(nameof(FullScreenMapSubtitle));
         OnPropertyChanged(nameof(StopListeningButtonText));
@@ -549,10 +576,14 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(SaveLanguageButtonText));
         OnPropertyChanged(nameof(RestoreButtonText));
         OnPropertyChanged(nameof(RefreshButtonText));
+        OnPropertyChanged(nameof(PlaybackModePickerTitle));
+        OnPropertyChanged(nameof(PreviewAudioButtonText));
+        OnPropertyChanged(nameof(AutoNarrationLabel));
         OnPropertyChanged(nameof(PoiDetailPageTitle));
         OnPropertyChanged(nameof(PoiDescriptionSectionTitle));
         OnPropertyChanged(nameof(PoiNarrationSectionTitle));
         OnPropertyChanged(nameof(PoiDirectionButtonText));
+        OnPropertyChanged(nameof(SelectedPoiNarrationStateText));
         OnPropertyChanged(nameof(FeaturedDishPageTitle));
         OnPropertyChanged(nameof(FeaturedDishGroupPrefix));
         OnPropertyChanged(nameof(FeaturedDishPriceTitle));

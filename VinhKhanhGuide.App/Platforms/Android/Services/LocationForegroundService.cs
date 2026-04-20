@@ -222,7 +222,7 @@ public sealed class LocationForegroundService : Service
 
         var contentText = location is null
             ? "Đang theo dõi vị trí để kích hoạt thuyết minh tự động."
-            : $"Lat {location.Latitude:F5}, Lng {location.Longitude:F5}";
+            : "Đang dùng vị trí để gợi ý quán gần bạn.";
 
         Notification.Builder builder;
         if (OperatingSystem.IsAndroidVersionAtLeast(26))
@@ -237,7 +237,7 @@ public sealed class LocationForegroundService : Service
         }
 
         builder
-            .SetContentTitle("Vinh Khanh Guide đang tracking nền")
+            .SetContentTitle("Vinh Khanh Guide đang dùng vị trí")
             .SetContentText(contentText)
             .SetSmallIcon(Resource.Mipmap.appicon)
             .SetOngoing(true)
@@ -262,10 +262,10 @@ public sealed class LocationForegroundService : Service
 
         var channel = new NotificationChannel(
             ChannelId,
-            "Tracking vị trí nền",
+            "Vị trí khi khám phá",
             NotificationImportance.Low)
         {
-            Description = "Giữ foreground service để tiếp tục theo dõi vị trí và geofence khi app chạy nền."
+            Description = "Giúp app gợi ý quán gần bạn và tự phát thuyết minh khi cần."
         };
 
         notificationManager.CreateNotificationChannel(channel);
