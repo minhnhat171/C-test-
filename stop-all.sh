@@ -6,8 +6,10 @@ ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RUN_DIR="$ROOT_DIR/.run"
 
 API_PORT=5287
+WEB_PORT=5088
 
 API_PID_FILE="$RUN_DIR/api.pid"
+WEB_PID_FILE="$RUN_DIR/webadmin.pid"
 
 is_pid_running() {
   local pid="${1:-}"
@@ -66,7 +68,7 @@ stop_pid_file_process() {
     fi
   fi
 
-  rm -f "$pid_file"
+  rm -f "$pid_file" 2>/dev/null || true
 }
 
 stop_port_processes() {
@@ -91,7 +93,9 @@ stop_port_processes() {
 }
 
 stop_pid_file_process "VKFoodAPI" "$API_PID_FILE"
+stop_pid_file_process "CTest.WebAdmin" "$WEB_PID_FILE"
 
 stop_port_processes "VKFoodAPI" "$API_PORT"
+stop_port_processes "CTest.WebAdmin" "$WEB_PORT"
 
-echo "Da xu ly stop cho API."
+echo "Da xu ly stop cho API va WebAdmin."

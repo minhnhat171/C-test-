@@ -895,6 +895,7 @@
             const panelCountEl = document.getElementById("activeDevicePanelCount");
             const listEl = document.getElementById("activeDeviceList");
             let pollingTimer = 0;
+            let isLoadingStats = false;
 
             const escapeHtml = (value) => String(value ?? "")
                 .replaceAll("&", "&amp;")
@@ -983,27 +984,37 @@
                 renderDevices(devices);
             };
 
-            const startPolling = () => {
-                if (pollingTimer || !statsUrl) {
+            const loadStats = async () => {
+                if (!statsUrl || isLoadingStats) {
                     return;
                 }
 
-                const loadStats = async () => {
-                    try {
-                        const response = await fetch(statsUrl, { cache: "no-store" });
-                        if (!response.ok) {
-                            return;
-                        }
+                isLoadingStats = true;
 
-                        updateStats(await response.json());
-                    } catch {
-                        // Keep the last visible value if the admin API is temporarily unavailable.
+                try {
+                    const response = await fetch(statsUrl, { cache: "no-store" });
+                    if (!response.ok) {
+                        return;
                     }
-                };
+
+                    updateStats(await response.json());
+                } catch {
+                    // Keep the last visible value if the admin API is temporarily unavailable.
+                } finally {
+                    isLoadingStats = false;
+                }
+            };
+
+            const startPolling = () => {
+                if (pollingTimer) {
+                    return;
+                }
 
                 loadStats();
-                pollingTimer = window.setInterval(loadStats, 2000);
+                pollingTimer = window.setInterval(loadStats, 3000);
             };
+
+            startPolling();
 
             if ("EventSource" in window && eventsUrl) {
                 const source = new EventSource(eventsUrl);
@@ -1016,11 +1027,18 @@
                 });
                 source.onerror = () => {
                     source.close();
-                    startPolling();
                 };
-            } else {
-                startPolling();
             }
+
+            document.addEventListener("visibilitychange", () => {
+                if (!document.hidden) {
+                    void loadStats();
+                }
+            });
+
+            window.addEventListener("focus", () => {
+                void loadStats();
+            });
         })();
     </script>
 }

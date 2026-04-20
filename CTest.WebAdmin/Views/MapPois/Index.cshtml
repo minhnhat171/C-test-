@@ -1,4 +1,5 @@
 @using System.Globalization
+@using System.Text.Json
 @model MapPoiManagementViewModel
 @{
     ViewData["Title"] = "Map POI";
@@ -6,6 +7,31 @@
     var hasCoordinates = Math.Abs(Model.Editor.Latitude) > 0.000001 || Math.Abs(Model.Editor.Longitude) > 0.000001;
     var initialLatitude = hasCoordinates ? Model.Editor.Latitude.ToString(CultureInfo.InvariantCulture) : "10.762622";
     var initialLongitude = hasCoordinates ? Model.Editor.Longitude.ToString(CultureInfo.InvariantCulture) : "106.682172";
+    var activePoiCount = Model.Pois.Count(poi => poi.IsActive);
+    var inactivePoiCount = Model.Pois.Count - activePoiCount;
+    var mapPois = Model.Pois.Select(poi => new
+    {
+        id = poi.Id.ToString(),
+        code = poi.Code,
+        name = poi.Name,
+        address = poi.Address,
+        description = poi.Description,
+        latitude = poi.Latitude,
+        longitude = poi.Longitude,
+        radius = poi.RadiusInMeters,
+        priority = poi.Priority,
+        isActive = poi.IsActive,
+        relatedAudioCount = poi.RelatedAudioCount,
+        selectUrl = Url.Action("Index", "MapPois", new { poiId = poi.Id }) ?? $"/MapPois?poiId={poi.Id}",
+        editUrl = Url.Action("Edit", "Pois", new { id = poi.Id }) ?? $"/Pois/Edit/{poi.Id}",
+        detailsUrl = Url.Action("Details", "Pois", new { id = poi.Id }) ?? $"/Pois/Details/{poi.Id}",
+        qrUrl = Url.Action("Index", "QrCodes", new { selectedTargetType = "poi", selectedTargetId = poi.Id }) ?? $"/QrCodes?selectedTargetType=poi&selectedTargetId={poi.Id}",
+        appLaunchUrl = $"vinhkhanhguide://poi/{poi.Id}?autoplay=1&source=webadmin-map"
+    }).ToList();
+    var selectedAppLaunchUrl = Model.HasSelection
+        ? $"vinhkhanhguide://poi/{Model.Editor.Id}?autoplay=1&source=webadmin-map"
+        : string.Empty;
+    var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 }
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -167,6 +193,63 @@
         height: 100%;
     }
 
+    .map-poi-marker {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 3px solid #fff;
+        background: #2563eb;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.28);
+    }
+
+    .map-poi-marker.is-selected {
+        width: 22px;
+        height: 22px;
+        background: #0f172a;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.34);
+    }
+
+    .map-poi-marker.is-inactive {
+        background: #94a3b8;
+    }
+
+    .map-poi-popup {
+        min-width: 220px;
+    }
+
+    .map-poi-popup-title {
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .map-poi-popup-meta {
+        margin-top: 0.3rem;
+        color: #64748b;
+        font-size: 0.84rem;
+        line-height: 1.4;
+    }
+
+    .map-poi-popup-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 0.75rem;
+    }
+
+    .map-poi-popup-actions a,
+    .map-poi-popup-actions span {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: #0f172a;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
     .map-poi-kicker {
         color: var(--map-muted);
         font-size: 0.76rem;
@@ -277,7 +360,7 @@
     <div class="map-poi-head">
         <div>
             <h1>Map POI</h1>
-            <p>Chon POI trong danh sach, xem marker tren ban do va sua truc tiep latitude, longitude, radius, noi dung, map link ngay trong mot man hinh.</p>
+            <p>Mot ban do duy nhat hien tat ca POI tu VKFoodAPI. Chon marker hoac danh sach de sua toa do, tao QR va mo dung POI trong app mobile.</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
             <a asp-controller="Pois" asp-action="Create" class="btn btn-primary btn-lg rounded-pill px-4">+ Tao POI moi</a>
@@ -300,7 +383,7 @@
             <div class="map-poi-sidebar">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div class="fw-bold">Danh sach POI</div>
-                    <span class="text-muted small">@Model.Pois.Count diem</span>
+                    <span class="text-muted small">@Model.Pois.Count diem, @activePoiCount active</span>
                 </div>
 
                 @if (Model.Pois.Any())
@@ -344,6 +427,7 @@
                         </div>
 
                         <div class="d-flex flex-wrap gap-2">
+                            <a href="@selectedAppLaunchUrl" class="btn btn-primary rounded-pill px-4">Mo trong app</a>
                             <a asp-controller="Pois" asp-action="Edit" asp-route-id="@Model.Editor.Id" class="btn btn-outline-primary rounded-pill px-4">Mo form day du</a>
                             <a asp-controller="AudioGuides" asp-action="Index" asp-route-poiId="@Model.Editor.Id" class="btn btn-outline-info rounded-pill px-4">Audio (@Model.Editor.RelatedAudioCount)</a>
                             <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedTargetType="poi" asp-route-selectedTargetId="@Model.Editor.Id" class="btn btn-outline-success rounded-pill px-4">Tao QR</a>
@@ -355,9 +439,9 @@
                             <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
                                 <div>
                                     <div class="map-poi-kicker">Ban do thao tac</div>
-                                    <div class="fw-semibold">Keo marker hoac bam len ban do de doi vi tri</div>
+                                    <div class="fw-semibold">Tat ca POI nam tren mot map; marker dang sua co the keo de doi vi tri</div>
                                 </div>
-                                <button type="button" class="btn btn-outline-dark rounded-pill px-4" id="recenterMapButton">Can giua marker</button>
+                                <button type="button" class="btn btn-outline-dark rounded-pill px-4" id="recenterMapButton">Can giua POI dang sua</button>
                             </div>
 
                             <div class="map-poi-map-frame">
@@ -365,7 +449,7 @@
                             </div>
 
                             <div class="map-poi-status" id="mapPoiStatus">
-                                Marker se dong bo truc tiep vao Latitude, Longitude va Map link.
+                                Map dang doc @Model.Pois.Count POI tu API. Marker dang sua se dong bo truc tiep vao Latitude, Longitude va Map link.
                             </div>
                         </div>
 
@@ -391,6 +475,14 @@
                                     <span class="map-poi-kicker">Priority</span>
                                     <strong id="mapPoiPriorityValue">#@Model.Editor.Priority</strong>
                                 </div>
+                                <div class="map-poi-metric">
+                                    <span class="map-poi-kicker">Tong POI</span>
+                                    <strong>@Model.Pois.Count</strong>
+                                </div>
+                                <div class="map-poi-metric">
+                                    <span class="map-poi-kicker">Tam khoa</span>
+                                    <strong>@inactivePoiCount</strong>
+                                </div>
                             </div>
 
                             <div class="mt-3 text-muted">
@@ -411,6 +503,10 @@
                                     Mo map link
                                 </a>
                             }
+
+                            <a href="@selectedAppLaunchUrl" class="btn btn-primary rounded-pill px-4 mt-3">
+                                Mo POI nay trong app
+                            </a>
                         </div>
                     </div>
 
@@ -515,6 +611,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         (() => {
+            const mapPois = @Html.Raw(JsonSerializer.Serialize(mapPois, jsonOptions));
+            const selectedPoiId = @Html.Raw(JsonSerializer.Serialize(Model.SelectedPoiId.ToString(), jsonOptions));
             const latInput = document.getElementById("mapPoiLatitude");
             const lngInput = document.getElementById("mapPoiLongitude");
             const radiusInput = document.getElementById("mapPoiRadiusInput");
@@ -540,14 +638,60 @@
 
             const fallbackLat = 10.762622;
             const fallbackLng = 106.682172;
+            const selectedPoi = mapPois.find((poi) => poi.id === selectedPoiId) ?? null;
 
             const parseNumber = (value, fallback) => {
                 const parsed = Number.parseFloat(value);
                 return Number.isFinite(parsed) ? parsed : fallback;
             };
 
+            const isUsableCoordinate = (lat, lng) =>
+                Number.isFinite(lat) &&
+                Number.isFinite(lng) &&
+                Math.abs(lat) <= 90 &&
+                Math.abs(lng) <= 180 &&
+                (Math.abs(lat) > 0.000001 || Math.abs(lng) > 0.000001);
+
             const formatCoordinate = (value) => Number(value).toFixed(6);
             const buildMapLink = (lat, lng) => `https://maps.google.com/?q=${formatCoordinate(lat)},${formatCoordinate(lng)}`;
+            const escapeHtml = (value) => String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+
+            const buildMarkerIcon = (poi, isSelected) => L.divIcon({
+                className: "",
+                html: `<span class="map-poi-marker ${isSelected ? "is-selected" : ""} ${poi.isActive ? "" : "is-inactive"}"></span>`,
+                iconSize: isSelected ? [22, 22] : [18, 18],
+                iconAnchor: isSelected ? [11, 11] : [9, 9],
+                popupAnchor: [0, -12]
+            });
+
+            const buildPopupHtml = (poi, isSelected) => {
+                const status = poi.isActive ? "Dang hoat dong" : "Tam khoa";
+                const address = poi.address?.trim() || "Chua co dia chi";
+                const code = poi.code?.trim() || "Chua co ma";
+                const selectedBadge = isSelected
+                    ? '<span>Dang sua</span>'
+                    : `<a href="${escapeHtml(poi.selectUrl)}">Sua tren map</a>`;
+
+                return `
+                    <div class="map-poi-popup">
+                        <div class="map-poi-popup-title">${escapeHtml(poi.name || "POI chua dat ten")}</div>
+                        <div class="map-poi-popup-meta">
+                            ${escapeHtml(address)}<br />
+                            ${escapeHtml(code)} - ${status} - Audio ${Number(poi.relatedAudioCount || 0)}
+                        </div>
+                        <div class="map-poi-popup-actions">
+                            ${selectedBadge}
+                            <a href="${escapeHtml(poi.detailsUrl)}">Chi tiet</a>
+                            <a href="${escapeHtml(poi.qrUrl)}">QR</a>
+                            <a href="${escapeHtml(poi.appLaunchUrl)}">Mo app</a>
+                        </div>
+                    </div>`;
+            };
 
             const syncTextPreview = () => {
                 if (nameLabel) {
@@ -589,6 +733,7 @@
             let map = null;
             let marker = null;
             let circle = null;
+            let markerBounds = null;
 
             const getCoordinates = () => ({
                 lat: parseNumber(latInput.value, fallbackLat),
@@ -642,8 +787,43 @@
                     attribution: "&copy; OpenStreetMap"
                 }).addTo(map);
 
-                marker = L.marker([start.lat, start.lng], { draggable: true }).addTo(map);
-                circle = L.circle([start.lat, start.lng], {
+                markerBounds = L.latLngBounds([]);
+
+                for (const poi of mapPois) {
+                    const lat = Number(poi.latitude);
+                    const lng = Number(poi.longitude);
+
+                    if (!isUsableCoordinate(lat, lng)) {
+                        continue;
+                    }
+
+                    const isSelected = poi.id === selectedPoiId;
+                    const poiMarker = L.marker([lat, lng], {
+                        draggable: isSelected,
+                        icon: buildMarkerIcon(poi, isSelected),
+                        title: poi.name || poi.code || "POI"
+                    }).addTo(map);
+
+                    poiMarker.bindPopup(buildPopupHtml(poi, isSelected), { maxWidth: 320 });
+                    markerBounds.extend([lat, lng]);
+
+                    if (isSelected) {
+                        marker = poiMarker;
+                    }
+                }
+
+                if (!marker) {
+                    marker = L.marker([start.lat, start.lng], {
+                        draggable: true,
+                        title: selectedPoi?.name || "POI dang sua"
+                    }).addTo(map);
+
+                    if (selectedPoi) {
+                        marker.bindPopup(buildPopupHtml(selectedPoi, true), { maxWidth: 320 });
+                    }
+                }
+
+                circle = L.circle(marker.getLatLng(), {
                     radius: Math.max(1, parseNumber(radiusInput.value, 50)),
                     color: "#2563eb",
                     fillColor: "#60a5fa",
@@ -662,7 +842,17 @@
                     statusBox.textContent = "Da cap nhat toa do tu diem bam tren ban do.";
                 });
 
-                window.setTimeout(() => map.invalidateSize(), 60);
+                window.setTimeout(() => {
+                    map.invalidateSize();
+
+                    if (markerBounds?.isValid()) {
+                        if (markerBounds.getNorthEast().equals(markerBounds.getSouthWest())) {
+                            map.setView(markerBounds.getCenter(), 17);
+                        } else {
+                            map.fitBounds(markerBounds.pad(0.18), { maxZoom: 17 });
+                        }
+                    }
+                }, 80);
             };
 
             latInput.addEventListener("input", () => {

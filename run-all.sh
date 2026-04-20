@@ -6,13 +6,17 @@ unsetopt BG_NICE 2>/dev/null || true
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RUN_DIR="$ROOT_DIR/.run"
 API_DIR="$ROOT_DIR/VKFoodAPI"
+WEB_DIR="$ROOT_DIR/CTest.WebAdmin"
 
 API_PORT=5287
+WEB_PORT=5088
 
 mkdir -p "$RUN_DIR"
 
 API_PID_FILE="$RUN_DIR/api.pid"
 API_LOG_FILE="$RUN_DIR/api.log"
+WEB_PID_FILE="$RUN_DIR/webadmin.pid"
+WEB_LOG_FILE="$RUN_DIR/webadmin.log"
 
 is_pid_running() {
   local pid="${1:-}"
@@ -44,7 +48,7 @@ start_service() {
       return 0
     fi
 
-    rm -f "$pid_file"
+    rm -f "$pid_file" 2>/dev/null || true
   fi
 
   if is_port_listening "$port"; then
@@ -81,6 +85,8 @@ start_service() {
 }
 
 start_service "VKFoodAPI" "$API_DIR" "$API_PORT" "$API_PID_FILE" "$API_LOG_FILE"
+start_service "CTest.WebAdmin" "$WEB_DIR" "$WEB_PORT" "$WEB_PID_FILE" "$WEB_LOG_FILE"
 
 echo
 echo "API dang san sang tai: http://localhost:$API_PORT/api/pois"
+echo "WebAdmin dang san sang tai: http://localhost:$WEB_PORT"

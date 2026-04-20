@@ -1,9 +1,10 @@
 using CTest.WebAdmin.Models;
 using CTest.WebAdmin.Services;
 using Microsoft.AspNetCore.HttpOverrides;
+using VinhKhanhGuide.Core.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
-var poiApiBaseUrl = builder.Configuration["PoiApi:BaseUrl"] ?? "http://localhost:5287/";
+var poiApiBaseUrl = builder.Configuration["PoiApi:BaseUrl"];
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -50,7 +51,7 @@ app.Run();
 
 void ConfigureSharedApiClient(HttpClient client)
 {
-    client.BaseAddress = new Uri(poiApiBaseUrl);
+    client.BaseAddress = PoiApiDefaults.CreateBaseUri(poiApiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
 
     if (client.BaseAddress.Host.EndsWith(".ngrok-free.dev", StringComparison.OrdinalIgnoreCase))
