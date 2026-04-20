@@ -196,6 +196,9 @@
                     @Html.AntiForgeryToken()
                     <input asp-for="Id" type="hidden" />
                     <input asp-for="IsEditMode" type="hidden" />
+                    <input asp-for="OwnerUserCode" type="hidden" />
+                    <input asp-for="OwnerDisplayName" type="hidden" />
+                    <input asp-for="OwnerEmail" type="hidden" />
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
                     <div class="poi-editor-section">

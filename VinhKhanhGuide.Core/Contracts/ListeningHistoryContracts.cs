@@ -23,6 +23,8 @@ public sealed class ListeningHistoryEntryDto
     public string DevicePlatform { get; set; } = string.Empty;
     public bool AutoTriggered { get; set; }
     public DateTimeOffset StartedAtUtc { get; set; }
+    public DateTimeOffset ReceivedAtUtc { get; set; }
+    public int TtsQueuePosition { get; set; }
     public DateTimeOffset? CompletedAtUtc { get; set; }
     public int ListenSeconds { get; set; }
     public bool Completed { get; set; }
@@ -53,6 +55,8 @@ public sealed class ListeningHistoryEntryDto
             DevicePlatform = DevicePlatform,
             AutoTriggered = AutoTriggered,
             StartedAtUtc = StartedAtUtc,
+            ReceivedAtUtc = ReceivedAtUtc,
+            TtsQueuePosition = TtsQueuePosition,
             CompletedAtUtc = CompletedAtUtc,
             ListenSeconds = ListenSeconds,
             Completed = Completed,

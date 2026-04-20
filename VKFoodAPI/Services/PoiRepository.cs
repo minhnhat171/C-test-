@@ -222,6 +222,9 @@ public class PoiRepository
         normalized.NarrationText ??= string.Empty;
         normalized.MapLink ??= string.Empty;
         normalized.AudioAssetPath ??= string.Empty;
+        normalized.OwnerUserCode ??= string.Empty;
+        normalized.OwnerDisplayName ??= string.Empty;
+        normalized.OwnerEmail ??= string.Empty;
         normalized.CooldownMinutes = normalized.CooldownMinutes <= 0 ? 5 : normalized.CooldownMinutes;
         normalized.TriggerRadiusMeters = normalized.TriggerRadiusMeters <= 0 ? 50 : normalized.TriggerRadiusMeters;
         normalized.Priority = normalized.Priority <= 0 ? 1 : normalized.Priority;

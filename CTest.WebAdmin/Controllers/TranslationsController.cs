@@ -7,6 +7,7 @@ namespace CTest.WebAdmin.Controllers;
 public class TranslationsController : Controller
 {
     private readonly AppDataService _data;
+    private readonly WebDisplayClock _clock;
     private static readonly (string Code, string Label)[] SupportedLanguages =
     [
         ("vi", "Tiếng Việt"),
@@ -15,9 +16,10 @@ public class TranslationsController : Controller
         ("ko", "Tiếng Hàn")
     ];
 
-    public TranslationsController(AppDataService data)
+    public TranslationsController(AppDataService data, WebDisplayClock clock)
     {
         _data = data;
+        _clock = clock;
     }
 
     public IActionResult Index(int? poiId)
@@ -79,7 +81,7 @@ public class TranslationsController : Controller
         entry.NarrationScript = model.NarrationScript;
         entry.Body = model.NarrationScript;
         entry.IsApproved = model.IsTranslated;
-        entry.UpdatedAt = DateTime.Now;
+        entry.UpdatedAt = _clock.Now.DateTime;
 
         TempData["TranslationMessage"] = $"Đã cập nhật nội dung {model.LanguageLabel} cho {poi.Name}.";
         return RedirectToAction(nameof(Index), new { poiId = poi.Id });

@@ -5,8 +5,8 @@
     ViewData["Title"] = "Map Analytics";
 
     var hasCoordinates = Math.Abs(Model.Editor.Latitude) > 0.000001 || Math.Abs(Model.Editor.Longitude) > 0.000001;
-    var initialLatitude = hasCoordinates ? Model.Editor.Latitude.ToString(CultureInfo.InvariantCulture) : "10.762622";
-    var initialLongitude = hasCoordinates ? Model.Editor.Longitude.ToString(CultureInfo.InvariantCulture) : "106.682172";
+    var initialLatitude = hasCoordinates ? Model.Editor.Latitude.ToString(CultureInfo.InvariantCulture) : "10.761450";
+    var initialLongitude = hasCoordinates ? Model.Editor.Longitude.ToString(CultureInfo.InvariantCulture) : "106.702820";
     var activePoiCount = Model.Pois.Count(poi => poi.IsActive);
     var inactivePoiCount = Model.Pois.Count - activePoiCount;
     var activeDevices = Model.ActiveDeviceStats.Devices;
@@ -26,6 +26,7 @@
         ? "0 giay"
         : $"{Model.AverageListenSeconds:0.#} giay";
     var analyticsByPoi = Model.TopListeningPois.ToDictionary(item => item.PoiId);
+    var topListeningPoiId = Model.TopListeningPois.FirstOrDefault()?.PoiId ?? Guid.Empty;
     var mapPois = Model.Pois.Select(poi =>
     {
         analyticsByPoi.TryGetValue(poi.Id, out var poiAnalytics);
@@ -42,6 +43,7 @@
             radius = poi.RadiusInMeters,
             priority = poi.Priority,
             isActive = poi.IsActive,
+            isTopListening = poi.Id == topListeningPoiId,
             listenCount = poiAnalytics?.ListenCount ?? 0,
             averageListenSeconds = poiAnalytics?.AverageListenSeconds ?? 0,
             selectUrl = Url.Action("Index", "MapPois", new { poiId = poi.Id }) ?? $"/MapPois?poiId={poi.Id}",
@@ -222,8 +224,28 @@
         height: 16px;
         border-radius: 999px;
         border: 3px solid #fff;
-        background: #ef4444;
-        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.16), 0 10px 24px rgba(15, 23, 42, 0.22);
+        background: #0ea5e9;
+        box-shadow: 0 0 0 8px rgba(14, 165, 233, 0.16), 0 10px 24px rgba(15, 23, 42, 0.22);
+    }
+
+    .map-active-user-marker.device-color-1 {
+        background: #22c55e;
+        box-shadow: 0 0 0 8px rgba(34, 197, 94, 0.16), 0 10px 24px rgba(15, 23, 42, 0.22);
+    }
+
+    .map-active-user-marker.device-color-2 {
+        background: #f97316;
+        box-shadow: 0 0 0 8px rgba(249, 115, 22, 0.16), 0 10px 24px rgba(15, 23, 42, 0.22);
+    }
+
+    .map-active-user-marker.device-color-3 {
+        background: #e11d48;
+        box-shadow: 0 0 0 8px rgba(225, 29, 72, 0.16), 0 10px 24px rgba(15, 23, 42, 0.22);
+    }
+
+    .map-active-user-marker.device-color-4 {
+        background: #8b5cf6;
+        box-shadow: 0 0 0 8px rgba(139, 92, 246, 0.16), 0 10px 24px rgba(15, 23, 42, 0.22);
     }
 
     .map-route-popup {
@@ -301,6 +323,11 @@
 
     .map-poi-marker.has-listens {
         background: #14b8a6;
+    }
+
+    .map-poi-marker.is-top-listening {
+        background: #f59e0b;
+        box-shadow: 0 0 0 9px rgba(245, 158, 11, 0.20), 0 12px 28px rgba(15, 23, 42, 0.32);
     }
 
     .map-poi-popup {
@@ -875,8 +902,8 @@
                 return;
             }
 
-            const fallbackLat = 10.762622;
-            const fallbackLng = 106.682172;
+            const fallbackLat = 10.761450;
+            const fallbackLng = 106.702820;
             const selectedPoi = mapPois.find((poi) => poi.id === selectedPoiId) ?? null;
 
             const parseNumber = (value, fallback) => {
@@ -902,7 +929,7 @@
 
             const buildMarkerIcon = (poi, isSelected) => L.divIcon({
                 className: "",
-                html: `<span class="map-poi-marker ${isSelected ? "is-selected" : ""} ${poi.isActive ? "" : "is-inactive"} ${Number(poi.listenCount || 0) > 0 ? "has-listens" : ""}"></span>`,
+                html: `<span class="map-poi-marker ${isSelected ? "is-selected" : ""} ${poi.isActive ? "" : "is-inactive"} ${Number(poi.listenCount || 0) > 0 ? "has-listens" : ""} ${poi.isTopListening ? "is-top-listening" : ""}"></span>`,
                 iconSize: isSelected ? [22, 22] : [18, 18],
                 iconAnchor: isSelected ? [11, 11] : [9, 9],
                 popupAnchor: [0, -12]
@@ -1047,9 +1074,9 @@
                 });
             };
 
-            const buildActiveUserIcon = () => L.divIcon({
+            const buildActiveUserIcon = (index) => L.divIcon({
                 className: "",
-                html: '<span class="map-active-user-marker"></span>',
+                html: `<span class="map-active-user-marker device-color-${index % 5}"></span>`,
                 iconSize: [16, 16],
                 iconAnchor: [8, 8],
                 popupAnchor: [0, -10]
@@ -1164,7 +1191,7 @@
                 activeDeviceLayer.clearLayers();
                 getLocatedDevices(stats).forEach((device, index) => {
                     const marker = L.marker([Number(device.latitude), Number(device.longitude)], {
-                        icon: buildActiveUserIcon(),
+                        icon: buildActiveUserIcon(index),
                         title: `Nguoi dung online #${index + 1}`
                     });
 
@@ -1239,7 +1266,6 @@
 
                     renderAnalyticsLayers(await response.json());
                 } catch {
-                    // Keep the last rendered analytics layer if the API is temporarily unavailable.
                 } finally {
                     isLoadingStats = false;
                 }

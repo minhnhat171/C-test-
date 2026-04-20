@@ -1,9 +1,12 @@
+using CTest.WebAdmin.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CTest.WebAdmin.Services;
 using CTest.WebAdmin.Models;
 
 namespace CTest.WebAdmin.Controllers;
 
+[Authorize(Policy = WebAdminPolicies.AdminOnly)]
 public class ToursController : Controller
 {
     private readonly TourAdminService _tourService;

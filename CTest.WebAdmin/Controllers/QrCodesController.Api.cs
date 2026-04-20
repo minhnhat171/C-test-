@@ -1,6 +1,8 @@
 using System.Globalization;
 using CTest.WebAdmin.Models;
+using CTest.WebAdmin.Security;
 using CTest.WebAdmin.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -11,6 +13,7 @@ using VinhKhanhGuide.Core.Mappings;
 
 namespace CTest.WebAdmin.Controllers;
 
+[Authorize(Policy = WebAdminPolicies.AdminOnly)]
 public class QrCodesController : Controller
 {
     private static readonly string[] SupportedNarrationLanguages = ["vi", "en", "zh", "ko", "fr"];
@@ -90,6 +93,7 @@ public class QrCodesController : Controller
     }
 
     [HttpGet("/qr/{id:guid}")]
+    [AllowAnonymous]
     public IActionResult LegacyPoiScan(Guid id)
     {
         return RedirectToAction(nameof(Scan), new
@@ -100,6 +104,7 @@ public class QrCodesController : Controller
     }
 
     [HttpGet("/qr/{targetType}/{targetId}")]
+    [AllowAnonymous]
     public async Task<IActionResult> Scan(
         string targetType,
         string targetId,
@@ -124,6 +129,7 @@ public class QrCodesController : Controller
     }
 
     [HttpPost("/qr/analytics/listening-history")]
+    [AllowAnonymous]
     public async Task<ActionResult<object>> CreateListeningHistory(
         [FromBody] ListeningHistoryCreateRequest request,
         CancellationToken cancellationToken = default)
@@ -152,6 +158,7 @@ public class QrCodesController : Controller
     }
 
     [HttpPut("/qr/analytics/listening-history/{id:guid}")]
+    [AllowAnonymous]
     public async Task<IActionResult> UpdateListeningHistory(
         Guid id,
         [FromBody] ListeningHistoryUpdateRequest request,
@@ -174,6 +181,7 @@ public class QrCodesController : Controller
     }
 
     [HttpPost("/qr/analytics/active-devices/heartbeat")]
+    [AllowAnonymous]
     public async Task<IActionResult> WebHeartbeat(
         [FromBody] ActiveDeviceHeartbeatRequest request,
         CancellationToken cancellationToken = default)
@@ -200,6 +208,7 @@ public class QrCodesController : Controller
     }
 
     [HttpPost("/qr/analytics/active-devices/disconnect")]
+    [AllowAnonymous]
     public async Task<IActionResult> WebDisconnect(
         [FromBody] ActiveDeviceDisconnectRequest request,
         CancellationToken cancellationToken = default)
@@ -226,6 +235,7 @@ public class QrCodesController : Controller
     }
 
     [HttpGet("/qr/image/{targetType}/{targetId}")]
+    [AllowAnonymous]
     public async Task<IActionResult> Image(
         string targetType,
         string targetId,

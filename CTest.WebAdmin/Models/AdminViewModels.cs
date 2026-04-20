@@ -23,6 +23,9 @@ public class PoiListItemViewModel
     public int Priority { get; set; }
     public bool IsActive { get; set; }
     public int RelatedAudioCount { get; set; }
+    public string OwnerUserCode { get; set; } = string.Empty;
+    public string OwnerDisplayName { get; set; } = string.Empty;
+    public string OwnerEmail { get; set; } = string.Empty;
 
     public string DisplayId =>
         Id == Guid.Empty
@@ -48,6 +51,9 @@ public class PoiEditorViewModel
     public string MapLink { get; set; } = string.Empty;
     public string NarrationScript { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
+    public string OwnerUserCode { get; set; } = string.Empty;
+    public string OwnerDisplayName { get; set; } = string.Empty;
+    public string OwnerEmail { get; set; } = string.Empty;
     public bool IsEditMode { get; set; }
     public int RelatedAudioCount { get; set; }
     public int RelatedTranslationCount { get; set; }
@@ -72,6 +78,14 @@ public class MapPoiManagementViewModel
     public double AverageListenSeconds { get; set; }
 
     public bool HasSelection => Editor.Id != Guid.Empty;
+}
+
+public class OwnerPortalViewModel
+{
+    public PoiEditorViewModel Registration { get; set; } = new();
+    public PoiManagementViewModel Pois { get; set; } = new();
+    public ListeningHistoryPageViewModel ListeningHistory { get; set; } = new();
+    public string OwnerDisplayName { get; set; } = string.Empty;
 }
 
 public class PoiLookupItemViewModel

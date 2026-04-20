@@ -19,7 +19,10 @@ internal static class PoiAdminMappings
             Longitude = dto.Longitude,
             RadiusInMeters = dto.TriggerRadiusMeters,
             Priority = dto.Priority,
-            IsActive = dto.IsActive
+            IsActive = dto.IsActive,
+            OwnerUserCode = dto.OwnerUserCode,
+            OwnerDisplayName = dto.OwnerDisplayName,
+            OwnerEmail = dto.OwnerEmail
         };
     }
 
@@ -68,6 +71,9 @@ internal static class PoiAdminMappings
             MapLink = dto.MapLink,
             NarrationScript = narrationScript ?? string.Empty,
             IsActive = dto.IsActive,
+            OwnerUserCode = dto.OwnerUserCode,
+            OwnerDisplayName = dto.OwnerDisplayName,
+            OwnerEmail = dto.OwnerEmail,
             IsEditMode = true,
             RelatedAudioCount = relatedAudioCount,
             RelatedTranslationCount = dto.NarrationTranslations?.Count(x => !string.IsNullOrWhiteSpace(x.Value)) ?? 0,
@@ -96,6 +102,9 @@ internal static class PoiAdminMappings
             : model.MapLink.Trim();
         dto.NarrationText = model.NarrationScript.Trim();
         dto.IsActive = model.IsActive;
+        dto.OwnerUserCode = model.OwnerUserCode.Trim();
+        dto.OwnerDisplayName = model.OwnerDisplayName.Trim();
+        dto.OwnerEmail = model.OwnerEmail.Trim().ToLowerInvariant();
         dto.NarrationTranslations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         dto.NarrationTranslations["vi"] = dto.NarrationText;
     }

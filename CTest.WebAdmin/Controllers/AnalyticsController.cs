@@ -1,8 +1,11 @@
+using CTest.WebAdmin.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
 namespace CTest.WebAdmin.Controllers;
 
+[Authorize(Policy = WebAdminPolicies.AdminOnly)]
 public class AnalyticsController : Controller
 {
     [HttpGet]

@@ -1,8 +1,11 @@
+using CTest.WebAdmin.Security;
 using CTest.WebAdmin.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CTest.WebAdmin.Controllers;
 
+[Authorize(Policy = WebAdminPolicies.AdminOnly)]
 public class UsageLogsController : Controller
 {
     private readonly ListeningHistoryService _listeningHistoryService;

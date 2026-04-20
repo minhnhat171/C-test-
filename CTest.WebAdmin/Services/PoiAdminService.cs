@@ -1,4 +1,5 @@
 using CTest.WebAdmin.Models;
+using CTest.WebAdmin.Security;
 using VinhKhanhGuide.Core.Contracts;
 
 namespace CTest.WebAdmin.Services;
@@ -9,17 +10,20 @@ public class PoiAdminService
     private readonly AudioGuideApiClient _audioGuideApiClient;
     private readonly ListeningHistoryApiClient _listeningHistoryApiClient;
     private readonly ActiveDeviceApiClient _activeDeviceApiClient;
+    private readonly IWebAdminCurrentUser _currentUser;
 
     public PoiAdminService(
         PoiApiClient poiApiClient,
         AudioGuideApiClient audioGuideApiClient,
         ListeningHistoryApiClient listeningHistoryApiClient,
-        ActiveDeviceApiClient activeDeviceApiClient)
+        ActiveDeviceApiClient activeDeviceApiClient,
+        IWebAdminCurrentUser currentUser)
     {
         _poiApiClient = poiApiClient;
         _audioGuideApiClient = audioGuideApiClient;
         _listeningHistoryApiClient = listeningHistoryApiClient;
         _activeDeviceApiClient = activeDeviceApiClient;
+        _currentUser = currentUser;
     }
 
     public async Task<PoiManagementViewModel> LoadManagementPageAsync(
@@ -36,7 +40,7 @@ public class PoiAdminService
             .GroupBy(item => item.PoiId)
             .ToDictionary(group => group.Key, group => group.Count());
 
-        var query = poisTask.Result
+        var query = FilterPoisForCurrentUser(poisTask.Result)
             .Select(x =>
             {
                 var item = x.ToListItem();
@@ -84,7 +88,7 @@ public class PoiAdminService
             .GroupBy(item => item.PoiId)
             .ToDictionary(group => group.Key, group => group.Count());
 
-        var orderedPois = poisTask.Result
+        var orderedPois = FilterPoisForCurrentUser(poisTask.Result)
             .OrderByDescending(x => x.Priority)
             .ThenBy(x => x.Name)
             .ToList();
@@ -150,7 +154,7 @@ public class PoiAdminService
         await Task.WhenAll(poiTask, audioGuidesTask);
 
         var poi = poiTask.Result;
-        if (poi is null)
+        if (poi is null || !_currentUser.CanManage(poi))
         {
             return null;
         }
@@ -166,6 +170,10 @@ public class PoiAdminService
     {
         var dto = new PoiDto { Id = Guid.NewGuid() };
         dto.ApplyEditorValues(model);
+        if (_currentUser.IsPoiOwner && !_currentUser.IsAdmin)
+        {
+            ApplyOwner(dto);
+        }
 
         var created = await _poiApiClient.CreatePoiAsync(dto, cancellationToken);
 
@@ -184,7 +192,16 @@ public class PoiAdminService
             return PoiOperationResult.Missing("POI không còn tồn tại trên API.");
         }
 
+        if (!_currentUser.CanManage(poi))
+        {
+            return PoiOperationResult.Missing("Ban khong co quyen cap nhat POI nay.");
+        }
+
         poi.ApplyEditorValues(model);
+        if (_currentUser.IsPoiOwner && !_currentUser.IsAdmin)
+        {
+            ApplyOwner(poi);
+        }
         var updated = await _poiApiClient.UpdatePoiAsync(poi.Id, poi, cancellationToken);
 
         return updated
@@ -201,6 +218,17 @@ public class PoiAdminService
         if (id == Guid.Empty)
         {
             return PoiOperationResult.Failure("Không xác định được POI cần xóa.");
+        }
+
+        var existing = await _poiApiClient.GetPoiAsync(id, cancellationToken);
+        if (existing is null)
+        {
+            return PoiOperationResult.Missing("Khong tim thay POI de xoa.");
+        }
+
+        if (!_currentUser.CanManage(existing))
+        {
+            return PoiOperationResult.Missing("Ban khong co quyen xoa POI nay.");
         }
 
         var deleted = await _poiApiClient.DeletePoiAsync(id, cancellationToken);
@@ -241,6 +269,30 @@ public class PoiAdminService
             .ThenBy(item => item.PoiName)
             .Take(5)
             .ToList();
+    }
+
+    private IReadOnlyList<PoiDto> FilterPoisForCurrentUser(IReadOnlyList<PoiDto> pois)
+    {
+        if (_currentUser.IsAdmin)
+        {
+            return pois;
+        }
+
+        if (!_currentUser.IsPoiOwner)
+        {
+            return [];
+        }
+
+        return pois
+            .Where(_currentUser.CanManage)
+            .ToList();
+    }
+
+    private void ApplyOwner(PoiDto dto)
+    {
+        dto.OwnerUserCode = _currentUser.OwnerCode;
+        dto.OwnerDisplayName = _currentUser.DisplayName;
+        dto.OwnerEmail = _currentUser.OwnerEmail;
     }
 
     private static string ResolvePoiName(ListeningHistoryEntryDto item)

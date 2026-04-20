@@ -1,9 +1,12 @@
 using CTest.WebAdmin.Models;
+using CTest.WebAdmin.Security;
 using CTest.WebAdmin.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CTest.WebAdmin.Controllers;
 
+[Authorize(Policy = WebAdminPolicies.AdminOnly)]
 public class AudioGuidesController : Controller
 {
     private readonly AudioGuideAdminService _audioGuideService;
