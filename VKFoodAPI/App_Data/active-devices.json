@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "DeviceId": "c239ade3cc3c4225be40424773acef4f",
+    "UserCode": "guest",
+    "UserDisplayName": "duy khoa",
+    "UserEmail": "123@gmail.com",
+    "DevicePlatform": "Android",
+    "DeviceModel": "Google sdk_gphone64_x86_64",
+    "AppVersion": "1.0.0",
+    "ConnectedAtUtc": "2026-04-20T15:12:27.016566+00:00",
+    "LastSeenAtUtc": "2026-04-20T15:50:10.9201103+00:00",
+    "SecondsSinceLastSeen": 0,
+    "IsActive": true
+  }
+]
