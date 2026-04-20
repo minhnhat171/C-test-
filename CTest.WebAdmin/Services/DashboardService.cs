@@ -7,6 +7,7 @@ public class DashboardService
 {
     private readonly PoiApiClient _poiApiClient;
     private readonly TourApiClient _tourApiClient;
+    private readonly AudioGuideApiClient _audioGuideApiClient;
     private readonly ListeningHistoryApiClient _listeningHistoryApiClient;
     private readonly UserManagementApiClient _userManagementApiClient;
     private readonly ActiveDeviceApiClient _activeDeviceApiClient;
@@ -15,6 +16,7 @@ public class DashboardService
     public DashboardService(
         PoiApiClient poiApiClient,
         TourApiClient tourApiClient,
+        AudioGuideApiClient audioGuideApiClient,
         ListeningHistoryApiClient listeningHistoryApiClient,
         UserManagementApiClient userManagementApiClient,
         ActiveDeviceApiClient activeDeviceApiClient,
@@ -22,6 +24,7 @@ public class DashboardService
     {
         _poiApiClient = poiApiClient;
         _tourApiClient = tourApiClient;
+        _audioGuideApiClient = audioGuideApiClient;
         _listeningHistoryApiClient = listeningHistoryApiClient;
         _userManagementApiClient = userManagementApiClient;
         _activeDeviceApiClient = activeDeviceApiClient;
@@ -34,6 +37,7 @@ public class DashboardService
         {
             var poisTask = _poiApiClient.GetPoisAsync(cancellationToken);
             var toursTask = _tourApiClient.GetToursAsync(cancellationToken);
+            var audioGuidesTask = _audioGuideApiClient.GetAudioGuidesAsync(cancellationToken);
             var historyTask = _listeningHistoryApiClient.GetListeningHistoryAsync(
                 sortBy: "time_desc",
                 period: "all",
@@ -41,10 +45,11 @@ public class DashboardService
             var usersTask = _userManagementApiClient.GetUsersAsync(cancellationToken);
             var activeDevicesTask = GetActiveDeviceStatsAsync(cancellationToken);
 
-            await Task.WhenAll(poisTask, toursTask, historyTask, usersTask, activeDevicesTask);
+            await Task.WhenAll(poisTask, toursTask, audioGuidesTask, historyTask, usersTask, activeDevicesTask);
 
             return BuildFromSharedData(
                 poisTask.Result,
+                audioGuidesTask.Result,
                 historyTask.Result,
                 toursTask.Result.Count,
                 usersTask.Result,
@@ -86,6 +91,7 @@ public class DashboardService
 
     private static DashboardViewModel BuildFromSharedData(
         IReadOnlyList<PoiDto> pois,
+        IReadOnlyList<AudioGuideDto> audioGuides,
         IReadOnlyList<ListeningHistoryEntryDto> history,
         int totalTours,
         IReadOnlyList<AdminUserSummaryDto> users,
@@ -116,11 +122,17 @@ public class DashboardService
             .ToList();
 
         var totalUsageLogs = localizedHistory.Count;
+        var poiIdsWithPublishedAudio = audioGuides
+            .Where(item => item.IsPublished)
+            .Select(item => item.PoiId)
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToHashSet();
 
         return new DashboardViewModel
         {
             TotalPois = pois.Count,
-            TotalAudioGuides = pois.Sum(CountAudioVariants),
+            TotalAudioGuides = pois.Count,
             MappedPoiCount = pois.Count(HasMapData),
             TotalQrCodes = pois.Count(poi => poi.IsActive && !string.IsNullOrWhiteSpace(poi.Code)),
             TodayListenCount = localizedHistory.Count(x => x.LocalStartedAt.Date == today),
@@ -130,7 +142,7 @@ public class DashboardService
             AverageListenSeconds = totalUsageLogs == 0 ? 0 : localizedHistory.Average(x => x.Item.ListenSeconds),
             CompletionRate = totalUsageLogs == 0 ? 0 : (int)Math.Round(localizedHistory.Count(x => x.Item.Completed) * 100.0 / totalUsageLogs),
             QrListenRate = totalUsageLogs == 0 ? 0 : (int)Math.Round(localizedHistory.Count(x => IsQrTrigger(x.Item.TriggerType)) * 100.0 / totalUsageLogs),
-            PublishedAudioCount = pois.Count(poi => poi.IsActive && CountAudioVariants(poi) > 0),
+            PublishedAudioCount = pois.Count(poi => poiIdsWithPublishedAudio.Contains(poi.Id)),
             ActivePoiCount = pois.Count(poi => poi.IsActive),
             ActiveDeviceStats = activeDevices.Clone(),
             ActiveDeviceCount = activeDevices.ActiveDeviceCount,
@@ -224,7 +236,7 @@ public class DashboardService
         return new DashboardViewModel
         {
             TotalPois = _fallbackData.Pois.Count,
-            TotalAudioGuides = _fallbackData.AudioGuides.Count,
+            TotalAudioGuides = _fallbackData.Pois.Count,
             MappedPoiCount = _fallbackData.Pois.Count(HasMapData),
             TotalQrCodes = totalQrCodes,
             TodayListenCount = _fallbackData.UsageLogs.Count(x => x.StartedAt.Date == today),
@@ -234,7 +246,8 @@ public class DashboardService
             AverageListenSeconds = totalUsageLogs == 0 ? 0 : _fallbackData.UsageLogs.Average(x => x.ListenSeconds),
             CompletionRate = totalUsageLogs == 0 ? 0 : (int)Math.Round(_fallbackData.UsageLogs.Count(x => x.Completed) * 100.0 / totalUsageLogs),
             QrListenRate = totalUsageLogs == 0 ? 0 : (int)Math.Round(_fallbackData.UsageLogs.Count(x => x.TriggerType == "QR") * 100.0 / totalUsageLogs),
-            PublishedAudioCount = _fallbackData.AudioGuides.Count(x => x.IsPublished),
+            PublishedAudioCount = _fallbackData.Pois.Count(poi =>
+                _fallbackData.AudioGuides.Any(audioGuide => audioGuide.PoiId == poi.Id && audioGuide.IsPublished)),
             ActivePoiCount = _fallbackData.Pois.Count(x => x.IsActive),
             ActiveDeviceStats = new ActiveDeviceStatsDto
             {

@@ -32,6 +32,10 @@ internal static class PoiAdminMappings
             Name = dto.Name,
             Address = dto.Address,
             Description = dto.Description,
+            NarrationText = dto.NarrationText,
+            NarrationTranslations = new Dictionary<string, string>(
+                dto.NarrationTranslations ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+                StringComparer.OrdinalIgnoreCase),
             IsActive = dto.IsActive
         };
     }

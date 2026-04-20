@@ -159,6 +159,35 @@
         font-weight: 800;
     }
 
+    .audio-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .audio-summary-card {
+        padding: 1rem;
+        border-radius: 8px;
+        background: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .audio-summary-label {
+        color: var(--audio-muted);
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .audio-summary-value {
+        margin-top: 0.35rem;
+        font-size: 1.6rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
     @@media (max-width: 1199.98px) {
         .audio-layout {
             grid-template-columns: 1fr;
@@ -166,6 +195,16 @@
 
         .audio-head {
             flex-direction: column;
+        }
+
+        .audio-summary-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .audio-summary-grid {
+            grid-template-columns: 1fr;
         }
     }
 </style>
@@ -188,7 +227,7 @@
         </div>
         <div class="alert alert-primary border-0 shadow-sm">
             Dang quan ly audio cho POI <strong>@Model.ScopePoiName</strong> (@Model.ScopePoiCode).
-            Hien co <strong>@Model.Items.Count</strong> ban ghi trong danh sach nay.
+            Hien co <strong>@Model.PoiWithSelectedLanguageAudioCount</strong> ban ghi dung ngon ngu dang chon.
         </div>
     }
 
@@ -202,62 +241,89 @@
         <div class="alert alert-warning border-0 shadow-sm">@Model.LoadErrorMessage</div>
     }
 
+    <div class="audio-summary-grid">
+        <div class="audio-summary-card">
+            <div class="audio-summary-label">POI tu API</div>
+            <div class="audio-summary-value">@Model.TotalPoiCount</div>
+        </div>
+        <div class="audio-summary-card">
+            <div class="audio-summary-label">Co TTS ngon ngu nay</div>
+            <div class="audio-summary-value">@Model.PoiWithSelectedLanguageAudioCount</div>
+        </div>
+        <div class="audio-summary-card">
+            <div class="audio-summary-label">Da publish</div>
+            <div class="audio-summary-value">@Model.PublishedPoiAudioCount</div>
+        </div>
+        <div class="audio-summary-card">
+            <div class="audio-summary-label">Can tao them</div>
+            <div class="audio-summary-value">@Model.MissingSelectedLanguageAudioCount</div>
+        </div>
+    </div>
+
     <div class="audio-layout">
         <div class="audio-panel">
             <div class="table-responsive">
                 <table class="table audio-table align-middle">
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>POI</th>
-                            <th>Ngôn ngữ</th>
-                            <th>Nguồn</th>
-                            <th>Trạng thái</th>
-                            <th>Cập nhật</th>
-                            <th>Thao tác</th>
+                            <th>Audio / TTS</th>
+                            <th>Ngon ngu da co</th>
+                            <th>Trang thai</th>
+                            <th>Cap nhat</th>
+                            <th>Thao tac</th>
                         </tr>
                     </thead>
                     <tbody>
-                    @if (Model.Items.Any())
+                    @if (Model.PoiAudioItems.Any())
                     {
-                        @foreach (var item in Model.Items)
+                        @foreach (var item in Model.PoiAudioItems)
                         {
                             <tr class="@(item.IsSelected ? "audio-row-selected" : string.Empty)">
-                                <td><span class="fw-semibold">@item.DisplayId</span></td>
                                 <td>
                                     <div class="fw-semibold">@item.PoiName</div>
                                     <div class="text-muted small">@item.PoiCode</div>
+                                    <div class="text-muted small">@item.PoiAddress</div>
                                 </td>
                                 <td>
+                                    <div class="fw-semibold">@item.DisplayId</div>
                                     <div>@item.LanguageLabel</div>
                                     <div class="text-muted small">@item.VoiceLabel</div>
                                 </td>
+                                <td>@item.AvailableLanguageLabels</td>
                                 <td>
-                                    <span class="audio-pill @(item.SourceType == "file" ? "source-file" : "source-tts")">
-                                        @item.SourceLabel
+                                    <span class="audio-pill @(item.HasSelectedLanguageAudio ? (item.HasPublishedAudio ? "status-published" : "status-draft") : "source-tts")">
+                                        @item.StatusLabel
                                     </span>
+                                    <div class="text-muted small mt-1">@item.SourceLabel</div>
                                 </td>
-                                <td>
-                                    <span class="audio-pill @(item.IsPublished ? "status-published" : "status-draft")">
-                                        @(item.IsPublished ? "Đang dùng" : "Bản nháp")
-                                    </span>
-                                </td>
-                                <td>@item.UpdatedAtLocal.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@(item.UpdatedAtLocal?.ToString("dd/MM/yyyy HH:mm") ?? "Chua tao")</td>
                                 <td>
                                     <div class="audio-actions">
                                         <a asp-controller="Pois" asp-action="Details" asp-route-id="@item.PoiId" class="btn btn-outline-secondary btn-sm rounded-pill">POI</a>
-                                        <a asp-action="Index" asp-route-audioId="@item.Id" asp-route-poiId="@Model.ScopePoiId" class="btn btn-outline-primary btn-sm rounded-pill">Sửa</a>
+                                        @if (item.AudioId.HasValue)
+                                        {
+                                            <a asp-action="Index" asp-route-audioId="@item.AudioId" asp-route-poiId="@item.PoiId" asp-route-languageCode="@item.LanguageCode" class="btn btn-outline-primary btn-sm rounded-pill">Sua</a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-action="Index" asp-route-poiId="@item.PoiId" asp-route-languageCode="@item.LanguageCode" asp-route-createNew="true" class="btn btn-primary btn-sm rounded-pill">Tao TTS</a>
+                                        }
                                         <button type="button"
                                                 class="btn btn-outline-dark btn-sm rounded-pill js-audio-preview"
                                                 data-script="@item.Script">
                                             Nghe thử
                                         </button>
-                                        <form asp-action="Delete" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa audio này không?');">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@item.Id" />
-                                            <input type="hidden" name="scopePoiId" value="@Model.ScopePoiId" />
-                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">Xóa</button>
-                                        </form>
+                                        @if (item.AudioId.HasValue)
+                                        {
+                                            <form asp-action="Delete" method="post" onsubmit="return confirm('Ban co chac muon xoa audio nay khong?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@item.AudioId" />
+                                                <input type="hidden" name="scopePoiId" value="@item.PoiId" />
+                                                <input type="hidden" name="languageCode" value="@item.LanguageCode" />
+                                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">Xoa</button>
+                                            </form>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -266,7 +332,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">Chưa có audio nào trong VKFoodAPI.</td>
+                            <td colspan="6" class="text-center py-4 text-muted">Chua co POI nao trong VKFoodAPI de tao Audio / TTS.</td>
                         </tr>
                     }
                     </tbody>

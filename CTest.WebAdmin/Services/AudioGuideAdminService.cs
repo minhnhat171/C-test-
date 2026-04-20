@@ -41,9 +41,12 @@ public class AudioGuideAdminService
 
             await Task.WhenAll(poisTask, audioGuidesTask);
 
-            vm.Pois = poisTask.Result
+            var orderedPois = poisTask.Result
                 .OrderByDescending(item => item.IsActive)
                 .ThenBy(item => item.Name)
+                .ToList();
+
+            vm.Pois = orderedPois
                 .Select(item => item.ToLookupItem())
                 .ToList();
 
@@ -69,6 +72,13 @@ public class AudioGuideAdminService
                 normalizedLanguageCode,
                 createNew);
 
+            vm.PoiAudioItems = BuildPoiAudioCoverage(
+                orderedPois,
+                audioGuidesTask.Result,
+                normalizedLanguageCode,
+                vm.ScopePoiId,
+                selectedGuide?.Id);
+
             vm.Items = scopedAudioGuides
                 .OrderByDescending(item => item.UpdatedAtUtc)
                 .ThenBy(item => item.PoiName)
@@ -81,10 +91,14 @@ public class AudioGuideAdminService
 
             if (createNew || selectedGuide is null)
             {
+                var selectedPoi = vm.Pois.FirstOrDefault(item => item.Id == (vm.ScopePoiId ?? Guid.Empty));
                 vm.Editor = new AudioGuideEditorFormViewModel
                 {
                     PoiId = vm.ScopePoiId ?? Guid.Empty,
-                    LanguageCode = normalizedLanguageCode
+                    LanguageCode = normalizedLanguageCode,
+                    Script = selectedPoi is null
+                        ? string.Empty
+                        : ResolveDefaultScript(selectedPoi, normalizedLanguageCode)
                 };
                 return vm;
             }
@@ -217,6 +231,102 @@ public class AudioGuideAdminService
                 };
             })
             .ToList();
+    }
+
+    private static List<AudioGuidePoiCoverageItemViewModel> BuildPoiAudioCoverage(
+        IReadOnlyList<PoiDto> pois,
+        IReadOnlyList<AudioGuideDto> audioGuides,
+        string selectedLanguageCode,
+        Guid? scopePoiId,
+        Guid? selectedAudioId)
+    {
+        var audioByPoi = audioGuides
+            .GroupBy(item => item.PoiId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        return pois
+            .Where(poi => !scopePoiId.HasValue || poi.Id == scopePoiId.Value)
+            .Select(poi =>
+            {
+                audioByPoi.TryGetValue(poi.Id, out var poiAudioGuides);
+                poiAudioGuides ??= [];
+
+                var selectedLanguageGuide = poiAudioGuides
+                    .Where(item => string.Equals(
+                        AudioGuideAdminMappings.NormalizeLanguageCode(item.LanguageCode),
+                        selectedLanguageCode,
+                        StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(item => item.UpdatedAtUtc)
+                    .FirstOrDefault();
+
+                var fallbackGuide = selectedLanguageGuide ?? poiAudioGuides
+                    .OrderByDescending(item => item.UpdatedAtUtc)
+                    .FirstOrDefault();
+
+                var languageLabels = poiAudioGuides
+                    .Select(item => AudioGuideAdminMappings.GetLanguageLabel(item.LanguageCode))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(label => label)
+                    .ToList();
+
+                return new AudioGuidePoiCoverageItemViewModel
+                {
+                    PoiId = poi.Id,
+                    PoiCode = poi.Code,
+                    PoiName = poi.Name,
+                    PoiAddress = poi.Address,
+                    IsActivePoi = poi.IsActive,
+                    AudioId = selectedLanguageGuide?.Id,
+                    LanguageCode = selectedLanguageCode,
+                    LanguageLabel = AudioGuideAdminMappings.GetLanguageLabel(selectedLanguageCode),
+                    VoiceLabel = selectedLanguageGuide is null
+                        ? "TTS mac dinh"
+                        : AudioGuideAdminMappings.GetVoiceLabel(selectedLanguageGuide.VoiceType),
+                    SourceType = selectedLanguageGuide is null
+                        ? "tts"
+                        : AudioGuideAdminMappings.NormalizeSourceType(selectedLanguageGuide.SourceType),
+                    SourceLabel = selectedLanguageGuide is null
+                        ? "Can tao TTS"
+                        : AudioGuideAdminMappings.GetSourceLabel(selectedLanguageGuide.SourceType),
+                    Script = selectedLanguageGuide?.Script ?? ResolveDefaultScript(poi, selectedLanguageCode),
+                    AudioCount = poiAudioGuides.Count,
+                    AvailableLanguageLabels = languageLabels.Count == 0
+                        ? "Chua co"
+                        : string.Join(", ", languageLabels),
+                    HasSelectedLanguageAudio = selectedLanguageGuide is not null,
+                    HasPublishedAudio = poiAudioGuides.Any(item => item.IsPublished),
+                    IsSelected = selectedAudioId.HasValue && fallbackGuide?.Id == selectedAudioId.Value,
+                    UpdatedAtLocal = selectedLanguageGuide?.UpdatedAtUtc.ToLocalTime()
+                };
+            })
+            .ToList();
+    }
+
+    private static string ResolveDefaultScript(PoiLookupItemViewModel poi, string languageCode)
+    {
+        if (poi.NarrationTranslations.TryGetValue(languageCode, out var translated) &&
+            !string.IsNullOrWhiteSpace(translated))
+        {
+            return translated;
+        }
+
+        return !string.IsNullOrWhiteSpace(poi.NarrationText)
+            ? poi.NarrationText
+            : poi.Description;
+    }
+
+    private static string ResolveDefaultScript(PoiDto poi, string languageCode)
+    {
+        if (poi.NarrationTranslations is not null &&
+            poi.NarrationTranslations.TryGetValue(languageCode, out var translated) &&
+            !string.IsNullOrWhiteSpace(translated))
+        {
+            return translated;
+        }
+
+        return !string.IsNullOrWhiteSpace(poi.NarrationText)
+            ? poi.NarrationText
+            : poi.Description;
     }
 }
 
