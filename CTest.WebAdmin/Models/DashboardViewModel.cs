@@ -1,3 +1,5 @@
+using VinhKhanhGuide.Core.Contracts;
+
 namespace CTest.WebAdmin.Models;
 
 public class DashboardViewModel
@@ -20,6 +22,8 @@ public class DashboardViewModel
     public int QrListenRate { get; set; }
     public int PublishedAudioCount { get; set; }
     public int ActivePoiCount { get; set; }
+    public int ActiveDeviceCount { get; set; }
+    public ActiveDeviceStatsDto ActiveDeviceStats { get; set; } = new();
     public bool IsSyncOnline { get; set; }
     public DateTime? LastSyncedAt { get; set; }
     public string DataSourceLabel { get; set; } = string.Empty;

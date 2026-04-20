@@ -12,17 +12,23 @@ public partial class App : Application
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IAuthService _authService;
+    private readonly IActiveDeviceTracker _activeDeviceTracker;
     private bool _isHandlingQrRequests;
     private bool _isSigningInGuestForQr;
 
-    public App(IServiceProvider serviceProvider, IAuthService authService)
+    public App(
+        IServiceProvider serviceProvider,
+        IAuthService authService,
+        IActiveDeviceTracker activeDeviceTracker)
     {
         _serviceProvider = serviceProvider;
         _authService = authService;
+        _activeDeviceTracker = activeDeviceTracker;
         _authService.SessionChanged += OnSessionChanged;
         QrDeepLinkBroker.PendingRequestAvailable += OnPendingQrRequestAvailable;
 
         UpdateRootPage();
+        _ = _activeDeviceTracker.StartAsync();
         _ = DrainPendingQrRequestsAsync();
     }
 
@@ -36,8 +42,30 @@ public partial class App : Application
         MainThread.BeginInvokeOnMainThread(() =>
         {
             UpdateRootPage();
+            _ = _activeDeviceTracker.SendHeartbeatAsync();
             _ = DrainPendingQrRequestsAsync();
         });
+    }
+
+    protected override void OnStart()
+    {
+        _ = _activeDeviceTracker.StartAsync();
+    }
+
+    protected override void OnResume()
+    {
+        _ = _activeDeviceTracker.StartAsync();
+    }
+
+    protected override void OnSleep()
+    {
+        _ = StopActiveDeviceTrackerAsync();
+    }
+
+    private async Task StopActiveDeviceTrackerAsync()
+    {
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        await _activeDeviceTracker.StopAsync(cancellation.Token);
     }
 
     private void UpdateRootPage()
