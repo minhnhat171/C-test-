@@ -5,6 +5,7 @@ using VinhKhanhGuide.App.Services;
 using VinhKhanhGuide.App.ViewModels;
 using VinhKhanhGuide.App.Views;
 using VinhKhanhGuide.Core.Interfaces;
+using VinhKhanhGuide.Core.Services;
 
 namespace VinhKhanhGuide.App;
 
@@ -59,6 +60,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<ILocationService, LocationService>();
         builder.Services.AddSingleton<IMapOfflineTileService, MapOfflineTileService>();
         builder.Services.AddSingleton<IPoiOfflineStore, PoiOfflineStore>();
+        builder.Services.AddSingleton<IAutoPoiSelectionService, PoiAutoNarrationDecisionService>();
         builder.Services.AddSingleton<IPoiProvider, PoiProvider>();
         builder.Services.AddSingleton<IPoiRepository, PoiRepository>();
         builder.Services.AddSingleton<ITourProvider, TourProvider>();

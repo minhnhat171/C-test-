@@ -189,6 +189,13 @@ public sealed class LocationForegroundService : Service
 
     private void HandleLocationChanged(AndroidLocation location)
     {
+        if (!VinhKhanhGuide.App.Services.LocationService.IsValidCoordinate(
+                location.Latitude,
+                location.Longitude))
+        {
+            return;
+        }
+
         var dto = new LocationDto
         {
             Latitude = location.Latitude,

@@ -868,11 +868,11 @@ public partial class MainPage : ContentPage
         return new Pin
         {
             Type = PinType.Pin,
-            Color = Color.FromArgb("#102A43"),
+            Color = Color.FromArgb("#06283D"),
             Position = new Position(MainViewModel.EntranceLatitude, MainViewModel.EntranceLongitude),
             Label = string.Empty,
             Address = string.Empty,
-            Scale = 0.42F
+            Scale = 0.34F
         };
     }
 
@@ -881,11 +881,11 @@ public partial class MainPage : ContentPage
         return new Pin
         {
             Type = PinType.Pin,
-            Color = Color.FromArgb("#2F80FF"),
+            Color = Color.FromArgb("#1685FF"),
             Position = new Position(location.Latitude, location.Longitude),
             Label = string.Empty,
             Address = string.Empty,
-            Scale = 0.48F
+            Scale = 0.42F
         };
     }
 
@@ -896,26 +896,26 @@ public partial class MainPage : ContentPage
         {
             Type = PinType.Pin,
             Color = isSelected
-                ? Color.FromArgb("#102A43")
+                ? Color.FromArgb("#06283D")
                 : poi.IsActiveTourStop
-                    ? Color.FromArgb("#2F80FF")
+                    ? Color.FromArgb("#1685FF")
                     : poi.IsCompletedTourStop
-                        ? Color.FromArgb("#60A5FA")
+                        ? Color.FromArgb("#7DB7FF")
                         : poi.IsInsideRadius
-                            ? Color.FromArgb("#1D4ED8")
+                            ? Color.FromArgb("#0D6EFD")
                             : poi.IsNearest
-                                ? Color.FromArgb("#3B82F6")
-                                : Color.FromArgb("#94A3B8"),
+                                ? Color.FromArgb("#3B9CFF")
+                                : Color.FromArgb("#8FA6BE"),
             Position = new Position(poi.Latitude, poi.Longitude),
             Label = string.Empty,
             Address = string.Empty,
             Scale = isSelected
-                ? 0.52F
+                ? 0.48F
                 : poi.IsActiveTourStop
-                    ? 0.48F
+                    ? 0.44F
                     : poi.IsCompletedTourStop
-                        ? 0.42F
-                        : 0.38F,
+                        ? 0.36F
+                        : 0.34F,
             Tag = poi.PoiId
         };
     }

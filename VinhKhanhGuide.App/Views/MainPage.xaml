@@ -423,29 +423,33 @@
                                 <Button Text="+"
                                         Clicked="OnZoomInClicked"
                                         BackgroundColor="#FFFFFF"
-                                        TextColor="#2F80FF"
+                                        TextColor="#1685FF"
                                         FontSize="22"
-                                        WidthRequest="42"
-                                        HeightRequest="42"
-                                        CornerRadius="21" />
+                                        FontAttributes="Bold"
+                                        WidthRequest="40"
+                                        HeightRequest="40"
+                                        CornerRadius="20"
+                                        Padding="0" />
 
                                 <Button Text="-"
                                         Clicked="OnZoomOutClicked"
                                         BackgroundColor="#FFFFFF"
-                                        TextColor="#2F80FF"
+                                        TextColor="#1685FF"
                                         FontSize="22"
-                                        WidthRequest="42"
-                                        HeightRequest="42"
-                                        CornerRadius="21" />
+                                        FontAttributes="Bold"
+                                        WidthRequest="40"
+                                        HeightRequest="40"
+                                        CornerRadius="20"
+                                        Padding="0" />
 
-                                <Button Text="◎"
-                                        Clicked="OnCenterCurrentLocationClicked"
+                                <ImageButton Source="locate_control_icon.svg"
+                                             Clicked="OnCenterCurrentLocationClicked"
+                                             Aspect="AspectFit"
+                                             Padding="10"
                                         BackgroundColor="#FFFFFF"
-                                        TextColor="#2F80FF"
-                                        FontSize="20"
-                                        WidthRequest="42"
-                                        HeightRequest="42"
-                                        CornerRadius="21" />
+                                             WidthRequest="40"
+                                             HeightRequest="40"
+                                             CornerRadius="20" />
                             </VerticalStackLayout>
                         </Grid>
 
@@ -802,28 +806,29 @@
         <Grid Grid.Row="1"
               Padding="20,8,20,18">
             <Border BackgroundColor="#FFFFFF"
-                    Padding="10"
+                    Padding="8"
                     StrokeThickness="0"
                     StrokeShape="RoundRectangle 30">
                 <Grid ColumnDefinitions="*,*,*,*,*"
-                      ColumnSpacing="8">
-                    <Border BackgroundColor="#F4F8FF"
-                            Padding="8"
+                      ColumnSpacing="7">
+                    <Border BackgroundColor="#F8FBFF"
+                            Padding="6"
+                            HeightRequest="70"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 22">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnHomeTapped" />
                         </Border.GestureRecognizers>
 
-                        <VerticalStackLayout Spacing="4"
+                        <VerticalStackLayout Spacing="3"
                                              HorizontalOptions="Center"
                                              VerticalOptions="Center">
                             <Image Source="home_nav_icon.svg"
-                                   HeightRequest="24"
-                                   WidthRequest="24"
+                                   HeightRequest="22"
+                                   WidthRequest="22"
                                    Aspect="AspectFit" />
                             <Label Text="{Binding HomeNavigationLabel}"
-                                   FontSize="11"
+                                   FontSize="10"
                                    FontAttributes="Bold"
                                    HorizontalTextAlignment="Center"
                                    TextColor="#2F80FF" />
@@ -831,23 +836,24 @@
                     </Border>
 
                     <Border Grid.Column="1"
-                            BackgroundColor="#F4F8FF"
-                            Padding="8"
+                            BackgroundColor="#F8FBFF"
+                            Padding="6"
+                            HeightRequest="70"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 22">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnOpenFullScreenMapTapped" />
                         </Border.GestureRecognizers>
 
-                        <VerticalStackLayout Spacing="4"
+                        <VerticalStackLayout Spacing="3"
                                              HorizontalOptions="Center"
                                              VerticalOptions="Center">
-                            <Image Source="map_pin.png"
-                                   HeightRequest="24"
-                                   WidthRequest="24"
+                            <Image Source="map_nav_icon.svg"
+                                   HeightRequest="22"
+                                   WidthRequest="22"
                                    Aspect="AspectFit" />
                             <Label Text="{Binding MapNavigationLabel}"
-                                   FontSize="11"
+                                   FontSize="10"
                                    FontAttributes="Bold"
                                    HorizontalTextAlignment="Center"
                                    TextColor="#2F80FF" />
@@ -855,23 +861,24 @@
                     </Border>
 
                     <Border Grid.Column="2"
-                            BackgroundColor="#F4F8FF"
-                            Padding="8"
+                            BackgroundColor="#F8FBFF"
+                            Padding="6"
+                            HeightRequest="70"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 22">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnTourShortcutTapped" />
                         </Border.GestureRecognizers>
 
-                        <VerticalStackLayout Spacing="4"
+                        <VerticalStackLayout Spacing="3"
                                              HorizontalOptions="Center"
                                              VerticalOptions="Center">
                             <Image Source="tour_route_icon.svg"
-                                   HeightRequest="24"
-                                   WidthRequest="24"
+                                   HeightRequest="22"
+                                   WidthRequest="22"
                                    Aspect="AspectFit" />
                             <Label Text="{Binding TourNavigationLabel}"
-                                   FontSize="11"
+                                   FontSize="10"
                                    FontAttributes="Bold"
                                    HorizontalTextAlignment="Center"
                                    TextColor="#2F80FF" />
@@ -879,23 +886,24 @@
                     </Border>
 
                     <Border Grid.Column="3"
-                            BackgroundColor="#F4F8FF"
-                            Padding="8"
+                            BackgroundColor="#F8FBFF"
+                            Padding="6"
+                            HeightRequest="70"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 22">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnHistoryShortcutTapped" />
                         </Border.GestureRecognizers>
 
-                        <VerticalStackLayout Spacing="4"
+                        <VerticalStackLayout Spacing="3"
                                              HorizontalOptions="Center"
                                              VerticalOptions="Center">
-                            <Image Source="listening_history_icon.png"
-                                   HeightRequest="24"
-                                   WidthRequest="24"
+                            <Image Source="history_nav_icon.svg"
+                                   HeightRequest="22"
+                                   WidthRequest="22"
                                    Aspect="AspectFit" />
                             <Label Text="{Binding HistoryNavigationLabel}"
-                                   FontSize="11"
+                                   FontSize="10"
                                    FontAttributes="Bold"
                                    HorizontalTextAlignment="Center"
                                    TextColor="#2F80FF" />
@@ -903,23 +911,24 @@
                     </Border>
 
                     <Border Grid.Column="4"
-                            BackgroundColor="#F4F8FF"
-                            Padding="8"
+                            BackgroundColor="#F8FBFF"
+                            Padding="6"
+                            HeightRequest="70"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 22">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnOpenAccountPageTapped" />
                         </Border.GestureRecognizers>
 
-                        <VerticalStackLayout Spacing="4"
+                        <VerticalStackLayout Spacing="3"
                                              HorizontalOptions="Center"
                                              VerticalOptions="Center">
                             <Image Source="account_nav_icon.svg"
-                                   HeightRequest="24"
-                                   WidthRequest="24"
+                                   HeightRequest="22"
+                                   WidthRequest="22"
                                    Aspect="AspectFit" />
                             <Label Text="{Binding SettingsNavigationLabel}"
-                                   FontSize="11"
+                                   FontSize="10"
                                    FontAttributes="Bold"
                                    HorizontalTextAlignment="Center"
                                    TextColor="#2F80FF" />

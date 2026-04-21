@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CTest.WebAdmin", "CTest.Web
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VKFoodAPI", "VKFoodAPI\VKFoodAPI.csproj", "{77CF52CD-6495-4ECC-941D-6DAB27AB42F5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VinhKhanhGuide.Core.Tests", "VinhKhanhGuide.Core.Tests\VinhKhanhGuide.Core.Tests.csproj", "{B746F186-45C9-4074-8DA9-5D6896F7EF89}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{77CF52CD-6495-4ECC-941D-6DAB27AB42F5}.Release|x64.Build.0 = Release|Any CPU
 		{77CF52CD-6495-4ECC-941D-6DAB27AB42F5}.Release|x86.ActiveCfg = Release|Any CPU
 		{77CF52CD-6495-4ECC-941D-6DAB27AB42F5}.Release|x86.Build.0 = Release|Any CPU
+		{B746F186-45C9-4074-8DA9-5D6896F7EF89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B746F186-45C9-4074-8DA9-5D6896F7EF89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B746F186-45C9-4074-8DA9-5D6896F7EF89}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B746F186-45C9-4074-8DA9-5D6896F7EF89}.Debug|x64.Build.0 = Debug|Any CPU
+		{B746F186-45C9-4074-8DA9-5D6896F7EF89}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B746F186-45C9-4074-8DA9-5D6896F7EF89}.Debug|x86.Build.0 = Debug|Any CPU
+		{B746F186-45C9-4074-8DA9-5D6896F7EF89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B746F186-45C9-4074-8DA9-5D6896F7EF89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B746F186-45C9-4074-8DA9-5D6896F7EF89}.Release|x64.ActiveCfg = Release|Any CPU
+		{B746F186-45C9-4074-8DA9-5D6896F7EF89}.Release|x64.Build.0 = Release|Any CPU
+		{B746F186-45C9-4074-8DA9-5D6896F7EF89}.Release|x86.ActiveCfg = Release|Any CPU
+		{B746F186-45C9-4074-8DA9-5D6896F7EF89}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
