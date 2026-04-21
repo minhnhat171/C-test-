@@ -75,6 +75,10 @@
     <div class="alert alert-warning">@Model.Pois.LoadErrorMessage</div>
 }
 
+<div class="alert alert-info">
+    POI mới gửi từ khu vực chủ nhà hàng sẽ ở trạng thái chờ duyệt. Admin duyệt xong POI mới hoạt động trên web và app.
+</div>
+
 <div class="owner-grid mb-4">
     <section class="owner-panel">
         <h2 class="h4 mb-3">Đăng ký POI</h2>
@@ -108,12 +112,12 @@
                     <span asp-validation-for="Registration.Address" class="text-danger small"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="Registration.Latitude" class="form-label">Latitude</label>
+                    <label asp-for="Registration.Latitude" class="form-label">Vĩ độ</label>
                     <input asp-for="Registration.Latitude" class="form-control" />
                     <span asp-validation-for="Registration.Latitude" class="text-danger small"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="Registration.Longitude" class="form-label">Longitude</label>
+                    <label asp-for="Registration.Longitude" class="form-label">Kinh độ</label>
                     <input asp-for="Registration.Longitude" class="form-control" />
                     <span asp-validation-for="Registration.Longitude" class="text-danger small"></span>
                 </div>
@@ -123,7 +127,7 @@
                     <span asp-validation-for="Registration.RadiusInMeters" class="text-danger small"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="Registration.Priority" class="form-label">Uu tien</label>
+                    <label asp-for="Registration.Priority" class="form-label">Ưu tiên</label>
                     <input asp-for="Registration.Priority" class="form-control" />
                     <span asp-validation-for="Registration.Priority" class="text-danger small"></span>
                 </div>
@@ -134,9 +138,9 @@
                 <div class="col-12">
                     <label asp-for="Registration.UploadedImage" class="form-label">Ảnh quán</label>
                     <div class="owner-image-dropzone" id="ownerImageDropzone">
-                        <img id="ownerImagePreview" class="owner-image-preview" alt="Preview anh quan" />
+                        <img id="ownerImagePreview" class="owner-image-preview" alt="Xem trước ảnh quán" />
                         <div class="fw-semibold">Kéo ảnh vào đây hoặc bấm để chọn</div>
-                        <div class="text-muted small mt-1">Ho tro JPG, PNG, WEBP. Toi da 5 MB.</div>
+                        <div class="text-muted small mt-1">Hỗ trợ JPG, PNG, WEBP. Tối đa 5 MB.</div>
                         <input asp-for="Registration.UploadedImage" type="file" class="visually-hidden" id="ownerImageFile" accept="image/*" />
                     </div>
                     <span asp-validation-for="Registration.UploadedImage" class="text-danger small"></span>
@@ -158,12 +162,12 @@
     </section>
 
     <section class="owner-panel">
-        <h2 class="h4 mb-3">POI cua ban</h2>
+        <h2 class="h4 mb-3">POI của bạn</h2>
         <div class="owner-poi-table table-responsive">
             <table class="table table-sm align-middle">
                 <thead>
                     <tr>
-                        <th>Ma</th>
+                        <th>Mã</th>
                         <th>Tên quán</th>
                         <th>Trạng thái</th>
                         <th>Địa chỉ</th>
@@ -183,7 +187,7 @@
                         <tr>
                             <td>@poi.Code</td>
                             <td class="fw-semibold">@poi.Name</td>
-                            <td>@(poi.IsActive ? "Đang hoạt động" : "Tạm khóa")</td>
+                            <td>@poi.ApprovalStatusLabel</td>
                             <td>@poi.Address</td>
                         </tr>
                     }
@@ -212,20 +216,20 @@
             <label class="form-label" for="period">Mốc thời gian</label>
             <select class="form-select" id="period" name="period">
                 <option value="all" selected="@(Model.ListeningHistory.SelectedPeriod == "all" ? "selected" : null)">Tất cả</option>
-                <option value="day" selected="@(Model.ListeningHistory.SelectedPeriod == "day" ? "selected" : null)">24 gio qua</option>
-                <option value="week" selected="@(Model.ListeningHistory.SelectedPeriod == "week" ? "selected" : null)">7 ngay qua</option>
-                <option value="month" selected="@(Model.ListeningHistory.SelectedPeriod == "month" ? "selected" : null)">30 ngay qua</option>
+                <option value="day" selected="@(Model.ListeningHistory.SelectedPeriod == "day" ? "selected" : null)">24 giờ qua</option>
+                <option value="week" selected="@(Model.ListeningHistory.SelectedPeriod == "week" ? "selected" : null)">7 ngày qua</option>
+                <option value="month" selected="@(Model.ListeningHistory.SelectedPeriod == "month" ? "selected" : null)">30 ngày qua</option>
             </select>
         </div>
         <div class="col-md-3">
-            <label class="form-label" for="sortBy">Sap xep</label>
+            <label class="form-label" for="sortBy">Sắp xếp</label>
             <select class="form-select" id="sortBy" name="sortBy">
                 <option value="time_desc" selected="@(Model.ListeningHistory.SelectedSortBy == "time_desc" ? "selected" : null)">Mới nhất trước</option>
-                <option value="time_asc" selected="@(Model.ListeningHistory.SelectedSortBy == "time_asc" ? "selected" : null)">Cu nhat truoc</option>
+                <option value="time_asc" selected="@(Model.ListeningHistory.SelectedSortBy == "time_asc" ? "selected" : null)">Cũ nhất trước</option>
             </select>
         </div>
         <div class="col-md-1">
-            <button type="submit" class="btn btn-dark w-100">Loc</button>
+            <button type="submit" class="btn btn-dark w-100">Lọc</button>
         </div>
     </form>
 

@@ -133,6 +133,17 @@
         color: #b91c1c;
     }
 
+    .poi-status.pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .poi-owner-note {
+        color: var(--poi-muted);
+        font-size: 0.84rem;
+        margin-top: 0.25rem;
+    }
+
     .poi-actions {
         display: flex;
         flex-wrap: wrap;
@@ -194,6 +205,7 @@
                 <select class="form-select" name="statusFilter">
                     <option value="all" selected="@(Model.StatusFilter == "all" ? "selected" : null)">Tất cả trạng thái</option>
                     <option value="active" selected="@(Model.StatusFilter == "active" ? "selected" : null)">Đang hoạt động</option>
+                    <option value="pending" selected="@(Model.StatusFilter == "pending" ? "selected" : null)">Chờ duyệt</option>
                     <option value="inactive" selected="@(Model.StatusFilter == "inactive" ? "selected" : null)">Tạm khóa</option>
                 </select>
 
@@ -230,18 +242,28 @@
                             <td>
                                 <div class="poi-name">@item.Name</div>
                                 <div class="poi-address">@item.Code</div>
+                                @if (item.IsOwnerSubmitted)
+                                {
+                                    <div class="poi-owner-note">Chủ quán: @(string.IsNullOrWhiteSpace(item.OwnerLabel) ? "Chưa rõ" : item.OwnerLabel)</div>
+                                }
                             </td>
                             <td>@item.Address</td>
                             <td class="poi-coordinates">@item.Latitude, @item.Longitude</td>
                             <td>@item.RadiusInMeters m</td>
                             <td>@item.Priority</td>
                             <td>
-                                <span class="poi-status @(item.IsActive ? "active" : "inactive")">
-                                    @(item.IsActive ? "Hoạt động" : "Tạm khóa")
-                                </span>
+                                <span class="poi-status @item.ApprovalStatusCssClass">@item.ApprovalStatusLabel</span>
                             </td>
                             <td class="text-end">
                                 <div class="poi-actions">
+                                    @if (item.IsPendingApproval)
+                                    {
+                                        <form asp-action="Approve" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="btn btn-success poi-action-btn">Duyệt</button>
+                                        </form>
+                                    }
                                     <a asp-controller="MapPois" asp-action="Index" asp-route-poiId="@item.Id" class="btn btn-outline-secondary poi-action-btn">Map Analytics</a>
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark poi-action-btn">Xem</a>
                                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary poi-action-btn">Sửa</a>

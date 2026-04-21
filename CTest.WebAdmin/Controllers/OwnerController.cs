@@ -51,7 +51,7 @@ public class OwnerController : Controller
     {
         var editor = model.Registration;
         editor.IsEditMode = false;
-        editor.IsActive = true;
+        editor.IsActive = false;
 
         try
         {
@@ -122,7 +122,7 @@ public class OwnerController : Controller
                 OwnerEmail = _currentUser.OwnerEmail,
                 RadiusInMeters = 50,
                 CooldownMinutes = 5,
-                IsActive = true
+                IsActive = false
             }
         };
     }

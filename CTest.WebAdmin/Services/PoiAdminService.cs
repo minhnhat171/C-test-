@@ -60,17 +60,19 @@ public class PoiAdminService
                 x.Address.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
         }
 
-        query = statusFilter switch
+        var normalizedStatusFilter = NormalizeStatusFilter(statusFilter);
+        query = normalizedStatusFilter switch
         {
             "active" => query.Where(x => x.IsActive),
-            "inactive" => query.Where(x => !x.IsActive),
+            "inactive" => query.Where(x => !x.IsActive && !x.IsPendingApproval),
+            "pending" => query.Where(x => x.IsPendingApproval),
             _ => query
         };
 
         return new PoiManagementViewModel
         {
             SearchTerm = searchTerm ?? string.Empty,
-            StatusFilter = statusFilter,
+            StatusFilter = normalizedStatusFilter,
             Items = query
                 .OrderByDescending(x => x.Priority)
                 .ThenBy(x => x.Name)
@@ -184,16 +186,53 @@ public class PoiAdminService
 
         var dto = new PoiDto { Id = Guid.NewGuid() };
         dto.ApplyEditorValues(model);
+        var isOwnerSubmission = _currentUser.IsPoiOwner && !_currentUser.IsAdmin;
         if (_currentUser.IsPoiOwner && !_currentUser.IsAdmin)
         {
             ApplyOwner(dto);
+            dto.IsActive = false;
         }
 
         var created = await _poiApiClient.CreatePoiAsync(dto, cancellationToken);
 
         return PoiOperationResult.Success(
-            "Đã thêm POI mới. Danh sách, bản đồ và QR sẽ dùng dữ liệu mới từ API.",
+            isOwnerSubmission
+                ? "Đã gửi POI cho Admin duyệt. POI sẽ hoạt động trên app sau khi được duyệt."
+                : "Đã thêm POI mới. Danh sách, bản đồ và QR sẽ dùng dữ liệu mới từ API.",
             created.Id);
+    }
+
+    public async Task<PoiOperationResult> ApproveAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_currentUser.IsAdmin)
+        {
+            return PoiOperationResult.Missing("Bạn không có quyền duyệt POI.");
+        }
+
+        if (id == Guid.Empty)
+        {
+            return PoiOperationResult.Failure("Không xác định được POI cần duyệt.");
+        }
+
+        var poi = await _poiApiClient.GetPoiAsync(id, cancellationToken);
+        if (poi is null)
+        {
+            return PoiOperationResult.Missing("Không tìm thấy POI cần duyệt.");
+        }
+
+        if (poi.IsActive)
+        {
+            return PoiOperationResult.Success("POI đã ở trạng thái hoạt động.", poi.Id);
+        }
+
+        poi.IsActive = true;
+        var updated = await _poiApiClient.UpdatePoiAsync(poi.Id, poi, cancellationToken);
+
+        return updated
+            ? PoiOperationResult.Success("Đã duyệt POI. POI hiện đã hoạt động trên web và app.", poi.Id)
+            : PoiOperationResult.Missing("Không tìm thấy POI cần duyệt.");
     }
 
     public async Task<PoiOperationResult> UpdateAsync(
@@ -318,6 +357,17 @@ public class PoiAdminService
         dto.OwnerUserCode = _currentUser.OwnerCode;
         dto.OwnerDisplayName = _currentUser.DisplayName;
         dto.OwnerEmail = _currentUser.OwnerEmail;
+    }
+
+    private static string NormalizeStatusFilter(string? statusFilter)
+    {
+        return statusFilter?.Trim().ToLowerInvariant() switch
+        {
+            "active" => "active",
+            "inactive" => "inactive",
+            "pending" => "pending",
+            _ => "all"
+        };
     }
 
     private static string ResolvePoiName(ListeningHistoryEntryDto item)

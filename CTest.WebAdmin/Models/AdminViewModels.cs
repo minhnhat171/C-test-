@@ -32,6 +32,24 @@ public class PoiListItemViewModel
         Id == Guid.Empty
             ? "N/A"
             : AdminViewModelIds.BuildShortPoiId(Id);
+
+    public bool IsOwnerSubmitted =>
+        !string.IsNullOrWhiteSpace(OwnerUserCode) ||
+        !string.IsNullOrWhiteSpace(OwnerEmail);
+
+    public bool IsPendingApproval => IsOwnerSubmitted && !IsActive;
+
+    public string ApprovalStatusLabel => IsPendingApproval
+        ? "Chờ duyệt"
+        : IsActive ? "Hoạt động" : "Tạm khóa";
+
+    public string ApprovalStatusCssClass => IsPendingApproval
+        ? "pending"
+        : IsActive ? "active" : "inactive";
+
+    public string OwnerLabel => !string.IsNullOrWhiteSpace(OwnerDisplayName)
+        ? OwnerDisplayName
+        : OwnerUserCode;
 }
 
 public class PoiEditorViewModel

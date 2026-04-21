@@ -143,6 +143,23 @@ public class PoisController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Approve(Guid id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var result = await _poiService.ApproveAsync(id, cancellationToken);
+            TempData["PoiMessage"] = result.Message;
+        }
+        catch (HttpRequestException)
+        {
+            TempData["PoiMessage"] = "Không thể kết nối VKFoodAPI nên chưa duyệt được POI.";
+        }
+
+        return RedirectToAction(nameof(Index), new { statusFilter = "pending" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
     {
         try

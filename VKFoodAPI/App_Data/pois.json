@@ -463,5 +463,38 @@
     "NarrationTranslations": {
       "vi": "Quán ốc mã với sự thơm ngon"
     }
+  },
+  {
+    "Id": "82c14819-b0a1-47ca-94b1-5ad8c817a057",
+    "Code": "VK-FOOD-15",
+    "Name": "khoa",
+    "Category": "Ẩm thực",
+    "ImageSource": "/uploads/pois/a9ed928dfed34518a561f15d916ef18e.png",
+    "Address": "vĩnh kaang",
+    "Description": "khoa",
+    "SpecialDish": "khoa",
+    "PriceRange": "",
+    "OpeningHours": "",
+    "FirstDishSuggestion": "",
+    "FeaturedCategories": [],
+    "NarrationText": "khoa",
+    "MapLink": "https://maps.google.com/?q=0,0",
+    "AudioAssetPath": "",
+    "OwnerUserCode": "owner",
+    "OwnerDisplayName": "Chủ nhà hàng",
+    "OwnerEmail": "owner@local.vinhkhanh",
+    "Priority": 1,
+    "Latitude": 0,
+    "Longitude": 0,
+    "TriggerRadiusMeters": 50,
+    "CooldownMinutes": 5,
+    "IsActive": false,
+    "IsDeleted": true,
+    "CreatedAtUtc": "2026-04-21T20:10:10.1403678Z",
+    "UpdatedAtUtc": "2026-04-21T20:10:33.328143Z",
+    "DeletedAtUtc": "2026-04-21T20:10:33.328143Z",
+    "NarrationTranslations": {
+      "vi": "khoa"
+    }
   }
 ]
