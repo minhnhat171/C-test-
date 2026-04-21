@@ -27,11 +27,17 @@ public partial class TourPage : ContentPage
         }
 
         await _viewModel.ActivateTourAsync(item.TourId);
+        await OpenActiveTourPageAsync();
     }
 
     private async void OnStopActiveTourClicked(object? sender, EventArgs e)
     {
         await _viewModel.StopActiveTourAsync();
+    }
+
+    private async void OnOpenActiveTourClicked(object? sender, EventArgs e)
+    {
+        await OpenActiveTourPageAsync();
     }
 
     private async void OnTourStopTapped(object? sender, TappedEventArgs e)
@@ -55,5 +61,11 @@ public partial class TourPage : ContentPage
         {
             _isNavigatingToPoiDetail = false;
         }
+    }
+
+    private async Task OpenActiveTourPageAsync()
+    {
+        var activeTourPage = _serviceProvider.GetRequiredService<ActiveTourPage>();
+        await Navigation.PushAsync(activeTourPage);
     }
 }

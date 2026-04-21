@@ -52,6 +52,8 @@ public partial class MainViewModel : INotifyPropertyChanged
     private readonly GeofenceEngine _geofenceEngine;
     private readonly SemaphoreSlim _locationUpdateGate = new(1, 1);
     private readonly SemaphoreSlim _listeningHistoryRefreshGate = new(1, 1);
+    private readonly object _optimisticListeningHistoryGate = new();
+    private readonly List<ListeningHistoryDisplayItem> _optimisticListeningHistoryItems = new();
     private readonly Dictionary<Guid, DateTimeOffset> _lastNarratedAt = new();
     private readonly HashSet<Guid> _insidePoiIds = [];
     private readonly List<string> _recentSearches = [];
@@ -3236,6 +3238,11 @@ public partial class MainViewModel : INotifyPropertyChanged
         AddListeningHistory(
             $"{NowLabel()} {(autoTriggered ? "Tự động nghe" : "Nghe thủ công")} {poi.Name}" +
             (distanceMeters.HasValue ? $" ({distanceMeters.Value:F0}m)" : string.Empty));
+        var optimisticHistoryId = AddOptimisticListeningHistory(
+            poi,
+            SelectedLanguage,
+            playbackRequest.PlaybackMode,
+            autoTriggered);
 
         if (!string.IsNullOrWhiteSpace(playbackRequest.FallbackMessage))
         {
@@ -3247,7 +3254,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             SelectedLanguage,
             playbackRequest.PlaybackMode,
             autoTriggered);
-        _ = RefreshListeningHistoryAfterCreateAsync(historyTask);
+        _ = RefreshListeningHistoryAfterCreateAsync(historyTask, optimisticHistoryId);
 
         try
         {
@@ -3608,6 +3615,9 @@ public partial class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ActiveTourSummary));
         OnPropertyChanged(nameof(ActiveTourCurrentStopText));
         OnPropertyChanged(nameof(ActiveTourNextStopText));
+        OnPropertyChanged(nameof(ActiveTourRoutePoints));
+        OnPropertyChanged(nameof(ActiveTourStops));
+        OnPropertyChanged(nameof(IsTourPackageListVisible));
         OnPropertyChanged(nameof(TourPackagesHeight));
         OnPropertyChanged(nameof(ActiveTourStopsHeight));
         OnPropertyChanged(nameof(HomeNarrationSummary));
@@ -3813,9 +3823,10 @@ public partial class MainViewModel : INotifyPropertyChanged
 
             await Task.WhenAll(timelineTask, rankingTask);
 
-            var timelineItems = await BuildListeningHistoryDisplayItemsAsync(
-                timelineTask.Result,
-                cancellationToken);
+            var timelineItems = MergeOptimisticListeningHistoryItems(
+                await BuildListeningHistoryDisplayItemsAsync(
+                    timelineTask.Result,
+                    cancellationToken));
             var rankingItems = rankingTask.Result
                 .Select((item, index) => ToListeningHistoryRankingDisplayItem(item, index))
                 .ToList();
@@ -3848,13 +3859,14 @@ public partial class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private async Task RefreshListeningHistoryAfterCreateAsync(Task<Guid?> historyTask)
+    private async Task RefreshListeningHistoryAfterCreateAsync(Task<Guid?> historyTask, Guid optimisticHistoryId)
     {
         try
         {
             var historyId = await historyTask;
             if (historyId.HasValue)
             {
+                RemoveOptimisticListeningHistoryItem(optimisticHistoryId);
                 await RefreshListeningHistoryAsync();
             }
         }
@@ -3904,6 +3916,31 @@ public partial class MainViewModel : INotifyPropertyChanged
             .Select(item => ToListeningHistoryDisplayItem(
                 item,
                 poiLookup.TryGetValue(item.PoiId, out var poi) ? poi : null))
+            .ToList();
+    }
+
+    private List<ListeningHistoryDisplayItem> MergeOptimisticListeningHistoryItems(
+        IReadOnlyList<ListeningHistoryDisplayItem> syncedItems)
+    {
+        List<ListeningHistoryDisplayItem> pendingItems;
+        lock (_optimisticListeningHistoryGate)
+        {
+            pendingItems = _optimisticListeningHistoryItems.ToList();
+        }
+
+        if (pendingItems.Count == 0)
+        {
+            return syncedItems.ToList();
+        }
+
+        var syncedIds = syncedItems
+            .Select(item => item.Id)
+            .ToHashSet();
+
+        return pendingItems
+            .Where(item => !syncedIds.Contains(item.Id))
+            .Concat(syncedItems)
+            .Take(15)
             .ToList();
     }
 
@@ -4515,6 +4552,11 @@ public partial class MainViewModel : INotifyPropertyChanged
         ListeningHistory.Clear();
         ListeningHistoryLocalEntries.Clear();
         ListeningHistoryRanking.Clear();
+        lock (_optimisticListeningHistoryGate)
+        {
+            _optimisticListeningHistoryItems.Clear();
+        }
+
         _usageHistoryService.ClearEntries(UsageHistoryCategory.Listening);
         ListeningHistoryLoadError = string.Empty;
         _lastListeningHistorySyncAt = null;
@@ -4574,7 +4616,94 @@ public partial class MainViewModel : INotifyPropertyChanged
             UsageHistoryCategory.Listening,
             message,
             RaiseListeningHistoryStateChanged);
-        TriggerListeningHistoryRefresh();
+    }
+
+    private Guid AddOptimisticListeningHistory(
+        POI poi,
+        string language,
+        string playbackMode,
+        bool autoTriggered)
+    {
+        var startedAt = DateTimeOffset.Now;
+        var narrationSnapshot = poi.GetNarrationText(language);
+        var languageLabel = GetLanguageDisplayName(language);
+        var playbackModeLabel = GetPlaybackModeLabel(playbackMode);
+        var detailSummaryParts = new[]
+        {
+            languageLabel,
+            playbackModeLabel,
+            GetLocalizedHistoryDurationLabel(0)
+        };
+
+        var displayItem = new ListeningHistoryDisplayItem
+        {
+            Id = Guid.NewGuid(),
+            PoiId = poi.Id,
+            PoiCode = poi.Code,
+            PoiName = poi.Name,
+            Address = poi.Address,
+            Description = string.IsNullOrWhiteSpace(poi.Description)
+                ? GetLocalizedHistoryDescriptionFallback()
+                : poi.Description,
+            SpecialDish = poi.SpecialDish,
+            ImageSource = poi.ImageSource,
+            MapLink = poi.MapLink,
+            Language = language,
+            LanguageLabel = languageLabel,
+            PlaybackMode = playbackMode,
+            PlaybackModeLabel = playbackModeLabel,
+            NarrationSnapshot = narrationSnapshot,
+            AudioAssetPath = poi.AudioAssetPath,
+            NarrationPreview = BuildNarrationPreview(narrationSnapshot),
+            StartedAtLabel = startedAt.ToString("dd/MM/yyyy HH:mm:ss"),
+            StartedAtShortLabel = startedAt.ToString("HH:mm"),
+            DetailSummaryLabel = string.Join(" • ", detailSummaryParts.Where(part => !string.IsNullOrWhiteSpace(part))),
+            DetailLabel = GetLocalizedHistoryTriggerLabel(autoTriggered),
+            StatusLabel = LocalizeUi(
+                "Đang đồng bộ",
+                "Syncing",
+                "正在同步",
+                "동기화 중",
+                "Synchronisation"),
+            StatusAccentColor = "#2F80FF"
+        };
+
+        lock (_optimisticListeningHistoryGate)
+        {
+            _optimisticListeningHistoryItems.Insert(0, displayItem);
+
+            while (_optimisticListeningHistoryItems.Count > 15)
+            {
+                _optimisticListeningHistoryItems.RemoveAt(_optimisticListeningHistoryItems.Count - 1);
+            }
+        }
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            ListeningHistoryLoadError = string.Empty;
+
+            if (ListeningHistory.All(item => item.Id != displayItem.Id))
+            {
+                ListeningHistory.Insert(0, displayItem);
+            }
+
+            while (ListeningHistory.Count > 15)
+            {
+                ListeningHistory.RemoveAt(ListeningHistory.Count - 1);
+            }
+
+            RaiseListeningHistoryStateChanged();
+        });
+
+        return displayItem.Id;
+    }
+
+    private void RemoveOptimisticListeningHistoryItem(Guid historyId)
+    {
+        lock (_optimisticListeningHistoryGate)
+        {
+            _optimisticListeningHistoryItems.RemoveAll(item => item.Id == historyId);
+        }
     }
 
     private void AddViewHistory(string message)

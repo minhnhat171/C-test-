@@ -245,6 +245,7 @@ public partial class MainPage : ContentPage
         await _viewModel.ActivateTourAsync(item.TourId);
         RefreshMapPins(centerOnSelection: true);
         FocusMapOnActiveRoute(RestaurantMap, PreviewEntranceResolution);
+        await OpenActiveTourPageAsync();
 
         if (sender is CollectionView collectionView)
         {
@@ -650,8 +651,20 @@ public partial class MainPage : ContentPage
 
     private async Task OpenTourPageAsync()
     {
+        if (_viewModel.HasActiveTour)
+        {
+            await OpenActiveTourPageAsync();
+            return;
+        }
+
         var tourPage = _serviceProvider.GetRequiredService<TourPage>();
         await Navigation.PushAsync(tourPage);
+    }
+
+    private async Task OpenActiveTourPageAsync()
+    {
+        var activeTourPage = _serviceProvider.GetRequiredService<ActiveTourPage>();
+        await Navigation.PushAsync(activeTourPage);
     }
 
     private async Task OpenHistoryPageAsync()

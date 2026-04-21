@@ -97,12 +97,25 @@
                         </Border>
                     </Grid>
 
-                    <Button Text="{Binding StopTourButtonText}"
-                            Clicked="OnStopActiveTourClicked"
-                            BackgroundColor="#102A43"
-                            TextColor="White"
-                            FontSize="16"
-                            CornerRadius="18" />
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="10">
+                        <Button Text="{Binding ViewRouteButtonText}"
+                                Clicked="OnOpenActiveTourClicked"
+                                BackgroundColor="#2F80FF"
+                                TextColor="White"
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                CornerRadius="18" />
+
+                        <Button Grid.Column="1"
+                                Text="{Binding StopTourButtonText}"
+                                Clicked="OnStopActiveTourClicked"
+                                BackgroundColor="#102A43"
+                                TextColor="White"
+                                FontSize="16"
+                                CornerRadius="18"
+                                Padding="16,0" />
+                    </Grid>
 
                     <VerticalStackLayout Spacing="10"
                                          BindableLayout.ItemsSource="{Binding ActiveTourStops}">
@@ -166,6 +179,7 @@
             </Border>
 
             <VerticalStackLayout Spacing="14"
+                                 IsVisible="{Binding IsTourPackageListVisible}"
                                  BindableLayout.ItemsSource="{Binding TourPackages}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate>

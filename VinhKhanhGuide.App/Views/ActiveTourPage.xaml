@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="VinhKhanhGuide.App.Views.ActiveTourPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:mapsui="clr-namespace:Mapsui.UI.Maui;assembly=Mapsui.UI.Maui8"
+    x:Name="ActiveTourRoot"
+    Title="{Binding ActiveTourName}"
+    BackgroundColor="#F4F8FF"
+    Shell.NavBarIsVisible="True">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="20,20,20,24"
+                                 Spacing="16">
+                <Border StrokeThickness="0"
+                        StrokeShape="RoundRectangle 30">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0"
+                                             EndPoint="1,1">
+                            <GradientStop Color="#102A43" Offset="0" />
+                            <GradientStop Color="#2F80FF" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.Background>
+
+                    <VerticalStackLayout Padding="20"
+                                         Spacing="10">
+                        <Border BackgroundColor="#FFFFFF"
+                                Padding="12,8"
+                                HorizontalOptions="Start"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 16">
+                            <Label Text="{Binding ActiveTourBadgeText}"
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   TextColor="#2F80FF" />
+                        </Border>
+
+                        <Label Text="{Binding ActiveTourName}"
+                               FontSize="27"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               LineBreakMode="WordWrap" />
+
+                        <Label Text="{Binding ActiveTourSummary}"
+                               FontSize="15"
+                               TextColor="#DCEBFF"
+                               LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border BackgroundColor="#FFFFFF"
+                        Padding="0"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 28">
+                    <Grid>
+                        <mapsui:MapView x:Name="TourRouteMap"
+                                        HeightRequest="320"
+                                        IsZoomButtonVisible="False"
+                                        IsNorthingButtonVisible="False"
+                                        IsMyLocationButtonVisible="False"
+                                        RotationLock="True" />
+
+                        <Border BackgroundColor="#F8FBFF"
+                                Margin="14"
+                                Padding="12,10"
+                                HorizontalOptions="Start"
+                                VerticalOptions="Start"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 18">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="{Binding ActiveTourMapTitle}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="#102A43" />
+                                <Label Text="{Binding ActiveTourMapSummary}"
+                                       FontSize="12"
+                                       TextColor="#486581"
+                                       MaxLines="2"
+                                       LineBreakMode="TailTruncation" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <VerticalStackLayout Spacing="8"
+                                             HorizontalOptions="End"
+                                             VerticalOptions="End"
+                                             Margin="0,0,14,14">
+                            <Button Text="+"
+                                    Clicked="OnZoomInClicked"
+                                    BackgroundColor="#FFFFFF"
+                                    TextColor="#1685FF"
+                                    FontSize="22"
+                                    FontAttributes="Bold"
+                                    WidthRequest="42"
+                                    HeightRequest="42"
+                                    CornerRadius="21"
+                                    Padding="0" />
+
+                            <Button Text="-"
+                                    Clicked="OnZoomOutClicked"
+                                    BackgroundColor="#FFFFFF"
+                                    TextColor="#1685FF"
+                                    FontSize="22"
+                                    FontAttributes="Bold"
+                                    WidthRequest="42"
+                                    HeightRequest="42"
+                                    CornerRadius="21"
+                                    Padding="0" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <Grid ColumnDefinitions="*,*"
+                      ColumnSpacing="10">
+                    <Border BackgroundColor="#FFFFFF"
+                            Padding="14"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 20">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="{Binding CurrentStopTitle}"
+                                   FontSize="13"
+                                   TextColor="#6B7C93" />
+                            <Label Text="{Binding ActiveTourCurrentStopText}"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="#163B6D"
+                                   LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="1"
+                            BackgroundColor="#FFFFFF"
+                            Padding="14"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 20">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="{Binding NextStopTitle}"
+                                   FontSize="13"
+                                   TextColor="#6B7C93" />
+                            <Label Text="{Binding ActiveTourNextStopText}"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="#163B6D"
+                                   LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <VerticalStackLayout Spacing="10"
+                                     BindableLayout.ItemsSource="{Binding ActiveTourStops}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Border BackgroundColor="#FFFFFF"
+                                    Padding="14"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 20">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnTourStopTapped" />
+                                </Border.GestureRecognizers>
+
+                                <Grid ColumnDefinitions="Auto,*"
+                                      ColumnSpacing="12">
+                                    <Border BackgroundColor="#2F80FF"
+                                            WidthRequest="38"
+                                            HeightRequest="38"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 19">
+                                        <Label Text="{Binding Order}"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center"
+                                               FontSize="15"
+                                               FontAttributes="Bold"
+                                               TextColor="White" />
+                                    </Border>
+
+                                    <VerticalStackLayout Grid.Column="1"
+                                                         Spacing="3">
+                                        <Label Text="{Binding Name}"
+                                               FontSize="16"
+                                               FontAttributes="Bold"
+                                               TextColor="#102A43"
+                                               LineBreakMode="WordWrap" />
+                                        <Label Text="{Binding Address}"
+                                               FontSize="14"
+                                               TextColor="#6B7C93"
+                                               LineBreakMode="WordWrap"
+                                               MaxLines="2" />
+                                        <Label Text="{Binding StatusLabel}"
+                                               FontSize="13"
+                                               FontAttributes="Bold"
+                                               TextColor="#2F80FF" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border Grid.Row="1"
+                BackgroundColor="#FFFFFF"
+                Padding="18,12"
+                StrokeThickness="0"
+                IsVisible="{Binding HasActiveTour}">
+            <Button Text="{Binding StopTourButtonText}"
+                    Clicked="OnStopActiveTourClicked"
+                    BackgroundColor="#102A43"
+                    TextColor="White"
+                    FontSize="17"
+                    FontAttributes="Bold"
+                    CornerRadius="18"
+                    HeightRequest="50" />
+        </Border>
+    </Grid>
+</ContentPage>

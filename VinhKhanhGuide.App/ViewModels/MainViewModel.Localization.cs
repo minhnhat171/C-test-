@@ -98,6 +98,13 @@ public partial class MainViewModel
     public string CurrentStopTitle => LocalizeUi("Điểm hiện tại", "Current Stop", "当前站点", "현재 지점", "Étape actuelle");
     public string NextStopTitle => LocalizeUi("Điểm tiếp theo", "Next Stop", "下一站", "다음 지점", "Étape suivante");
     public string ViewRouteButtonText => LocalizeUi("Xem lộ trình", "View Route", "查看路线", "경로 보기", "Voir l'itinéraire");
+    public string ActiveTourMapTitle => LocalizeUi("Bản đồ lộ trình", "Route Map", "路线地图", "경로 지도", "Carte du parcours");
+    public string ActiveTourMapSummary => LocalizeUi(
+        "Các điểm dừng được nối theo thứ tự tour để khách thấy toàn bộ đường đi.",
+        "Stops are connected in tour order so guests can see the full route.",
+        "站点按路线顺序连接，方便查看完整路线。",
+        "투어 순서대로 지점을 연결해 전체 경로를 볼 수 있습니다.",
+        "Les étapes sont reliées dans l'ordre du parcours pour voir l'itinéraire complet.");
     public string StopTourButtonText => LocalizeUi("Dừng tour", "Stop Tour", "结束路线", "투어 중지", "Arrêter le parcours");
     public string SelectedPoiSectionTitle => HasActiveTour
         ? LocalizeUi("Quán đang trong tour", "Current Tour Stop", "当前路线店铺", "현재 투어 매장", "Lieu du parcours")
@@ -146,6 +153,7 @@ public partial class MainViewModel
         "현재 위치를 가져오지 못했지만 수동 청취는 가능합니다",
         "La position actuelle est indisponible, mais l'écoute manuelle reste possible");
     public bool HasNoTourNotice => _isInitialized && !HasTours;
+    public bool IsTourPackageListVisible => HasTours && !HasActiveTour;
     public string NoTourNoticeText => LocalizeUi(
         "Chưa có tour khả dụng hôm nay",
         "No tours are available today",
@@ -659,6 +667,8 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(CurrentStopTitle));
         OnPropertyChanged(nameof(NextStopTitle));
         OnPropertyChanged(nameof(ViewRouteButtonText));
+        OnPropertyChanged(nameof(ActiveTourMapTitle));
+        OnPropertyChanged(nameof(ActiveTourMapSummary));
         OnPropertyChanged(nameof(StopTourButtonText));
         OnPropertyChanged(nameof(SelectedPoiSectionTitle));
         OnPropertyChanged(nameof(PoiBrowsePageTitle));
