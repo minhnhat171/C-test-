@@ -23,6 +23,11 @@ public partial class MainViewModel : INotifyPropertyChanged
     private const int MaxSearchSuggestions = 6;
     private const int MaxPinnedRecentSuggestions = 3;
     private static readonly TimeSpan PoiRefreshInterval = TimeSpan.FromSeconds(8);
+    private static readonly AutoNarrationDecisionOptions AutoNarrationOptions = new()
+    {
+        DebounceInterval = TimeSpan.FromSeconds(2),
+        SamePrioritySwitchThresholdMeters = 8d
+    };
 
     public const double EntranceLatitude = 10.7614500;
     public const double EntranceLongitude = 106.7028200;
@@ -43,6 +48,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     private readonly IUsageHistoryService _usageHistoryService;
     private readonly IListeningHistorySyncService _listeningHistorySyncService;
     private readonly IMapOfflineTileService _mapOfflineTileService;
+    private readonly IAutoPoiSelectionService _autoPoiSelectionService;
     private readonly GeofenceEngine _geofenceEngine;
     private readonly SemaphoreSlim _locationUpdateGate = new(1, 1);
     private readonly SemaphoreSlim _listeningHistoryRefreshGate = new(1, 1);
@@ -64,6 +70,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     private bool _isRestoringUserPreferences;
     private int _narrationSessionId;
     private Guid? _lastAutoNarratedPoiId;
+    private DateTimeOffset? _lastAutoNarrationEvaluationAtUtc;
     private LocationDto? _lastLocation;
     private LocationDto? _gpsOriginLocation;
     private Guid? _activeNarrationPoiId;
@@ -147,6 +154,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         IUsageHistoryService usageHistoryService,
         IListeningHistorySyncService listeningHistorySyncService,
         IMapOfflineTileService mapOfflineTileService,
+        IAutoPoiSelectionService autoPoiSelectionService,
         GeofenceEngine geofenceEngine)
     {
         _locationService = locationService;
@@ -163,6 +171,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         _usageHistoryService = usageHistoryService;
         _listeningHistorySyncService = listeningHistorySyncService;
         _mapOfflineTileService = mapOfflineTileService;
+        _autoPoiSelectionService = autoPoiSelectionService;
         _geofenceEngine = geofenceEngine;
         _featuredDishCatalog = CreateFeaturedDishCatalog();
 
@@ -1356,6 +1365,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         IsTracking = false;
         _insidePoiIds.Clear();
         _lastAutoNarratedPoiId = null;
+        _lastAutoNarrationEvaluationAtUtc = null;
         await ReturnToEntranceAsync(clearLiveLocation: true);
         AddLog($"{NowLabel()} Dừng cập nhật vị trí");
     }
@@ -1598,6 +1608,9 @@ public partial class MainViewModel : INotifyPropertyChanged
         _activeTourId = tour.Id;
         _activeTourStopIndex = 0;
         _hasUserSelectedPoi = false;
+        _insidePoiIds.Clear();
+        _lastAutoNarratedPoiId = null;
+        _lastAutoNarrationEvaluationAtUtc = null;
 
         NormalizeActiveTourState();
         RefreshTourState();
@@ -2153,6 +2166,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         _hasUserSelectedPoi = false;
         _insidePoiIds.Clear();
         _lastAutoNarratedPoiId = null;
+        _lastAutoNarrationEvaluationAtUtc = null;
         _activeTourId = null;
         _activeTourStopIndex = 0;
         _gpsOriginLocation = null;
@@ -2385,6 +2399,11 @@ public partial class MainViewModel : INotifyPropertyChanged
 
     private async Task ApplyLocationSnapshotAsync(LocationDto location, bool allowAutoNarrate)
     {
+        if (!LocationService.IsValidCoordinate(location.Latitude, location.Longitude))
+        {
+            return;
+        }
+
         _lastLocation = location;
         _hasCheckedLocationPermission = true;
         _hasLocationPermission = true;
@@ -2400,10 +2419,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             ? Array.Empty<(POI Poi, double DistanceMeters, bool IsInside)>()
             : _geofenceEngine.Evaluate(location, _pois);
         var nearest = results.FirstOrDefault();
-        var insideNow = results
-            .Where(item => item.IsInside)
-            .Select(item => item.Poi.Id)
-            .ToHashSet();
+        var autoCandidates = CreateAutoNarrationCandidates(results);
         var currentTourPoi = GetCurrentActiveTourPoi();
 
         await MainThread.InvokeOnMainThreadAsync(() =>
@@ -2432,23 +2448,34 @@ public partial class MainViewModel : INotifyPropertyChanged
             UpdateMapBadges();
         });
 
-        if (allowAutoNarrate)
+        if (allowAutoNarrate && IsAutoNarrationEnabled)
         {
-            var candidate = ResolveAutoNarrationCandidate(results);
+            var nowUtc = DateTimeOffset.UtcNow;
+            var decision = ResolveAutoNarrationDecision(autoCandidates, nowUtc);
 
-            if (IsAutoNarrationEnabled && candidate.Poi is not null && ShouldAutoNarrate(candidate.Poi))
+            if (decision.ShouldUpdateEvaluationTimestamp)
             {
-                await NarratePoiAsync(candidate.Poi, true, candidate.DistanceMeters);
+                _lastAutoNarrationEvaluationAtUtc = nowUtc;
+            }
+
+            if (decision.ShouldNarrate && decision.Poi is not null)
+            {
+                await NarratePoiAsync(decision.Poi, true, decision.DistanceMeters);
             }
         }
 
         _insidePoiIds.Clear();
-        foreach (var poiId in insideNow)
+        foreach (var poiId in autoCandidates.Select(candidate => candidate.Poi.Id))
         {
             _insidePoiIds.Add(poiId);
         }
 
         if (_insidePoiIds.Count == 0)
+        {
+            _lastAutoNarratedPoiId = null;
+        }
+        else if (_lastAutoNarratedPoiId.HasValue &&
+                 !_insidePoiIds.Contains(_lastAutoNarratedPoiId.Value))
         {
             _lastAutoNarratedPoiId = null;
         }
@@ -2462,6 +2489,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         _lastLocation = null;
         _insidePoiIds.Clear();
         _lastAutoNarratedPoiId = null;
+        _lastAutoNarrationEvaluationAtUtc = null;
 
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
@@ -2510,6 +2538,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             _lastLocation = null;
             _insidePoiIds.Clear();
             _lastAutoNarratedPoiId = null;
+            _lastAutoNarrationEvaluationAtUtc = null;
         }
 
         await MainThread.InvokeOnMainThreadAsync(() =>
@@ -2556,6 +2585,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         if (_lastAutoNarratedPoiId.HasValue && !activePoiIds.Contains(_lastAutoNarratedPoiId.Value))
         {
             _lastAutoNarratedPoiId = null;
+            _lastAutoNarrationEvaluationAtUtc = null;
         }
 
         foreach (var stalePoiId in _lastNarratedAt.Keys.Where(poiId => !activePoiIds.Contains(poiId)).ToList())
@@ -2802,31 +2832,49 @@ public partial class MainViewModel : INotifyPropertyChanged
                (distanceMeters.HasValue && distanceMeters.Value <= poi.TriggerRadiusMeters);
     }
 
-    private (POI Poi, double DistanceMeters, bool IsInside) ResolveAutoNarrationCandidate(
+    private IReadOnlyList<AutoNarrationCandidate> CreateAutoNarrationCandidates(
         IReadOnlyList<(POI Poi, double DistanceMeters, bool IsInside)> results)
     {
+        IEnumerable<(POI Poi, double DistanceMeters, bool IsInside)> scopedResults = results;
+
         if (HasActiveTour)
         {
             var currentTourPoiId = GetCurrentActiveTourPoiId();
             if (!currentTourPoiId.HasValue)
             {
-                return default;
+                return Array.Empty<AutoNarrationCandidate>();
             }
 
-            var currentTourResult = results.FirstOrDefault(item => item.Poi.Id == currentTourPoiId.Value);
-            if (currentTourResult.Poi is not null && currentTourResult.IsInside)
-            {
-                return currentTourResult;
-            }
-
-            return default;
+            scopedResults = results.Where(item => item.Poi.Id == currentTourPoiId.Value);
         }
 
-        return results
-            .Where(item => item.IsInside)
-            .OrderByDescending(item => item.Poi.Priority)
-            .ThenBy(item => item.DistanceMeters)
-            .FirstOrDefault();
+        var evaluations = scopedResults
+            .Select(item => new AutoNarrationPoiEvaluation(
+                item.Poi,
+                item.DistanceMeters,
+                item.IsInside))
+            .ToList();
+
+        return _autoPoiSelectionService.CreateCandidates(evaluations, SelectedLanguage);
+    }
+
+    private AutoNarrationDecisionResult ResolveAutoNarrationDecision(
+        IReadOnlyList<AutoNarrationCandidate> candidates,
+        DateTimeOffset nowUtc)
+    {
+        return _autoPoiSelectionService.Decide(new AutoNarrationDecisionInput
+        {
+            Candidates = candidates,
+            CurrentPoiId = _lastAutoNarratedPoiId,
+            ActiveNarrationPoiId = _activeNarrationPoiId,
+            LastAutoNarratedPoiId = _lastAutoNarratedPoiId,
+            IsNarrationInProgress = IsNarrating,
+            LastEvaluationAtUtc = _lastAutoNarrationEvaluationAtUtc,
+            NowUtc = nowUtc,
+            PreviousInsidePoiIds = _insidePoiIds.ToList(),
+            LastNarratedAtUtc = new Dictionary<Guid, DateTimeOffset>(_lastNarratedAt),
+            Options = AutoNarrationOptions
+        });
     }
 
     private string BuildIdleStatusText()
@@ -3123,19 +3171,6 @@ public partial class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HasManualLocationNotice));
         OnPropertyChanged(nameof(ManualLocationNoticeText));
         OnPropertyChanged(nameof(ActiveMapCategoryFilterText));
-    }
-
-    private bool ShouldAutoNarrate(POI poi)
-    {
-        var isNewEntry = !_insidePoiIds.Contains(poi.Id);
-        var candidateChanged = _lastAutoNarratedPoiId != poi.Id;
-
-        if (!isNewEntry && !candidateChanged)
-        {
-            return false;
-        }
-
-        return CanNarrate(poi);
     }
 
     private async Task NarratePoiAsync(
@@ -3496,16 +3531,6 @@ public partial class MainViewModel : INotifyPropertyChanged
         return status is null || double.IsNaN(status.DistanceMeters)
             ? null
             : status.DistanceMeters;
-    }
-
-    private bool CanNarrate(POI poi)
-    {
-        if (!_lastNarratedAt.TryGetValue(poi.Id, out var lastNarratedAt))
-        {
-            return true;
-        }
-
-        return DateTimeOffset.UtcNow - lastNarratedAt >= TimeSpan.FromMinutes(poi.CooldownMinutes);
     }
 
     private bool IsCurrentNarration(POI poi) => IsNarrating && _activeNarrationPoiId == poi.Id;

@@ -262,7 +262,19 @@ public class LocationService : ILocationService
     private static bool IsUsableLocation(Location? location)
     {
         return location is not null &&
+               IsValidCoordinate(location.Latitude, location.Longitude) &&
                (location.Accuracy is null || location.Accuracy <= MaxAcceptedAccuracyMeters);
+    }
+
+    public static bool IsValidCoordinate(double latitude, double longitude)
+    {
+        return !double.IsNaN(latitude) &&
+               !double.IsNaN(longitude) &&
+               !double.IsInfinity(latitude) &&
+               !double.IsInfinity(longitude) &&
+               latitude is >= -90 and <= 90 &&
+               longitude is >= -180 and <= 180 &&
+               (Math.Abs(latitude) > 0.000001 || Math.Abs(longitude) > 0.000001);
     }
 
     private static bool IsRecentLocation(Location location, TimeSpan maxAge)
