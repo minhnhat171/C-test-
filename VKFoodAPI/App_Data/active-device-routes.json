@@ -96,5 +96,12 @@
     "Longitude": -122.084,
     "AccuracyMeters": 5,
     "RecordedAtUtc": "2026-04-21T08:55:39.25+00:00"
+  },
+  {
+    "AnonymousRouteId": "ANON-267BBE",
+    "Latitude": 37.421998333333335,
+    "Longitude": -122.084,
+    "AccuracyMeters": 5,
+    "RecordedAtUtc": "2026-04-21T09:02:47.56+00:00"
   }
 ]
