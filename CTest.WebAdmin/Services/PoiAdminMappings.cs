@@ -87,24 +87,24 @@ internal static class PoiAdminMappings
             ? $"VK-POI-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}"
             : model.Code.Trim();
         dto.Category = string.IsNullOrWhiteSpace(model.Category) ? "Ẩm thực" : model.Category.Trim();
-        dto.Name = model.Name.Trim();
-        dto.Address = model.Address.Trim();
+        dto.Name = TrimOrEmpty(model.Name);
+        dto.Address = TrimOrEmpty(model.Address);
         dto.Latitude = model.Latitude;
         dto.Longitude = model.Longitude;
         dto.TriggerRadiusMeters = model.RadiusInMeters <= 0 ? 50 : model.RadiusInMeters;
         dto.Priority = model.Priority <= 0 ? 1 : model.Priority;
         dto.CooldownMinutes = model.CooldownMinutes <= 0 ? 5 : model.CooldownMinutes;
-        dto.Description = model.Description.Trim();
-        dto.SpecialDish = model.SpecialDish.Trim();
-        dto.ImageSource = model.ImageSource.Trim();
+        dto.Description = TrimOrEmpty(model.Description);
+        dto.SpecialDish = TrimOrEmpty(model.SpecialDish);
+        dto.ImageSource = TrimOrEmpty(model.ImageSource);
         dto.MapLink = string.IsNullOrWhiteSpace(model.MapLink)
             ? BuildMapLink(model.Latitude, model.Longitude)
             : model.MapLink.Trim();
-        dto.NarrationText = model.NarrationScript.Trim();
+        dto.NarrationText = TrimOrEmpty(model.NarrationScript);
         dto.IsActive = model.IsActive;
-        dto.OwnerUserCode = model.OwnerUserCode.Trim();
-        dto.OwnerDisplayName = model.OwnerDisplayName.Trim();
-        dto.OwnerEmail = model.OwnerEmail.Trim().ToLowerInvariant();
+        dto.OwnerUserCode = TrimOrEmpty(model.OwnerUserCode);
+        dto.OwnerDisplayName = TrimOrEmpty(model.OwnerDisplayName);
+        dto.OwnerEmail = TrimOrEmpty(model.OwnerEmail).ToLowerInvariant();
         dto.NarrationTranslations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         dto.NarrationTranslations["vi"] = dto.NarrationText;
     }
@@ -122,5 +122,10 @@ internal static class PoiAdminMappings
             "https://maps.google.com/?q={0},{1}",
             latitude,
             longitude);
+    }
+
+    private static string TrimOrEmpty(string? value)
+    {
+        return value?.Trim() ?? string.Empty;
     }
 }

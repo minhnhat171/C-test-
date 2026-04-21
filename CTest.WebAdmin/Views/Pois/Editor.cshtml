@@ -1,5 +1,13 @@
 @model PoiEditorViewModel
 @{
+    var imagePreviewSource = !string.IsNullOrWhiteSpace(Model.ImageSource) &&
+        (Model.ImageSource.StartsWith("/", StringComparison.Ordinal) ||
+         Model.ImageSource.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+         Model.ImageSource.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            ? Model.ImageSource
+            : string.Empty;
+}
+@{
     ViewData["Title"] = Model.IsEditMode ? "Sửa POI" : "Thêm POI";
 }
 
@@ -173,6 +181,43 @@
         line-height: 1.6;
     }
 
+    .poi-image-dropzone {
+        border: 1px dashed rgba(37, 99, 235, 0.42);
+        border-radius: 8px;
+        background: #f8fafc;
+        padding: 1rem;
+        cursor: pointer;
+    }
+
+    .poi-image-dropzone.is-dragover {
+        border-color: #2563eb;
+        background: #eff6ff;
+    }
+
+    .poi-image-preview,
+    .poi-side-image-preview {
+        display: none;
+        width: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+        background: #e2e8f0;
+    }
+
+    .poi-image-preview {
+        max-height: 220px;
+        margin-bottom: 0.85rem;
+    }
+
+    .poi-side-image-preview {
+        height: 180px;
+        margin-bottom: 1rem;
+    }
+
+    .poi-image-preview.has-image,
+    .poi-side-image-preview.has-image {
+        display: block;
+    }
+
     @@media (max-width: 1199.98px) {
         .poi-editor-layout {
             grid-template-columns: 1fr;
@@ -192,7 +237,7 @@
     <div class="poi-editor-layout">
         <div class="poi-editor-panel">
             <div class="poi-editor-body">
-                <form asp-action="@(Model.IsEditMode ? "Edit" : "Create")" method="post">
+                <form asp-action="@(Model.IsEditMode ? "Edit" : "Create")" method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <input asp-for="Id" type="hidden" />
                     <input asp-for="IsEditMode" type="hidden" />
@@ -239,7 +284,18 @@
                             </div>
                             <div class="col-12">
                                 <label asp-for="ImageSource" class="form-label">Ảnh minh họa</label>
-                                <input asp-for="ImageSource" class="form-control" placeholder="vd: ocoanh.png" />
+                                <input asp-for="ImageSource" class="form-control" id="poiImageSource" placeholder="vd: ocoanh.png hoac /uploads/pois/..." />
+                                <div class="poi-image-dropzone mt-2" id="poiImageDropzone">
+                                    <img id="poiImagePreview"
+                                         class="poi-image-preview @(string.IsNullOrWhiteSpace(imagePreviewSource) ? "" : "has-image")"
+                                         src="@imagePreviewSource"
+                                         alt="Preview anh POI" />
+                                    <div class="fw-semibold">Keo anh vao day hoac bam de chon</div>
+                                    <div class="text-muted small mt-1">Ho tro JPG, PNG, WEBP. Toi da 5 MB.</div>
+                                    <input asp-for="UploadedImage" type="file" class="visually-hidden" id="poiImageFile" accept="image/*" />
+                                </div>
+                                <span asp-validation-for="UploadedImage" class="text-danger small"></span>
+                                <span asp-validation-for="ImageSource" class="text-danger small"></span>
                             </div>
                         </div>
                     </div>
@@ -314,6 +370,10 @@
         <div class="poi-editor-panel">
             <div class="poi-side-block">
                 <div class="poi-preview-card">
+                    <img id="poiSideImagePreview"
+                         class="poi-side-image-preview @(string.IsNullOrWhiteSpace(imagePreviewSource) ? "" : "has-image")"
+                         src="@imagePreviewSource"
+                         alt="Anh minh hoa POI" />
                     <div class="poi-preview-label">Preview</div>
                     <div class="poi-preview-name" id="previewName">@(string.IsNullOrWhiteSpace(Model.Name) ? "Tên điểm sẽ hiển thị ở đây" : Model.Name)</div>
                     <div class="poi-summary-copy mt-2" id="previewAddress">@(string.IsNullOrWhiteSpace(Model.Address) ? "Địa chỉ sẽ tự cập nhật khi bạn nhập form." : Model.Address)</div>
@@ -388,6 +448,11 @@
             const coordinates = document.getElementById("previewCoordinates");
             const narration = document.getElementById("poiNarration");
             const qrPreview = document.getElementById("previewQr");
+            const imageDropzone = document.getElementById("poiImageDropzone");
+            const imageInput = document.getElementById("poiImageFile");
+            const imageSource = document.getElementById("poiImageSource");
+            const imagePreview = document.getElementById("poiImagePreview");
+            const sideImagePreview = document.getElementById("poiSideImagePreview");
 
             const syncCoordinates = () => {
                 coordinates.textContent = `${latitude?.value || 0}, ${longitude?.value || 0}`;
@@ -396,6 +461,52 @@
             const syncQr = () => {
                 qrPreview.textContent = narration && narration.value.toUpperCase().includes("QR") ? "Có" : "Chưa rõ";
             };
+
+            const setImagePreview = (source) => {
+                [imagePreview, sideImagePreview].forEach((preview) => {
+                    if (!preview) return;
+                    preview.src = source || "";
+                    preview.classList.toggle("has-image", Boolean(source));
+                });
+            };
+
+            const previewFile = (file) => {
+                if (!file || !file.type.startsWith("image/")) return;
+
+                const reader = new FileReader();
+                reader.addEventListener("load", () => setImagePreview(reader.result));
+                reader.readAsDataURL(file);
+            };
+
+            imageDropzone?.addEventListener("click", () => imageInput?.click());
+            imageDropzone?.addEventListener("dragover", (event) => {
+                event.preventDefault();
+                imageDropzone.classList.add("is-dragover");
+            });
+            imageDropzone?.addEventListener("dragleave", () => {
+                imageDropzone.classList.remove("is-dragover");
+            });
+            imageDropzone?.addEventListener("drop", (event) => {
+                event.preventDefault();
+                imageDropzone.classList.remove("is-dragover");
+
+                const file = event.dataTransfer?.files?.[0];
+                if (!file || !imageInput) return;
+
+                const files = new DataTransfer();
+                files.items.add(file);
+                imageInput.files = files.files;
+                previewFile(file);
+            });
+            imageInput?.addEventListener("change", () => {
+                previewFile(imageInput.files?.[0]);
+            });
+            imageSource?.addEventListener("input", () => {
+                const value = imageSource.value.trim();
+                if (value.startsWith("/") || value.startsWith("http://") || value.startsWith("https://") || value.startsWith("data:image/")) {
+                    setImagePreview(value);
+                }
+            });
 
             latitude?.addEventListener("input", syncCoordinates);
             longitude?.addEventListener("input", syncCoordinates);

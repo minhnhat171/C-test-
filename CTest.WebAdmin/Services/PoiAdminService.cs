@@ -11,19 +11,22 @@ public class PoiAdminService
     private readonly ListeningHistoryApiClient _listeningHistoryApiClient;
     private readonly ActiveDeviceApiClient _activeDeviceApiClient;
     private readonly IWebAdminCurrentUser _currentUser;
+    private readonly PoiImageStorageService _imageStorage;
 
     public PoiAdminService(
         PoiApiClient poiApiClient,
         AudioGuideApiClient audioGuideApiClient,
         ListeningHistoryApiClient listeningHistoryApiClient,
         ActiveDeviceApiClient activeDeviceApiClient,
-        IWebAdminCurrentUser currentUser)
+        IWebAdminCurrentUser currentUser,
+        PoiImageStorageService imageStorage)
     {
         _poiApiClient = poiApiClient;
         _audioGuideApiClient = audioGuideApiClient;
         _listeningHistoryApiClient = listeningHistoryApiClient;
         _activeDeviceApiClient = activeDeviceApiClient;
         _currentUser = currentUser;
+        _imageStorage = imageStorage;
     }
 
     public async Task<PoiManagementViewModel> LoadManagementPageAsync(
@@ -168,6 +171,17 @@ public class PoiAdminService
         PoiEditorViewModel model,
         CancellationToken cancellationToken = default)
     {
+        var imageResult = await _imageStorage.SaveAsync(model.UploadedImage, cancellationToken);
+        if (!imageResult.Succeeded)
+        {
+            return PoiOperationResult.Failure(imageResult.ErrorMessage ?? "Khong luu duoc anh POI.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(imageResult.PublicPath))
+        {
+            model.ImageSource = imageResult.PublicPath;
+        }
+
         var dto = new PoiDto { Id = Guid.NewGuid() };
         dto.ApplyEditorValues(model);
         if (_currentUser.IsPoiOwner && !_currentUser.IsAdmin)
@@ -195,6 +209,17 @@ public class PoiAdminService
         if (!_currentUser.CanManage(poi))
         {
             return PoiOperationResult.Missing("Ban khong co quyen cap nhat POI nay.");
+        }
+
+        var imageResult = await _imageStorage.SaveAsync(model.UploadedImage, cancellationToken);
+        if (!imageResult.Succeeded)
+        {
+            return PoiOperationResult.Failure(imageResult.ErrorMessage ?? "Khong luu duoc anh POI.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(imageResult.PublicPath))
+        {
+            model.ImageSource = imageResult.PublicPath;
         }
 
         poi.ApplyEditorValues(model);

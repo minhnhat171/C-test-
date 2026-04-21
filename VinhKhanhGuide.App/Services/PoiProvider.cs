@@ -39,7 +39,7 @@ public class PoiProvider : IPoiProvider
             var pois = await _httpClient.GetFromJsonAsync<List<PoiDto>>("api/pois", cancellationToken) ?? [];
             var mappedPois = pois
                 .Where(dto => dto.IsActive)
-                .Select(dto => dto.ToDomain())
+                .Select(ToDomainWithResolvedImageSource)
                 .ToList();
 
             CacheSuccessfulRemotePois(mappedPois);
@@ -90,7 +90,7 @@ public class PoiProvider : IPoiProvider
             var dto = await _httpClient.GetFromJsonAsync<PoiDto>($"api/pois/{poiId}", cancellationToken);
             if (dto is not null)
             {
-                return dto.ToDomain();
+                return ToDomainWithResolvedImageSource(dto);
             }
         }
         catch (Exception ex)
@@ -184,5 +184,30 @@ public class PoiProvider : IPoiProvider
         return pois
             .Select(poi => poi.ToDto().ToDomain())
             .ToList();
+    }
+
+    private POI ToDomainWithResolvedImageSource(PoiDto dto)
+    {
+        var poi = dto.ToDomain();
+        poi.ImageSource = ResolveImageSource(poi.ImageSource);
+        return poi;
+    }
+
+    private string ResolveImageSource(string? imageSource)
+    {
+        var value = imageSource?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(value) ||
+            Uri.TryCreate(value, UriKind.Absolute, out _))
+        {
+            return value;
+        }
+
+        if (value.StartsWith("/", StringComparison.Ordinal) &&
+            _httpClient.BaseAddress is not null)
+        {
+            return new Uri(_httpClient.BaseAddress, value.TrimStart('/')).ToString();
+        }
+
+        return value;
     }
 }

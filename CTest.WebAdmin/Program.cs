@@ -51,6 +51,7 @@ builder.Services.AddScoped<PoiAdminService>();
 builder.Services.AddScoped<TourAdminService>();
 builder.Services.AddScoped<ListeningHistoryService>();
 builder.Services.AddScoped<PoiValidationService>();
+builder.Services.AddScoped<PoiImageStorageService>();
 
 var app = builder.Build();
 
