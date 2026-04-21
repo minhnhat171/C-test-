@@ -22,6 +22,8 @@ public class PoiProvider : IPoiProvider
     private IReadOnlyList<POI> _lastSuccessfulRemotePois = Array.Empty<POI>();
     private bool _hasSuccessfulRemoteFetch;
 
+    public PoiDataSource LastDataSource { get; private set; } = PoiDataSource.Unknown;
+
     public PoiProvider(
         HttpClient httpClient,
         ILogger<PoiProvider> logger,
@@ -41,10 +43,12 @@ public class PoiProvider : IPoiProvider
                 .Where(dto => dto.IsActive)
                 .Select(dto => dto.ToDomain())
                 .ToList();
+            var normalizedPois = MergeWithSeedPois(mappedPois);
 
-            CacheSuccessfulRemotePois(mappedPois);
-            await PersistOfflineSnapshotAsync(mappedPois, cancellationToken);
-            return ClonePois(mappedPois);
+            CacheSuccessfulRemotePois(normalizedPois);
+            await PersistOfflineSnapshotAsync(normalizedPois, cancellationToken);
+            LastDataSource = PoiDataSource.Remote;
+            return ClonePois(normalizedPois);
         }
         catch (Exception ex)
         {
@@ -53,9 +57,13 @@ public class PoiProvider : IPoiProvider
                 var offlinePois = await _poiOfflineStore.GetPoisAsync(cancellationToken);
                 if (offlinePois.Count > 0)
                 {
-                    _logger.LogWarning(ex, "Failed to load POIs from API. Using SQLite offline snapshot.");
-                    CacheSuccessfulRemotePois(offlinePois);
-                    return ClonePois(offlinePois);
+                    var normalizedOfflinePois = MergeWithSeedPois(offlinePois);
+
+                    _logger.LogWarning(ex, "Failed to load POIs from API. Using SQLite offline snapshot merged with bundled seed data.");
+                    CacheSuccessfulRemotePois(normalizedOfflinePois);
+                    await PersistOfflineSnapshotAsync(normalizedOfflinePois, cancellationToken);
+                    LastDataSource = PoiDataSource.OfflineSnapshot;
+                    return ClonePois(normalizedOfflinePois);
                 }
             }
             catch (Exception offlineEx)
@@ -68,6 +76,7 @@ public class PoiProvider : IPoiProvider
             if (TryGetLastSuccessfulRemotePois(out var cachedPois))
             {
                 _logger.LogWarning(ex, "Failed to load POIs from API. Using the last successful API snapshot.");
+                LastDataSource = PoiDataSource.CachedSnapshot;
                 return cachedPois;
             }
 
@@ -75,6 +84,7 @@ public class PoiProvider : IPoiProvider
         }
 
         await EnsureSeedSnapshotAsync(cancellationToken);
+        LastDataSource = PoiDataSource.Seed;
         return ClonePois(FallbackPois);
     }
 
@@ -184,5 +194,56 @@ public class PoiProvider : IPoiProvider
         return pois
             .Select(poi => poi.ToDto().ToDomain())
             .ToList();
+    }
+
+    private static IReadOnlyList<POI> MergeWithSeedPois(IEnumerable<POI> pois)
+    {
+        var mergedPois = FallbackPois
+            .ToDictionary(poi => poi.Id, poi => poi.ToDto().ToDomain());
+
+        foreach (var poi in pois.Where(item => item.IsActive))
+        {
+            var normalizedPoi = poi.ToDto().ToDomain();
+
+            if (mergedPois.TryGetValue(normalizedPoi.Id, out var seedPoi))
+            {
+                FillMissingSeedFields(normalizedPoi, seedPoi);
+            }
+
+            mergedPois[normalizedPoi.Id] = normalizedPoi;
+        }
+
+        return mergedPois.Values
+            .Where(item => item.IsActive)
+            .OrderByDescending(item => item.Priority)
+            .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static void FillMissingSeedFields(POI poi, POI seedPoi)
+    {
+        if (string.IsNullOrWhiteSpace(poi.PriceRange))
+        {
+            poi.PriceRange = seedPoi.PriceRange;
+        }
+
+        if (string.IsNullOrWhiteSpace(poi.OpeningHours))
+        {
+            poi.OpeningHours = seedPoi.OpeningHours;
+        }
+
+        if (string.IsNullOrWhiteSpace(poi.FirstDishSuggestion))
+        {
+            poi.FirstDishSuggestion = seedPoi.FirstDishSuggestion;
+        }
+
+        if (poi.FeaturedCategories.Count == 0)
+        {
+            poi.FeaturedCategories = seedPoi.FeaturedCategories
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Select(item => item.Trim().ToLowerInvariant())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
     }
 }

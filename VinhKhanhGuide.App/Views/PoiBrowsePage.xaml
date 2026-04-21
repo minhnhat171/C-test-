@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="VinhKhanhGuide.App.Views.PoiBrowsePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Name="PoiBrowseRoot"
+    Title="{Binding PoiBrowsePageTitle}"
+    BackgroundColor="#F4F8FF"
+    Shell.NavBarIsVisible="True">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,20,20,28"
+                             Spacing="18">
+            <Border BackgroundColor="#FFFFFF"
+                    Padding="18"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 26">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{Binding PoiBrowsePageTitle}"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="#102A43" />
+
+                    <Label Text="{Binding SearchPreviewSummaryText}"
+                           FontSize="14"
+                           TextColor="#486581"
+                           IsVisible="{Binding HasSearchQuery}" />
+
+                    <Label Text="{Binding SearchResultStatusText}"
+                           FontSize="14"
+                           TextColor="#7B8BA3"
+                           IsVisible="{Binding IsSearchResultEmpty}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="#F8FBFF"
+                    Padding="16"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 20"
+                    IsVisible="{Binding IsSearchResultEmpty}">
+                <Label Text="{Binding SearchResultStatusText}"
+                       FontSize="15"
+                       TextColor="#5E7491"
+                       LineBreakMode="WordWrap" />
+            </Border>
+
+            <VerticalStackLayout Spacing="14"
+                                 BindableLayout.ItemsSource="{Binding FilteredPoiStatuses}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate>
+                        <Border BackgroundColor="#FFFFFF"
+                                Padding="16"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 28">
+                            <VerticalStackLayout Spacing="14">
+                                <Grid ColumnDefinitions="96,*"
+                                      ColumnSpacing="14">
+                                    <Border BackgroundColor="#E8F1FF"
+                                            HeightRequest="96"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 20">
+                                        <Image Source="{Binding ImageSource}"
+                                               Aspect="AspectFill" />
+                                    </Border>
+
+                                    <VerticalStackLayout Grid.Column="1"
+                                                         Spacing="6">
+                                        <Grid ColumnDefinitions="*,Auto"
+                                              ColumnSpacing="8">
+                                            <Label Text="{Binding Name}"
+                                                   FontSize="19"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#102A43"
+                                                   LineBreakMode="TailTruncation" />
+
+                                            <Border Grid.Column="1"
+                                                    BackgroundColor="#D9E9FF"
+                                                    Padding="10,6"
+                                                    VerticalOptions="Start"
+                                                    StrokeThickness="0"
+                                                    StrokeShape="RoundRectangle 14">
+                                                <Label Text="{Binding DistanceLabel}"
+                                                       FontSize="11"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#2F80FF" />
+                                            </Border>
+                                        </Grid>
+
+                                        <Label Text="{Binding Address}"
+                                               FontSize="14"
+                                               TextColor="#6B7C93"
+                                               LineBreakMode="TailTruncation"
+                                               MaxLines="2" />
+
+                                        <Border BackgroundColor="#EAF3FF"
+                                                Padding="8,4"
+                                                HorizontalOptions="Start"
+                                                StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 12"
+                                                IsVisible="{Binding HasTourBadge}">
+                                            <Label Text="{Binding TourBadgeText}"
+                                                   FontSize="11"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#2F80FF" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Grid>
+
+                                <Label Text="{Binding Description}"
+                                       FontSize="15"
+                                       TextColor="#486581"
+                                       LineBreakMode="TailTruncation"
+                                       MaxLines="3" />
+
+                                <Border BackgroundColor="#F4F8FF"
+                                        Padding="12"
+                                        HorizontalOptions="Start"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 16"
+                                        IsVisible="{Binding HasSpecialDish}">
+                                    <Label Text="{Binding SpecialDishLabel}"
+                                           FontSize="13"
+                                           TextColor="#2F80FF"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="2" />
+                                </Border>
+
+                                <Grid ColumnDefinitions="*,*"
+                                      ColumnSpacing="10">
+                                    <Button Text="{Binding Source={x:Reference PoiBrowseRoot}, Path=BindingContext.SelectedPoiDetailButtonText}"
+                                            Clicked="OnOpenPoiDetailClicked"
+                                            BackgroundColor="#E8F1FF"
+                                            TextColor="#2F80FF"
+                                            FontSize="15"
+                                            CornerRadius="18" />
+
+                                    <Button Grid.Column="1"
+                                            Text="{Binding NarrationActionText}"
+                                            Clicked="OnPoiNarrationClicked"
+                                            BackgroundColor="#2F80FF"
+                                            TextColor="White"
+                                            FontSize="15"
+                                            CornerRadius="18">
+                                        <Button.Triggers>
+                                            <DataTrigger TargetType="Button"
+                                                         Binding="{Binding IsNarrationActive}"
+                                                         Value="True">
+                                                <Setter Property="BackgroundColor"
+                                                        Value="#102A43" />
+                                            </DataTrigger>
+                                        </Button.Triggers>
+                                    </Button>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

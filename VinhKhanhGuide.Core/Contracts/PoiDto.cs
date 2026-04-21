@@ -12,6 +12,10 @@ public class PoiDto
     public string Address { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string SpecialDish { get; set; } = string.Empty;
+    public string PriceRange { get; set; } = string.Empty;
+    public string OpeningHours { get; set; } = string.Empty;
+    public string FirstDishSuggestion { get; set; } = string.Empty;
+    public List<string> FeaturedCategories { get; set; } = [];
 
     public string NarrationText { get; set; } = string.Empty;
     public string MapLink { get; set; } = string.Empty;
@@ -41,6 +45,14 @@ public class PoiDto
             Address = Address,
             Description = Description,
             SpecialDish = SpecialDish,
+            PriceRange = PriceRange,
+            OpeningHours = OpeningHours,
+            FirstDishSuggestion = FirstDishSuggestion,
+            FeaturedCategories = FeaturedCategories
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Select(item => item.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList(),
             NarrationText = NarrationText,
             MapLink = MapLink,
             AudioAssetPath = AudioAssetPath,

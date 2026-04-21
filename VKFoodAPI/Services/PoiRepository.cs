@@ -219,6 +219,14 @@ public class PoiRepository
         normalized.Address ??= string.Empty;
         normalized.Description ??= string.Empty;
         normalized.SpecialDish ??= string.Empty;
+        normalized.PriceRange ??= string.Empty;
+        normalized.OpeningHours ??= string.Empty;
+        normalized.FirstDishSuggestion ??= string.Empty;
+        normalized.FeaturedCategories = (normalized.FeaturedCategories ?? [])
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Select(item => item.Trim().ToLowerInvariant())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
         normalized.NarrationText ??= string.Empty;
         normalized.MapLink ??= string.Empty;
         normalized.AudioAssetPath ??= string.Empty;

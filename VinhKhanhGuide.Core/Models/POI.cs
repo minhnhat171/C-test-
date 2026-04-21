@@ -16,6 +16,10 @@ public class POI
     public string Address { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string SpecialDish { get; set; } = string.Empty;
+    public string PriceRange { get; set; } = string.Empty;
+    public string OpeningHours { get; set; } = string.Empty;
+    public string FirstDishSuggestion { get; set; } = string.Empty;
+    public List<string> FeaturedCategories { get; set; } = [];
 
     // Media / map / narration
     public string ImageSource { get; set; } = string.Empty;
@@ -125,12 +129,20 @@ public class POI
                 "butter-garlic razor clams, salt roasted sea snails, and grilled oysters",
             "Sò điệp nướng mỡ hành, ốc bươu nướng tiêu, nghêu hấp Thái" =>
                 "scallops with scallion oil, pepper grilled apple snails, and Thai-style steamed clams",
+            "Cua Cà Mau rang me, sò điệp nướng mỡ hành, nghêu hấp Thái" =>
+                "tamarind Ca Mau crab, scallops with scallion oil, and Thai-style steamed clams",
+            "Cua rang me, sò điệp nướng phô mai, ốc hương xào bơ" =>
+                "tamarind crab, cheese grilled scallops, and butter sea snails",
             "Lẩu hải sản, bạch tuộc nướng, tôm nướng muối ớt" =>
                 "seafood hotpot, grilled octopus, and chili salt grilled shrimp",
             "Lẩu Thái hải sản, mực nướng sa tế, tôm nướng" =>
                 "Thai seafood hotpot, satay grilled squid, and grilled shrimp",
+            "Lẩu kim chi hải sản, bạch tuộc nướng, tôm sốt cay" =>
+                "kimchi seafood hotpot, grilled octopus, and spicy shrimp",
             "Bò nướng tảng, bò cuộn nấm, lẩu bò" =>
                 "grilled beef steak, mushroom rolled beef, and beef hotpot",
+            "Sườn bò nướng, bò cuộn nấm, lẩu bò" =>
+                "grilled beef ribs, mushroom rolled beef, and beef hotpot",
             _ => Transliterate(specialDish)
         };
     }

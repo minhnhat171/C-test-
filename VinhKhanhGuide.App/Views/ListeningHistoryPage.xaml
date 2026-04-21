@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="VinhKhanhGuide.App.Views.ListeningHistoryPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Name="ListeningHistoryRoot"
+    Title="{Binding HistoryPageTitle}"
+    BackgroundColor="#F4F8FF"
+    Shell.NavBarIsVisible="True">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,20,20,28"
+                             Spacing="18">
+            <Border BackgroundColor="#FFFFFF"
+                    Padding="18"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 26">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{Binding ListeningHistorySectionTitle}"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="#102A43" />
+
+                    <Label Text="{Binding ListeningHistorySectionSummary}"
+                           FontSize="14"
+                           TextColor="#486581"
+                           LineBreakMode="WordWrap" />
+
+                    <Label Text="{Binding ListeningHistorySyncStatus}"
+                           FontSize="13"
+                           TextColor="#7B8BA3" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="#F8FBFF"
+                    Padding="16"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 20"
+                    IsVisible="{Binding IsListeningHistoryDisplayEmpty}">
+                <Label Text="{Binding ListeningHistoryEmptyStateText}"
+                       FontSize="15"
+                       TextColor="#5E7491"
+                       LineBreakMode="WordWrap" />
+            </Border>
+
+            <VerticalStackLayout Spacing="12"
+                                 BindableLayout.ItemsSource="{Binding ListeningHistory}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate>
+                        <Border BackgroundColor="#FFFFFF"
+                                Padding="16"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 24">
+                            <VerticalStackLayout Spacing="12">
+                                <Grid ColumnDefinitions="Auto,*"
+                                      ColumnSpacing="12">
+                                    <Border BackgroundColor="#E8F1FF"
+                                            WidthRequest="44"
+                                            HeightRequest="44"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 22">
+                                        <Label Text="▶"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center"
+                                               FontSize="16"
+                                               FontAttributes="Bold"
+                                               TextColor="#2F80FF" />
+                                    </Border>
+
+                                    <VerticalStackLayout Grid.Column="1"
+                                                         Spacing="4">
+                                        <Grid ColumnDefinitions="*,Auto"
+                                              ColumnSpacing="8">
+                                            <Label Text="{Binding PoiName}"
+                                                   FontSize="17"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#102A43"
+                                                   LineBreakMode="TailTruncation" />
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding StartedAtShortLabel}"
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#2F80FF"
+                                                   VerticalOptions="Center" />
+                                        </Grid>
+
+                                        <Label Text="{Binding DetailSummaryLabel}"
+                                               FontSize="13"
+                                               TextColor="#486581"
+                                               LineBreakMode="TailTruncation" />
+                                        <Label Text="{Binding StatusLabel}"
+                                               FontSize="12"
+                                               FontAttributes="Bold"
+                                               TextColor="{Binding StatusAccentColor}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+
+                                <Grid ColumnDefinitions="*,*"
+                                      ColumnSpacing="10">
+                                    <Button Text="{Binding Source={x:Reference ListeningHistoryRoot}, Path=BindingContext.SelectedPoiDetailButtonText}"
+                                            Clicked="OnHistoryDetailClicked"
+                                            BackgroundColor="#E8F1FF"
+                                            TextColor="#2F80FF"
+                                            FontSize="15"
+                                            CornerRadius="18" />
+
+                                    <Button Grid.Column="1"
+                                            Text="{Binding ReplayActionText}"
+                                            Clicked="OnReplayClicked"
+                                            IsEnabled="{Binding CanReplay}"
+                                            BackgroundColor="#2F80FF"
+                                            TextColor="White"
+                                            FontSize="15"
+                                            CornerRadius="18" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

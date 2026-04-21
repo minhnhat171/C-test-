@@ -75,6 +75,9 @@ public static class MauiProgram
         builder.Services.AddTransient<Views.AccountPage>();
         builder.Services.AddTransient<Views.PoiDetailPage>();
         builder.Services.AddTransient<Views.FeaturedDishCategoryPage>();
+        builder.Services.AddTransient<Views.PoiBrowsePage>();
+        builder.Services.AddTransient<Views.TourPage>();
+        builder.Services.AddTransient<Views.ListeningHistoryPage>();
 
         var app = builder.Build();
         MapTileHttpClientFactory.ConfigureOfflineTileService(

@@ -80,6 +80,99 @@
             <Border BackgroundColor="White"
                     Padding="18"
                     StrokeThickness="0"
+                    StrokeShape="RoundRectangle 24"
+                    IsVisible="{Binding HasSelectedPoiPracticalInfo}">
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="{Binding PoiPracticalInfoSectionTitle}"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="#102A43" />
+
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
+                        <Border BackgroundColor="#F8FBFF"
+                                Padding="14"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 18"
+                                IsVisible="{Binding HasSelectedPoiPriceRange}">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding PoiPriceTitle}"
+                                       FontSize="12"
+                                       FontAttributes="Bold"
+                                       TextColor="#6B7C93" />
+                                <Label Text="{Binding SelectedPoiPriceRangeText}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="#102A43"
+                                       LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                BackgroundColor="#F8FBFF"
+                                Padding="14"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 18"
+                                IsVisible="{Binding HasSelectedPoiOpeningHours}">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding PoiOpeningHoursTitle}"
+                                       FontSize="12"
+                                       FontAttributes="Bold"
+                                       TextColor="#6B7C93" />
+                                <Label Text="{Binding SelectedPoiOpeningHoursText}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="#102A43"
+                                       LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
+                        <Border BackgroundColor="#F8FBFF"
+                                Padding="14"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 18"
+                                IsVisible="{Binding HasSelectedPoiFirstDish}">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding PoiFirstDishTitle}"
+                                       FontSize="12"
+                                       FontAttributes="Bold"
+                                       TextColor="#6B7C93" />
+                                <Label Text="{Binding SelectedPoiFirstDishText}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="#102A43"
+                                       LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                BackgroundColor="#F8FBFF"
+                                Padding="14"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 18"
+                                IsVisible="{Binding HasSelectedPoiTravelEstimate}">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding PoiTravelEstimateTitle}"
+                                       FontSize="12"
+                                       FontAttributes="Bold"
+                                       TextColor="#6B7C93" />
+                                <Label Text="{Binding SelectedPoiTravelEstimateText}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="#102A43"
+                                       LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="White"
+                    Padding="18"
+                    StrokeThickness="0"
                     StrokeShape="RoundRectangle 24">
                 <VerticalStackLayout Spacing="14">
                     <Label Text="{Binding PoiNarrationSectionTitle}"

@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
 using VinhKhanhGuide.Core.Contracts;
+using VinhKhanhGuide.Core.Seed;
 
 namespace VinhKhanhGuide.App.Services;
 
@@ -41,8 +42,14 @@ public class TourProvider : ITourProvider
                 return cachedTours;
             }
 
-            _logger.LogWarning(ex, "Failed to load tours from API. Returning an empty tour list.");
-            return Array.Empty<TourDto>();
+            var seedTours = TourSeedData.CreateDefaultDtos()
+                .Where(item => item.IsActive)
+                .Select(item => item.Clone())
+                .ToList();
+
+            _logger.LogWarning(ex, "Failed to load tours from API. Using bundled tour seed data.");
+            CacheSuccessfulRemoteTours(seedTours);
+            return CloneTours(seedTours);
         }
     }
 
@@ -75,7 +82,9 @@ public class TourProvider : ITourProvider
             }
         }
 
-        return null;
+        return TourSeedData.CreateDefaultDtos()
+            .FirstOrDefault(item => item.Id == tourId && item.IsActive)
+            ?.Clone();
     }
 
     private void CacheSuccessfulRemoteTours(IReadOnlyList<TourDto> tours)

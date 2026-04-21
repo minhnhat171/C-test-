@@ -17,6 +17,8 @@ public sealed class PoiRepository : IPoiRepository
         _poiProvider = poiProvider;
     }
 
+    public PoiDataSource CurrentDataSource => _poiProvider.LastDataSource;
+
     public async Task<IReadOnlyList<POI>> GetPoisAsync(CancellationToken cancellationToken = default)
     {
         var pois = await _poiProvider.GetPoisAsync(cancellationToken);

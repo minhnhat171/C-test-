@@ -85,9 +85,14 @@ public partial class MainViewModel : INotifyPropertyChanged
     private string _selectedPoiDescription = string.Empty;
     private string _selectedPoiDishText = string.Empty;
     private string _selectedPoiStatusText = string.Empty;
+    private string _selectedPoiPriceRangeText = string.Empty;
+    private string _selectedPoiOpeningHoursText = string.Empty;
+    private string _selectedPoiFirstDishText = string.Empty;
+    private string _selectedPoiTravelEstimateText = string.Empty;
     private string _selectedPoiNarrationPreview = string.Empty;
     private string _selectedPoiMapLink = string.Empty;
     private string _selectedPoiImageSource = string.Empty;
+    private string _activeMapCategoryKey = string.Empty;
     private string _selectedFeaturedDishCategoryName = "Món nổi bật";
     private string _selectedFeaturedDishCategorySummary =
         "Chạm vào Bò, Lẩu, Ốc hoặc Cua để xem danh sách món nổi bật theo từng nhóm.";
@@ -250,6 +255,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     public bool HasActiveTourStops => ActiveTourStops.Count > 0;
     public bool IsActiveTourCompleted => HasActiveTour && GetCurrentActiveTourPoi() is null;
     public IReadOnlyList<PoiStatusItem> VisibleMapPoiStatuses => GetVisibleMapPoiStatuses();
+    public IReadOnlyList<PoiStatusItem> PreviewMapPoiStatuses => GetPreviewMapPoiStatuses();
     public IReadOnlyList<LocationDto> ActiveTourRoutePoints => GetActiveTourStopIds()
         .Select(poiId => _pois.FirstOrDefault(item => item.Id == poiId))
         .Where(poi => poi is not null)
@@ -510,6 +516,62 @@ public partial class MainViewModel : INotifyPropertyChanged
         private set => SetProperty(ref _selectedPoiStatusText, value);
     }
 
+    public string SelectedPoiPriceRangeText
+    {
+        get => _selectedPoiPriceRangeText;
+        private set
+        {
+            if (!SetProperty(ref _selectedPoiPriceRangeText, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasSelectedPoiPriceRange));
+        }
+    }
+
+    public string SelectedPoiOpeningHoursText
+    {
+        get => _selectedPoiOpeningHoursText;
+        private set
+        {
+            if (!SetProperty(ref _selectedPoiOpeningHoursText, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasSelectedPoiOpeningHours));
+        }
+    }
+
+    public string SelectedPoiFirstDishText
+    {
+        get => _selectedPoiFirstDishText;
+        private set
+        {
+            if (!SetProperty(ref _selectedPoiFirstDishText, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasSelectedPoiFirstDish));
+        }
+    }
+
+    public string SelectedPoiTravelEstimateText
+    {
+        get => _selectedPoiTravelEstimateText;
+        private set
+        {
+            if (!SetProperty(ref _selectedPoiTravelEstimateText, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(HasSelectedPoiTravelEstimate));
+        }
+    }
+
     public string SelectedPoiNarrationPreview
     {
         get => _selectedPoiNarrationPreview;
@@ -529,12 +591,42 @@ public partial class MainViewModel : INotifyPropertyChanged
     }
 
     public bool HasSelectedPoiDish => !string.IsNullOrWhiteSpace(SelectedPoiDishText);
+    public bool HasSelectedPoiPriceRange => !string.IsNullOrWhiteSpace(SelectedPoiPriceRangeText);
+    public bool HasSelectedPoiOpeningHours => !string.IsNullOrWhiteSpace(SelectedPoiOpeningHoursText);
+    public bool HasSelectedPoiFirstDish => !string.IsNullOrWhiteSpace(SelectedPoiFirstDishText);
+    public bool HasSelectedPoiTravelEstimate => !string.IsNullOrWhiteSpace(SelectedPoiTravelEstimateText);
+    public bool HasSelectedPoiPracticalInfo =>
+        HasSelectedPoiPriceRange || HasSelectedPoiOpeningHours || HasSelectedPoiFirstDish || HasSelectedPoiTravelEstimate;
+
+    public bool HasMapCategoryFilter => !string.IsNullOrWhiteSpace(_activeMapCategoryKey);
+
+    public string ActiveMapCategoryFilterText => !HasMapCategoryFilter
+        ? string.Empty
+        : LocalizeUi(
+            $"Đang lọc theo nhóm {GetFeaturedCategoryDisplayName(_activeMapCategoryKey)}",
+            $"Filtered for {GetFeaturedCategoryDisplayName(_activeMapCategoryKey)}",
+            $"按 {GetFeaturedCategoryDisplayName(_activeMapCategoryKey)} 分组筛选",
+            $"{GetFeaturedCategoryDisplayName(_activeMapCategoryKey)} 그룹으로 필터 중",
+            $"Filtré sur {GetFeaturedCategoryDisplayName(_activeMapCategoryKey)}");
+
+    public IReadOnlyList<PoiStatusItem> SearchPreviewItems => FilteredPoiStatuses.Take(3).ToList();
+
+    public bool HasSearchPreviewResults => HasSearchQuery && SearchPreviewItems.Count > 0;
+
+    public string SearchPreviewSummaryText => LocalizeUi(
+        $"{FilteredPoiStatuses.Count} quán khớp với \"{SearchQuery.Trim()}\"",
+        $"{FilteredPoiStatuses.Count} places match \"{SearchQuery.Trim()}\"",
+        $"有 {FilteredPoiStatuses.Count} 家店铺匹配 “{SearchQuery.Trim()}”",
+        $"\"{SearchQuery.Trim()}\"에 맞는 매장 {FilteredPoiStatuses.Count}곳",
+        $"{FilteredPoiStatuses.Count} lieux correspondent à \"{SearchQuery.Trim()}\"");
 
     public string SelectedFeaturedDishCategoryName
     {
         get => _selectedFeaturedDishCategoryName;
         private set => SetProperty(ref _selectedFeaturedDishCategoryName, value);
     }
+
+    public string SelectedFeaturedDishCategoryKey => _selectedFeaturedDishCategoryKey;
 
     public string SelectedFeaturedDishCategorySummary
     {
@@ -1230,6 +1322,12 @@ public partial class MainViewModel : INotifyPropertyChanged
 
         await RefreshOfflinePackageStatusAsync();
         _isInitialized = true;
+        OnPropertyChanged(nameof(HasOfflineSnapshotNotice));
+        OnPropertyChanged(nameof(OfflineSnapshotNoticeText));
+        OnPropertyChanged(nameof(HasManualLocationNotice));
+        OnPropertyChanged(nameof(ManualLocationNoticeText));
+        OnPropertyChanged(nameof(HasNoTourNotice));
+        OnPropertyChanged(nameof(NoTourNoticeText));
     }
 
     public async Task StartAsync(bool autoStart = false)
@@ -1448,6 +1546,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         }
 
         _hasUserSelectedPoi = false;
+        ClearMapCategoryFilterInternal();
         HideSearchSuggestions();
         ClearSearch();
 
@@ -1495,6 +1594,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             await StopNarrationAsync();
         }
 
+        ClearMapCategoryFilterInternal();
         _activeTourId = tour.Id;
         _activeTourStopIndex = 0;
         _hasUserSelectedPoi = false;
@@ -1579,6 +1679,106 @@ public partial class MainViewModel : INotifyPropertyChanged
         AddRecentSearch(SearchQuery);
         UpdateFilteredPoiStatuses();
         return FilteredPoiStatuses.Count > 0;
+    }
+
+    public void SetMapCategoryFilter(string? categoryKey, bool updateStatus = true)
+    {
+        var normalizedCategory = NormalizeFeaturedDishCategoryKey(categoryKey);
+        if (string.Equals(_activeMapCategoryKey, normalizedCategory, StringComparison.OrdinalIgnoreCase))
+        {
+            if (updateStatus)
+            {
+                StatusText = LocalizeUi(
+                    $"Đang mở bản đồ cho nhóm {GetFeaturedCategoryDisplayName(normalizedCategory)}.",
+                    $"Map is already filtered for {GetFeaturedCategoryDisplayName(normalizedCategory)}.",
+                    $"地图已经按 {GetFeaturedCategoryDisplayName(normalizedCategory)} 分组显示。",
+                    $"{GetFeaturedCategoryDisplayName(normalizedCategory)} 그룹 지도를 이미 표시 중입니다.",
+                    $"La carte est déjà filtrée sur {GetFeaturedCategoryDisplayName(normalizedCategory)}.");
+            }
+
+            return;
+        }
+
+        _activeMapCategoryKey = normalizedCategory;
+        OnPropertyChanged(nameof(HasMapCategoryFilter));
+        OnPropertyChanged(nameof(ActiveMapCategoryFilterText));
+
+        if (updateStatus)
+        {
+            StatusText = LocalizeUi(
+                $"Đã lọc bản đồ theo nhóm {GetFeaturedCategoryDisplayName(normalizedCategory)}.",
+                $"Map filtered for {GetFeaturedCategoryDisplayName(normalizedCategory)}.",
+                $"地图已按 {GetFeaturedCategoryDisplayName(normalizedCategory)} 分组筛选。",
+                $"{GetFeaturedCategoryDisplayName(normalizedCategory)} 그룹으로 지도를 필터링했습니다.",
+                $"Carte filtrée sur {GetFeaturedCategoryDisplayName(normalizedCategory)}.");
+        }
+
+        UpdateMapBadges();
+        RaiseMapStateChanged();
+    }
+
+    public void ClearMapCategoryFilter(bool updateStatus = false)
+    {
+        ClearMapCategoryFilterInternal();
+
+        if (updateStatus)
+        {
+            StatusText = BuildIdleStatusText();
+        }
+    }
+
+    public bool TrySelectNearestPoiForFeaturedCategory(string? categoryKey)
+    {
+        var poi = GetNearestPoiForFeaturedCategory(categoryKey);
+        if (poi is null)
+        {
+            return false;
+        }
+
+        SetSelectedPoi(poi, true, EvaluateCurrentPoiStatuses());
+        StatusText = LocalizeUi(
+            $"Quán gần nhất cho nhóm {GetFeaturedCategoryDisplayName(categoryKey)} là {poi.Name}.",
+            $"Nearest place for {GetFeaturedCategoryDisplayName(categoryKey)} is {poi.Name}.",
+            $"{GetFeaturedCategoryDisplayName(categoryKey)} 分组最近的店铺是 {poi.Name}。",
+            $"{GetFeaturedCategoryDisplayName(categoryKey)} 그룹에서 가장 가까운 곳은 {poi.Name}입니다.",
+            $"Le lieu le plus proche pour {GetFeaturedCategoryDisplayName(categoryKey)} est {poi.Name}.");
+        return true;
+    }
+
+    public bool TrySelectRecommendedPoiForFeaturedCategory(string? categoryKey)
+    {
+        var poi = GetRecommendedPoiForFeaturedCategory(categoryKey);
+        if (poi is null)
+        {
+            return false;
+        }
+
+        SetSelectedPoi(poi, true, EvaluateCurrentPoiStatuses());
+        StatusText = LocalizeUi(
+            $"Quán nên bắt đầu cho nhóm {GetFeaturedCategoryDisplayName(categoryKey)} là {poi.Name}.",
+            $"Recommended first stop for {GetFeaturedCategoryDisplayName(categoryKey)} is {poi.Name}.",
+            $"{GetFeaturedCategoryDisplayName(categoryKey)} 分组建议先去 {poi.Name}。",
+            $"{GetFeaturedCategoryDisplayName(categoryKey)} 그룹 추천 첫 매장은 {poi.Name}입니다.",
+            $"Le premier lieu recommandé pour {GetFeaturedCategoryDisplayName(categoryKey)} est {poi.Name}.");
+        return true;
+    }
+
+    public async Task<bool> StartFeaturedCategoryTourAsync(string? categoryKey)
+    {
+        var tour = ResolveFeaturedCategoryTour(categoryKey);
+        if (tour is null)
+        {
+            StatusText = LocalizeUi(
+                "Nhóm món này chưa có mini tour khả dụng.",
+                "This category does not have a mini tour yet.",
+                "这个分组暂时没有可用的小路线。",
+                "이 그룹에는 아직 미니 투어가 없습니다.",
+                "Cette catégorie n'a pas encore de mini parcours.");
+            return false;
+        }
+
+        await ActivateTourAsync(tour.Id);
+        return true;
     }
 
     public bool ApplySearchSuggestion(SearchSuggestionItem suggestion)
@@ -1967,6 +2167,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     {
         var normalizedCategory = NormalizeFeaturedDishCategoryKey(categoryKey);
         _selectedFeaturedDishCategoryKey = normalizedCategory;
+        OnPropertyChanged(nameof(SelectedFeaturedDishCategoryKey));
         var category = FeaturedDishes.FirstOrDefault(item =>
                            string.Equals(item.Key, normalizedCategory, StringComparison.OrdinalIgnoreCase))
                        ?? FeaturedDishes.First();
@@ -1980,6 +2181,10 @@ public partial class MainViewModel : INotifyPropertyChanged
         SelectedFeaturedDishCategorySummary = category.Description;
         OnPropertyChanged(nameof(SelectedFeaturedDishResultsText));
         OnPropertyChanged(nameof(SelectedFeaturedDishCategoryHeaderText));
+        OnPropertyChanged(nameof(SelectedFeaturedDishNearestPoiText));
+        OnPropertyChanged(nameof(SelectedFeaturedDishRecommendedPoiText));
+        OnPropertyChanged(nameof(SelectedFeaturedDishMapFilterText));
+        OnPropertyChanged(nameof(SelectedFeaturedDishMiniTourText));
     }
 
     private void EnsurePoiRefreshLoopStarted()
@@ -2462,15 +2667,27 @@ public partial class MainViewModel : INotifyPropertyChanged
 
     private IReadOnlyList<PoiStatusItem> GetVisibleMapPoiStatuses()
     {
+        var filteredItems = GetCategoryFilteredPoiStatuses(PoiStatuses);
         var activeTourPoiIds = GetActiveTourStopIds().ToHashSet();
         if (activeTourPoiIds.Count == 0)
         {
-            return PoiStatuses.ToList();
+            return SortPoiStatusesForNearby(filteredItems);
         }
 
-        return PoiStatuses
+        return filteredItems
             .Where(item => activeTourPoiIds.Contains(item.PoiId))
             .ToList();
+    }
+
+    private IReadOnlyList<PoiStatusItem> GetPreviewMapPoiStatuses()
+    {
+        var fullItems = GetVisibleMapPoiStatuses();
+        if (HasActiveTour || HasMapCategoryFilter)
+        {
+            return fullItems.Take(4).ToList();
+        }
+
+        return fullItems.Take(4).ToList();
     }
 
     private TourDto? GetActiveTour()
@@ -2861,6 +3078,7 @@ public partial class MainViewModel : INotifyPropertyChanged
 
     private void UpdateMapBadges()
     {
+        var previewMapPoiCount = PreviewMapPoiStatuses.Count;
         var visibleMapPoiCount = VisibleMapPoiStatuses.Count;
 
         MapPoiBadgeText = visibleMapPoiCount == 0
@@ -2872,17 +3090,28 @@ public partial class MainViewModel : INotifyPropertyChanged
                     $"路线中 {visibleMapPoiCount} 个站点",
                     $"투어 내 지점 {visibleMapPoiCount}개",
                     $"{visibleMapPoiCount} étapes dans le parcours")
+                : HasMapCategoryFilter
+                    ? LocalizeUi(
+                        $"{visibleMapPoiCount} quán trong nhóm {GetFeaturedCategoryDisplayName(_activeMapCategoryKey)}",
+                        $"{visibleMapPoiCount} places in {GetFeaturedCategoryDisplayName(_activeMapCategoryKey)}",
+                        $"{GetFeaturedCategoryDisplayName(_activeMapCategoryKey)} 分组 {visibleMapPoiCount} 家店铺",
+                        $"{GetFeaturedCategoryDisplayName(_activeMapCategoryKey)} 그룹 {visibleMapPoiCount}개 매장",
+                        $"{visibleMapPoiCount} lieux dans {GetFeaturedCategoryDisplayName(_activeMapCategoryKey)}")
                 : LocalizeUi(
-                    $"{_pois.Count} quán đang hiển thị",
-                    $"{_pois.Count} places shown",
-                    $"显示 {_pois.Count} 家店铺",
-                    $"매장 {_pois.Count}개 표시 중",
-                    $"{_pois.Count} lieux affichés");
+                    $"{previewMapPoiCount} quán nổi bật đang hiển thị",
+                    $"{previewMapPoiCount} nearby places shown",
+                    $"显示 {previewMapPoiCount} 家附近店铺",
+                    $"가까운 매장 {previewMapPoiCount}개 표시 중",
+                    $"{previewMapPoiCount} lieux proches affichés");
 
         MapModeBadgeText = IsTracking
             ? HasActiveTour
                 ? LocalizeUi("Đang dẫn tour", "Guiding tour", "正在引导路线", "투어 안내 중", "Guidage du parcours")
+                : HasMapCategoryFilter
+                    ? LocalizeUi("Đang lọc theo món", "Dish filter on", "正在按菜品筛选", "메뉴 필터 적용 중", "Filtre plat actif")
                 : LocalizeUi("Đang dùng vị trí", "Using location", "正在使用定位", "위치 사용 중", "Position active")
+            : HasMapCategoryFilter
+                ? LocalizeUi("Đang lọc theo món", "Dish filter on", "正在按菜品筛选", "메뉴 필터 적용 중", "Filtre plat actif")
             : _lastLocation is not null
                 ? LocalizeUi("Đã có vị trí", "Location ready", "已有定位", "위치 확보됨", "Position captée")
                 : _hasCheckedLocationPermission
@@ -2892,6 +3121,12 @@ public partial class MainViewModel : INotifyPropertyChanged
                         ? LocalizeUi("Đang tìm vị trí", "Finding location", "正在查找位置", "위치 찾는 중", "Recherche de position")
                         : LocalizeUi("Đầu phố", "Entrance", "默认位置", "기본 위치", "Position par défaut"))
                     : LocalizeUi("Đang chuẩn bị bản đồ", "Preparing map", "正在准备地图", "지도 준비 중", "Préparation de la carte");
+
+        OnPropertyChanged(nameof(HasOfflineSnapshotNotice));
+        OnPropertyChanged(nameof(OfflineSnapshotNoticeText));
+        OnPropertyChanged(nameof(HasManualLocationNotice));
+        OnPropertyChanged(nameof(ManualLocationNoticeText));
+        OnPropertyChanged(nameof(ActiveMapCategoryFilterText));
     }
 
     private bool ShouldAutoNarrate(POI poi)
@@ -3123,6 +3358,10 @@ public partial class MainViewModel : INotifyPropertyChanged
         RaiseTourStateChanged();
         OnPropertyChanged(nameof(HomeNarrationSummary));
         OnPropertyChanged(nameof(HomeNarrationAvailabilityText));
+        OnPropertyChanged(nameof(SelectedFeaturedDishNearestPoiText));
+        OnPropertyChanged(nameof(SelectedFeaturedDishRecommendedPoiText));
+        OnPropertyChanged(nameof(SelectedFeaturedDishMapFilterText));
+        OnPropertyChanged(nameof(SelectedFeaturedDishMiniTourText));
     }
 
     private void SetSelectedPoi(
@@ -3191,6 +3430,21 @@ public partial class MainViewModel : INotifyPropertyChanged
                 "현재 거리: 아직 알 수 없음",
                 "Distance : non disponible");
 
+        var referenceLocation = _lastLocation ?? EntranceLocation;
+        var effectiveDistance = distanceMeters ??
+            GeoMath.DistanceMeters(
+                referenceLocation.Latitude,
+                referenceLocation.Longitude,
+                _selectedPoi.Latitude,
+                _selectedPoi.Longitude);
+        var walkMinutes = Math.Max(1, (int)Math.Round(effectiveDistance / 78d, MidpointRounding.AwayFromZero));
+        var travelEstimateLabel = LocalizeUi(
+            $"{effectiveDistance:F0}m • khoảng {walkMinutes} phút đi bộ",
+            $"{effectiveDistance:F0}m • about {walkMinutes} min walk",
+            $"{effectiveDistance:F0} 米 • 步行约 {walkMinutes} 分钟",
+            $"{effectiveDistance:F0}m • 도보 약 {walkMinutes}분",
+            $"{effectiveDistance:F0} m • environ {walkMinutes} min à pied");
+
         SelectedPoiName = _selectedPoi.Name;
         SelectedPoiAddress = _selectedPoi.Address;
         SelectedPoiDescription = _selectedPoi.Description;
@@ -3202,6 +3456,10 @@ public partial class MainViewModel : INotifyPropertyChanged
                 $"触发半径 {_selectedPoi.TriggerRadiusMeters:F0} 米",
                 $"트리거 반경 {_selectedPoi.TriggerRadiusMeters:F0}m",
                 $"Rayon de déclenchement {_selectedPoi.TriggerRadiusMeters:F0} m")}";
+        SelectedPoiPriceRangeText = _selectedPoi.PriceRange;
+        SelectedPoiOpeningHoursText = _selectedPoi.OpeningHours;
+        SelectedPoiFirstDishText = _selectedPoi.FirstDishSuggestion;
+        SelectedPoiTravelEstimateText = travelEstimateLabel;
         SelectedPoiNarrationPreview = _selectedPoi.GetNarrationText(SelectedLanguage);
         SelectedPoiMapLink = _selectedPoi.MapLink;
         SelectedPoiImageSource = _selectedPoi.ImageSource;
@@ -3224,6 +3482,10 @@ public partial class MainViewModel : INotifyPropertyChanged
         SelectedPoiDescription = string.Empty;
         SelectedPoiDishText = string.Empty;
         SelectedPoiStatusText = string.Empty;
+        SelectedPoiPriceRangeText = string.Empty;
+        SelectedPoiOpeningHoursText = string.Empty;
+        SelectedPoiFirstDishText = string.Empty;
+        SelectedPoiTravelEstimateText = string.Empty;
         SelectedPoiNarrationPreview = string.Empty;
         SelectedPoiMapLink = string.Empty;
         SelectedPoiImageSource = string.Empty;
@@ -3319,6 +3581,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HasActiveTour));
         OnPropertyChanged(nameof(HasActiveTourStops));
         OnPropertyChanged(nameof(IsActiveTourCompleted));
+        OnPropertyChanged(nameof(SelectedPoiSectionTitle));
         OnPropertyChanged(nameof(TourSectionSummary));
         OnPropertyChanged(nameof(ActiveTourName));
         OnPropertyChanged(nameof(ActiveTourSummary));
@@ -3328,6 +3591,8 @@ public partial class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ActiveTourStopsHeight));
         OnPropertyChanged(nameof(HomeNarrationSummary));
         OnPropertyChanged(nameof(HomePrimaryCtaText));
+        OnPropertyChanged(nameof(HasNoTourNotice));
+        OnPropertyChanged(nameof(NoTourNoticeText));
     }
 
     private void UpdateFilteredPoiStatuses()
@@ -3339,7 +3604,7 @@ public partial class MainViewModel : INotifyPropertyChanged
                 .Where(item => item is not null)
                 .Cast<PoiStatusItem>()
                 .ToList()
-            : PoiStatuses.ToList();
+            : SortPoiStatusesForNearby(PoiStatuses);
 
         FilteredPoiStatuses.Clear();
 
@@ -3352,13 +3617,16 @@ public partial class MainViewModel : INotifyPropertyChanged
         SearchResultStatusText = IsSearchResultEmpty
             ? GetSearchEmptyStateMessage(searchResult.Keyword)
             : string.Empty;
+        OnPropertyChanged(nameof(SearchPreviewItems));
+        OnPropertyChanged(nameof(HasSearchPreviewResults));
+        OnPropertyChanged(nameof(SearchPreviewSummaryText));
     }
 
     private void RefreshSearchSuggestions()
     {
         SearchSuggestions.Clear();
 
-        if (!_isSearchFocused || PoiStatuses.Count == 0)
+        if (!_isSearchFocused || PoiStatuses.Count == 0 || HasSearchQuery)
         {
             IsSearchSuggestionsVisible = false;
             return;
@@ -3372,10 +3640,103 @@ public partial class MainViewModel : INotifyPropertyChanged
 
         foreach (var suggestion in suggestions)
         {
-            SearchSuggestions.Add(suggestion);
+        SearchSuggestions.Add(suggestion);
         }
 
         IsSearchSuggestionsVisible = SearchSuggestions.Count > 0;
+    }
+
+    private IReadOnlyList<PoiStatusItem> GetCategoryFilteredPoiStatuses(IEnumerable<PoiStatusItem> source)
+    {
+        if (!HasMapCategoryFilter)
+        {
+            return source.ToList();
+        }
+
+        var normalizedCategory = NormalizeFeaturedDishCategoryKey(_activeMapCategoryKey);
+        return source
+            .Where(item => _pois.FirstOrDefault(poi => poi.Id == item.PoiId)?
+                .FeaturedCategories
+                .Any(category => string.Equals(category, normalizedCategory, StringComparison.OrdinalIgnoreCase)) == true)
+            .ToList();
+    }
+
+    private List<PoiStatusItem> SortPoiStatusesForNearby(IEnumerable<PoiStatusItem> source)
+    {
+        return source
+            .OrderBy(item => double.IsNaN(item.DistanceMeters) ? 1 : 0)
+            .ThenBy(item => double.IsNaN(item.DistanceMeters) ? double.MaxValue : item.DistanceMeters)
+            .ThenByDescending(item => item.IsNearest)
+            .ThenByDescending(item => item.Priority)
+            .ThenBy(item => item.Name)
+            .ToList();
+    }
+
+    private void ClearMapCategoryFilterInternal()
+    {
+        if (string.IsNullOrWhiteSpace(_activeMapCategoryKey))
+        {
+            return;
+        }
+
+        _activeMapCategoryKey = string.Empty;
+        OnPropertyChanged(nameof(HasMapCategoryFilter));
+        OnPropertyChanged(nameof(ActiveMapCategoryFilterText));
+        UpdateMapBadges();
+        RaiseMapStateChanged();
+    }
+
+    private IReadOnlyList<POI> GetPoisForFeaturedCategory(string? categoryKey)
+    {
+        var normalizedCategory = NormalizeFeaturedDishCategoryKey(categoryKey);
+        return _pois
+            .Where(poi => poi.FeaturedCategories.Any(item =>
+                string.Equals(item, normalizedCategory, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+    }
+
+    private POI? GetNearestPoiForFeaturedCategory(string? categoryKey)
+    {
+        var candidates = GetPoisForFeaturedCategory(categoryKey);
+        if (candidates.Count == 0)
+        {
+            return null;
+        }
+
+        var referenceLocation = _lastLocation ?? EntranceLocation;
+        return candidates
+            .OrderBy(poi => GeoMath.DistanceMeters(
+                referenceLocation.Latitude,
+                referenceLocation.Longitude,
+                poi.Latitude,
+                poi.Longitude))
+            .ThenByDescending(poi => poi.Priority)
+            .FirstOrDefault();
+    }
+
+    private POI? GetRecommendedPoiForFeaturedCategory(string? categoryKey)
+    {
+        return GetPoisForFeaturedCategory(categoryKey)
+            .OrderByDescending(poi => poi.Priority)
+            .ThenBy(poi => NormalizeForSearch(poi.Name))
+            .FirstOrDefault();
+    }
+
+    private TourDto? ResolveFeaturedCategoryTour(string? categoryKey)
+    {
+        var normalizedCategory = NormalizeFeaturedDishCategoryKey(categoryKey);
+        var codeFragment = normalizedCategory switch
+        {
+            "bo" => "BO",
+            "lau" => "LAU",
+            "oc" => "OC",
+            "cua" => "CUA",
+            _ => string.Empty
+        };
+
+        return _tours.FirstOrDefault(item =>
+            !string.IsNullOrWhiteSpace(codeFragment) &&
+            item.Code.Contains(codeFragment, StringComparison.OrdinalIgnoreCase));
     }
 
     private void AddRecentSearch(string query)
@@ -4326,6 +4687,8 @@ public partial class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(OfflineMapDetail));
         OnPropertyChanged(nameof(OfflineAudioSummary));
         OnPropertyChanged(nameof(OfflineAudioDetail));
+        OnPropertyChanged(nameof(HasOfflineSnapshotNotice));
+        OnPropertyChanged(nameof(OfflineSnapshotNoticeText));
         UpdateOfflinePackageCommandStates();
     }
 

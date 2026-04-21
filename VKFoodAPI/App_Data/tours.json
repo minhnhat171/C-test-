@@ -1,10 +1,10 @@
 [
   {
     "Id": 1,
-    "Code": "VK-DEMO-TOUR-01",
-    "Name": "Tour Ẩm Thực Vĩnh Khánh Về Đêm",
-    "Description": "Lộ trình ngắn đi qua ba điểm dừng tiêu biểu, phù hợp để làm quen không khí ăn đêm và theo dõi thuyết minh theo từng chặng.",
-    "EstimatedMinutes": 20,
+    "Code": "VK-TOUR-STARTER",
+    "Name": "Tour Làm Quen Cho Khách Mới",
+    "Description": "Lộ trình ngắn cho lần đầu ghé Vĩnh Khánh, ưu tiên các quán dễ chọn và dễ nghe theo nhịp.",
+    "EstimatedMinutes": 22,
     "IsActive": true,
     "IsQrEnabled": true,
     "PoiIds": [
@@ -12,21 +12,66 @@
       "11111111-1111-1111-1111-111111111104",
       "11111111-1111-1111-1111-111111111109"
     ],
-    "UpdatedAtUtc": "2026-04-18T08:00:00Z"
+    "UpdatedAtUtc": "2026-04-21T09:00:00Z"
   },
   {
     "Id": 2,
-    "Code": "1703",
-    "Name": "Nhật Minh",
-    "Description": "đạt đẹp trai",
-    "EstimatedMinutes": 45,
+    "Code": "VK-TOUR-OC-MINI",
+    "Name": "Mini Tour Món Ốc",
+    "Description": "Đi nhanh qua các quán ốc dễ thử nhất để khách mới cảm nhận đúng chất phố ẩm thực.",
+    "EstimatedMinutes": 26,
     "IsActive": true,
     "IsQrEnabled": true,
     "PoiIds": [
+      "11111111-1111-1111-1111-111111111102",
       "11111111-1111-1111-1111-111111111104",
-      "11111111-1111-1111-1111-111111111105",
-      "11111111-1111-1111-1111-111111111102"
+      "11111111-1111-1111-1111-111111111103"
     ],
-    "UpdatedAtUtc": "2026-04-20T16:21:23.7022708Z"
+    "UpdatedAtUtc": "2026-04-21T09:02:00Z"
+  },
+  {
+    "Id": 3,
+    "Code": "VK-TOUR-LAU-MINI",
+    "Name": "Mini Tour Lẩu Và Nướng",
+    "Description": "Lộ trình ngắn cho nhóm muốn chuyển từ hải sản sang lẩu và nướng trong cùng một buổi tối.",
+    "EstimatedMinutes": 28,
+    "IsActive": true,
+    "IsQrEnabled": true,
+    "PoiIds": [
+      "11111111-1111-1111-1111-111111111108",
+      "11111111-1111-1111-1111-111111111109",
+      "11111111-1111-1111-1111-111111111110"
+    ],
+    "UpdatedAtUtc": "2026-04-21T09:04:00Z"
+  },
+  {
+    "Id": 4,
+    "Code": "VK-TOUR-BO-MINI",
+    "Name": "Mini Tour Bò Nướng",
+    "Description": "Phù hợp khi bạn muốn đổi vị khỏi ốc để thử bò nướng và các quán hợp đi nhóm.",
+    "EstimatedMinutes": 24,
+    "IsActive": true,
+    "IsQrEnabled": true,
+    "PoiIds": [
+      "11111111-1111-1111-1111-111111111110",
+      "11111111-1111-1111-1111-111111111109",
+      "11111111-1111-1111-1111-111111111108"
+    ],
+    "UpdatedAtUtc": "2026-04-21T09:06:00Z"
+  },
+  {
+    "Id": 5,
+    "Code": "VK-TOUR-CUA-MINI",
+    "Name": "Mini Tour Món Cua",
+    "Description": "Nhịp tour ngắn dành cho khách muốn thử các quán dễ bắt đầu với món cua và hải sản đậm vị.",
+    "EstimatedMinutes": 25,
+    "IsActive": true,
+    "IsQrEnabled": true,
+    "PoiIds": [
+      "11111111-1111-1111-1111-111111111107",
+      "11111111-1111-1111-1111-111111111104",
+      "11111111-1111-1111-1111-111111111101"
+    ],
+    "UpdatedAtUtc": "2026-04-21T09:08:00Z"
   }
 ]

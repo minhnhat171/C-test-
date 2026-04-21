@@ -33,8 +33,77 @@
                         <Label Text="{Binding SelectedFeaturedDishResultsText}"
                                FontSize="11"
                                FontAttributes="Bold"
-                               TextColor="#7C2D12" />
+                            TextColor="#7C2D12" />
                     </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="#FFFFFF"
+                    StrokeThickness="0"
+                    Padding="16"
+                    StrokeShape="RoundRectangle 24">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="10">
+                        <Border BackgroundColor="#F6FBFA"
+                                Padding="14"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 18">
+                            <Label Text="{Binding SelectedFeaturedDishNearestPoiText}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="#173A43"
+                                   LineBreakMode="WordWrap" />
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                BackgroundColor="#FFF7ED"
+                                Padding="14"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 18">
+                            <Label Text="{Binding SelectedFeaturedDishRecommendedPoiText}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="#9A3412"
+                                   LineBreakMode="WordWrap" />
+                        </Border>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="10">
+                        <Button Text="{Binding SelectedFeaturedDishMapFilterText}"
+                                Clicked="OnOpenFilteredMapClicked"
+                                BackgroundColor="#173A43"
+                                TextColor="White"
+                                FontSize="14"
+                                CornerRadius="18" />
+
+                        <Button Grid.Column="1"
+                                Text="{Binding SelectedFeaturedDishMiniTourText}"
+                                Clicked="OnStartMiniTourClicked"
+                                BackgroundColor="#FDE7D7"
+                                TextColor="#7C2D12"
+                                FontSize="14"
+                                CornerRadius="18" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="10">
+                        <Button Text="{Binding SelectedFeaturedDishNearestPoiText}"
+                                Clicked="OnOpenNearestPoiClicked"
+                                BackgroundColor="#E8F1FF"
+                                TextColor="#2F80FF"
+                                FontSize="14"
+                                CornerRadius="18" />
+
+                        <Button Grid.Column="1"
+                                Text="{Binding SelectedFeaturedDishRecommendedPoiText}"
+                                Clicked="OnOpenRecommendedPoiClicked"
+                                BackgroundColor="#EEFDF5"
+                                TextColor="#15803D"
+                                FontSize="14"
+                                CornerRadius="18" />
+                    </Grid>
                 </VerticalStackLayout>
             </Border>
 
@@ -98,6 +167,11 @@
                                                TextColor="#173A43" />
                                     </VerticalStackLayout>
                                 </Border>
+
+                                <Label Text="{Binding Source={x:Reference FeaturedDishPageRoot}, Path=BindingContext.SelectedFeaturedDishRecommendedPoiText}"
+                                       FontSize="12"
+                                       TextColor="#5B6B7D"
+                                       LineBreakMode="WordWrap" />
                             </VerticalStackLayout>
                         </Border>
                     </DataTemplate>

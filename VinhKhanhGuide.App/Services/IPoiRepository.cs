@@ -4,6 +4,7 @@ namespace VinhKhanhGuide.App.Services;
 
 public interface IPoiRepository
 {
+    PoiDataSource CurrentDataSource { get; }
     Task<IReadOnlyList<POI>> GetPoisAsync(CancellationToken cancellationToken = default);
 
     Task<POI?> GetPoiByIdAsync(Guid poiId, CancellationToken cancellationToken = default);

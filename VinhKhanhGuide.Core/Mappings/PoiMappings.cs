@@ -19,6 +19,14 @@ public static class PoiMappings
             Address = dto.Address,
             Description = dto.Description,
             SpecialDish = dto.SpecialDish,
+            PriceRange = dto.PriceRange,
+            OpeningHours = dto.OpeningHours,
+            FirstDishSuggestion = dto.FirstDishSuggestion,
+            FeaturedCategories = dto.FeaturedCategories?
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Select(item => item.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList() ?? [],
             NarrationText = dto.NarrationText,
             MapLink = dto.MapLink,
             AudioAssetPath = dto.AudioAssetPath,
@@ -48,6 +56,14 @@ public static class PoiMappings
             Address = poi.Address,
             Description = poi.Description,
             SpecialDish = poi.SpecialDish,
+            PriceRange = poi.PriceRange,
+            OpeningHours = poi.OpeningHours,
+            FirstDishSuggestion = poi.FirstDishSuggestion,
+            FeaturedCategories = poi.FeaturedCategories?
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Select(item => item.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList() ?? [],
             NarrationText = poi.NarrationText,
             MapLink = poi.MapLink,
             AudioAssetPath = poi.AudioAssetPath,

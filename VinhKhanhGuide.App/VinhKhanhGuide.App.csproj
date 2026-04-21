@@ -42,7 +42,10 @@
     <MauiXaml Update="Views\AuthPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Views\AccountPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Views\FeaturedDishCategoryPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Views\ListeningHistoryPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Views\PoiDetailPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Views\PoiBrowsePage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Views\TourPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Resources\Styles\Colors.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Resources\Styles\Styles.xaml" Generator="MSBuild:Compile" />
   </ItemGroup>
