@@ -2287,6 +2287,7 @@ public partial class MainViewModel : INotifyPropertyChanged
                     GetCurrentActiveTourPoi() ?? nearestPoi,
                     evaluated);
                 UpdateMapBadges();
+                RaiseMapStateChanged();
             });
 
             if (_isInitialized &&
@@ -2682,12 +2683,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     private IReadOnlyList<PoiStatusItem> GetPreviewMapPoiStatuses()
     {
         var fullItems = GetVisibleMapPoiStatuses();
-        if (HasActiveTour || HasMapCategoryFilter)
-        {
-            return fullItems.Take(4).ToList();
-        }
-
-        return fullItems.Take(4).ToList();
+        return fullItems.ToList();
     }
 
     private TourDto? GetActiveTour()

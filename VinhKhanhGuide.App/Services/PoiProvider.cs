@@ -196,7 +196,6 @@ public class PoiProvider : IPoiProvider
             .ToList();
     }
 
-<<<<<<< HEAD
     private static IReadOnlyList<POI> MergeWithSeedPois(IEnumerable<POI> pois)
     {
         var mergedPois = FallbackPois
@@ -246,7 +245,8 @@ public class PoiProvider : IPoiProvider
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
-=======
+    }
+
     private POI ToDomainWithResolvedImageSource(PoiDto dto)
     {
         var poi = dto.ToDomain();
@@ -270,6 +270,5 @@ public class PoiProvider : IPoiProvider
         }
 
         return value;
->>>>>>> 5c1f925156adcfc9c693616638279c7b35c12a05
     }
 }
