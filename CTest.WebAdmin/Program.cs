@@ -1,5 +1,7 @@
 using CTest.WebAdmin.Models;
+using CTest.WebAdmin.Security;
 using CTest.WebAdmin.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 using VinhKhanhGuide.Core.Configuration;
 
@@ -9,7 +11,31 @@ var poiApiBaseUrl = builder.Configuration["PoiApi:BaseUrl"];
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/Login";
+        options.Cookie.Name = "CTest.WebAdmin.Auth";
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(WebAdminPolicies.AdminOnly, policy =>
+        policy.RequireRole(WebAdminRoles.Admin));
+    options.AddPolicy(WebAdminPolicies.OwnerArea, policy =>
+        policy.RequireRole(WebAdminRoles.Admin, WebAdminRoles.PoiOwner));
+});
+
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<WebAdminAuthOptions>(builder.Configuration.GetSection("WebAdminAuth"));
+builder.Services.AddSingleton<IWebAdminAuthService, WebAdminAuthService>();
+builder.Services.AddScoped<IWebAdminCurrentUser, WebAdminCurrentUser>();
+builder.Services.AddSingleton<WebDisplayClock>();
 builder.Services.AddSingleton<AppDataService>();
 builder.Services.Configure<QrCodeOptions>(builder.Configuration.GetSection("QrCode"));
 builder.Services.AddHttpClient<PoiApiClient>(ConfigureSharedApiClient);
@@ -43,6 +69,8 @@ app.UseHttpsRedirection();
 app.UseDeveloperExceptionPage();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",

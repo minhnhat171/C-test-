@@ -5,7 +5,7 @@ namespace CTest.WebAdmin.Services;
 
 internal static class AudioGuideAdminMappings
 {
-    public static AudioGuideListItemViewModel ToListItem(this AudioGuideDto dto, bool isSelected = false)
+    public static AudioGuideListItemViewModel ToListItem(this AudioGuideDto dto, WebDisplayClock clock, bool isSelected = false)
     {
         return new AudioGuideListItemViewModel
         {
@@ -23,7 +23,9 @@ internal static class AudioGuideAdminMappings
             FilePath = dto.FilePath ?? string.Empty,
             EstimatedSeconds = dto.EstimatedSeconds,
             IsPublished = dto.IsPublished,
-            UpdatedAtLocal = dto.UpdatedAtUtc == default ? DateTime.Now : dto.UpdatedAtUtc.ToLocalTime(),
+            UpdatedAtLocal = dto.UpdatedAtUtc == default
+                ? clock.Now.DateTime
+                : clock.ToDisplayTime(dto.UpdatedAtUtc).DateTime,
             IsSelected = isSelected
         };
     }

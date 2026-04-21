@@ -1,9 +1,12 @@
 using CTest.WebAdmin.Models;
+using CTest.WebAdmin.Security;
 using CTest.WebAdmin.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CTest.WebAdmin.Controllers;
 
+[Authorize(Policy = WebAdminPolicies.AdminOnly)]
 public class MapPoisController : Controller
 {
     private readonly PoiAdminService _poiService;
@@ -85,7 +88,7 @@ public class MapPoisController : Controller
         {
             return new MapPoiManagementViewModel
             {
-                LoadErrorMessage = "Khong the ket noi VKFoodAPI. Trang Map POI chi hoat dong khi API dang chay.",
+                LoadErrorMessage = "Khong the ket noi VKFoodAPI. Trang Map Analytics chi hoat dong khi API dang chay.",
                 SelectedPoiId = editorOverride?.Id ?? poiId ?? Guid.Empty,
                 Editor = editorOverride ?? new PoiEditorViewModel
                 {

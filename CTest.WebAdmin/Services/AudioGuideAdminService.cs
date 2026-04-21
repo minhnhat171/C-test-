@@ -18,15 +18,18 @@ public class AudioGuideAdminService
 
     private readonly AudioGuideApiClient _audioGuideApiClient;
     private readonly PoiApiClient _poiApiClient;
+    private readonly WebDisplayClock _clock;
     private readonly string _poiApiBaseUrl;
 
     public AudioGuideAdminService(
         AudioGuideApiClient audioGuideApiClient,
         PoiApiClient poiApiClient,
+        WebDisplayClock clock,
         IConfiguration configuration)
     {
         _audioGuideApiClient = audioGuideApiClient;
         _poiApiClient = poiApiClient;
+        _clock = clock;
         _poiApiBaseUrl = PoiApiDefaults.CreateBaseUri(configuration["PoiApi:BaseUrl"]).ToString();
     }
 
@@ -89,7 +92,7 @@ public class AudioGuideAdminService
             vm.Items = scopedAudioGuides
                 .OrderByDescending(item => item.UpdatedAtUtc)
                 .ThenBy(item => item.PoiName)
-                .Select(item => item.ToListItem(item.Id == selectedGuide?.Id))
+                .Select(item => item.ToListItem(_clock, item.Id == selectedGuide?.Id))
                 .ToList();
 
             vm.LanguageSlots = vm.ScopePoiId.HasValue
@@ -193,7 +196,7 @@ public class AudioGuideAdminService
         return guideByLanguage ?? scopedAudioGuides.FirstOrDefault();
     }
 
-    private static List<AudioGuideLanguageSlotViewModel> BuildLanguageSlots(
+    private List<AudioGuideLanguageSlotViewModel> BuildLanguageSlots(
         IReadOnlyList<AudioGuideDto> scopedAudioGuides,
         string selectedLanguageCode)
     {
@@ -229,7 +232,7 @@ public class AudioGuideAdminService
                         ? AudioGuideAdminMappings.GetSourceLabel(latestGuide!.SourceType)
                         : "Chua co audio",
                     UpdatedLabel = hasAudio
-                        ? latestGuide!.UpdatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                        ? _clock.ToDisplayTime(latestGuide!.UpdatedAtUtc).ToString("dd/MM/yyyy HH:mm")
                         : "Chua cap nhat",
                     AudioId = latestGuide?.Id,
                     HasAudio = hasAudio,
@@ -240,7 +243,7 @@ public class AudioGuideAdminService
             .ToList();
     }
 
-    private static List<AudioGuidePoiCoverageItemViewModel> BuildPoiAudioCoverage(
+    private List<AudioGuidePoiCoverageItemViewModel> BuildPoiAudioCoverage(
         IReadOnlyList<PoiDto> pois,
         IReadOnlyList<AudioGuideDto> audioGuides,
         string selectedLanguageCode,
@@ -307,7 +310,9 @@ public class AudioGuideAdminService
                     HasSelectedLanguageAudio = selectedLanguageGuide is not null,
                     HasPublishedAudio = poiAudioGuides.Any(item => item.IsPublished),
                     IsSelected = selectedAudioId.HasValue && fallbackGuide?.Id == selectedAudioId.Value,
-                    UpdatedAtLocal = selectedLanguageGuide?.UpdatedAtUtc.ToLocalTime()
+                    UpdatedAtLocal = selectedLanguageGuide is null
+                        ? null
+                        : _clock.ToDisplayTime(selectedLanguageGuide.UpdatedAtUtc).DateTime
                 };
             })
             .ToList();

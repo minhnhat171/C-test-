@@ -79,7 +79,9 @@ public class ListeningHistoryRepository
         lock (_syncRoot)
         {
             var created = NormalizeCreateRequest(request);
+            created.ReceivedAtUtc = DateTimeOffset.UtcNow;
             _items.Add(created);
+            RecalculateQueuePositionsUnsafe(created.PoiId);
             SaveUnsafe();
             return created.Clone();
         }
@@ -97,7 +99,9 @@ public class ListeningHistoryRepository
 
             existing.ListenSeconds = Math.Max(0, request.ListenSeconds);
             existing.Completed = request.Completed;
-            existing.CompletedAtUtc = request.CompletedAtUtc ?? DateTimeOffset.UtcNow;
+            existing.CompletedAtUtc = request.CompletedAtUtc.HasValue
+                ? request.CompletedAtUtc.Value.ToUniversalTime()
+                : DateTimeOffset.UtcNow;
             existing.ErrorMessage = request.ErrorMessage?.Trim() ?? string.Empty;
 
             SaveUnsafe();
@@ -131,7 +135,9 @@ public class ListeningHistoryRepository
         {
             var json = File.ReadAllText(_dataFilePath);
             var items = JsonSerializer.Deserialize<List<ListeningHistoryEntryDto>>(json, _jsonOptions);
-            return items?.Select(NormalizeStoredEntry).ToList() ?? [];
+            var normalizedItems = items?.Select(NormalizeStoredEntry).ToList() ?? [];
+            RecalculateQueuePositions(normalizedItems);
+            return normalizedItems;
         }
         catch
         {
@@ -228,7 +234,10 @@ public class ListeningHistoryRepository
             Source = string.IsNullOrWhiteSpace(request.Source) ? "app" : request.Source.Trim(),
             DevicePlatform = request.DevicePlatform?.Trim() ?? string.Empty,
             AutoTriggered = request.AutoTriggered,
-            StartedAtUtc = request.StartedAtUtc == default ? DateTimeOffset.UtcNow : request.StartedAtUtc,
+            StartedAtUtc = request.StartedAtUtc == default
+                ? DateTimeOffset.UtcNow
+                : request.StartedAtUtc.ToUniversalTime(),
+            ReceivedAtUtc = DateTimeOffset.UtcNow,
             CompletedAtUtc = null,
             ListenSeconds = 0,
             Completed = false,
@@ -259,8 +268,54 @@ public class ListeningHistoryRepository
         normalized.DevicePlatform ??= string.Empty;
         normalized.ErrorMessage ??= string.Empty;
         normalized.ListenSeconds = Math.Max(0, normalized.ListenSeconds);
-        normalized.StartedAtUtc = normalized.StartedAtUtc == default ? DateTimeOffset.UtcNow : normalized.StartedAtUtc;
+        normalized.StartedAtUtc = normalized.StartedAtUtc == default
+            ? DateTimeOffset.UtcNow
+            : normalized.StartedAtUtc.ToUniversalTime();
+        normalized.ReceivedAtUtc = normalized.ReceivedAtUtc == default
+            ? normalized.StartedAtUtc
+            : normalized.ReceivedAtUtc.ToUniversalTime();
+        normalized.CompletedAtUtc = normalized.CompletedAtUtc?.ToUniversalTime();
+        normalized.TtsQueuePosition = Math.Max(1, normalized.TtsQueuePosition);
         return normalized;
+    }
+
+    private void RecalculateQueuePositionsUnsafe(Guid poiId)
+    {
+        if (poiId == Guid.Empty)
+        {
+            return;
+        }
+
+        var ordered = _items
+            .Where(item => item.PoiId == poiId)
+            .OrderBy(item => item.StartedAtUtc)
+            .ThenBy(item => item.ReceivedAtUtc)
+            .ThenBy(item => item.Id)
+            .ToList();
+
+        for (var index = 0; index < ordered.Count; index++)
+        {
+            ordered[index].TtsQueuePosition = index + 1;
+        }
+    }
+
+    private static void RecalculateQueuePositions(List<ListeningHistoryEntryDto> items)
+    {
+        foreach (var group in items
+            .Where(item => item.PoiId != Guid.Empty)
+            .GroupBy(item => item.PoiId))
+        {
+            var ordered = group
+                .OrderBy(item => item.StartedAtUtc)
+                .ThenBy(item => item.ReceivedAtUtc)
+                .ThenBy(item => item.Id)
+                .ToList();
+
+            for (var index = 0; index < ordered.Count; index++)
+            {
+                ordered[index].TtsQueuePosition = index + 1;
+            }
+        }
     }
 
     private static string NormalizePeriod(string? period)

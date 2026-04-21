@@ -1,4 +1,5 @@
 using CTest.WebAdmin.Models;
+using CTest.WebAdmin.Security;
 using VinhKhanhGuide.Core.Contracts;
 
 namespace CTest.WebAdmin.Services;
@@ -7,13 +8,22 @@ public class PoiAdminService
 {
     private readonly PoiApiClient _poiApiClient;
     private readonly AudioGuideApiClient _audioGuideApiClient;
+    private readonly ListeningHistoryApiClient _listeningHistoryApiClient;
+    private readonly ActiveDeviceApiClient _activeDeviceApiClient;
+    private readonly IWebAdminCurrentUser _currentUser;
 
     public PoiAdminService(
         PoiApiClient poiApiClient,
-        AudioGuideApiClient audioGuideApiClient)
+        AudioGuideApiClient audioGuideApiClient,
+        ListeningHistoryApiClient listeningHistoryApiClient,
+        ActiveDeviceApiClient activeDeviceApiClient,
+        IWebAdminCurrentUser currentUser)
     {
         _poiApiClient = poiApiClient;
         _audioGuideApiClient = audioGuideApiClient;
+        _listeningHistoryApiClient = listeningHistoryApiClient;
+        _activeDeviceApiClient = activeDeviceApiClient;
+        _currentUser = currentUser;
     }
 
     public async Task<PoiManagementViewModel> LoadManagementPageAsync(
@@ -30,7 +40,7 @@ public class PoiAdminService
             .GroupBy(item => item.PoiId)
             .ToDictionary(group => group.Key, group => group.Count());
 
-        var query = poisTask.Result
+        var query = FilterPoisForCurrentUser(poisTask.Result)
             .Select(x =>
             {
                 var item = x.ToListItem();
@@ -78,7 +88,7 @@ public class PoiAdminService
             .GroupBy(item => item.PoiId)
             .ToDictionary(group => group.Key, group => group.Count());
 
-        var orderedPois = poisTask.Result
+        var orderedPois = FilterPoisForCurrentUser(poisTask.Result)
             .OrderByDescending(x => x.Priority)
             .ThenBy(x => x.Name)
             .ToList();
@@ -97,12 +107,33 @@ public class PoiAdminService
             ? count
             : 0;
 
-        return new MapPoiManagementViewModel
+        var vm = new MapPoiManagementViewModel
         {
             Pois = items,
             SelectedPoiId = selectedPoi?.Id ?? Guid.Empty,
             Editor = selectedPoi?.ToEditorViewModel(relatedAudioCount) ?? new PoiEditorViewModel()
         };
+
+        try
+        {
+            var historyTask = _listeningHistoryApiClient.GetListeningHistoryAsync(
+                sortBy: "time_desc",
+                period: "all",
+                cancellationToken: cancellationToken);
+            var activeDevicesTask = _activeDeviceApiClient.GetStatsAsync(cancellationToken);
+
+            await Task.WhenAll(historyTask, activeDevicesTask);
+            ApplyMapAnalytics(vm, historyTask.Result, activeDevicesTask.Result);
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException ||
+            ex is TaskCanceledException ||
+            ex is InvalidOperationException)
+        {
+            vm.AnalyticsLoadErrorMessage = "Khong the tai du lieu analytics tu VKFoodAPI. Map van cho phep chinh sua POI.";
+        }
+
+        return vm;
     }
 
     public async Task<IReadOnlyList<PoiListItemViewModel>> LoadValidationSnapshotAsync(
@@ -123,7 +154,7 @@ public class PoiAdminService
         await Task.WhenAll(poiTask, audioGuidesTask);
 
         var poi = poiTask.Result;
-        if (poi is null)
+        if (poi is null || !_currentUser.CanManage(poi))
         {
             return null;
         }
@@ -139,6 +170,10 @@ public class PoiAdminService
     {
         var dto = new PoiDto { Id = Guid.NewGuid() };
         dto.ApplyEditorValues(model);
+        if (_currentUser.IsPoiOwner && !_currentUser.IsAdmin)
+        {
+            ApplyOwner(dto);
+        }
 
         var created = await _poiApiClient.CreatePoiAsync(dto, cancellationToken);
 
@@ -157,7 +192,16 @@ public class PoiAdminService
             return PoiOperationResult.Missing("POI không còn tồn tại trên API.");
         }
 
+        if (!_currentUser.CanManage(poi))
+        {
+            return PoiOperationResult.Missing("Ban khong co quyen cap nhat POI nay.");
+        }
+
         poi.ApplyEditorValues(model);
+        if (_currentUser.IsPoiOwner && !_currentUser.IsAdmin)
+        {
+            ApplyOwner(poi);
+        }
         var updated = await _poiApiClient.UpdatePoiAsync(poi.Id, poi, cancellationToken);
 
         return updated
@@ -176,11 +220,94 @@ public class PoiAdminService
             return PoiOperationResult.Failure("Không xác định được POI cần xóa.");
         }
 
+        var existing = await _poiApiClient.GetPoiAsync(id, cancellationToken);
+        if (existing is null)
+        {
+            return PoiOperationResult.Missing("Khong tim thay POI de xoa.");
+        }
+
+        if (!_currentUser.CanManage(existing))
+        {
+            return PoiOperationResult.Missing("Ban khong co quyen xoa POI nay.");
+        }
+
         var deleted = await _poiApiClient.DeletePoiAsync(id, cancellationToken);
 
         return deleted
             ? PoiOperationResult.Success("Đã xóa POI khỏi nguồn dữ liệu dùng chung.", id)
             : PoiOperationResult.Missing("Không tìm thấy POI để xóa.");
+    }
+
+    private static void ApplyMapAnalytics(
+        MapPoiManagementViewModel vm,
+        IReadOnlyList<ListeningHistoryEntryDto> history,
+        ActiveDeviceStatsDto activeDevices)
+    {
+        var orderedHistory = history
+            .OrderByDescending(item => item.StartedAtUtc)
+            .ToList();
+
+        vm.ActiveDeviceStats = activeDevices.Clone();
+        vm.TotalListenSessions = orderedHistory.Count;
+        vm.AverageListenSeconds = orderedHistory.Count == 0
+            ? 0
+            : orderedHistory.Average(item => item.ListenSeconds);
+        vm.TopListeningPois = orderedHistory
+            .GroupBy(item => new { item.PoiId, item.PoiCode, PoiName = ResolvePoiName(item) })
+            .Select(group => new PoiListeningRankingItemViewModel
+            {
+                PoiId = group.Key.PoiId,
+                PoiCode = group.Key.PoiCode,
+                PoiName = group.Key.PoiName,
+                ListenCount = group.Count(),
+                CompletedCount = group.Count(item => item.Completed),
+                TotalListenSeconds = group.Sum(item => item.ListenSeconds),
+                LastStartedAtUtc = group.Max(item => (DateTimeOffset?)item.StartedAtUtc)
+            })
+            .OrderByDescending(item => item.ListenCount)
+            .ThenByDescending(item => item.TotalListenSeconds)
+            .ThenBy(item => item.PoiName)
+            .Take(5)
+            .ToList();
+    }
+
+    private IReadOnlyList<PoiDto> FilterPoisForCurrentUser(IReadOnlyList<PoiDto> pois)
+    {
+        if (_currentUser.IsAdmin)
+        {
+            return pois;
+        }
+
+        if (!_currentUser.IsPoiOwner)
+        {
+            return [];
+        }
+
+        return pois
+            .Where(_currentUser.CanManage)
+            .ToList();
+    }
+
+    private void ApplyOwner(PoiDto dto)
+    {
+        dto.OwnerUserCode = _currentUser.OwnerCode;
+        dto.OwnerDisplayName = _currentUser.DisplayName;
+        dto.OwnerEmail = _currentUser.OwnerEmail;
+    }
+
+    private static string ResolvePoiName(ListeningHistoryEntryDto item)
+    {
+        if (!string.IsNullOrWhiteSpace(item.PoiName))
+        {
+            return item.PoiName;
+        }
+
+        if (!string.IsNullOrWhiteSpace(item.PoiCode))
+        {
+            return item.PoiCode;
+        }
+
+        return "POI khong xac dinh";
     }
 }
 

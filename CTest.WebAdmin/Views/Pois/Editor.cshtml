@@ -123,6 +123,10 @@
         border: 1px solid rgba(148, 163, 184, 0.14);
     }
 
+    .poi-meta-grid .poi-meta-tile:first-child {
+        display: none;
+    }
+
     .poi-meta-tile strong {
         display: block;
         margin-top: 0.35rem;
@@ -192,6 +196,9 @@
                     @Html.AntiForgeryToken()
                     <input asp-for="Id" type="hidden" />
                     <input asp-for="IsEditMode" type="hidden" />
+                    <input asp-for="OwnerUserCode" type="hidden" />
+                    <input asp-for="OwnerDisplayName" type="hidden" />
+                    <input asp-for="OwnerEmail" type="hidden" />
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
                     <div class="poi-editor-section">
@@ -295,8 +302,7 @@
                         <button type="submit" class="btn btn-primary rounded-pill px-4">@(Model.IsEditMode ? "Lưu thay đổi" : "Tạo POI")</button>
                         @if (Model.IsEditMode)
                         {
-                            <a asp-controller="AudioGuides" asp-action="Index" asp-route-poiId="@Model.Id" class="btn btn-outline-info rounded-pill px-4">Quan ly Audio (@Model.RelatedAudioCount)</a>
-                            <a asp-controller="MapPois" asp-action="Index" asp-route-poiId="@Model.Id" class="btn btn-outline-dark rounded-pill px-4">Map POI</a>
+                            <a asp-controller="MapPois" asp-action="Index" asp-route-poiId="@Model.Id" class="btn btn-outline-dark rounded-pill px-4">Map Analytics</a>
                             <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-dark rounded-pill px-4">Xem chi tiết</a>
                             <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedTargetType="poi" asp-route-selectedTargetId="@Model.Id" class="btn btn-outline-success rounded-pill px-4">Tạo QR</a>
                         }

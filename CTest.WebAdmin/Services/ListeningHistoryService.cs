@@ -6,10 +6,14 @@ namespace CTest.WebAdmin.Services;
 public class ListeningHistoryService
 {
     private readonly ListeningHistoryApiClient _apiClient;
+    private readonly WebDisplayClock _clock;
 
-    public ListeningHistoryService(ListeningHistoryApiClient apiClient)
+    public ListeningHistoryService(
+        ListeningHistoryApiClient apiClient,
+        WebDisplayClock clock)
     {
         _apiClient = apiClient;
+        _clock = clock;
     }
 
     public async Task<ListeningHistoryPageViewModel> LoadPageAsync(
@@ -69,6 +73,48 @@ public class ListeningHistoryService
         }
     }
 
+    public async Task<ListeningHistoryPageViewModel> LoadPageForPoisAsync(
+        IEnumerable<Guid> allowedPoiIds,
+        string? sortBy,
+        string? period,
+        string? keyword,
+        CancellationToken cancellationToken = default)
+    {
+        var allowed = allowedPoiIds
+            .Where(id => id != Guid.Empty)
+            .ToHashSet();
+
+        var page = await LoadPageAsync(sortBy, period, keyword, cancellationToken);
+        if (allowed.Count == 0)
+        {
+            page.TimelineItems = [];
+            page.RankingItems = [];
+            page.TotalSessions = 0;
+            page.CompletedSessions = 0;
+            page.TotalListenSeconds = 0;
+            page.AverageListenSeconds = 0;
+            page.DistinctPoiCount = 0;
+            page.MostPlayedPoi = "Chua co du lieu";
+            page.MostPlayedPoiListenCount = 0;
+            return page;
+        }
+
+        var filtered = page.TimelineItems
+            .Where(item => allowed.Contains(item.PoiId))
+            .ToList();
+
+        page.TimelineItems = filtered;
+        page.RankingItems = BuildRanking(filtered.Select(ToDtoFromTimeline));
+        page.TotalSessions = filtered.Count;
+        page.CompletedSessions = filtered.Count(item => item.Completed);
+        page.TotalListenSeconds = filtered.Sum(item => item.ListenSeconds);
+        page.AverageListenSeconds = filtered.Count == 0 ? 0 : filtered.Average(item => item.ListenSeconds);
+        page.DistinctPoiCount = page.RankingItems.Count;
+        page.MostPlayedPoi = page.RankingItems.FirstOrDefault()?.PoiName ?? "Chua co du lieu";
+        page.MostPlayedPoiListenCount = page.RankingItems.FirstOrDefault()?.ListenCount ?? 0;
+        return page;
+    }
+
     private static IEnumerable<ListeningHistoryEntryDto> ApplyKeywordFilter(
         IEnumerable<ListeningHistoryEntryDto> items,
         string keyword)
@@ -89,7 +135,7 @@ public class ListeningHistoryService
             ContainsKeyword(item.DevicePlatform, keyword));
     }
 
-    private static List<PoiListeningRankingItemViewModel> BuildRanking(IEnumerable<ListeningHistoryEntryDto> entries)
+    private List<PoiListeningRankingItemViewModel> BuildRanking(IEnumerable<ListeningHistoryEntryDto> entries)
     {
         return entries
             .GroupBy(item => new { item.PoiId, item.PoiCode, item.PoiName })
@@ -101,7 +147,10 @@ public class ListeningHistoryService
                 ListenCount = group.Count(),
                 CompletedCount = group.Count(item => item.Completed),
                 TotalListenSeconds = group.Sum(item => item.ListenSeconds),
-                LastStartedAtUtc = group.Max(item => (DateTimeOffset?)item.StartedAtUtc)
+                LastStartedAtUtc = group.Max(item => (DateTimeOffset?)item.StartedAtUtc),
+                LastStartedAtLocal = group
+                    .Select(item => (DateTimeOffset?)_clock.ToDisplayTime(item.StartedAtUtc))
+                    .Max()
             })
             .OrderByDescending(item => item.ListenCount)
             .ThenByDescending(item => item.TotalListenSeconds)
@@ -109,9 +158,37 @@ public class ListeningHistoryService
             .ToList();
     }
 
-    private static ListeningHistoryItemViewModel ToTimelineItem(ListeningHistoryEntryDto item)
+    private ListeningHistoryItemViewModel ToTimelineItem(ListeningHistoryEntryDto item)
     {
         return new ListeningHistoryItemViewModel
+        {
+            Id = item.Id,
+            PoiId = item.PoiId,
+            PoiCode = item.PoiCode,
+            PoiName = item.PoiName,
+            UserCode = item.UserCode,
+            UserDisplayName = item.UserDisplayName,
+            TriggerType = item.TriggerType,
+            Language = item.Language,
+            Source = item.Source,
+            DevicePlatform = item.DevicePlatform,
+            StartedAtUtc = item.StartedAtUtc,
+            CompletedAtUtc = item.CompletedAtUtc,
+            StartedAtLocal = _clock.ToDisplayTime(item.StartedAtUtc),
+            CompletedAtLocal = item.CompletedAtUtc.HasValue
+                ? _clock.ToDisplayTime(item.CompletedAtUtc.Value)
+                : null,
+            ListenSeconds = item.ListenSeconds,
+            Completed = item.Completed,
+            AutoTriggered = item.AutoTriggered,
+            ErrorMessage = item.ErrorMessage,
+            TtsQueuePosition = item.TtsQueuePosition
+        };
+    }
+
+    private static ListeningHistoryEntryDto ToDtoFromTimeline(ListeningHistoryItemViewModel item)
+    {
+        return new ListeningHistoryEntryDto
         {
             Id = item.Id,
             PoiId = item.PoiId,
@@ -128,7 +205,8 @@ public class ListeningHistoryService
             ListenSeconds = item.ListenSeconds,
             Completed = item.Completed,
             AutoTriggered = item.AutoTriggered,
-            ErrorMessage = item.ErrorMessage
+            ErrorMessage = item.ErrorMessage,
+            TtsQueuePosition = item.TtsQueuePosition
         };
     }
 

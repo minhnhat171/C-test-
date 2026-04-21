@@ -7,6 +7,13 @@ namespace VinhKhanhGuide.App.Services;
 internal static class MapTileHttpClientFactory
 {
     public const string UserAgent = "VinhKhanhGuideApp/1.0";
+    private static readonly byte[] TransparentPngTile =
+    [
+        137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82,
+        0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137,
+        0, 0, 0, 13, 73, 68, 65, 84, 120, 156, 99, 0, 1, 0, 0, 5,
+        0, 1, 13, 10, 45, 180, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130
+    ];
 
     private static readonly Lazy<HttpClient> SharedClientValue = new(CreateHttpClient);
     private static IMapOfflineTileService? _offlineTileService;
@@ -96,7 +103,35 @@ internal static class MapTileHttpClientFactory
                 }
             }
 
-            return await base.SendAsync(request, cancellationToken);
+            try
+            {
+                var response = await base.SendAsync(request, cancellationToken);
+                if (!response.IsSuccessStatusCode || offlineTileService is null)
+                {
+                    return response;
+                }
+
+                var tileBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+                await offlineTileService.StoreTileAsync(request.RequestUri, tileBytes, cancellationToken);
+
+                response.Dispose();
+                return BuildTileResponse(request, tileBytes);
+            }
+            catch when (offlineTileService is not null)
+            {
+                return BuildTileResponse(request, TransparentPngTile);
+            }
+        }
+
+        private static HttpResponseMessage BuildTileResponse(HttpRequestMessage request, byte[] tileBytes)
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                RequestMessage = request,
+                Content = new ByteArrayContent(tileBytes)
+            };
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+            return response;
         }
     }
 }

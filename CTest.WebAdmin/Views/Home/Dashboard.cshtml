@@ -22,8 +22,6 @@
         : "Hôm nay chưa có lượt sử dụng mới. Dashboard sẽ tự động cập nhật khi dữ liệu phát sinh.";
 }
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
 <style>
     .dashboard-shell {
         --dash-ink: #0f172a;
@@ -808,7 +806,7 @@
             </div>
         </div>
 
-        <div class="col-sm-6 col-xl-4 col-xxl-2">
+        <div class="col-sm-6 col-xl-4 col-xxl-2 d-none">
             <div class="metric-card metric-audio">
                 <span class="metric-mark">Audio</span>
                 <div class="metric-label">POI Audio / TTS</div>
@@ -910,51 +908,6 @@
                 <div class="active-device-empty">Chua co thiet bi nao dang hoat dong.</div>
             }
         </div>
-    </div>
-
-    <div class="dashboard-panel live-heatmap-panel mb-4">
-        <div class="heatmap-toolbar">
-            <div>
-                <h2 class="panel-title">Heatmap vi tri nguoi dung online</h2>
-                <div class="panel-subtitle">GPS duoc gui kem heartbeat cua web va app, uu tien vi tri moi nhat cua tung thiet bi dang online.</div>
-
-                <div class="heatmap-summary">
-                    <div class="heatmap-stat">
-                        <span class="heatmap-stat-label">Co toa do</span>
-                        <span class="heatmap-stat-value" id="heatmapLocatedCount">@locatedActiveDevices.Count</span>
-                    </div>
-                    <div class="heatmap-stat">
-                        <span class="heatmap-stat-label">Chua gui GPS</span>
-                        <span class="heatmap-stat-value" id="heatmapMissingCount">@(Math.Max(0, activeDevices.Count - locatedActiveDevices.Count))</span>
-                    </div>
-                    <div class="heatmap-stat">
-                        <span class="heatmap-stat-label">Cap nhat cuoi</span>
-                        <span class="heatmap-stat-value" id="heatmapUpdatedAt">@(latestLocationAt?.ToLocalTime().ToString("HH:mm:ss dd/MM") ?? "Chua co")</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="heatmap-toolbar-actions">
-                <button type="button" class="btn btn-outline-dark rounded-pill px-4" id="heatmapRecenterButton">Can giua cum online</button>
-            </div>
-        </div>
-
-        <div class="heatmap-map-shell">
-            <div id="activeDeviceHeatmapMap"></div>
-            <div class="heatmap-empty-state @(locatedActiveDevices.Any() ? "is-hidden" : null)" id="heatmapEmptyState">
-                Chua co thiet bi online nao gui GPS. Heatmap se sang len ngay khi app da duoc cap quyen vi tri va gui heartbeat kem toa do.
-            </div>
-            <div class="heatmap-legend">
-                <div class="heatmap-stat-label">Mat do online</div>
-                <div class="heatmap-gradient"></div>
-                <div class="heatmap-legend-scale">
-                    <span>Thap</span>
-                    <span>Cao</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="heatmap-note">Lop mau cho thay cum nguoi dung, marker nho giup xem nhanh user nao dang nam o dau va do chinh xac GPS hien co.</div>
     </div>
 
     <div class="row g-4 mb-4">
@@ -1152,8 +1105,6 @@
 </div>
 
 @section Scripts {
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script>
         (() => {
             const initialStats = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ActiveDeviceStats, jsonOptions));

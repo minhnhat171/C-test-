@@ -43,15 +43,18 @@ public class ListeningHistoryItemViewModel
     public string DevicePlatform { get; set; } = string.Empty;
     public DateTimeOffset StartedAtUtc { get; set; }
     public DateTimeOffset? CompletedAtUtc { get; set; }
+    public DateTimeOffset? StartedAtLocal { get; set; }
+    public DateTimeOffset? CompletedAtLocal { get; set; }
     public int ListenSeconds { get; set; }
     public bool Completed { get; set; }
     public bool AutoTriggered { get; set; }
     public string ErrorMessage { get; set; } = string.Empty;
+    public int TtsQueuePosition { get; set; }
 
-    public string StartedAtDisplay => StartedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss");
+    public string StartedAtDisplay => (StartedAtLocal ?? StartedAtUtc.ToLocalTime()).ToString("dd/MM/yyyy HH:mm:ss");
 
     public string CompletedAtDisplay => CompletedAtUtc.HasValue
-        ? CompletedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
+        ? (CompletedAtLocal ?? CompletedAtUtc.Value.ToLocalTime()).ToString("dd/MM/yyyy HH:mm:ss")
         : "--";
 
     public string DurationLabel => $"{ListenSeconds} giây";
@@ -81,6 +84,7 @@ public class PoiListeningRankingItemViewModel
     public int CompletedCount { get; set; }
     public int TotalListenSeconds { get; set; }
     public DateTimeOffset? LastStartedAtUtc { get; set; }
+    public DateTimeOffset? LastStartedAtLocal { get; set; }
 
     public double AverageListenSeconds => ListenCount == 0 ? 0 : TotalListenSeconds / (double)ListenCount;
 
@@ -95,6 +99,6 @@ public class PoiListeningRankingItemViewModel
         : $"{AverageListenSeconds:0.#} giây";
 
     public string LastStartedAtDisplay => LastStartedAtUtc.HasValue
-        ? LastStartedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+        ? (LastStartedAtLocal ?? LastStartedAtUtc.Value.ToLocalTime()).ToString("dd/MM/yyyy HH:mm")
         : "--";
 }

@@ -20,6 +20,9 @@ public class PoiDto
     public string NarrationText { get; set; } = string.Empty;
     public string MapLink { get; set; } = string.Empty;
     public string AudioAssetPath { get; set; } = string.Empty;
+    public string OwnerUserCode { get; set; } = string.Empty;
+    public string OwnerDisplayName { get; set; } = string.Empty;
+    public string OwnerEmail { get; set; } = string.Empty;
 
     public int Priority { get; set; } = 1;
 
@@ -56,6 +59,9 @@ public class PoiDto
             NarrationText = NarrationText,
             MapLink = MapLink,
             AudioAssetPath = AudioAssetPath,
+            OwnerUserCode = OwnerUserCode,
+            OwnerDisplayName = OwnerDisplayName,
+            OwnerEmail = OwnerEmail,
             Priority = Priority,
             Latitude = Latitude,
             Longitude = Longitude,

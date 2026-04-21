@@ -12,6 +12,7 @@ public class DashboardService
     private readonly UserManagementApiClient _userManagementApiClient;
     private readonly ActiveDeviceApiClient _activeDeviceApiClient;
     private readonly AppDataService _fallbackData;
+    private readonly WebDisplayClock _clock;
 
     public DashboardService(
         PoiApiClient poiApiClient,
@@ -20,7 +21,8 @@ public class DashboardService
         ListeningHistoryApiClient listeningHistoryApiClient,
         UserManagementApiClient userManagementApiClient,
         ActiveDeviceApiClient activeDeviceApiClient,
-        AppDataService fallbackData)
+        AppDataService fallbackData,
+        WebDisplayClock clock)
     {
         _poiApiClient = poiApiClient;
         _tourApiClient = tourApiClient;
@@ -29,6 +31,7 @@ public class DashboardService
         _userManagementApiClient = userManagementApiClient;
         _activeDeviceApiClient = activeDeviceApiClient;
         _fallbackData = fallbackData;
+        _clock = clock;
     }
 
     public async Task<DashboardViewModel> LoadAsync(CancellationToken cancellationToken = default)
@@ -103,12 +106,12 @@ public class DashboardService
                 .Select(item => new
                 {
                     Item = item,
-                    LocalStartedAt = item.StartedAtUtc.ToLocalTime()
+                    LocalStartedAt = _clock.ToDisplayTime(item.StartedAtUtc)
                 })
                 .OrderByDescending(x => x.LocalStartedAt)
                 .ToList();
 
-            var today = DateTime.Now.Date;
+            var today = _clock.Now.Date;
             var mostPlayedPoi = localizedHistory
                 .GroupBy(x => ResolvePoiName(x.Item))
                 .OrderByDescending(group => group.Count())
@@ -150,7 +153,7 @@ public class DashboardService
         }
     }
 
-    private static DashboardViewModel BuildFromSharedData(
+    private DashboardViewModel BuildFromSharedData(
         IReadOnlyList<PoiDto> pois,
         IReadOnlyList<AudioGuideDto> audioGuides,
         IReadOnlyList<ListeningHistoryEntryDto> history,
@@ -158,14 +161,14 @@ public class DashboardService
         IReadOnlyList<AdminUserSummaryDto> users,
         ActiveDeviceStatsDto activeDevices)
     {
-        var dashboardGeneratedAt = DateTime.Now;
+        var dashboardGeneratedAt = _clock.Now;
         var today = dashboardGeneratedAt.Date;
 
         var localizedHistory = history
             .Select(item => new
             {
                 Item = item,
-                LocalStartedAt = item.StartedAtUtc.ToLocalTime()
+                LocalStartedAt = _clock.ToDisplayTime(item.StartedAtUtc)
             })
             .OrderByDescending(x => x.LocalStartedAt)
             .ToList();
@@ -208,7 +211,7 @@ public class DashboardService
             ActiveDeviceStats = activeDevices.Clone(),
             ActiveDeviceCount = activeDevices.ActiveDeviceCount,
             IsSyncOnline = true,
-            LastSyncedAt = dashboardGeneratedAt,
+            LastSyncedAt = dashboardGeneratedAt.DateTime,
             DataSourceLabel = "VKFoodAPI",
             DataSourceDescription = "Dashboard dang doc cung nguon POI va lich su nghe voi app MAUI qua VKFoodAPI.",
             DailyListenPoints = Enumerable.Range(0, 7)
@@ -255,7 +258,7 @@ public class DashboardService
 
     private DashboardViewModel BuildFromSampleData()
     {
-        var today = DateTime.Today;
+        var today = _clock.Now.Date;
         var lastSyncedAt = _fallbackData.UsageLogs
             .OrderByDescending(x => x.StartedAt)
             .Select(x => (DateTime?)x.StartedAt)
