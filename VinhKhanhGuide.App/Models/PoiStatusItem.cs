@@ -1,3 +1,6 @@
+using Microsoft.Maui.Controls;
+using VinhKhanhGuide.App.Services;
+
 namespace VinhKhanhGuide.App.Models;
 
 public class PoiStatusItem
@@ -36,4 +39,5 @@ public class PoiStatusItem
     public bool HasTourBadge => IsActiveTourStop || IsCompletedTourStop;
     public string TourBadgeText { get; set; } = string.Empty;
     public string DistanceLabel { get; set; } = string.Empty;
+    public ImageSource? ResolvedImageSource => AppImageSourceResolver.Resolve(ImageSource);
 }

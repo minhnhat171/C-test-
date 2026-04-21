@@ -98,7 +98,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     private string _selectedPoiTravelEstimateText = string.Empty;
     private string _selectedPoiNarrationPreview = string.Empty;
     private string _selectedPoiMapLink = string.Empty;
-    private string _selectedPoiImageSource = string.Empty;
+    private ImageSource? _selectedPoiImageSource;
     private string _activeMapCategoryKey = string.Empty;
     private string _selectedFeaturedDishCategoryName = "Món nổi bật";
     private string _selectedFeaturedDishCategorySummary =
@@ -593,7 +593,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         private set => SetProperty(ref _selectedPoiMapLink, value);
     }
 
-    public string SelectedPoiImageSource
+    public ImageSource? SelectedPoiImageSource
     {
         get => _selectedPoiImageSource;
         private set => SetProperty(ref _selectedPoiImageSource, value);
@@ -2301,6 +2301,7 @@ public partial class MainViewModel : INotifyPropertyChanged
                     GetCurrentActiveTourPoi() ?? nearestPoi,
                     evaluated);
                 UpdateMapBadges();
+                RaiseMapStateChanged();
             });
 
             if (_isInitialized &&
@@ -2712,12 +2713,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     private IReadOnlyList<PoiStatusItem> GetPreviewMapPoiStatuses()
     {
         var fullItems = GetVisibleMapPoiStatuses();
-        if (HasActiveTour || HasMapCategoryFilter)
-        {
-            return fullItems.Take(4).ToList();
-        }
-
-        return fullItems.Take(4).ToList();
+        return fullItems.ToList();
     }
 
     private TourDto? GetActiveTour()
@@ -3497,7 +3493,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         SelectedPoiTravelEstimateText = travelEstimateLabel;
         SelectedPoiNarrationPreview = _selectedPoi.GetNarrationText(SelectedLanguage);
         SelectedPoiMapLink = _selectedPoi.MapLink;
-        SelectedPoiImageSource = _selectedPoi.ImageSource;
+        SelectedPoiImageSource = AppImageSourceResolver.Resolve(_selectedPoi.ImageSource);
     }
 
     private void ClearSelectedPoiDetails()
@@ -3523,7 +3519,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         SelectedPoiTravelEstimateText = string.Empty;
         SelectedPoiNarrationPreview = string.Empty;
         SelectedPoiMapLink = string.Empty;
-        SelectedPoiImageSource = string.Empty;
+        SelectedPoiImageSource = null;
         OnPropertyChanged(nameof(IsSelectedPoiNarrating));
         OnPropertyChanged(nameof(SelectedPoiNarrationActionText));
         OnPropertyChanged(nameof(SelectedPoiNarrationStateText));

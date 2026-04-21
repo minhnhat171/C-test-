@@ -59,7 +59,7 @@
                                             HeightRequest="96"
                                             StrokeThickness="0"
                                             StrokeShape="RoundRectangle 20">
-                                        <Image Source="{Binding ImageSource}"
+                                        <Image Source="{Binding ResolvedImageSource}"
                                                Aspect="AspectFill" />
                                     </Border>
 
