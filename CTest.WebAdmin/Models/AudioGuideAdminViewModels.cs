@@ -71,14 +71,14 @@ public class AudioGuidePoiCoverageItemViewModel
     public string DisplayId =>
         AudioId.HasValue
             ? $"AUD-{AudioId.Value.ToString("N")[^6..].ToUpperInvariant()}"
-            : "Chua co";
+            : "Chưa có";
 
     public string StatusLabel =>
         !HasSelectedLanguageAudio
-            ? "Can tao TTS"
+            ? "Cần tạo TTS"
             : HasPublishedAudio
-                ? "Dang publish"
-                : "Ban nhap";
+                ? "Đang publish"
+                : "Bản nháp";
 }
 
 public class AudioGuideEditorFormViewModel

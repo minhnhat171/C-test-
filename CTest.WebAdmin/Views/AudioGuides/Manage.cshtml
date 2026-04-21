@@ -221,13 +221,13 @@
     @if (Model.HasPoiScope)
     {
         <div class="d-flex flex-wrap gap-2 mb-3">
-            <a asp-controller="Pois" asp-action="Details" asp-route-id="@Model.ScopePoiId" class="btn btn-outline-secondary rounded-pill px-4">Ve POI</a>
-            <a asp-action="Index" class="btn btn-outline-dark rounded-pill px-4">Tat ca audio</a>
-            <a asp-action="Index" asp-route-poiId="@Model.ScopePoiId" asp-route-createNew="true" class="btn btn-primary rounded-pill px-4">+ Tao audio moi cho POI nay</a>
+            <a asp-controller="Pois" asp-action="Details" asp-route-id="@Model.ScopePoiId" class="btn btn-outline-secondary rounded-pill px-4">Về POI</a>
+            <a asp-action="Index" class="btn btn-outline-dark rounded-pill px-4">Tất cả audio</a>
+            <a asp-action="Index" asp-route-poiId="@Model.ScopePoiId" asp-route-createNew="true" class="btn btn-primary rounded-pill px-4">+ Tạo audio mới cho POI này</a>
         </div>
         <div class="alert alert-primary border-0 shadow-sm">
-            Dang quan ly audio cho POI <strong>@Model.ScopePoiName</strong> (@Model.ScopePoiCode).
-            Hien co <strong>@Model.PoiWithSelectedLanguageAudioCount</strong> ban ghi dung ngon ngu dang chon.
+            Đang quản lý audio cho POI <strong>@Model.ScopePoiName</strong> (@Model.ScopePoiCode).
+            Hiện có <strong>@Model.PoiWithSelectedLanguageAudioCount</strong> bản ghi đúng ngôn ngữ đang chọn.
         </div>
     }
 
@@ -243,19 +243,19 @@
 
     <div class="audio-summary-grid">
         <div class="audio-summary-card">
-            <div class="audio-summary-label">POI tu API</div>
+            <div class="audio-summary-label">POI từ API</div>
             <div class="audio-summary-value">@Model.TotalPoiCount</div>
         </div>
         <div class="audio-summary-card">
-            <div class="audio-summary-label">Co TTS ngon ngu nay</div>
+            <div class="audio-summary-label">Có TTS ngôn ngữ này</div>
             <div class="audio-summary-value">@Model.PoiWithSelectedLanguageAudioCount</div>
         </div>
         <div class="audio-summary-card">
-            <div class="audio-summary-label">Da publish</div>
+            <div class="audio-summary-label">Đã publish</div>
             <div class="audio-summary-value">@Model.PublishedPoiAudioCount</div>
         </div>
         <div class="audio-summary-card">
-            <div class="audio-summary-label">Can tao them</div>
+            <div class="audio-summary-label">Cần tạo thêm</div>
             <div class="audio-summary-value">@Model.MissingSelectedLanguageAudioCount</div>
         </div>
     </div>
@@ -268,10 +268,10 @@
                         <tr>
                             <th>POI</th>
                             <th>Audio / TTS</th>
-                            <th>Ngon ngu da co</th>
-                            <th>Trang thai</th>
-                            <th>Cap nhat</th>
-                            <th>Thao tac</th>
+                            <th>Ngôn ngữ đã có</th>
+                            <th>Trạng thái</th>
+                            <th>Cập nhật</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -297,17 +297,17 @@
                                     </span>
                                     <div class="text-muted small mt-1">@item.SourceLabel</div>
                                 </td>
-                                <td>@(item.UpdatedAtLocal?.ToString("dd/MM/yyyy HH:mm") ?? "Chua tao")</td>
+                                <td>@(item.UpdatedAtLocal?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa tạo")</td>
                                 <td>
                                     <div class="audio-actions">
                                         <a asp-controller="Pois" asp-action="Details" asp-route-id="@item.PoiId" class="btn btn-outline-secondary btn-sm rounded-pill">POI</a>
                                         @if (item.AudioId.HasValue)
                                         {
-                                            <a asp-action="Index" asp-route-audioId="@item.AudioId" asp-route-poiId="@item.PoiId" asp-route-languageCode="@item.LanguageCode" class="btn btn-outline-primary btn-sm rounded-pill">Sua</a>
+                                            <a asp-action="Index" asp-route-audioId="@item.AudioId" asp-route-poiId="@item.PoiId" asp-route-languageCode="@item.LanguageCode" class="btn btn-outline-primary btn-sm rounded-pill">Sửa</a>
                                         }
                                         else
                                         {
-                                            <a asp-action="Index" asp-route-poiId="@item.PoiId" asp-route-languageCode="@item.LanguageCode" asp-route-createNew="true" class="btn btn-primary btn-sm rounded-pill">Tao TTS</a>
+                                            <a asp-action="Index" asp-route-poiId="@item.PoiId" asp-route-languageCode="@item.LanguageCode" asp-route-createNew="true" class="btn btn-primary btn-sm rounded-pill">Tạo TTS</a>
                                         }
                                         <button type="button"
                                                 class="btn btn-outline-dark btn-sm rounded-pill js-audio-preview"
@@ -321,12 +321,12 @@
                                         </button>
                                         @if (item.AudioId.HasValue)
                                         {
-                                            <form asp-action="Delete" method="post" onsubmit="return confirm('Ban co chac muon xoa audio nay khong?');">
+                                            <form asp-action="Delete" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa audio này không?');">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="id" value="@item.AudioId" />
                                                 <input type="hidden" name="scopePoiId" value="@item.PoiId" />
                                                 <input type="hidden" name="languageCode" value="@item.LanguageCode" />
-                                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">Xoa</button>
+                                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">Xóa</button>
                                             </form>
                                         }
                                     </div>
@@ -337,7 +337,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">Chua co POI nao trong VKFoodAPI de tao Audio / TTS.</td>
+                            <td colspan="6" class="text-center py-4 text-muted">Chưa có POI nào trong VKFoodAPI để tạo Audio / TTS.</td>
                         </tr>
                     }
                     </tbody>
@@ -429,7 +429,7 @@
                 </form>
 
                 <div class="audio-preview">
-                    <div class="audio-preview-label">Preview</div>
+                    <div class="audio-preview-label">Xem trước</div>
                     <div class="audio-preview-title" id="audioPreviewPoi">@selectedPoiName</div>
                     <div class="text-muted mt-2" id="audioPreviewSummary">
                         @(string.Equals(Model.Editor.SourceType, "file", StringComparison.OrdinalIgnoreCase)
@@ -465,7 +465,7 @@
             const previewPoi = document.getElementById("audioPreviewPoi");
             const previewSummary = document.getElementById("audioPreviewSummary");
             const narrationPlayer = window.VinhKhanhNarrationPlayer?.createPlayer({
-                onStatus: (message) => {
+                onTrạng thái: (message) => {
                     if (previewSummary) {
                         previewSummary.textContent = message;
                     }
@@ -486,7 +486,7 @@
 
             const getDefaultSummary = () => sourceType?.value === "file"
                 ? "Ban ghi hien dung file audio. Web se uu tien phat dung file nay giong app neu file truy cap duoc."
-                : "Ban ghi hien dung TTS. Web se doc theo locale va giong phu hop voi ngon ngu dang chon.";
+                : "Bản ghi hiện dùng TTS. Web sẽ đọc theo locale và giọng phù hợp với ngôn ngữ đang chọn.";
 
             const setSummary = (message) => {
                 if (previewSummary) {
@@ -511,7 +511,7 @@
 
             const previewEditor = () => {
                 if (!narrationPlayer) {
-                    setSummary("Web chua tai duoc bo phat narration.");
+                    setSummary("Web chưa tải được bộ phát thuyết minh.");
                     return;
                 }
 
@@ -526,13 +526,13 @@
                     baseUrl: apiBaseUrl,
                     messages: {
                         playingAudio: "Dang phat dung file audio da luu...",
-                        audioEnded: "Da phat xong file audio mau.",
+                        audioEnded: "Đã phát xong file audio mẫu.",
                         audioUnavailable: "Ban ghi nay chua co file audio hop le de preview tren web.",
-                        audioFailed: "Khong phat duoc file audio nay tren web.",
+                        audioFailed: "Không phát được file audio này trên web.",
                         playingTts: "Dang doc preview TTS theo tuy chon hien tai...",
                         ttsEnded: "Da doc xong preview TTS.",
                         ttsFailed: "Khong the phat preview TTS. Thu bam lai mot lan nua.",
-                        unsupportedTts: "Trinh duyet nay khong ho tro TTS preview.",
+                        unsupportedTts: "Trình duyệt này không hỗ trợ TTS preview.",
                         empty: "Hay nhap script truoc khi nghe thu."
                     }
                 });
@@ -545,7 +545,7 @@
             languageSelect?.addEventListener("change", () => setSummary(getDefaultSummary()));
             voiceSelect?.addEventListener("change", () => setSummary(getDefaultSummary()));
             previewButton?.addEventListener("click", previewEditor);
-            stopButton?.addEventListener("click", () => narrationPlayer?.stop("Da dung nghe thu."));
+            stopButton?.addEventListener("click", () => narrationPlayer?.stop("Đã dừng nghe thử."));
 
             estimateButton?.addEventListener("click", () => {
                 const words = (scriptInput?.value || "").trim().split(/\s+/).filter(Boolean).length;
@@ -557,7 +557,7 @@
             document.querySelectorAll(".js-audio-preview").forEach((button) => {
                 button.addEventListener("click", () => {
                     if (!narrationPlayer) {
-                        setSummary("Web chua tai duoc bo phat narration.");
+                        setSummary("Web chưa tải được bộ phát thuyết minh.");
                         return;
                     }
 
@@ -574,15 +574,15 @@
                         allowAudioFallback: false,
                         baseUrl: apiBaseUrl,
                         messages: {
-                            playingAudio: "Dang phat file audio da publish cho POI nay...",
+                            playingAudio: "Đang phát file audio đã publish cho POI này...",
                             audioEnded: "Da nghe xong ban ghi mau cua POI.",
-                            audioUnavailable: "POI nay chua co file audio hop le de phat tren web.",
+                            audioUnavailable: "POI này chưa có file audio hợp lệ để phát trên web.",
                             audioFailed: "Khong phat duoc file audio da luu cho POI nay.",
                             playingTts: "Dang doc preview TTS cua POI...",
                             ttsEnded: "Da doc xong preview POI.",
                             ttsFailed: "Khong the doc preview TTS cua POI nay.",
-                            unsupportedTts: "Trinh duyet nay khong ho tro TTS preview.",
-                            empty: "POI nay chua co noi dung de nghe thu."
+                            unsupportedTts: "Trình duyệt này không hỗ trợ TTS preview.",
+                            empty: "POI này chưa có nội dung để nghe thử."
                         }
                     });
                 });

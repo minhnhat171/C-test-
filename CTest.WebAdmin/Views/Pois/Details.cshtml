@@ -145,7 +145,7 @@
             </div>
             <div class="poi-detail-card">
                 <div class="poi-detail-label">Map Analytics</div>
-                <div class="poi-detail-value">@(string.IsNullOrWhiteSpace(Model.MapLink) ? "Chưa có map link" : "Sẵn sàng mở từ web quản lý")</div>
+                <div class="poi-detail-value">@(string.IsNullOrWhiteSpace(Model.MapLink) ? "Chưa có liên kết bản đồ" : "Sẵn sàng mở từ web quản lý")</div>
             </div>
         </div>
 
@@ -156,7 +156,7 @@
 
         @if (!string.IsNullOrWhiteSpace(Model.MapLink))
         {
-            <a href="@Model.MapLink" target="_blank" class="btn btn-outline-primary rounded-pill px-4">Mở map link</a>
+            <a href="@Model.MapLink" target="_blank" class="btn btn-outline-primary rounded-pill px-4">Mở bản đồ</a>
         }
     </div>
 </div>

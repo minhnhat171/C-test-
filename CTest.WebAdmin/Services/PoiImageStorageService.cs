@@ -31,19 +31,19 @@ public sealed class PoiImageStorageService
 
         if (image.Length > MaxImageBytes)
         {
-            return PoiImageSaveResult.Failure("Anh POI toi da 5 MB.");
+            return PoiImageSaveResult.Failure("Ảnh POI tối đa 5 MB.");
         }
 
         var extension = Path.GetExtension(image.FileName);
         if (!AllowedExtensions.Contains(extension))
         {
-            return PoiImageSaveResult.Failure("Chi ho tro anh .jpg, .jpeg, .png hoac .webp.");
+            return PoiImageSaveResult.Failure("Chỉ hỗ trợ ảnh .jpg, .jpeg, .png hoặc .webp.");
         }
 
         if (!string.IsNullOrWhiteSpace(image.ContentType) &&
             !image.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
         {
-            return PoiImageSaveResult.Failure("File duoc chon khong phai anh hop le.");
+            return PoiImageSaveResult.Failure("File được chọn không phải ảnh hợp lệ.");
         }
 
         var fileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";

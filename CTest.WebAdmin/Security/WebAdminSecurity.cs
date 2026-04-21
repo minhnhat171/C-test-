@@ -116,7 +116,7 @@ public sealed class WebAdminAuthService : IWebAdminAuthService
             {
                 Username = "owner",
                 Password = "12345678",
-                DisplayName = "Chu nha hang",
+                DisplayName = "Chủ nhà hàng",
                 Role = WebAdminRoles.PoiOwner,
                 OwnerCode = "owner",
                 OwnerEmail = "owner@local.vinhkhanh"

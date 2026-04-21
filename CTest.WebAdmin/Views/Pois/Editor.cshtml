@@ -51,7 +51,7 @@
     .poi-editor-panel {
         background: var(--poi-panel);
         border: 1px solid rgba(255,255,255,0.84);
-        border-radius: 28px;
+        border-radius: 8px;
         box-shadow: var(--poi-shadow);
         overflow: hidden;
     }
@@ -78,7 +78,7 @@
     .poi-editor .form-control,
     .poi-editor .form-check-input,
     .poi-editor textarea {
-        border-radius: 16px;
+        border-radius: 8px;
     }
 
     .poi-editor .form-control,
@@ -97,7 +97,7 @@
 
     .poi-preview-card {
         padding: 1.1rem;
-        border-radius: 24px;
+        border-radius: 8px;
         background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
         margin-bottom: 1rem;
     }
@@ -126,7 +126,7 @@
 
     .poi-meta-tile {
         padding: 1rem;
-        border-radius: 20px;
+        border-radius: 8px;
         background: #f8fafc;
         border: 1px solid rgba(148, 163, 184, 0.14);
     }
@@ -142,7 +142,7 @@
     }
 
     .poi-map-card {
-        border-radius: 24px;
+        border-radius: 8px;
         padding: 1.2rem;
         background:
             linear-gradient(135deg, rgba(14, 165, 233, 0.10), rgba(37, 99, 235, 0.16)),
@@ -170,7 +170,7 @@
         left: 1rem;
         right: 1rem;
         bottom: 1rem;
-        border-radius: 18px;
+        border-radius: 8px;
         padding: 0.9rem 1rem;
         background: rgba(255,255,255,0.92);
         backdrop-filter: blur(8px);
@@ -264,7 +264,7 @@
                                 <input asp-for="Category" class="form-control" />
                             </div>
                             <div class="col-md-4">
-                                <label asp-for="CooldownMinutes" class="form-label">Cooldown</label>
+                                <label asp-for="CooldownMinutes" class="form-label">Thời gian chờ</label>
                                 <input asp-for="CooldownMinutes" class="form-control" />
                                 <span asp-validation-for="CooldownMinutes" class="text-danger small"></span>
                             </div>
@@ -284,14 +284,14 @@
                             </div>
                             <div class="col-12">
                                 <label asp-for="ImageSource" class="form-label">Ảnh minh họa</label>
-                                <input asp-for="ImageSource" class="form-control" id="poiImageSource" placeholder="vd: ocoanh.png hoac /uploads/pois/..." />
+                                <input asp-for="ImageSource" class="form-control" id="poiImageSource" placeholder="Ví dụ: ocoanh.png hoặc /uploads/pois/..." />
                                 <div class="poi-image-dropzone mt-2" id="poiImageDropzone">
                                     <img id="poiImagePreview"
                                          class="poi-image-preview @(string.IsNullOrWhiteSpace(imagePreviewSource) ? "" : "has-image")"
                                          src="@imagePreviewSource"
-                                         alt="Preview anh POI" />
-                                    <div class="fw-semibold">Keo anh vao day hoac bam de chon</div>
-                                    <div class="text-muted small mt-1">Ho tro JPG, PNG, WEBP. Toi da 5 MB.</div>
+                                         alt="Xem trước ảnh POI" />
+                                    <div class="fw-semibold">Kéo ảnh vào đây hoặc bấm để chọn</div>
+                                    <div class="text-muted small mt-1">Hỗ trợ JPG, PNG, WEBP. Tối đa 5 MB.</div>
                                     <input asp-for="UploadedImage" type="file" class="visually-hidden" id="poiImageFile" accept="image/*" />
                                 </div>
                                 <span asp-validation-for="UploadedImage" class="text-danger small"></span>
@@ -304,17 +304,17 @@
                         <div class="poi-section-kicker">Vị trí</div>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label asp-for="Latitude" class="form-label">Latitude</label>
+                                <label asp-for="Latitude" class="form-label">Vĩ độ</label>
                                 <input asp-for="Latitude" class="form-control" id="poiLatitude" />
                                 <span asp-validation-for="Latitude" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="Longitude" class="form-label">Longitude</label>
+                                <label asp-for="Longitude" class="form-label">Kinh độ</label>
                                 <input asp-for="Longitude" class="form-control" id="poiLongitude" />
                                 <span asp-validation-for="Longitude" class="text-danger small"></span>
                             </div>
                             <div class="col-12">
-                                <label asp-for="MapLink" class="form-label">Map link</label>
+                                <label asp-for="MapLink" class="form-label">Liên kết bản đồ</label>
                                 <input asp-for="MapLink" class="form-control" id="poiMapLink" />
                                 <span asp-validation-for="MapLink" class="text-danger small"></span>
                             </div>
@@ -341,7 +341,7 @@
                         <div class="poi-section-kicker">Nội dung</div>
                         <div class="row g-3">
                             <div class="col-12">
-                                <label asp-for="NarrationScript" class="form-label">Narration script</label>
+                                <label asp-for="NarrationScript" class="form-label">Nội dung thuyết minh</label>
                                 <textarea asp-for="NarrationScript" class="form-control" rows="6" id="poiNarration"></textarea>
                                 <span asp-validation-for="NarrationScript" class="text-danger small"></span>
                             </div>
@@ -373,8 +373,8 @@
                     <img id="poiSideImagePreview"
                          class="poi-side-image-preview @(string.IsNullOrWhiteSpace(imagePreviewSource) ? "" : "has-image")"
                          src="@imagePreviewSource"
-                         alt="Anh minh hoa POI" />
-                    <div class="poi-preview-label">Preview</div>
+                         alt="Ảnh minh họa POI" />
+                    <div class="poi-preview-label">Xem trước</div>
                     <div class="poi-preview-name" id="previewName">@(string.IsNullOrWhiteSpace(Model.Name) ? "Tên điểm sẽ hiển thị ở đây" : Model.Name)</div>
                     <div class="poi-summary-copy mt-2" id="previewAddress">@(string.IsNullOrWhiteSpace(Model.Address) ? "Địa chỉ sẽ tự cập nhật khi bạn nhập form." : Model.Address)</div>
                 </div>
@@ -385,7 +385,7 @@
                         <strong>@Model.RelatedAudioCount</strong>
                     </div>
                     <div class="poi-meta-tile">
-                        <span class="poi-preview-label">Map link</span>
+                        <span class="poi-preview-label">Liên kết bản đồ</span>
                         <strong>@(string.IsNullOrWhiteSpace(Model.MapLink) ? "Chưa có" : "Sẵn sàng")</strong>
                     </div>
                     <div class="poi-meta-tile">
@@ -403,7 +403,7 @@
                     <div class="poi-map-details">
                         <div class="poi-preview-label">Tọa độ hiện tại</div>
                         <div class="fw-semibold" id="previewCoordinates">@Model.Latitude, @Model.Longitude</div>
-                        <div class="poi-summary-copy mt-2">Box preview này mô phỏng vị trí và giúp bạn kiểm tra nhanh geofence trước khi lưu.</div>
+                        <div class="poi-summary-copy mt-2">Kiểm tra nhanh tọa độ và bán kính trước khi lưu.</div>
                     </div>
                 </div>
 
@@ -411,7 +411,7 @@
 
                 @if (!string.IsNullOrWhiteSpace(Model.MapLink))
                 {
-                    <a href="@Model.MapLink" target="_blank" class="btn btn-outline-primary rounded-pill px-4">Mở map link</a>
+                    <a href="@Model.MapLink" target="_blank" class="btn btn-outline-primary rounded-pill px-4">Mở bản đồ</a>
                 }
 
                 <div class="mt-3 text-muted small">

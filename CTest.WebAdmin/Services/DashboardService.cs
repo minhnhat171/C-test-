@@ -61,7 +61,7 @@ public class DashboardService
             ex is InvalidOperationException)
         {
             return BuildUnavailableDashboard(
-                "Khong the ket noi VKFoodAPI. Dashboard chi doc du lieu tu API nen tam thoi de trong so lieu.");
+                "Không thể kết nối VKFoodAPI. Dashboard chỉ đọc dữ liệu từ API nên tạm thời để trống số liệu.");
         }
     }
 
@@ -111,7 +111,7 @@ public class DashboardService
                 .OrderByDescending(group => group.Count())
                 .ThenBy(group => group.Key)
                 .Select(group => group.Key)
-                .FirstOrDefault() ?? "Chua co du lieu";
+                .FirstOrDefault() ?? "Chưa có dữ liệu";
 
             return new DashboardUsageSnapshotViewModel
             {
@@ -141,7 +141,7 @@ public class DashboardService
             return new DashboardUsageSnapshotViewModel
             {
                 TodayListenCount = 0,
-                MostPlayedPoi = "Chua co du lieu",
+                MostPlayedPoi = "Chưa có dữ liệu",
                 RecentLogs = new List<UsageLog>()
             };
         }
@@ -196,7 +196,7 @@ public class DashboardService
             TodayListenCount = localizedHistory.Count(x => x.LocalStartedAt.Date == today),
             TotalTours = totalTours,
             TotalUsageLogs = totalUsageLogs,
-            MostPlayedPoi = topPois.FirstOrDefault()?.Name ?? "Chua co du lieu",
+            MostPlayedPoi = topPois.FirstOrDefault()?.Name ?? "Chưa có dữ liệu",
             AverageListenSeconds = totalUsageLogs == 0 ? 0 : localizedHistory.Average(x => x.Item.ListenSeconds),
             CompletionRate = totalUsageLogs == 0 ? 0 : (int)Math.Round(localizedHistory.Count(x => x.Item.Completed) * 100.0 / totalUsageLogs),
             QrListenRate = totalUsageLogs == 0 ? 0 : (int)Math.Round(localizedHistory.Count(x => IsQrTrigger(x.Item.TriggerType)) * 100.0 / totalUsageLogs),
@@ -207,7 +207,7 @@ public class DashboardService
             IsSyncOnline = true,
             LastSyncedAt = dashboardGeneratedAt.DateTime,
             DataSourceLabel = "VKFoodAPI",
-            DataSourceDescription = "Dashboard dang doc cung nguon POI va lich su nghe voi app MAUI qua VKFoodAPI.",
+            DataSourceDescription = "Dashboard đang đọc cùng nguồn POI và lịch sử nghe với app MAUI qua VKFoodAPI.",
             DailyListenPoints = Enumerable.Range(0, 7)
                 .Select(offset => today.AddDays(offset - 6))
                 .Select(date => new DashboardDailyListenPoint
@@ -256,7 +256,7 @@ public class DashboardService
 
         return new DashboardViewModel
         {
-            MostPlayedPoi = "Chua co du lieu",
+            MostPlayedPoi = "Chưa có dữ liệu",
             ActiveDeviceStats = new ActiveDeviceStatsDto
             {
                 ActiveDeviceCount = 0,
@@ -268,7 +268,7 @@ public class DashboardService
             IsSyncOnline = false,
             LastSyncedAt = null,
             DataSourceLabel = "VKFoodAPI",
-            DataSourceDescription = "Dashboard chi doc tu VKFoodAPI; khi API offline, WebAdmin giu trang thai trong de tranh lech du lieu voi app.",
+            DataSourceDescription = "Dashboard chỉ đọc từ VKFoodAPI; khi API offline, WebAdmin giữ trạng thái trống để tránh lệch dữ liệu với app.",
             LoadErrorMessage = loadErrorMessage,
             DailyListenPoints = Enumerable.Range(0, 7)
                 .Select(offset => today.AddDays(offset - 6))
@@ -294,7 +294,7 @@ public class DashboardService
             return item.PoiCode;
         }
 
-        return "POI khong xac dinh";
+        return "POI không xác định";
     }
 
     private static string ResolveUserLabel(ListeningHistoryEntryDto item)
@@ -309,7 +309,7 @@ public class DashboardService
             return item.UserCode;
         }
 
-        return "Khach tham quan";
+        return "Khách tham quan";
     }
 
     private static string NormalizeTriggerType(string? triggerType)

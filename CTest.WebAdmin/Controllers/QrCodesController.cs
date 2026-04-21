@@ -115,7 +115,7 @@ public class QrCodesController : Controller
             var target = await ResolveTargetAsync(targetType, targetId, cancellationToken);
             if (target is null)
             {
-                return NotFound("Khong tim thay target cho ma QR nay.");
+                return NotFound("Không tìm thấy target cho mã QR này.");
             }
 
             return View("Scan", BuildScanViewModel(target));
@@ -124,7 +124,7 @@ public class QrCodesController : Controller
         {
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
-                "He thong tam thoi khong ket noi duoc du lieu target. Thu lai sau.");
+                "Hệ thống tạm thời không kết nối được dữ liệu target. Thử lại sau.");
         }
     }
 
@@ -141,7 +141,7 @@ public class QrCodesController : Controller
             {
                 return StatusCode(
                     StatusCodes.Status502BadGateway,
-                    "He thong chua tao duoc lich su nghe tu VKFoodAPI.");
+                    "Hệ thống chưa tạo được lịch sử nghe từ VKFoodAPI.");
             }
 
             return Ok(new { id = created.Id });
@@ -153,7 +153,7 @@ public class QrCodesController : Controller
         {
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
-                "He thong tam thoi chua ghi nhan duoc lich su nghe tren web.");
+                "Hệ thống tạm thời chưa ghi nhận được lịch sử nghe trên web.");
         }
     }
 
@@ -176,7 +176,7 @@ public class QrCodesController : Controller
         {
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
-                "He thong tam thoi chua cap nhat duoc lich su nghe tren web.");
+                "Hệ thống tạm thời chưa cập nhật được lịch sử nghe trên web.");
         }
     }
 
@@ -203,7 +203,7 @@ public class QrCodesController : Controller
         {
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
-                "He thong tam thoi chua ghi nhan duoc thiet bi web dang hoat dong.");
+                "Hệ thống tạm thời chưa ghi nhận được thiết bị web đang hoạt động.");
         }
     }
 
@@ -230,7 +230,7 @@ public class QrCodesController : Controller
         {
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
-                "He thong tam thoi chua danh dau duoc thiet bi web da ngung hoat dong.");
+                "Hệ thống tạm thời chưa đánh dấu được thiết bị web đã ngừng hoạt động.");
         }
     }
 
@@ -251,7 +251,7 @@ public class QrCodesController : Controller
         {
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
-                "Khong tao duoc QR luc nay vi target chua truy cap duoc.");
+                "Không tạo được QR lúc này vì target chưa truy cập được.");
         }
 
         if (target is null)
@@ -397,7 +397,7 @@ public class QrCodesController : Controller
             Description = poi.Description,
             Address = poi.Address,
             ActivationType = GetPoiActivationType(poi),
-            Status = poi.IsActive ? "San sang" : "Tam khoa",
+            Status = poi.IsActive ? "Sẵn sàng" : "Tạm khóa",
             NarrationText = string.IsNullOrWhiteSpace(primaryNarration) ? poi.Description : primaryNarration,
             AudioAssetPath = ResolvePublicAudioPath(poi.AudioAssetPath),
             NarrationByLanguage = narrationByLanguage,
@@ -406,7 +406,7 @@ public class QrCodesController : Controller
             DetailUrl = Url.Action("Details", "Pois", new { id = poi.Id }) ?? string.Empty,
             DetailActionLabel = "Xem POI",
             RouteSummary = BuildPoiRouteSummary(poi),
-            EstimatedDurationLabel = $"Ban kinh kich hoat {poi.TriggerRadiusMeters:0.#} m",
+            EstimatedDurationLabel = $"Bán kính kích hoạt {poi.TriggerRadiusMeters:0.#} m",
             SortOrder = 0
         };
     }
@@ -431,8 +431,8 @@ public class QrCodesController : Controller
             TargetKindLabel = "Tour",
             Description = tour.Description,
             Address = string.Empty,
-            ActivationType = "QR dieu huong tour",
-            Status = tour.IsActive && tour.IsQrEnabled ? "San sang" : "Tam khoa",
+            ActivationType = "QR điều hướng tour",
+            Status = tour.IsActive && tour.IsQrEnabled ? "Sẵn sàng" : "Tạm khóa",
             NarrationText = narrationText,
             AudioAssetPath = string.Empty,
             NarrationByLanguage = BuildFlatNarrationByLanguage(narrationText),
@@ -441,7 +441,7 @@ public class QrCodesController : Controller
             DetailUrl = Url.Action("Edit", "Tours", new { id = tour.Id }) ?? $"{Url.Action("Index", "Tours") ?? "/Tours"}#tour-{tour.Id}",
             DetailActionLabel = "Xem tour",
             RouteSummary = routeSummary,
-            EstimatedDurationLabel = $"{tour.EstimatedMinutes} phut",
+            EstimatedDurationLabel = $"{tour.EstimatedMinutes} phút",
             TourStops = tourStops,
             SortOrder = 1
         };
@@ -451,7 +451,7 @@ public class QrCodesController : Controller
     {
         return PoiAdminMappings.ContainsQr(poi.Description, poi.NarrationText)
             ? "QR + GPS"
-            : "QR tai diem";
+            : "QR tại điểm";
     }
 
     private static string BuildPoiRouteSummary(PoiDto poi)
@@ -479,10 +479,10 @@ public class QrCodesController : Controller
     private static string BuildTourNarration(TourDto tour, IReadOnlyList<string> tourStops)
     {
         var stopSummary = tourStops.Count == 0
-            ? "Tour chua co diem dung duoc khai bao."
-            : $"Cac diem dung chinh: {string.Join(", ", tourStops)}.";
+            ? "Tour chưa có điểm dừng được khai báo."
+            : $"Các điểm dừng chính: {string.Join(", ", tourStops)}.";
 
-        return $"{tour.Description} Thoi luong du kien {tour.EstimatedMinutes} phut. {stopSummary}";
+        return $"{tour.Description} Thời lượng dự kiến {tour.EstimatedMinutes} phút. {stopSummary}";
     }
 
     private static Dictionary<string, string> BuildPoiNarrationByLanguage(

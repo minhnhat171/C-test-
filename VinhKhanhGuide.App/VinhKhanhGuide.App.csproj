@@ -25,7 +25,7 @@
               ForegroundFile="Resources\AppIcon\appiconfg.svg"
               Color="#2F80FF" />
 
-    <MauiSplashScreen Include="Resources\Splash\splash.svg"
+    <MauiSplashScreen Include="Resources\AppIcon\appiconfg.svg"
                       Color="#2F80FF"
                       BaseSize="128,128" />
 

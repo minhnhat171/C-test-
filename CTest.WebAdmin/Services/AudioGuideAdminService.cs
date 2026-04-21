@@ -9,8 +9,8 @@ public class AudioGuideAdminService
 {
     private static readonly (string Code, string Label)[] SupportedLanguages =
     [
-        ("vi", "Tieng Viet"),
-        ("en", "Tieng Anh"),
+        ("vi", "Tiếng Việt"),
+        ("en", "Tiếng Anh"),
         ("zh", "Tieng Trung"),
         ("ko", "Tieng Han"),
         ("fr", "Tieng Phap")
@@ -118,7 +118,7 @@ public class AudioGuideAdminService
         }
         catch (HttpRequestException)
         {
-            vm.LoadErrorMessage = "Khong the ket noi VKFoodAPI. Phan Audio / TTS chi dong bo khi API dang chay.";
+            vm.LoadErrorMessage = "Không thể kết nối VKFoodAPI. Phần Audio / TTS chỉ đồng bộ khi API đang chạy.";
             vm.Editor = new AudioGuideEditorFormViewModel();
             return vm;
         }
@@ -144,9 +144,9 @@ public class AudioGuideAdminService
 
         return updated
             ? AudioGuideOperationResult.Success(
-                "Da cap nhat audio va luu vao VKFoodAPI.",
+                "Đã cập nhật audio và lưu vào VKFoodAPI.",
                 editor.Id)
-            : AudioGuideOperationResult.Missing("Khong tim thay audio can cap nhat tren VKFoodAPI.");
+            : AudioGuideOperationResult.Missing("Không tìm thấy audio cần cập nhật trên VKFoodAPI.");
     }
 
     public async Task<AudioGuideOperationResult> DeleteAsync(
@@ -155,14 +155,14 @@ public class AudioGuideAdminService
     {
         if (id == Guid.Empty)
         {
-            return AudioGuideOperationResult.Failure("Khong xac dinh duoc audio can xoa.");
+            return AudioGuideOperationResult.Failure("Không xác định được audio cần xóa.");
         }
 
         var deleted = await _audioGuideApiClient.DeleteAudioGuideAsync(id, cancellationToken);
 
         return deleted
             ? AudioGuideOperationResult.Success("Da xoa audio khoi VKFoodAPI.", id)
-            : AudioGuideOperationResult.Missing("Khong tim thay audio de xoa.");
+            : AudioGuideOperationResult.Missing("Không tìm thấy audio để xóa.");
     }
 
     private static AudioGuideDto? ResolveSelectedGuide(
@@ -219,10 +219,10 @@ public class AudioGuideAdminService
                     LanguageCode = language.Code,
                     LanguageLabel = language.Label,
                     StatusLabel = !hasAudio
-                        ? "Chua co noi dung"
+                        ? "Chưa có nội dung"
                         : isPublished
-                            ? "Dang publish"
-                            : "Ban nhap",
+                            ? "Đang publish"
+                            : "Bản nháp",
                     StatusCssClass = !hasAudio
                         ? "empty"
                         : isPublished
@@ -230,10 +230,10 @@ public class AudioGuideAdminService
                             : "draft",
                     SourceLabel = hasAudio
                         ? AudioGuideAdminMappings.GetSourceLabel(latestGuide!.SourceType)
-                        : "Chua co audio",
+                        : "Chưa có audio",
                     UpdatedLabel = hasAudio
                         ? _clock.ToDisplayTime(latestGuide!.UpdatedAtUtc).ToString("dd/MM/yyyy HH:mm")
-                        : "Chua cap nhat",
+                        : "Chưa cập nhật",
                     AudioId = latestGuide?.Id,
                     HasAudio = hasAudio,
                     IsPublished = isPublished,
@@ -299,13 +299,13 @@ public class AudioGuideAdminService
                         ? "tts"
                         : AudioGuideAdminMappings.NormalizeSourceType(selectedLanguageGuide.SourceType),
                     SourceLabel = selectedLanguageGuide is null
-                        ? "Can tao TTS"
+                        ? "Cần tạo TTS"
                         : AudioGuideAdminMappings.GetSourceLabel(selectedLanguageGuide.SourceType),
                     Script = selectedLanguageGuide?.Script ?? ResolveDefaultScript(poi, selectedLanguageCode),
                     FilePath = selectedLanguageGuide?.FilePath ?? string.Empty,
                     AudioCount = poiAudioGuides.Count,
                     AvailableLanguageLabels = languageLabels.Count == 0
-                        ? "Chua co"
+                        ? "Chưa có"
                         : string.Join(", ", languageLabels),
                     HasSelectedLanguageAudio = selectedLanguageGuide is not null,
                     HasPublishedAudio = poiAudioGuides.Any(item => item.IsPublished),

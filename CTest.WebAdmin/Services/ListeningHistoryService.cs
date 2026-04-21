@@ -94,7 +94,7 @@ public class ListeningHistoryService
             page.TotalListenSeconds = 0;
             page.AverageListenSeconds = 0;
             page.DistinctPoiCount = 0;
-            page.MostPlayedPoi = "Chua co du lieu";
+            page.MostPlayedPoi = "Chưa có dữ liệu";
             page.MostPlayedPoiListenCount = 0;
             return page;
         }
@@ -110,7 +110,7 @@ public class ListeningHistoryService
         page.TotalListenSeconds = filtered.Sum(item => item.ListenSeconds);
         page.AverageListenSeconds = filtered.Count == 0 ? 0 : filtered.Average(item => item.ListenSeconds);
         page.DistinctPoiCount = page.RankingItems.Count;
-        page.MostPlayedPoi = page.RankingItems.FirstOrDefault()?.PoiName ?? "Chua co du lieu";
+        page.MostPlayedPoi = page.RankingItems.FirstOrDefault()?.PoiName ?? "Chưa có dữ liệu";
         page.MostPlayedPoiListenCount = page.RankingItems.FirstOrDefault()?.ListenCount ?? 0;
         return page;
     }

@@ -55,7 +55,7 @@ public class MapPoisController : Controller
         {
             ModelState.AddModelError(
                 string.Empty,
-                "Khong the ket noi VKFoodAPI. Hay mo API truoc roi luu lai.");
+                "Không thể kết nối VKFoodAPI. Hãy mở API trước rồi lưu lại.");
 
             var offlineVm = await BuildPageAsync(model.Editor.Id, model.Editor, cancellationToken);
             return View("Index", offlineVm);
@@ -88,7 +88,7 @@ public class MapPoisController : Controller
         {
             return new MapPoiManagementViewModel
             {
-                LoadErrorMessage = "Khong the ket noi VKFoodAPI. Trang Map Analytics chi hoat dong khi API dang chay.",
+                LoadErrorMessage = "Không thể kết nối VKFoodAPI. Trang Map Analytics chỉ hoạt động khi API đang chạy.",
                 SelectedPoiId = editorOverride?.Id ?? poiId ?? Guid.Empty,
                 Editor = editorOverride ?? new PoiEditorViewModel
                 {

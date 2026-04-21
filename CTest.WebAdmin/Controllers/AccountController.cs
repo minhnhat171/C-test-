@@ -40,7 +40,7 @@ public class AccountController : Controller
         var authenticatedUser = _authService.ValidateCredentials(model.Username, model.Password);
         if (authenticatedUser is null)
         {
-            model.ErrorMessage = "Sai tai khoan hoac mat khau.";
+            model.ErrorMessage = "Sai tài khoản hoặc mật khẩu.";
             return View(model);
         }
 

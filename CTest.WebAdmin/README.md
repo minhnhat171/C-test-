@@ -1,34 +1,28 @@
 # CTest.WebAdmin
 
-Web quản lý đồ án C# được dựng theo nội dung file Word về hệ thống thuyết minh tự động đa ngôn ngữ cho ẩm thực Vĩnh Khánh.
+Web quản trị cho hệ thống thuyết minh tự động ẩm thực Vĩnh Khánh.
 
-## Chức năng có sẵn
-- Dashboard tổng quan
-- Quản lý POI
-- Quản lý Audio / TTS
-- Quản lý bản dịch
-- Quản lý tour
-- Lịch sử sử dụng (GPS / QR)
+## Chức năng chính
 
-## Công nghệ
-- ASP.NET Core MVC (.NET 8)
-- Bootstrap 5
-- Dữ liệu mẫu in-memory bằng `AppDataService`
+- Dashboard tổng quan dữ liệu nghe, thiết bị đang hoạt động và POI nổi bật.
+- Quản lý POI, ảnh POI, chủ quán và trạng thái kích hoạt.
+- Quản lý audio guide/TTS.
+- Quản lý tour và QR.
+- Theo dõi lịch sử nghe theo GPS/QR.
+- Phân quyền Admin và chủ quán.
 
-## Chạy project
+## Kiến trúc dữ liệu
+
+- WebAdmin không còn dùng `AppDataService` seed nội bộ.
+- WebAdmin đọc/ghi dữ liệu qua `VKFoodAPI`.
+- App mobile đọc POI/tour từ cùng API và có snapshot offline để chạy khi mất mạng.
+- Dữ liệu demo hiện nằm trong `VKFoodAPI/App_Data`.
+
+## Chạy nhanh
+
 ```bash
-cd CTest.WebAdmin
-dotnet restore
-dotnet run
+dotnet run --project VKFoodAPI/VKFoodAPI.csproj
+dotnet run --project CTest.WebAdmin/CTest.WebAdmin.csproj
 ```
 
-Sau đó mở trình duyệt tại địa chỉ do ASP.NET Core trả về, thường là:
-- https://localhost:xxxx
-- http://localhost:xxxx
-
-## Hướng phát triển tiếp theo
-1. Thay `AppDataService` bằng Entity Framework Core + SQL Server/SQLite.
-2. Thêm CRUD đầy đủ (Create/Edit/Delete).
-3. Tạo đăng nhập admin.
-4. Tích hợp sinh QR code thật.
-5. Đồng bộ với API/mobile app hiện có trong file zip của bạn.
+Tài khoản demo nằm trong `CTest.WebAdmin/appsettings.json`.

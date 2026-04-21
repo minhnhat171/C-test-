@@ -791,9 +791,9 @@
         <div class="col-sm-6 col-xl-4 col-xxl-2">
             <div class="metric-card metric-live">
                 <span class="metric-mark">Live</span>
-                <div class="metric-label">Thiet bi dang hoat dong</div>
+                <div class="metric-label">Thiết bị đang hoạt động</div>
                 <div class="metric-value" id="activeDeviceCount">@Model.ActiveDeviceCount</div>
-                <div class="metric-note" id="activeDeviceNote">Cap nhat realtime tu web va app</div>
+                <div class="metric-note" id="activeDeviceNote">Cập nhật realtime từ web và app</div>
             </div>
         </div>
 
@@ -820,7 +820,7 @@
                 <span class="metric-mark">Map</span>
                 <div class="metric-label">POI có dữ liệu map</div>
                 <div class="metric-value">@Model.MappedPoiCount</div>
-                <div class="metric-note">Có tọa độ hoặc map link để mở trực tiếp từ web quản lý</div>
+                        <div class="metric-note">Có tọa độ hoặc liên kết bản đồ để mở trực tiếp từ web quản lý</div>
             </div>
         </div>
 
@@ -855,10 +855,10 @@
     <div class="dashboard-panel active-device-panel mb-4">
         <div class="panel-header">
             <div>
-                <h2 class="panel-title">Thiet bi dang hoat dong</h2>
-                <div class="panel-subtitle">Danh sach thiet bi web va app van con gui heartbeat len VKFoodAPI.</div>
+                <h2 class="panel-title">Thiết bị đang hoạt động</h2>
+                <div class="panel-subtitle">Danh sách thiết bị web và app vẫn còn gửi heartbeat lên VKFoodAPI.</div>
             </div>
-            <span class="panel-chip" id="activeDevicePanelCount">@Model.ActiveDeviceCount thiet bi</span>
+            <span class="panel-chip" id="activeDevicePanelCount">@Model.ActiveDeviceCount thiết bị</span>
         </div>
 
         <div class="active-device-list" id="activeDeviceList">
@@ -893,7 +893,7 @@
                             }
                             else
                             {
-                                <div class="active-device-meta">Chua co GPS hien tai</div>
+                                <div class="active-device-meta">Chưa có GPS hiện tại</div>
                             }
                         </div>
                         <div class="active-device-status">
@@ -905,7 +905,7 @@
             }
             else
             {
-                <div class="active-device-empty">Chua co thiet bi nao dang hoat dong.</div>
+                <div class="active-device-empty">Chưa có thiết bị nào đang hoạt động.</div>
             }
         </div>
     </div>
@@ -1156,12 +1156,12 @@
 
             const formatTime = (value) => {
                 if (!value) {
-                    return "Vua cap nhat";
+                    return "Vừa cập nhật";
                 }
 
                 const date = new Date(value);
                 if (Number.isNaN(date.getTime())) {
-                    return "Vua cap nhat";
+                    return "Vừa cập nhật";
                 }
 
                 return date.toLocaleString("vi-VN", {
@@ -1315,7 +1315,7 @@
                 if (heatmapUpdatedAtEl) {
                     heatmapUpdatedAtEl.textContent = latestLocationValue
                         ? formatTime(latestLocationValue)
-                        : "Chua co";
+                        : "Chưa có";
                 }
 
                 if (heatmapEmptyStateEl) {
@@ -1349,7 +1349,7 @@
                             fillOpacity: 0.92
                         });
 
-                    const name = device.userDisplayName || device.userCode || "Khach tham quan";
+                    const name = device.userDisplayName || device.userCode || "Khách tham quan";
                     const popup = `
                         <div class="fw-semibold">${escapeHtml(name)}</div>
                         <div>${escapeHtml(formatCoordinate(device.latitude))}, ${escapeHtml(formatCoordinate(device.longitude))}</div>
@@ -1371,19 +1371,19 @@
                 }
 
                 if (!Array.isArray(devices) || devices.length === 0) {
-                    listEl.innerHTML = '<div class="active-device-empty">Chua co thiet bi nao dang hoat dong.</div>';
+                    listEl.innerHTML = '<div class="active-device-empty">Chưa có thiết bị nào đang hoạt động.</div>';
                     return;
                 }
 
                 listEl.innerHTML = devices.map((device) => {
-                    const name = device.userDisplayName || device.userCode || "Khach tham quan";
+                    const name = device.userDisplayName || device.userCode || "Khách tham quan";
                     const platform = device.devicePlatform || "App";
                     const model = device.deviceModel ? `${platform} - ${device.deviceModel}` : platform;
                     const version = device.appVersion ? `App ${device.appVersion}` : "";
                     const meta = version ? `${model} | ${version}` : model;
                     const locationMeta = hasLocation(device)
                         ? `${formatCoordinate(device.latitude)}, ${formatCoordinate(device.longitude)}${formatAccuracy(device.accuracyMeters)}`
-                        : "Chua co GPS hien tai";
+                        : "Chưa có GPS hiện tại";
 
                     return `
                         <div class="active-device-row">
@@ -1404,7 +1404,7 @@
             const renderUsageHistory = (snapshot) => {
                 const logs = Array.isArray(snapshot?.recentLogs) ? snapshot.recentLogs : [];
                 const todayListenCount = Number(snapshot?.todayListenCount ?? 0);
-                const mostPlayedPoi = snapshot?.mostPlayedPoi || "Chua co du lieu";
+                const mostPlayedPoi = snapshot?.mostPlayedPoi || "Chưa có dữ liệu";
 
                 if (todayListenCountEl) {
                     todayListenCountEl.textContent = todayListenCount.toString();
@@ -1423,7 +1423,7 @@
                 }
 
                 if (logs.length === 0) {
-                    recentHistoryBodyEl.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Chua co lich su su dung de hien thi.</td></tr>';
+                    recentHistoryBodyEl.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Chưa có lịch sử sử dụng để hiển thị.</td></tr>';
                     return;
                 }
 
@@ -1437,17 +1437,17 @@
 
                     return `
                         <tr>
-                            <td><span class="user-pill">${escapeHtml(item?.userCode || "Khach web")}</span></td>
-                            <td class="fw-semibold">${escapeHtml(item?.poiName || "POI khong xac dinh")}</td>
+                            <td><span class="user-pill">${escapeHtml(item?.userCode || "Khách web")}</span></td>
+                            <td class="fw-semibold">${escapeHtml(item?.poiName || "POI không xác định")}</td>
                             <td>
                                 <span class="trigger-pill ${triggerClass}">${escapeHtml(triggerType)}</span>
                             </td>
                             <td>${escapeHtml(item?.language || "vi")}</td>
                             <td>${escapeHtml(formatHistoryTime(item?.startedAt))}</td>
-                            <td>${escapeHtml(Number.isFinite(listenSeconds) ? `${Math.max(0, Math.round(listenSeconds))} giay` : "0 giay")}</td>
+                            <td>${escapeHtml(Number.isFinite(listenSeconds) ? `${Math.max(0, Math.round(listenSeconds))} giây` : "0 giây")}</td>
                             <td>
                                 <span class="status-badge ${completed ? "done" : "pending"}">
-                                    ${completed ? "Hoan tat" : "Dang nghe"}
+                                    ${completed ? "Hoàn tất" : "Đang nghe"}
                                 </span>
                             </td>
                         </tr>`;
@@ -1464,14 +1464,14 @@
 
                 if (noteEl) {
                     noteEl.textContent = count === 1
-                        ? "1 thiet bi dang online"
-                        : `${count} thiet bi dang online`;
+                        ? "1 thiết bị dang online"
+                        : `${count} thiết bị dang online`;
                 }
 
                 if (panelCountEl) {
                     panelCountEl.textContent = count === 1
-                        ? "1 thiet bi"
-                        : `${count} thiet bi`;
+                        ? "1 thiết bị"
+                        : `${count} thiết bị`;
                 }
 
                 renderDevices(devices);
@@ -1494,7 +1494,6 @@
                     lastStats = await response.json();
                     updateStats(lastStats);
                 } catch {
-                    // Keep the last visible value if the admin API is temporarily unavailable.
                 } finally {
                     isLoadingStats = false;
                 }
@@ -1516,7 +1515,6 @@
                     lastUsageSnapshot = await response.json();
                     renderUsageHistory(lastUsageSnapshot);
                 } catch {
-                    // Keep the current usage snapshot if the admin API is temporarily unavailable.
                 } finally {
                     isLoadingUsageSnapshot = false;
                 }

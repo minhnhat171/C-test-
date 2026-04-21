@@ -13,8 +13,8 @@ public class TranslationsController : Controller
     private readonly PoiApiClient _poiApiClient;
     private static readonly (string Code, string Label)[] SupportedLanguages =
     [
-        ("vi", "Tieng Viet"),
-        ("en", "Tieng Anh"),
+        ("vi", "Tiếng Việt"),
+        ("en", "Tiếng Anh"),
         ("zh", "Tieng Trung"),
         ("ko", "Tieng Han"),
         ("fr", "Tieng Phap")
@@ -45,7 +45,7 @@ public class TranslationsController : Controller
             var poi = await _poiApiClient.GetPoiAsync(selectedPoi.Id, cancellationToken);
             if (poi is null)
             {
-                vm.LoadErrorMessage = "Khong tai duoc du lieu POI tu API.";
+                vm.LoadErrorMessage = "Không tải được dữ liệu POI từ API.";
                 return View("Manage", vm);
             }
 
@@ -57,7 +57,7 @@ public class TranslationsController : Controller
         }
         catch (HttpRequestException)
         {
-            vm.LoadErrorMessage = "Khong the ket noi VKFoodAPI. Trang ban dich chi dong bo khi API dang chay.";
+            vm.LoadErrorMessage = "Không thể kết nối VKFoodAPI. Trang bản dịch chỉ đồng bộ khi API đang chạy.";
         }
 
         return View("Manage", vm);
@@ -69,7 +69,7 @@ public class TranslationsController : Controller
     {
         if (model.PoiId == Guid.Empty)
         {
-            TempData["TranslationMessage"] = "Khong xac dinh duoc POI de luu ban dich.";
+            TempData["TranslationMessage"] = "Không xác định được POI để lưu bản dịch.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -78,7 +78,7 @@ public class TranslationsController : Controller
             var poi = await _poiApiClient.GetPoiAsync(model.PoiId, cancellationToken);
             if (poi is null)
             {
-                TempData["TranslationMessage"] = "POI khong con ton tai tren API.";
+                TempData["TranslationMessage"] = "POI không còn tồn tại trên API.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -101,12 +101,12 @@ public class TranslationsController : Controller
 
             await _poiApiClient.UpdatePoiAsync(poi.Id, poi, cancellationToken);
 
-            TempData["TranslationMessage"] = $"Da cap nhat script {model.LanguageLabel} cho app MAUI.";
+            TempData["TranslationMessage"] = $"Đã cập nhật script {model.LanguageLabel} cho app MAUI.";
             return RedirectToAction(nameof(Index), new { poiId = poi.Id });
         }
         catch (HttpRequestException)
         {
-            TempData["TranslationMessage"] = "Khong the ket noi VKFoodAPI nen chua luu duoc ban dich.";
+            TempData["TranslationMessage"] = "Không thể kết nối VKFoodAPI nên chưa lưu được bản dịch.";
             return RedirectToAction(nameof(Index), new { poiId = model.PoiId });
         }
     }

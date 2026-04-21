@@ -7,11 +7,14 @@
     "LanguageCode": "vi",
     "VoiceType": "female",
     "SourceType": "tts",
-    "Script": "Bạn đang ở điểm dừng đầu tiên, Ốc Thảo. Quán đại diện cho nhịp mở màn của phố ẩm thực Vĩnh Khánh với hải sản tươi, lên món nhanh và mức giá dễ tiếp cận.",
+    "Script": "Bạn đang ở gần quán Ốc Thảo. Quán nổi tiếng với hải sản tươi, giá hợp lý và các món như ốc móng tay xào rau muống, nghêu hấp sả, hàu nướng phô mai.",
     "FilePath": "",
-    "EstimatedSeconds": 26,
+    "EstimatedSeconds": 15,
     "IsPublished": true,
-    "UpdatedAtUtc": "2026-04-18T08:00:00Z"
+    "IsDeleted": false,
+    "CreatedAtUtc": "2026-04-18T08:00:00Z",
+    "UpdatedAtUtc": "2026-04-21T08:00:00Z",
+    "DeletedAtUtc": null
   },
   {
     "Id": "22222222-2222-2222-2222-222222222204",
@@ -21,11 +24,14 @@
     "LanguageCode": "vi",
     "VoiceType": "female",
     "SourceType": "tts",
-    "Script": "Bạn đang ở Ốc Sáu Nở, điểm dừng thứ hai của hành trình. Quán được nhớ đến nhờ nước chấm đậm vị và các món ốc dễ ăn, rất hợp để tiếp nối trải nghiệm giữa tour.",
+    "Script": "Bạn đang ở gần quán Ốc Sáu Nở. Quán nổi tiếng với nước chấm đậm đà cùng các món như cua rang me, sò điệp nướng phô mai và ốc hương xào bơ.",
     "FilePath": "",
-    "EstimatedSeconds": 27,
+    "EstimatedSeconds": 15,
     "IsPublished": true,
-    "UpdatedAtUtc": "2026-04-18T08:00:00Z"
+    "IsDeleted": false,
+    "CreatedAtUtc": "2026-04-18T08:00:00Z",
+    "UpdatedAtUtc": "2026-04-21T08:00:00Z",
+    "DeletedAtUtc": null
   },
   {
     "Id": "22222222-2222-2222-2222-222222222209",
@@ -35,11 +41,14 @@
     "LanguageCode": "vi",
     "VoiceType": "female",
     "SourceType": "tts",
-    "Script": "Bạn đang ở Chilli - Lẩu nướng, điểm kết của tour đêm Vĩnh Khánh. Đây là nơi chuyển mạch từ món ốc sang lẩu và nướng, giúp hành trình kết thúc rõ nhịp và dễ nhớ.",
+    "Script": "Bạn đang ở gần quán Chilli - Lẩu nướng. Quán có phong cách cay đậm, phù hợp nếu bạn muốn đổi nhịp sang lẩu và nướng ở cuối hành trình.",
     "FilePath": "",
-    "EstimatedSeconds": 28,
+    "EstimatedSeconds": 15,
     "IsPublished": true,
-    "UpdatedAtUtc": "2026-04-18T08:00:00Z"
+    "IsDeleted": false,
+    "CreatedAtUtc": "2026-04-18T08:00:00Z",
+    "UpdatedAtUtc": "2026-04-21T08:00:00Z",
+    "DeletedAtUtc": null
   },
   {
     "Id": "22222222-2222-2222-2222-222222222210",
@@ -49,10 +58,30 @@
     "LanguageCode": "vi",
     "VoiceType": "female",
     "SourceType": "tts",
-    "Script": "Bạn đang ở gần Thế Giới Bò - Nướng và Lẩu. Đây là điểm đổi vị hấp dẫn với các món bò nướng tảng, bò cuộn nấm và lẩu bò.",
+    "Script": "Bạn đang ở gần quán Thế Giới Bò - Nướng và Lẩu. Đây là điểm đổi vị hấp dẫn với sườn bò nướng, bò cuộn nấm và lẩu bò.",
     "FilePath": "",
-    "EstimatedSeconds": 24,
+    "EstimatedSeconds": 15,
     "IsPublished": true,
-    "UpdatedAtUtc": "2026-04-18T08:00:00Z"
+    "IsDeleted": false,
+    "CreatedAtUtc": "2026-04-18T08:00:00Z",
+    "UpdatedAtUtc": "2026-04-21T08:00:00Z",
+    "DeletedAtUtc": null
+  },
+  {
+    "Id": "22222222-2222-2222-2222-222222222211",
+    "PoiId": "d3583d6e-1c84-4fa5-8012-2fb81f8d7e47",
+    "PoiCode": "VK-FOOD-11",
+    "PoiName": "Ốc Phát",
+    "LanguageCode": "vi",
+    "VoiceType": "female",
+    "SourceType": "tts",
+    "Script": "Bạn đang ở gần quán Ốc Phát trên đường Vĩnh Khánh. Đây là POI được đăng ký từ WebAdmin, có hình ảnh, tọa độ và nội dung thuyết minh đồng bộ xuống app.",
+    "FilePath": "",
+    "EstimatedSeconds": 15,
+    "IsPublished": true,
+    "IsDeleted": false,
+    "CreatedAtUtc": "2026-04-21T08:00:00Z",
+    "UpdatedAtUtc": "2026-04-21T08:00:00Z",
+    "DeletedAtUtc": null
   }
 ]

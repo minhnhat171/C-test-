@@ -16,7 +16,7 @@ public class AudioGuideValidationService
         }
         else if (!pois.Any(item => item.Id == model.PoiId))
         {
-            errors.Add(new AudioGuideValidationError("Editor.PoiId", "POI da chon khong con ton tai tren API."));
+            errors.Add(new AudioGuideValidationError("Editor.PoiId", "POI đã chọn không còn tồn tại trên API."));
         }
 
         if (string.Equals(model.SourceType, "file", StringComparison.OrdinalIgnoreCase))
@@ -28,14 +28,14 @@ public class AudioGuideValidationService
         }
         else if (string.IsNullOrWhiteSpace(model.Script))
         {
-            errors.Add(new AudioGuideValidationError("Editor.Script", "Hay nhap noi dung script cho TTS."));
+            errors.Add(new AudioGuideValidationError("Editor.Script", "Hãy nhập nội dung script cho TTS."));
         }
 
         if (model.EstimatedSeconds < 0)
         {
             errors.Add(new AudioGuideValidationError(
                 "Editor.EstimatedSeconds",
-                "Thoi luong du kien khong duoc nho hon 0."));
+                "Thời lượng dự kiến không được nhỏ hơn 0."));
         }
 
         return new AudioGuideValidationResult(errors.Count == 0, errors);

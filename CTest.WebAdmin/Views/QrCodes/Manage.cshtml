@@ -41,7 +41,7 @@
 
     .qr-panel {
         background: var(--qr-panel);
-        border-radius: 28px;
+        border-radius: 8px;
         box-shadow: var(--qr-shadow);
         overflow: hidden;
     }
@@ -102,7 +102,7 @@
     }
 
     .qr-preview-card {
-        border-radius: 28px;
+        border-radius: 8px;
         padding: 1.3rem;
         background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
     }
@@ -132,7 +132,7 @@
         width: min(100%, 280px);
         aspect-ratio: 1;
         background: white;
-        border-radius: 24px;
+        border-radius: 8px;
         padding: 1rem;
         box-shadow: 0 20px 40px rgba(37, 99, 235, 0.14);
         display: flex;
@@ -152,7 +152,7 @@
     }
 
     .qr-link-box {
-        border-radius: 18px;
+        border-radius: 8px;
         background: rgba(255,255,255,0.8);
         border: 1px solid rgba(148, 163, 184, 0.18);
         padding: 0.9rem;
@@ -182,7 +182,7 @@
     <div class="qr-head">
         <div>
             <h1>Quản lý QR code</h1>
-            <p>Mỗi QR giờ chỉ trỏ đến một <code>target</code> chung gồm <code>targetType</code> và <code>targetId</code>. POI và Tour dùng cùng một flow resolve, cùng một public link, cùng một trang scan.</p>
+            <p>Tạo QR cho POI hoặc tour để khách quét và nghe thuyết minh ngay.</p>
         </div>
     </div>
 
@@ -197,7 +197,7 @@
                 <table class="table qr-table align-middle">
                     <thead>
                         <tr>
-                            <th>Target</th>
+                            <th>Đối tượng</th>
                             <th>Mã QR</th>
                             <th>Loại kích hoạt</th>
                             <th>Trạng thái</th>
@@ -242,8 +242,8 @@
                                         Tải QR PNG
                                     </button>
                                     <button type="button" class="btn btn-outline-dark btn-sm rounded-pill" onclick="window.print()">In QR</button>
-                                    <a href="@item.PublicUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm rounded-pill">Test link</a>
-                                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill js-copy-link" data-url="@item.PublicUrl">Copy link</button>
+                                    <a href="@item.PublicUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm rounded-pill">Mở thử</a>
+                                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill js-copy-link" data-url="@item.PublicUrl">Sao chép liên kết</button>
                                 </div>
                             </td>
                         </tr>
@@ -260,7 +260,7 @@
                     var selectedKindClass = Model.SelectedItem.TargetType == QrTargetTypes.Tour ? "qr-kind qr-kind-tour" : "qr-kind";
 
                     <div class="qr-preview-card">
-                        <div class="qr-preview-kicker">Preview</div>
+                        <div class="qr-preview-kicker">Xem trước</div>
                         <div class="@selectedKindClass mt-2">@Model.SelectedItem.TargetKindLabel</div>
                         <div class="qr-preview-title">@Model.SelectedItem.TargetName</div>
                         @if (!string.IsNullOrWhiteSpace(Model.SelectedItem.RouteSummary))
@@ -268,18 +268,17 @@
                             <div class="qr-target-summary">@Model.SelectedItem.RouteSummary</div>
                         }
                         <div class="qr-link-box mt-3">
-                            <div class="small text-uppercase fw-bold text-secondary mb-2">Public QR link</div>
+                            <div class="small text-uppercase fw-bold text-secondary mb-2">Liên kết QR công khai</div>
                             <code>@Model.SelectedItem.PublicUrl</code>
                             <div class="d-flex flex-wrap gap-2 mt-3">
                                 <a href="@Model.SelectedItem.PublicUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm rounded-pill">Mở link công khai</a>
-                                <button type="button" class="btn btn-outline-dark btn-sm rounded-pill js-copy-link" data-url="@Model.SelectedItem.PublicUrl">Copy link</button>
+                                <button type="button" class="btn btn-outline-dark btn-sm rounded-pill js-copy-link" data-url="@Model.SelectedItem.PublicUrl">Sao chép liên kết</button>
                             </div>
-                            <div class="small text-muted mt-2">Payload QR luôn là public URL resolve theo <code>targetType</code> và <code>targetId</code>.</div>
+                            <div class="small text-muted mt-2">Liên kết công khai đã sẵn sàng để in hoặc chia sẻ.</div>
                         </div>
-                        <div class="qr-meta mt-2">Payload thực tế: <code>@Model.SelectedItem.Payload</code></div>
 
                         <div class="qr-image-wrap">
-                            <img src="@Model.SelectedItem.QrSvgUrl" alt="QR code for @Model.SelectedItem.TargetName" />
+                            <img src="@Model.SelectedItem.QrSvgUrl" alt="Mã QR" />
                         </div>
 
                         <div class="qr-meta">@Model.SelectedItem.Description</div>
@@ -304,13 +303,13 @@
                                 Tải PNG
                             </button>
                             <button type="button" class="btn btn-dark rounded-pill px-4" onclick="window.print()">In QR</button>
-                            <a href="@Model.SelectedItem.PublicUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary rounded-pill px-4">Test link</a>
+                            <a href="@Model.SelectedItem.PublicUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary rounded-pill px-4">Mở thử</a>
                         </div>
                     </div>
                 }
                 else
                 {
-                    <div class="qr-empty">Chưa có target nào sẵn để tạo QR.</div>
+                    <div class="qr-empty">Chưa có POI hoặc tour sẵn để tạo QR.</div>
                 }
             </div>
         </div>
@@ -375,7 +374,7 @@
                             button.textContent = originalText;
                         }, 1600);
                     } catch {
-                        window.prompt("Copy link này để đưa vào QR:", url);
+                        window.prompt("Sao chép liên kết này để tạo QR:", url);
                     }
                 });
             });

@@ -251,32 +251,32 @@
     <main class="scan-shell">
         <section class="scan-card">
             <header class="scan-hero">
-                <div class="scan-badge">@Model.TargetKindLabel QR Audio Guide</div>
+                <div class="scan-badge">@Model.TargetKindLabel QR thuyết minh</div>
                 <h1 class="scan-title">@Model.TargetName</h1>
                 <p class="scan-description">@Model.Description</p>
             </header>
 
             <div class="scan-body">
                 <section class="scan-panel">
-                    <p class="scan-panel-label">Nghe thuyet minh</p>
+                    <p class="scan-panel-label">Nghe thuyết minh</p>
 
                     <div class="scan-control-grid">
                         <label class="scan-control">
-                            <span class="scan-meta-label">Ngon ngu</span>
+                            <span class="scan-meta-label">Ngôn ngữ</span>
                             <select class="scan-select" id="languageSelect">
-                                <option value="vi">Tieng Viet</option>
-                                <option value="en">English</option>
-                                <option value="zh">Chinese</option>
-                                <option value="ko">Korean</option>
-                                <option value="fr">Francais</option>
+                                <option value="vi">Tiếng Việt</option>
+                                <option value="en">Tiếng Anh</option>
+                                <option value="zh">Tiếng Trung</option>
+                                <option value="ko">Tiếng Hàn</option>
+                                <option value="fr">Tiếng Pháp</option>
                             </select>
                         </label>
 
                         <label class="scan-control">
-                            <span class="scan-meta-label">Che do nghe</span>
+                            <span class="scan-meta-label">Chế độ nghe</span>
                             <select class="scan-select" id="playbackModeSelect">
-                                <option value="tts">Giong doc tu dong</option>
-                                <option value="audio">Ban thu san</option>
+                                <option value="tts">Giọng đọc tự động</option>
+                                <option value="audio">Bản thu sẵn</option>
                             </select>
                         </label>
                     </div>
@@ -284,47 +284,47 @@
                     <div class="scan-actions">
                         @if (shouldAutoOpenApp)
                         {
-                            <button type="button" class="scan-btn scan-btn-primary" id="openAppBtn">Mo app va nghe ngay</button>
-                            <button type="button" class="scan-btn scan-btn-secondary" id="speakBtn">Nghe tren web</button>
-                            <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">Dung doc web</button>
+                            <button type="button" class="scan-btn scan-btn-primary" id="openAppBtn">Mở app và nghe ngay</button>
+                            <button type="button" class="scan-btn scan-btn-secondary" id="speakBtn">Nghe trên web</button>
+                            <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">Dừng đọc web</button>
                         }
                         else
                         {
                             <button type="button" class="scan-btn scan-btn-primary" id="speakBtn">Nghe ngay</button>
-                            <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">Dung doc</button>
+                            <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">Dừng đọc</button>
                         }
                         @if (!string.IsNullOrWhiteSpace(Model.MapLink))
                         {
-                            <a class="scan-btn scan-btn-secondary" href="@Model.MapLink" target="_blank" rel="noopener noreferrer">Mo ban do</a>
+                            <a class="scan-btn scan-btn-secondary" href="@Model.MapLink" target="_blank" rel="noopener noreferrer">Mở bản đồ</a>
                         }
-                        <a class="scan-btn scan-btn-secondary" href="/download-app">Tai ung dung</a>
+                        <a class="scan-btn scan-btn-secondary" href="/download-app">Tải ứng dụng</a>
                     </div>
 
                     <p class="scan-note" id="playbackHint">
                         @(hasAudioAsset
-                            ? "POI nay da co ban thu san. Neu chon che do audio, web se uu tien phat cung nguon audio ma app dang dung."
-                            : "POI nay chua co ban thu san. Neu chon che do audio, web se tu dong roi ve TTS giong app.")
+                            ? "POI này đã có bản thu sẵn. Nếu chọn chế độ audio, web sẽ ưu tiên phát cùng nguồn audio mà app đang dùng."
+                            : "POI này chưa có bản thu sẵn. Nếu chọn chế độ audio, web sẽ tự động chuyển về TTS giống app.")
                     </p>
                     <p class="scan-note" id="speechStatus">
                         @(shouldAutoOpenApp
-                            ? "Trang se thu mo app truoc. Neu app chua mo duoc, web se phat theo tuy chon dang chon."
-                            : "Trang se thu phat noi dung theo tuy chon dang chon sau khi mo.")
+                            ? "Trang sẽ thử mở app trước. Nếu app chưa mở được, web sẽ phát theo tùy chọn đang chọn."
+                            : "Trang sẽ thử phát nội dung theo tùy chọn đang chọn sau khi mở.")
                     </p>
                     @if (shouldAutoOpenApp)
                     {
-                        <p class="scan-note">Dung cho diem dung xe buyt tai Khanh Hoi, Vinh Hoi, Xom Chieu. Quet la nghe ngay, khong can GPS.</p>
+                        <p class="scan-note">Dùng cho điểm dừng xe buýt tại Khánh Hội, Vĩnh Hội, Xóm Chiếu. Quét là nghe ngay, không cần GPS.</p>
                     }
                 </section>
 
                 <section class="scan-panel">
-                    <p class="scan-panel-label">Noi dung thuyet minh</p>
+                    <p class="scan-panel-label">Nội dung thuyết minh</p>
                     <p class="scan-text" id="scanNarrationText">@narrationText</p>
                 </section>
 
                 @if (Model.TourStops.Count > 0)
                 {
                     <section class="scan-panel">
-                        <p class="scan-panel-label">Lo trinh tour</p>
+                        <p class="scan-panel-label">Lộ trình tour</p>
                         <ol class="scan-stop-list">
                             @foreach (var stop in Model.TourStops)
                             {
@@ -338,7 +338,7 @@
                     @if (!string.IsNullOrWhiteSpace(Model.Address))
                     {
                         <div class="scan-meta-item">
-                            <span class="scan-meta-label">Dia chi</span>
+                            <span class="scan-meta-label">Địa chỉ</span>
                             <div>@Model.Address</div>
                         </div>
                     }
@@ -346,7 +346,7 @@
                     @if (!string.IsNullOrWhiteSpace(Model.SpecialDish))
                     {
                         <div class="scan-meta-item">
-                            <span class="scan-meta-label">Mon goi y</span>
+                            <span class="scan-meta-label">Món gợi ý</span>
                             <div>@Model.SpecialDish</div>
                         </div>
                     }
@@ -354,18 +354,18 @@
                     @if (!string.IsNullOrWhiteSpace(Model.EstimatedDurationLabel))
                     {
                         <div class="scan-meta-item">
-                            <span class="scan-meta-label">Thong tin them</span>
+                            <span class="scan-meta-label">Thông tin thêm</span>
                             <div>@Model.EstimatedDurationLabel</div>
                         </div>
                     }
 
                     <div class="scan-meta-item">
-                        <span class="scan-meta-label">Ma target</span>
+                        <span class="scan-meta-label">Mã đối tượng</span>
                         <div>@Model.TargetCode</div>
                     </div>
 
                     <div class="scan-meta-item">
-                        <span class="scan-meta-label">Link cong khai</span>
+                        <span class="scan-meta-label">Liên kết công khai</span>
                         <a class="scan-link" href="@Model.PublicUrl">@Model.PublicUrl</a>
                     </div>
                 </section>
@@ -401,7 +401,7 @@
             const speakBtn = document.getElementById("speakBtn");
             const stopBtn = document.getElementById("stopBtn");
             const narrationPlayer = window.VinhKhanhNarrationPlayer?.createPlayer({
-                onStatus: (message, state) => {
+                onTrạng thái: (message, state) => {
                     if (speechStatus) {
                         speechStatus.textContent = message;
                     }
@@ -456,7 +456,7 @@
             const browserDeviceId = buildDeviceId();
             const visitorSuffix = browserDeviceId.slice(-6).toUpperCase();
             const visitorCode = `web-${visitorSuffix}`;
-            const visitorName = `Khach web ${visitorSuffix}`;
+            const visitorName = `Khách web ${visitorSuffix}`;
 
             const postJson = async (url, payload, options = {}) => {
                 if (!url) {
@@ -658,12 +658,12 @@
 
                 if (normalizePlaybackMode(playbackModeSelect?.value) === "audio") {
                     playbackHint.textContent = hasAudioAsset
-                        ? "Web dang uu tien ban thu san cung nguon audio voi app."
-                        : "Diem nay chua co ban thu san, web se tu dong roi ve TTS neu ban bam nghe.";
+                        ? "Web đang ưu tiên bản thu sẵn cùng nguồn audio với app."
+                        : "Điểm này chưa có bản thu sẵn, web sẽ tự động chuyển về TTS nếu bạn bấm nghe.";
                     return;
                 }
 
-                playbackHint.textContent = "Web dang dung TTS theo ngon ngu da chon, giong voi logic fallback ben app.";
+                playbackHint.textContent = "Web đang dùng TTS theo ngôn ngữ đã chọn, giống logic fallback bên app.";
             };
 
             const stopSpeaking = (message) => {
@@ -675,11 +675,11 @@
                 void finalizeListeningSession(false);
 
                 if (!narrationPlayer) {
-                    updateStatus(message || "Da dung phat thuyet minh.");
+                    updateStatus(message || "Đã dừng phát thuyết minh.");
                     return;
                 }
 
-                narrationPlayer.stop(message || "Da dung phat thuyet minh.");
+                narrationPlayer.stop(message || "Đã dừng phát thuyết minh.");
             };
 
             const playOnWeb = () => {
@@ -693,14 +693,14 @@
                 syncPlaybackHint();
 
                 if (!narrationPlayer) {
-                    updateStatus("Web chua tai duoc bo phat narration.");
+                    updateStatus("Web chưa tải được bộ phát thuyết minh.");
                     return;
                 }
 
                 const currentNarrationText = resolveNarrationText(languageSelect?.value);
                 const currentPlaybackMode = playbackModeSelect?.value || "tts";
                 if (!currentNarrationText && !audioAssetPath) {
-                    updateStatus("Chua co noi dung thuyet minh de phat.");
+                    updateStatus("Chưa có nội dung thuyết minh để phát.");
                     return;
                 }
 
@@ -716,18 +716,18 @@
                     allowAudioFallback: true,
                     baseUrl: window.location.origin,
                     messages: {
-                        playingAudio: "Dang phat ban thu san giong app...",
-                        audioEnded: "Da phat xong. Ban co the bam nghe lai bat cu luc nao.",
+                        playingAudio: "Đang phát bản thu sẵn giống app...",
+                        audioEnded: "Đã phát xong. Bạn có thể bấm nghe lại bất cứ lúc nào.",
                         audioFallback: hasAudioAsset
-                            ? "Web khong mo duoc file audio nay. Dang chuyen sang TTS du phong."
-                            : "Diem nay chua co ban thu san. Web dang chuyen sang TTS giong app.",
-                        audioUnavailable: "Diem nay chua co ban thu san de phat tren web.",
-                        audioFailed: "Khong phat duoc ban thu san nay tren web.",
-                        playingTts: "Dang doc thuyet minh tren web...",
-                        ttsEnded: "Da doc xong. Ban co the bam nghe lai de nghe tiep.",
-                        ttsFailed: "Khong the phat TTS. Thu bam nghe lai mot lan nua.",
-                        unsupportedTts: "Trinh duyet nay khong ho tro TTS.",
-                        empty: "Chua co noi dung thuyet minh de phat."
+                            ? "Web không mở được file audio này. Đang chuyển sang TTS dự phòng."
+                            : "Điểm này chưa có bản thu sẵn. Web đang chuyển sang TTS giống app.",
+                        audioUnavailable: "Điểm này chưa có bản thu sẵn để phát trên web.",
+                        audioFailed: "Không phát được bản thu sẵn này trên web.",
+                        playingTts: "Đang đọc thuyết minh trên web...",
+                        ttsEnded: "Đã đọc xong. Bạn có thể bấm nghe lại để nghe tiếp.",
+                        ttsFailed: "Không thể phát TTS. Thử bấm nghe lại một lần nữa.",
+                        unsupportedTts: "Trình duyệt này không hỗ trợ TTS.",
+                        empty: "Chưa có nội dung thuyết minh để phát."
                     }
                 });
             };
@@ -739,11 +739,11 @@
                 }
 
                 stopSpeaking();
-                updateStatus("Dang chuyen qua app tren dien thoai...");
+                updateStatus("Đang chuyển qua app trên điện thoại...");
 
                 fallbackTimer = window.setTimeout(() => {
                     if (!document.hidden) {
-                        updateStatus("Chua mo duoc app. Web dang phat theo tuy chon hien tai.");
+                        updateStatus("Chưa mở được app. Web đang phát theo tùy chọn hiện tại.");
                         playOnWeb();
                     }
                 }, 1800);
@@ -760,25 +760,25 @@
                 fallbackTimer = 0;
                 void finalizeListeningSession(false);
                 narrationPlayer?.stop();
-                updateStatus("Da chuyen sang app. Neu dien thoai hoi xac nhan, hay chon Mo.");
+                updateStatus("Đã chuyển sang app. Nếu điện thoại hỏi xác nhận, hãy chọn Mở.");
             });
 
             languageSelect?.addEventListener("change", () => {
                 persistSelections();
                 syncNarrationText();
                 syncPlaybackHint();
-                stopSpeaking("Da cap nhat ngon ngu. Bam nghe lai de ap dung.");
+                stopSpeaking("Đã cập nhật ngôn ngữ. Bấm nghe lại để áp dụng.");
             });
 
             playbackModeSelect?.addEventListener("change", () => {
                 persistSelections();
                 syncPlaybackHint();
-                stopSpeaking("Da cap nhat che do nghe. Bam nghe lai de ap dung.");
+                stopSpeaking("Đã cập nhật chế độ nghe. Bấm nghe lại để áp dụng.");
             });
 
             openAppBtn?.addEventListener("click", openApp);
             speakBtn?.addEventListener("click", playOnWeb);
-            stopBtn?.addEventListener("click", () => stopSpeaking("Da dung phat thuyet minh."));
+            stopBtn?.addEventListener("click", () => stopSpeaking("Đã dừng phát thuyết minh."));
 
             window.addEventListener("beforeunload", () => {
                 narrationPlayer?.stop();

@@ -1,13 +1,10 @@
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
-    var pageTitle = ViewData["Title"] as string ?? "Trang quan tri";
+    var pageTitle = ViewData["Title"] as string ?? "Trang quản trị";
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
     var isAdmin = User.IsInRole("Admin");
     var isOwner = User.IsInRole("PoiOwner");
-    var displayName = User.FindFirst("vkg.display_name")?.Value ?? User.Identity?.Name ?? "Tai khoan";
-    var headerNote = isAuthenticated
-        ? "Admin quan ly toan bo. Chu nha hang chi quan ly POI va lich su nghe cua quan minh."
-        : "Dang nhap de truy cap dung khu vuc quan tri duoc phan quyen.";
+    var displayName = User.FindFirst("vkg.display_name")?.Value ?? User.Identity?.Name ?? "Tài khoản";
 
     string SidebarLinkClass(string controller) =>
         string.Equals(currentController, controller, System.StringComparison.OrdinalIgnoreCase)
@@ -19,7 +16,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@pageTitle - Pho am thuc Vinh Khanh</title>
+    <title>@pageTitle - Phố ẩm thực Vĩnh Khánh</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -32,14 +29,14 @@
             --app-muted: #667085;
             --app-panel: #ffffff;
             --app-border: rgba(102, 112, 133, 0.18);
-            --app-shadow: 0 18px 46px rgba(23, 32, 42, 0.10);
+            --app-shadow: 0 12px 32px rgba(23, 32, 42, 0.08);
             --app-sidebar: #0f766e;
         }
 
         body {
             min-height: 100vh;
             color: var(--app-ink);
-            background: #f4f7f8;
+            background: #f5f7f8;
             font-family: "Be Vietnam Pro", system-ui, sans-serif;
         }
 
@@ -171,11 +168,6 @@
             font-weight: 800;
         }
 
-        .content-header-note {
-            color: var(--app-muted);
-            text-align: right;
-        }
-
         .content-body {
             padding: 0 1.5rem 1.5rem;
         }
@@ -202,10 +194,6 @@
                 align-items: flex-start;
                 flex-direction: column;
             }
-
-            .content-header-note {
-                text-align: left;
-            }
         }
 
         @@media (max-width: 767.98px) {
@@ -221,53 +209,53 @@
             <div class="sidebar-shell">
                 <div class="sidebar-brand">
                     <div class="sidebar-kicker">VK Admin</div>
-                    <h1>Pho am thuc Vinh Khanh</h1>
+                    <h1>Phố ẩm thực Vĩnh Khánh</h1>
                 </div>
 
                 <div>
-                    <div class="sidebar-section-label">Dieu huong</div>
+                    <div class="sidebar-section-label">Điều hướng</div>
                     <nav class="nav sidebar-nav mt-2">
                         @if (isAdmin)
                         {
                             <a class="@SidebarLinkClass("Home")" asp-controller="Home" asp-action="Index">
                                 <span>
                                     <span class="sidebar-link-label">Dashboard</span>
-                                    <span class="sidebar-link-meta">Tong quan he thong</span>
+                                    <span class="sidebar-link-meta">Tổng quan hệ thống</span>
                                 </span>
                                 <span class="sidebar-link-tag">01</span>
                             </a>
                             <a class="@SidebarLinkClass("Pois")" asp-controller="Pois" asp-action="Index">
                                 <span>
-                                    <span class="sidebar-link-label">Quan ly POI</span>
-                                    <span class="sidebar-link-meta">Diem nghe va geofence</span>
+                                    <span class="sidebar-link-label">Quản lý POI</span>
+                                    <span class="sidebar-link-meta">Điểm nghe và geofence</span>
                                 </span>
                                 <span class="sidebar-link-tag">02</span>
                             </a>
                             <a class="@SidebarLinkClass("MapPois")" asp-controller="MapPois" asp-action="Index">
                                 <span>
                                     <span class="sidebar-link-label">Map Analytics</span>
-                                    <span class="sidebar-link-meta">Ban do, heatmap, ranking</span>
+                                    <span class="sidebar-link-meta">Bản đồ, heatmap, xếp hạng</span>
                                 </span>
                                 <span class="sidebar-link-tag">03</span>
                             </a>
                             <a class="@SidebarLinkClass("QrCodes")" asp-controller="QrCodes" asp-action="Index">
                                 <span>
                                     <span class="sidebar-link-label">QR code</span>
-                                    <span class="sidebar-link-meta">Dieu huong tai diem</span>
+                                    <span class="sidebar-link-meta">Điều hướng tại điểm</span>
                                 </span>
                                 <span class="sidebar-link-tag">04</span>
                             </a>
                             <a class="@SidebarLinkClass("Tours")" asp-controller="Tours" asp-action="Index">
                                 <span>
                                     <span class="sidebar-link-label">Tour</span>
-                                    <span class="sidebar-link-meta">Lo trinh tham quan</span>
+                                    <span class="sidebar-link-meta">Lộ trình tham quan</span>
                                 </span>
                                 <span class="sidebar-link-tag">05</span>
                             </a>
                             <a class="@SidebarLinkClass("UsageLogs")" asp-controller="UsageLogs" asp-action="Index">
                                 <span>
-                                    <span class="sidebar-link-label">Lich su nghe</span>
-                                    <span class="sidebar-link-meta">GPS, QR va TTS queue</span>
+                                    <span class="sidebar-link-label">Lịch sử nghe</span>
+                                    <span class="sidebar-link-meta">GPS, QR và hàng đợi TTS</span>
                                 </span>
                                 <span class="sidebar-link-tag">06</span>
                             </a>
@@ -276,8 +264,8 @@
                         {
                             <a class="@SidebarLinkClass("Owner")" asp-controller="Owner" asp-action="Index">
                                 <span>
-                                    <span class="sidebar-link-label">Chu nha hang</span>
-                                    <span class="sidebar-link-meta">Dang ky POI va lich su nghe</span>
+                                    <span class="sidebar-link-label">Chủ nhà hàng</span>
+                                    <span class="sidebar-link-meta">Đăng ký POI và lịch sử nghe</span>
                                 </span>
                                 <span class="sidebar-link-tag">01</span>
                             </a>
@@ -286,18 +274,18 @@
                 </div>
 
                 <div class="sidebar-footer">
-                    <div class="sidebar-footer-label">Tai khoan</div>
+                    <div class="sidebar-footer-label">Tài khoản</div>
                     <div class="mt-2 fw-semibold">@displayName</div>
                     @if (isAuthenticated)
                     {
                         <form asp-controller="Account" asp-action="Logout" method="post" class="mt-3">
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-light btn-sm w-100">Dang xuat</button>
+                            <button type="submit" class="btn btn-light btn-sm w-100">Đăng xuất</button>
                         </form>
                     }
                     else
                     {
-                        <a asp-controller="Account" asp-action="Login" class="btn btn-light btn-sm w-100 mt-3">Dang nhap</a>
+                        <a asp-controller="Account" asp-action="Login" class="btn btn-light btn-sm w-100 mt-3">Đăng nhập</a>
                     }
                 </div>
             </div>
@@ -307,11 +295,8 @@
             <header class="content-header">
                 <div class="content-header-shell">
                     <div>
-                        <div class="content-header-kicker">He thong quan tri</div>
+                        <div class="content-header-kicker">Hệ thống quản trị</div>
                         <div class="content-header-title">@pageTitle</div>
-                    </div>
-                    <div class="content-header-note">
-                        @headerNote
                     </div>
                 </div>
             </header>

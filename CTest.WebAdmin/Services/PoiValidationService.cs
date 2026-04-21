@@ -54,12 +54,12 @@ public class PoiValidationService
 
         if (model.Latitude is < -90 or > 90)
         {
-            errors.Add(new PoiValidationError(nameof(model.Latitude), "Latitude phải nằm trong khoảng -90 đến 90."));
+            errors.Add(new PoiValidationError(nameof(model.Latitude), "Vĩ độ phải nằm trong khoảng -90 đến 90."));
         }
 
         if (model.Longitude is < -180 or > 180)
         {
-            errors.Add(new PoiValidationError(nameof(model.Longitude), "Longitude phải nằm trong khoảng -180 đến 180."));
+            errors.Add(new PoiValidationError(nameof(model.Longitude), "Kinh độ phải nằm trong khoảng -180 đến 180."));
         }
 
         if (model.RadiusInMeters <= 0)
@@ -74,7 +74,7 @@ public class PoiValidationService
 
         if (model.CooldownMinutes <= 0)
         {
-            errors.Add(new PoiValidationError(nameof(model.CooldownMinutes), "Cooldown phải lớn hơn 0 phút."));
+            errors.Add(new PoiValidationError(nameof(model.CooldownMinutes), "Thời gian chờ phải lớn hơn 0 phút."));
         }
 
         if (!string.IsNullOrWhiteSpace(model.Code))
@@ -92,7 +92,7 @@ public class PoiValidationService
         if (!string.IsNullOrWhiteSpace(model.MapLink) &&
             !Uri.TryCreate(model.MapLink, UriKind.Absolute, out _))
         {
-            errors.Add(new PoiValidationError(nameof(model.MapLink), "Map link phải là URL hợp lệ."));
+            errors.Add(new PoiValidationError(nameof(model.MapLink), "Liên kết bản đồ phải là URL hợp lệ."));
         }
 
         return new PoiValidationResult(errors.Count == 0, errors);

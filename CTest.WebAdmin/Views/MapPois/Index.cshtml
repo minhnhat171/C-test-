@@ -21,10 +21,10 @@
             ? locatedActiveDevices.Max(item => item.LocationTimestampUtc ?? item.LastSeenAtUtc)
             : (DateTimeOffset?)null);
     var maxTopListenCount = Math.Max(1, Model.TopListeningPois.Select(x => x.ListenCount).DefaultIfEmpty(0).Max());
-    var topListeningPoi = Model.TopListeningPois.FirstOrDefault()?.PoiName ?? "Chua co du lieu";
+    var topListeningPoi = Model.TopListeningPois.FirstOrDefault()?.PoiName ?? "Chưa có dữ liệu";
     var averageListenLabel = Model.AverageListenSeconds <= 0
-        ? "0 giay"
-        : $"{Model.AverageListenSeconds:0.#} giay";
+        ? "0 giây"
+        : $"{Model.AverageListenSeconds:0.#} giây";
     var analyticsByPoi = Model.TopListeningPois.ToDictionary(item => item.PoiId);
     var topListeningPoiId = Model.TopListeningPois.FirstOrDefault()?.PoiId ?? Guid.Empty;
     var mapPois = Model.Pois.Select(poi =>
@@ -550,11 +550,11 @@
     <div class="map-poi-head">
         <div>
             <h1>Map Analytics</h1>
-            <p>Mot ban do duy nhat cho POI, tuyen di chuyen an danh, top dia diem duoc nghe nhieu nhat, thoi gian nghe trung binh va heatmap vi tri nguoi dung.</p>
+            <p>Một bản đồ duy nhất cho POI, tuyến di chuyển ẩn danh, top địa điểm được nghe nhiều nhất, thời gian nghe trung bình và heatmap vị trí người dùng.</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a asp-controller="Pois" asp-action="Create" class="btn btn-primary btn-lg rounded-pill px-4">+ Tao POI moi</a>
-            <a asp-controller="Pois" asp-action="Index" class="btn btn-outline-secondary btn-lg rounded-pill px-4">Ve danh sach POI</a>
+            <a asp-controller="Pois" asp-action="Create" class="btn btn-primary btn-lg rounded-pill px-4">+ Tạo POI mới</a>
+            <a asp-controller="Pois" asp-action="Index" class="btn btn-outline-secondary btn-lg rounded-pill px-4">Về danh sách POI</a>
         </div>
     </div>
 
@@ -577,8 +577,8 @@
         <div class="map-poi-panel">
             <div class="map-poi-sidebar">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="fw-bold">Danh sach POI</div>
-                    <span class="text-muted small">@Model.Pois.Count diem, @activePoiCount active</span>
+                    <div class="fw-bold">Danh sách POI</div>
+                <span class="text-muted small">@Model.Pois.Count điểm, @activePoiCount đang hoạt động</span>
                 </div>
 
                 @if (Model.Pois.Any())
@@ -593,7 +593,7 @@
                                 <div class="map-poi-item-address">@poi.Address</div>
                                 <div class="map-poi-item-meta">
                                     <span>@poi.Latitude, @poi.Longitude</span>
-                                    <span>@(poi.IsActive ? "Active" : "Inactive")</span>
+                                    <span>@(poi.IsActive ? "Đang hoạt động" : "Tạm khóa")</span>
                                 </div>
                             </a>
                         }
@@ -601,7 +601,7 @@
                 }
                 else
                 {
-                    <div class="map-poi-empty">Chua co POI de hien thi tren ban do.</div>
+                <div class="map-poi-empty">Chưa có POI để hiển thị trên bản đồ.</div>
                 }
             </div>
         </div>
@@ -610,21 +610,21 @@
             <div class="map-poi-content">
                 @if (!Model.HasSelection)
                 {
-                    <div class="map-poi-empty">Chon mot POI de bat dau chinh sua tren ban do.</div>
+                    <div class="map-poi-empty">Chọn một POI để bắt đầu chỉnh sửa trên bản đồ.</div>
                 }
                 else
                 {
                     <div class="map-poi-toolbar">
                         <div>
-                            <div class="map-poi-kicker">Dang chinh sua</div>
+                            <div class="map-poi-kicker">Đang chỉnh sửa</div>
                             <h2>@Model.Editor.Name</h2>
                             <p>@Model.Editor.Address</p>
                         </div>
 
                         <div class="d-flex flex-wrap gap-2">
-                            <a href="@selectedAppLaunchUrl" class="btn btn-primary rounded-pill px-4">Mo trong app</a>
-                            <a asp-controller="Pois" asp-action="Edit" asp-route-id="@Model.Editor.Id" class="btn btn-outline-primary rounded-pill px-4">Mo form day du</a>
-                            <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedTargetType="poi" asp-route-selectedTargetId="@Model.Editor.Id" class="btn btn-outline-success rounded-pill px-4">Tao QR</a>
+                            <a href="@selectedAppLaunchUrl" class="btn btn-primary rounded-pill px-4">Mở trong app</a>
+                            <a asp-controller="Pois" asp-action="Edit" asp-route-id="@Model.Editor.Id" class="btn btn-outline-primary rounded-pill px-4">Mở form đầy đủ</a>
+                            <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedTargetType="poi" asp-route-selectedTargetId="@Model.Editor.Id" class="btn btn-outline-success rounded-pill px-4">Tạo QR</a>
                         </div>
                     </div>
 
@@ -632,19 +632,19 @@
                         <div class="map-poi-map-card">
                             <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
                                 <div>
-                                    <div class="map-poi-kicker">Ban do analytics</div>
-                                    <div class="fw-semibold">POI, tuyen di chuyen an danh va heatmap nguoi dung cung nam tren mot map</div>
+                        <div class="map-poi-kicker">Bản đồ analytics</div>
+                        <div class="fw-semibold">POI, tuyến di chuyển ẩn danh và heatmap người dùng cùng hiển thị trên bản đồ</div>
                                 </div>
                                 <div class="d-flex flex-wrap gap-2">
-                                    <button type="button" class="btn btn-outline-dark rounded-pill px-4" id="recenterMapButton">Can giua POI dang sua</button>
-                                    <button type="button" class="btn btn-outline-primary rounded-pill px-4" id="recenterAnalyticsButton">Can giua heatmap</button>
+                                    <button type="button" class="btn btn-outline-dark rounded-pill px-4" id="recenterMapButton">Căn giữa POI đang sửa</button>
+                                    <button type="button" class="btn btn-outline-primary rounded-pill px-4" id="recenterAnalyticsButton">Căn giữa heatmap</button>
                                 </div>
                             </div>
 
                             <div class="map-poi-map-frame">
                                 <div id="poiMapCanvas"></div>
                                 <div class="analytics-map-empty @(heatmapPointCount > 0 ? "is-hidden" : null)" id="analyticsMapEmptyState">
-                                    Chua co GPS hoac route point de ve heatmap. Khi app gui heartbeat kem toa do, lop analytics se tu cap nhat tren map nay.
+                                    Chưa có GPS hoặc route point để vẽ heatmap. Khi app gửi heartbeat kèm tọa độ, lớp analytics sẽ tự cập nhật trên map này.
                                 </div>
                                 <div class="analytics-map-legend">
                                     <div class="map-poi-kicker">Heatmap vi tri</div>
@@ -657,13 +657,13 @@
                             </div>
 
                             <div class="map-poi-status" id="mapPoiStatus">
-                                Map dang doc @Model.Pois.Count POI tu API, @routePoints.Count route point an danh va @locatedActiveDevices.Count thiet bi online co GPS.
+                                Map dang doc @Model.Pois.Count POI tu API, @routePoints.Count route point an danh va @locatedActiveDevices.Count thiết bị online co GPS.
                             </div>
                         </div>
 
                         <div class="map-poi-summary-card">
                             <div class="map-poi-kicker">Map Analytics</div>
-                            <div class="fw-semibold mt-2">Tat ca yeu cau nam tren mot map</div>
+                            <div class="fw-semibold mt-2">Tất cả yêu cầu nằm trên một map</div>
 
                             <div class="map-poi-metrics">
                                 <div class="map-poi-metric">
@@ -675,7 +675,7 @@
                                     <strong id="analyticsHeatmapPointCount">@heatmapPointCount</strong>
                                 </div>
                                 <div class="map-poi-metric">
-                                    <span class="map-poi-kicker">Top dia diem</span>
+                        <span class="map-poi-kicker">Top địa điểm</span>
                                     <strong id="analyticsTopPoiName">@topListeningPoi</strong>
                                 </div>
                                 <div class="map-poi-metric">
@@ -685,10 +685,10 @@
                             </div>
 
                             <div class="map-analytics-requirements">
-                                <div class="map-analytics-requirement">Luu tuyen di chuyen an danh tu cac heartbeat GPS gan nhat.</div>
-                                <div class="map-analytics-requirement">Top dia diem duoc nghe nhieu nhat tu lich su nghe.</div>
-                                <div class="map-analytics-requirement">Thoi gian trung binh nghe 1 POI: @averageListenLabel.</div>
-                                <div class="map-analytics-requirement">Heatmap vi tri nguoi dung cap nhat realtime.</div>
+                                <div class="map-analytics-requirement">Lưu tuyến di chuyển ẩn danh từ các heartbeat GPS gần nhất.</div>
+                                <div class="map-analytics-requirement">Top địa điểm được nghe nhiều nhất từ lịch sử nghe.</div>
+                                <div class="map-analytics-requirement">Thời gian trung bình nghe 1 POI: @averageListenLabel.</div>
+                                <div class="map-analytics-requirement">Heatmap vị trí người dùng cập nhật realtime.</div>
                             </div>
 
                             <div class="map-analytics-list">
@@ -699,7 +699,7 @@
                                         var listenPercent = Math.Max(5, (int)Math.Round(item.ListenCount * 100.0 / maxTopListenCount));
                                             <div class="map-analytics-item">
                                                 <div class="map-analytics-item-title">@item.PoiName</div>
-                                            <div class="map-analytics-item-meta">@item.ListenCount luot nghe, TB @($"{item.AverageListenSeconds:0.#} giay")</div>
+                                            <div class="map-analytics-item-meta">@item.ListenCount lượt nghe, TB @($"{item.AverageListenSeconds:0.#} giây")</div>
                                             <div class="map-analytics-track">
                                                 <div class="map-analytics-fill" style="width:@listenPercent%;"></div>
                                             </div>
@@ -709,15 +709,15 @@
                                 else
                                 {
                                     <div class="map-analytics-item">
-                                        <div class="map-analytics-item-title">Chua co du lieu nghe</div>
-                                        <div class="map-analytics-item-meta">Ranking se tu cap nhat khi app ghi lich su nghe.</div>
+                                        <div class="map-analytics-item-title">Chưa có dữ liệu nghe</div>
+                                        <div class="map-analytics-item-meta">Bảng xếp hạng sẽ tự cập nhật khi app ghi lịch sử nghe.</div>
                                     </div>
                                 }
                             </div>
 
                             <div class="map-analytics-divider"></div>
 
-                            <div class="map-poi-kicker">Tom tat POI dang sua</div>
+                            <div class="map-poi-kicker">Tóm tắt POI đang sửa</div>
                             <div class="fw-semibold mt-2" id="mapPoiNameLabel">@Model.Editor.Name</div>
                             <div class="text-muted mt-2" id="mapPoiAddressLabel">@Model.Editor.Address</div>
 
@@ -739,19 +739,19 @@
                                     <strong id="mapPoiPriorityValue">#@Model.Editor.Priority</strong>
                                 </div>
                                 <div class="map-poi-metric">
-                                    <span class="map-poi-kicker">Tong POI</span>
+                                    <span class="map-poi-kicker">Tổng POI</span>
                                     <strong>@Model.Pois.Count</strong>
                                 </div>
                                 <div class="map-poi-metric">
-                                    <span class="map-poi-kicker">Tam khoa</span>
+                                    <span class="map-poi-kicker">Tạm khóa</span>
                                     <strong>@inactivePoiCount</strong>
                                 </div>
                             </div>
 
                             <div class="mt-3 text-muted">
-                                App code: <strong>@Model.Editor.Code</strong><br />
-                                QR ready: <strong>@(Model.Editor.IsQrEnabled ? "Co" : "Chua ro")</strong><br />
-                                Status: <strong id="mapPoiActiveValue">@(Model.Editor.IsActive ? "Dang hoat dong" : "Tam khoa")</strong>
+                                Mã app: <strong>@Model.Editor.Code</strong><br />
+                                QR sẵn sàng: <strong>@(Model.Editor.IsQrEnabled ? "Có" : "Chưa rõ")</strong><br />
+                                Trạng thái: <strong id="mapPoiActiveValue">@(Model.Editor.IsActive ? "Đang hoạt động" : "Tạm khóa")</strong>
                             </div>
 
                             @if (!string.IsNullOrWhiteSpace(Model.Editor.MapLink))
@@ -792,7 +792,7 @@
 
                             <div class="map-poi-form-grid">
                                 <div>
-                                    <label asp-for="Editor.Code" class="form-label">Ma POI</label>
+                                    <label asp-for="Editor.Code" class="form-label">Mã POI</label>
                                     <input asp-for="Editor.Code" class="form-control" />
                                     <span asp-validation-for="Editor.Code" class="text-danger small"></span>
                                 </div>
@@ -804,19 +804,19 @@
                                 </div>
 
                                 <div class="full">
-                                    <label asp-for="Editor.Name" class="form-label">Ten diem</label>
+                                    <label asp-for="Editor.Name" class="form-label">Tên điểm</label>
                                     <input asp-for="Editor.Name" class="form-control" id="mapPoiNameInput" />
                                     <span asp-validation-for="Editor.Name" class="text-danger small"></span>
                                 </div>
 
                                 <div class="full">
-                                    <label asp-for="Editor.Address" class="form-label">Dia chi</label>
+                                    <label asp-for="Editor.Address" class="form-label">Địa chỉ</label>
                                     <input asp-for="Editor.Address" class="form-control" id="mapPoiAddressInput" />
                                     <span asp-validation-for="Editor.Address" class="text-danger small"></span>
                                 </div>
 
                                 <div class="full">
-                                    <label asp-for="Editor.Description" class="form-label">Mo ta</label>
+                                    <label asp-for="Editor.Description" class="form-label">Mô tả</label>
                                     <textarea asp-for="Editor.Description" class="form-control" rows="4"></textarea>
                                     <span asp-validation-for="Editor.Description" class="text-danger small"></span>
                                 </div>
@@ -846,7 +846,7 @@
                                 </div>
 
                                 <div>
-                                    <label asp-for="Editor.MapLink" class="form-label">Map link</label>
+                                    <label asp-for="Editor.MapLink" class="form-label">Liên kết bản đồ</label>
                                     <input asp-for="Editor.MapLink" class="form-control" id="mapPoiMapLink" />
                                     <span asp-validation-for="Editor.MapLink" class="text-danger small"></span>
                                 </div>
@@ -854,15 +854,15 @@
                                 <div class="full">
                                     <div class="form-check form-switch mt-2">
                                         <input asp-for="Editor.IsActive" class="form-check-input" id="mapPoiActiveInput" />
-                                        <label asp-for="Editor.IsActive" class="form-check-label">POI dang hoat dong</label>
+                                        <label asp-for="Editor.IsActive" class="form-check-label">POI đang hoạt động</label>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="map-poi-actions">
-                                <button type="submit" class="btn btn-primary rounded-pill px-4">Luu thay doi</button>
-                                <a asp-controller="Pois" asp-action="Details" asp-route-id="@Model.Editor.Id" class="btn btn-outline-dark rounded-pill px-4">Xem chi tiet</a>
-                                <a asp-action="Index" asp-route-poiId="@Model.Editor.Id" class="btn btn-outline-secondary rounded-pill px-4">Tai lai du lieu</a>
+                                <button type="submit" class="btn btn-primary rounded-pill px-4">Lưu thay đổi</button>
+                                <a asp-controller="Pois" asp-action="Details" asp-route-id="@Model.Editor.Id" class="btn btn-outline-dark rounded-pill px-4">Xem chi tiết</a>
+                                <a asp-action="Index" asp-route-poiId="@Model.Editor.Id" class="btn btn-outline-secondary rounded-pill px-4">Tải lại dữ liệu</a>
                             </div>
                         </form>
                     </div>
@@ -951,39 +951,39 @@
             });
 
             const buildPopupHtml = (poi, isSelected) => {
-                const status = poi.isActive ? "Dang hoat dong" : "Tam khoa";
-                const address = poi.address?.trim() || "Chua co dia chi";
-                const code = poi.code?.trim() || "Chua co ma";
+                const status = poi.isActive ? "Đang hoạt động" : "Tạm khóa";
+                const address = poi.address?.trim() || "Chưa có địa chỉ";
+                const code = poi.code?.trim() || "Chưa có ma";
                 const listenCount = Number(poi.listenCount || 0);
                 const averageListenSeconds = Number(poi.averageListenSeconds || 0);
                 const selectedBadge = isSelected
-                    ? '<span>Dang sua</span>'
-                    : `<a href="${escapeHtml(poi.selectUrl)}">Sua tren map</a>`;
+                        ? '<span>Đang sửa</span>'
+                    : `<a href="${escapeHtml(poi.selectUrl)}">Sửa trên map</a>`;
 
                 return `
                     <div class="map-poi-popup">
-                        <div class="map-poi-popup-title">${escapeHtml(poi.name || "POI chua dat ten")}</div>
+                        <div class="map-poi-popup-title">${escapeHtml(poi.name || "POI chưa đặt tên")}</div>
                         <div class="map-poi-popup-meta">
                             ${escapeHtml(address)}<br />
                             ${escapeHtml(code)} - ${status} - Radius ${Number(poi.radius || 0)} m<br />
-                            ${listenCount} luot nghe - TB ${Number.isFinite(averageListenSeconds) ? averageListenSeconds.toFixed(1) : "0.0"} giay
+                            ${listenCount} lượt nghe - TB ${Number.isFinite(averageListenSeconds) ? averageListenSeconds.toFixed(1) : "0.0"} giây
                         </div>
                         <div class="map-poi-popup-actions">
                             ${selectedBadge}
-                            <a href="${escapeHtml(poi.detailsUrl)}">Chi tiet</a>
+                            <a href="${escapeHtml(poi.detailsUrl)}">Chi tiết</a>
                             <a href="${escapeHtml(poi.qrUrl)}">QR</a>
-                            <a href="${escapeHtml(poi.appLaunchUrl)}">Mo app</a>
+                            <a href="${escapeHtml(poi.appLaunchUrl)}">Mở app</a>
                         </div>
                     </div>`;
             };
 
             const syncTextPreview = () => {
                 if (nameLabel) {
-                    nameLabel.textContent = nameInput.value.trim() || "POI chua dat ten";
+                    nameLabel.textContent = nameInput.value.trim() || "POI chưa đặt tên";
                 }
 
                 if (addressLabel) {
-                    addressLabel.textContent = addressInput.value.trim() || "Dia chi se hien thi tai day.";
+                    addressLabel.textContent = addressInput.value.trim() || "Địa chỉ sẽ hiển thị tại đây.";
                 }
             };
 
@@ -999,7 +999,7 @@
                 priorityLabel.textContent = `#${Math.round(priority)}`;
 
                 if (activeLabel) {
-                    activeLabel.textContent = activeInput && activeInput.checked ? "Dang hoat dong" : "Tam khoa";
+                    activeLabel.textContent = activeInput && activeInput.checked ? "Đang hoạt động" : "Tạm khóa";
                 }
 
                 if (openLink) {
@@ -1072,12 +1072,12 @@
 
             const formatTime = (value) => {
                 if (!value) {
-                    return "Chua co";
+                    return "Chưa có";
                 }
 
                 const date = new Date(value);
                 if (Number.isNaN(date.getTime())) {
-                    return "Chua co";
+                    return "Chưa có";
                 }
 
                 return date.toLocaleString("vi-VN", {
@@ -1207,12 +1207,12 @@
                 getLocatedDevices(stats).forEach((device, index) => {
                     const marker = L.marker([Number(device.latitude), Number(device.longitude)], {
                         icon: buildActiveUserIcon(index),
-                        title: `Nguoi dung online #${index + 1}`
+                    title: `Người dùng online #${index + 1}`
                     });
 
                     marker.bindPopup(`
                         <div class="map-route-popup">
-                            <div class="fw-semibold">Nguoi dung online #${index + 1}</div>
+                                <div class="fw-semibold">Người dùng online #${index + 1}</div>
                             <div>${escapeHtml(formatCoordinate(device.latitude))}, ${escapeHtml(formatCoordinate(device.longitude))}</div>
                             <div>${escapeHtml(formatTime(device.locationTimestampUtc || device.lastSeenAtUtc))}</div>
                         </div>`);
@@ -1288,7 +1288,7 @@
 
             const initializeMap = () => {
                 if (!window.L) {
-                    statusBox.textContent = "Khong tai duoc thu vien ban do. Ban van co the sua bang tay cac truong toa do.";
+                    statusBox.textContent = "Không tải được thư viện bản đồ. Bạn vẫn có thể sửa thủ công các trường tọa độ.";
                     return;
                 }
 
@@ -1346,7 +1346,7 @@
                     marker = L.marker([start.lat, start.lng], {
                         draggable: true,
                         icon: buildMarkerIcon(selectedPoi ?? { isActive: true, listenCount: 0, isTopListening: false }, true),
-                        title: selectedPoi?.name || "POI dang sua"
+                        title: selectedPoi?.name || "POI đang sửa"
                     }).addTo(map);
 
                     if (selectedPoi) {
@@ -1365,12 +1365,12 @@
                 marker.on("dragend", () => {
                     const position = marker.getLatLng();
                     applyCoordinates(position.lat, position.lng, false);
-                    statusBox.textContent = "Da cap nhat toa do tu marker.";
+                    statusBox.textContent = "Đã cập nhật tọa độ từ marker.";
                 });
 
                 map.on("click", (event) => {
                     applyCoordinates(event.latlng.lat, event.latlng.lng, false);
-                    statusBox.textContent = "Da cap nhat toa do tu diem bam tren ban do.";
+                    statusBox.textContent = "Đã cập nhật tọa độ từ điểm bấm trên bản đồ.";
                 });
 
                 window.setTimeout(() => {

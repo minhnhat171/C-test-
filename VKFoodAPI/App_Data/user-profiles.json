@@ -2,56 +2,45 @@
   {
     "Id": "39de09e3-2694-fd1c-fce9-163e78ba2015",
     "UserCode": "USR001",
-    "DisplayName": "Nguyen Minh Anh",
+    "DisplayName": "Nguyễn Minh Anh",
     "Email": "usr001@vinhkhanh.app",
     "Role": "User",
     "PhoneNumber": "0901000001",
     "PreferredLanguage": "vi-VN",
-    "DevicePlatform": "",
-    "CreatedAtUtc": "2025-12-13T16:56:24.571253+00:00"
+    "DevicePlatform": "Android",
+    "CreatedAtUtc": "2026-01-10T08:00:00+00:00"
   },
   {
     "Id": "68a701a8-ff4a-ffdf-9d2c-ff3da69b3fcd",
     "UserCode": "USR002",
-    "DisplayName": "Tran Bao Chau",
+    "DisplayName": "Trần Bảo Châu",
     "Email": "usr002@vinhkhanh.app",
     "Role": "User",
     "PhoneNumber": "0901000002",
     "PreferredLanguage": "en-US",
-    "DevicePlatform": "",
-    "CreatedAtUtc": "2026-01-13T16:56:24.5713645+00:00"
+    "DevicePlatform": "iOS",
+    "CreatedAtUtc": "2026-02-05T08:00:00+00:00"
   },
   {
     "Id": "04986e69-69a1-45c3-0fcb-ea782c7d958d",
     "UserCode": "USR003",
-    "DisplayName": "Le Quoc Dat",
+    "DisplayName": "Lê Quốc Đạt",
     "Email": "usr003@vinhkhanh.app",
     "Role": "Contributor",
     "PhoneNumber": "0901000003",
-    "PreferredLanguage": "en-US",
-    "DevicePlatform": "",
-    "CreatedAtUtc": "2026-02-13T16:56:24.5713685+00:00"
+    "PreferredLanguage": "vi-VN",
+    "DevicePlatform": "Android",
+    "CreatedAtUtc": "2026-03-01T08:00:00+00:00"
   },
   {
     "Id": "56055a2e-0e39-9e4b-b08d-6a9942107a1f",
     "UserCode": "USR004",
-    "DisplayName": "Pham Thu Ha",
+    "DisplayName": "Phạm Thu Hà",
     "Email": "usr004@vinhkhanh.app",
     "Role": "User",
     "PhoneNumber": "0901000004",
     "PreferredLanguage": "vi-VN",
-    "DevicePlatform": "",
-    "CreatedAtUtc": "2026-03-13T16:56:24.5713698+00:00"
-  },
-  {
-    "Id": "5434a117-ed2d-c47d-fc50-d3cfe956f8e1",
-    "UserCode": "guest-2cba497f",
-    "DisplayName": "duy khoa",
-    "Email": "123@gmail.com",
-    "Role": "guest",
-    "PhoneNumber": "0123456789",
-    "PreferredLanguage": "en-US",
     "DevicePlatform": "Android",
-    "CreatedAtUtc": "2026-04-20T17:29:31.0522285+00:00"
+    "CreatedAtUtc": "2026-03-20T08:00:00+00:00"
   }
 ]

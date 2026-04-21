@@ -67,7 +67,7 @@ public class AudioGuidesController : Controller
         {
             ModelState.AddModelError(
                 string.Empty,
-                "Khong the ket noi VKFoodAPI. Hay mo API truoc roi luu lai.");
+                "Không thể kết nối VKFoodAPI. Hãy mở API trước rồi lưu lại.");
             return View("Manage", vm);
         }
     }
@@ -87,7 +87,7 @@ public class AudioGuidesController : Controller
         }
         catch (HttpRequestException)
         {
-            TempData["AudioMessage"] = "Khong the ket noi VKFoodAPI nen chua xoa duoc audio.";
+            TempData["AudioMessage"] = "Không thể kết nối VKFoodAPI nên chưa xóa được audio.";
         }
 
         return RedirectToAction(nameof(Index), new { createNew = true, poiId = scopePoiId, languageCode });

@@ -133,7 +133,7 @@ public class PoiAdminService
             ex is TaskCanceledException ||
             ex is InvalidOperationException)
         {
-            vm.AnalyticsLoadErrorMessage = "Khong the tai du lieu analytics tu VKFoodAPI. Map van cho phep chinh sua POI.";
+            vm.AnalyticsLoadErrorMessage = "Không thể tải dữ liệu analytics từ VKFoodAPI. Bản đồ vẫn cho phép chỉnh sửa POI.";
         }
 
         return vm;
@@ -174,7 +174,7 @@ public class PoiAdminService
         var imageResult = await _imageStorage.SaveAsync(model.UploadedImage, cancellationToken);
         if (!imageResult.Succeeded)
         {
-            return PoiOperationResult.Failure(imageResult.ErrorMessage ?? "Khong luu duoc anh POI.");
+            return PoiOperationResult.Failure(imageResult.ErrorMessage ?? "Không lưu được ảnh POI.");
         }
 
         if (!string.IsNullOrWhiteSpace(imageResult.PublicPath))
@@ -208,13 +208,13 @@ public class PoiAdminService
 
         if (!_currentUser.CanManage(poi))
         {
-            return PoiOperationResult.Missing("Ban khong co quyen cap nhat POI nay.");
+            return PoiOperationResult.Missing("Bạn không có quyền cập nhật POI này.");
         }
 
         var imageResult = await _imageStorage.SaveAsync(model.UploadedImage, cancellationToken);
         if (!imageResult.Succeeded)
         {
-            return PoiOperationResult.Failure(imageResult.ErrorMessage ?? "Khong luu duoc anh POI.");
+            return PoiOperationResult.Failure(imageResult.ErrorMessage ?? "Không lưu được ảnh POI.");
         }
 
         if (!string.IsNullOrWhiteSpace(imageResult.PublicPath))
@@ -248,12 +248,12 @@ public class PoiAdminService
         var existing = await _poiApiClient.GetPoiAsync(id, cancellationToken);
         if (existing is null)
         {
-            return PoiOperationResult.Missing("Khong tim thay POI de xoa.");
+            return PoiOperationResult.Missing("Không tìm thấy POI để xóa.");
         }
 
         if (!_currentUser.CanManage(existing))
         {
-            return PoiOperationResult.Missing("Ban khong co quyen xoa POI nay.");
+            return PoiOperationResult.Missing("Bạn không có quyền xóa POI này.");
         }
 
         var deleted = await _poiApiClient.DeletePoiAsync(id, cancellationToken);
@@ -332,7 +332,7 @@ public class PoiAdminService
             return item.PoiCode;
         }
 
-        return "POI khong xac dinh";
+        return "POI không xác định";
     }
 }
 

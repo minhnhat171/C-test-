@@ -78,7 +78,7 @@ public class OwnerController : Controller
         }
         catch (HttpRequestException)
         {
-            ModelState.AddModelError(string.Empty, "Khong the ket noi VKFoodAPI. Hay mo API truoc roi dang ky lai.");
+            ModelState.AddModelError(string.Empty, "Không thể kết nối VKFoodAPI. Hãy mở API trước rồi đăng ký lại.");
             var invalidModel = await BuildPortalAsync(null, null, null, cancellationToken);
             invalidModel.Registration = editor;
             return View("Index", invalidModel);
@@ -106,7 +106,7 @@ public class OwnerController : Controller
         }
         catch (HttpRequestException)
         {
-            pois.LoadErrorMessage = "Khong the ket noi VKFoodAPI. Hay mo API de dang ky POI va xem lich su nghe.";
+            pois.LoadErrorMessage = "Không thể kết nối VKFoodAPI. Hãy mở API để đăng ký POI và xem lịch sử nghe.";
             history.LoadErrorMessage = pois.LoadErrorMessage;
         }
 

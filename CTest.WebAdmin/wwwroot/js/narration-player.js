@@ -177,13 +177,13 @@
                 mode: "tts",
                 audioAssetPath: "",
                 allowAudioFallback: true,
-                fallbackMessage: "Quan nay chua co ban thu san, he thong se chuyen sang TTS."
+                fallbackMessage: "Quán này chưa có bản thu sẵn, hệ thống sẽ chuyển sang TTS."
             }
             : {
                 mode: "audio",
                 audioAssetPath: "",
                 allowAudioFallback: false,
-                fallbackMessage: "Quan nay chua co ban thu san de phat tren web."
+                fallbackMessage: "Quán này chưa có bản thu sẵn để phát trên web."
             };
     }
 
@@ -236,12 +236,12 @@
 
             async function speakTts() {
                 if (!narrationText) {
-                    onStatus(messages.empty || "Chua co noi dung de phat.", "empty");
+            onStatus(messages.empty || "Chưa có nội dung để phát.", "empty");
                     return { mode: "none", usedFallback: false };
                 }
 
                 if (!("speechSynthesis" in window)) {
-                    onStatus(messages.unsupportedTts || "Trinh duyet nay khong ho tro TTS.", "error");
+                    onStatus(messages.unsupportedTts || "Trình duyệt này không hỗ trợ TTS.", "error");
                     return { mode: "none", usedFallback: false };
                 }
 
@@ -266,17 +266,17 @@
                 utterance.volume = 1;
                 utterance.onstart = function () {
                     if (currentToken === playbackToken) {
-                        onStatus(messages.playingTts || "Dang doc thuyet minh...", "playing");
+                        onStatus(messages.playingTts || "Đang đọc thuyết minh...", "playing");
                     }
                 };
                 utterance.onend = function () {
                     if (currentToken === playbackToken) {
-                        onStatus(messages.ttsEnded || "Da phat xong.", "ended");
+                        onStatus(messages.ttsEnded || "Đã phát xong.", "ended");
                     }
                 };
                 utterance.onerror = function () {
                     if (currentToken === playbackToken) {
-                        onStatus(messages.ttsFailed || "Khong the phat TTS. Thu bam lai mot lan nua.", "error");
+                        onStatus(messages.ttsFailed || "Không thể phát TTS. Thử bấm lại một lần nữa.", "error");
                     }
                 };
 
@@ -303,13 +303,13 @@
                 audio.preload = "auto";
                 audio.onplaying = function () {
                     if (currentToken === playbackToken) {
-                        onStatus(messages.playingAudio || "Dang phat ban thu san...", "playing");
+                        onStatus(messages.playingAudio || "Đang phát bản thu sẵn...", "playing");
                     }
                 };
                 audio.onended = function () {
                     if (currentToken === playbackToken) {
                         activeAudio = null;
-                        onStatus(messages.audioEnded || "Da phat xong.", "ended");
+                        onStatus(messages.audioEnded || "Đã phát xong.", "ended");
                     }
                 };
                 audio.onerror = function () {
@@ -320,12 +320,12 @@
                     activeAudio = null;
 
                     if (playbackRequest.allowAudioFallback) {
-                        onStatus(messages.audioFallback || "Khong mo duoc file audio. Dang chuyen sang TTS.", "fallback");
+                        onStatus(messages.audioFallback || "Không mở được file audio. Đang chuyển sang TTS.", "fallback");
                         speakTts();
                         return;
                     }
 
-                    onStatus(messages.audioFailed || "Khong phat duoc file audio nay tren web.", "error");
+                    onStatus(messages.audioFailed || "Không phát được file audio này trên web.", "error");
                 };
 
                 try {
@@ -335,11 +335,11 @@
                     activeAudio = null;
 
                     if (playbackRequest.allowAudioFallback) {
-                        onStatus(messages.audioFallback || "Khong mo duoc file audio. Dang chuyen sang TTS.", "fallback");
+                        onStatus(messages.audioFallback || "Không mở được file audio. Đang chuyển sang TTS.", "fallback");
                         return speakTts();
                     }
 
-                    onStatus(messages.audioFailed || "Khong phat duoc file audio nay tren web.", "error");
+                    onStatus(messages.audioFailed || "Không phát được file audio này trên web.", "error");
                     return { mode: "audio", usedFallback: false, error: error };
                 }
             }
