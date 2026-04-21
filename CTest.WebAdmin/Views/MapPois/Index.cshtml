@@ -302,32 +302,37 @@
     }
 
     .map-poi-marker {
-        width: 18px;
-        height: 18px;
-        border-radius: 999px;
-        border: 3px solid #fff;
-        background: #2563eb;
-        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.28);
+        display: block;
+        width: 34px;
+        height: 34px;
+        color: #2563eb;
+        filter: drop-shadow(0 10px 14px rgba(15, 23, 42, 0.24));
     }
 
     .map-poi-marker.is-selected {
-        width: 22px;
-        height: 22px;
-        background: #0f172a;
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.34);
+        width: 38px;
+        height: 38px;
+        color: #0f172a;
+        filter: drop-shadow(0 12px 18px rgba(15, 23, 42, 0.34));
     }
 
     .map-poi-marker.is-inactive {
-        background: #94a3b8;
+        color: #94a3b8;
     }
 
     .map-poi-marker.has-listens {
-        background: #14b8a6;
+        color: #14b8a6;
     }
 
     .map-poi-marker.is-top-listening {
-        background: #f59e0b;
-        box-shadow: 0 0 0 9px rgba(245, 158, 11, 0.20), 0 12px 28px rgba(15, 23, 42, 0.32);
+        color: #f59e0b;
+        filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.52)) drop-shadow(0 12px 18px rgba(15, 23, 42, 0.32));
+    }
+
+    .map-poi-marker svg {
+        width: 100%;
+        height: 100%;
+        display: block;
     }
 
     .map-poi-popup {
@@ -779,6 +784,9 @@
                             <input asp-for="Editor.SpecialDish" type="hidden" />
                             <input asp-for="Editor.ImageSource" type="hidden" />
                             <input asp-for="Editor.IsEditMode" type="hidden" />
+                            <input asp-for="Editor.OwnerUserCode" type="hidden" />
+                            <input asp-for="Editor.OwnerDisplayName" type="hidden" />
+                            <input asp-for="Editor.OwnerEmail" type="hidden" />
 
                             <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 shadow-sm"></div>
 
@@ -927,12 +935,19 @@
                 .replaceAll('"', "&quot;")
                 .replaceAll("'", "&#039;");
 
+            const houseMarkerSvg = `
+                <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                    <path d="M6.5 23.5 24 8l17.5 15.5" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M11 22.5 24 11l13 11.5V40H11V22.5Z" fill="currentColor" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"></path>
+                    <path d="M20 40V29h8v11" fill="#ffffff"></path>
+                </svg>`;
+
             const buildMarkerIcon = (poi, isSelected) => L.divIcon({
                 className: "",
-                html: `<span class="map-poi-marker ${isSelected ? "is-selected" : ""} ${poi.isActive ? "" : "is-inactive"} ${Number(poi.listenCount || 0) > 0 ? "has-listens" : ""} ${poi.isTopListening ? "is-top-listening" : ""}"></span>`,
-                iconSize: isSelected ? [22, 22] : [18, 18],
-                iconAnchor: isSelected ? [11, 11] : [9, 9],
-                popupAnchor: [0, -12]
+                html: `<span class="map-poi-marker ${isSelected ? "is-selected" : ""} ${poi.isActive ? "" : "is-inactive"} ${Number(poi.listenCount || 0) > 0 ? "has-listens" : ""} ${poi.isTopListening ? "is-top-listening" : ""}">${houseMarkerSvg}</span>`,
+                iconSize: isSelected ? [38, 38] : [34, 34],
+                iconAnchor: isSelected ? [19, 34] : [17, 30],
+                popupAnchor: [0, -30]
             });
 
             const buildPopupHtml = (poi, isSelected) => {
@@ -1330,6 +1345,7 @@
                 if (!marker) {
                     marker = L.marker([start.lat, start.lng], {
                         draggable: true,
+                        icon: buildMarkerIcon(selectedPoi ?? { isActive: true, listenCount: 0, isTopListening: false }, true),
                         title: selectedPoi?.name || "POI dang sua"
                     }).addTo(map);
 

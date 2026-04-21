@@ -65,6 +65,14 @@ public class OwnerController : Controller
             }
 
             var result = await _poiService.CreateAsync(editor, cancellationToken);
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError($"{nameof(OwnerPortalViewModel.Registration)}.{nameof(PoiEditorViewModel.UploadedImage)}", result.Message);
+                var invalidModel = await BuildPortalAsync(null, null, null, cancellationToken);
+                invalidModel.Registration = editor;
+                return View("Index", invalidModel);
+            }
+
             TempData["OwnerMessage"] = result.Message;
             return RedirectToAction(nameof(Index));
         }

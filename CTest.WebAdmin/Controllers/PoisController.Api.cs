@@ -87,6 +87,12 @@ public class PoisController : Controller
             }
 
             var result = await _poiService.CreateAsync(model, cancellationToken);
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError(nameof(PoiEditorViewModel.UploadedImage), result.Message);
+                return View("Editor", model);
+            }
+
             TempData["PoiMessage"] = result.Message;
 
             return RedirectToAction(nameof(Index));
@@ -114,6 +120,15 @@ public class PoisController : Controller
             }
 
             var result = await _poiService.UpdateAsync(model, cancellationToken);
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError(
+                    result.NotFound ? string.Empty : nameof(PoiEditorViewModel.UploadedImage),
+                    result.Message);
+                model.IsEditMode = true;
+                return View("Editor", model);
+            }
+
             TempData["PoiMessage"] = result.Message;
 
             return RedirectToAction(nameof(Index));

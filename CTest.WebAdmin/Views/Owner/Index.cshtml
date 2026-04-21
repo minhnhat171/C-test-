@@ -23,6 +23,33 @@
         overflow: auto;
     }
 
+    .owner-image-dropzone {
+        border: 1px dashed rgba(37, 99, 235, 0.42);
+        border-radius: 8px;
+        background: #f8fafc;
+        padding: 1rem;
+        cursor: pointer;
+    }
+
+    .owner-image-dropzone.is-dragover {
+        border-color: #2563eb;
+        background: #eff6ff;
+    }
+
+    .owner-image-preview {
+        display: none;
+        width: 100%;
+        max-height: 220px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 0.85rem;
+        background: #e2e8f0;
+    }
+
+    .owner-image-preview.has-image {
+        display: block;
+    }
+
     @@media (max-width: 1199.98px) {
         .owner-grid {
             grid-template-columns: 1fr;
@@ -51,11 +78,12 @@
 <div class="owner-grid mb-4">
     <section class="owner-panel">
         <h2 class="h4 mb-3">Dang ky POI</h2>
-        <form asp-controller="Owner" asp-action="Register" method="post">
+        <form asp-controller="Owner" asp-action="Register" method="post" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
             <input asp-for="Registration.OwnerUserCode" type="hidden" />
             <input asp-for="Registration.OwnerDisplayName" type="hidden" />
             <input asp-for="Registration.OwnerEmail" type="hidden" />
+            <input asp-for="Registration.ImageSource" type="hidden" id="ownerImageSource" />
 
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
@@ -102,6 +130,16 @@
                 <div class="col-12">
                     <label asp-for="Registration.SpecialDish" class="form-label">Mon noi bat</label>
                     <input asp-for="Registration.SpecialDish" class="form-control" />
+                </div>
+                <div class="col-12">
+                    <label asp-for="Registration.UploadedImage" class="form-label">Anh quan</label>
+                    <div class="owner-image-dropzone" id="ownerImageDropzone">
+                        <img id="ownerImagePreview" class="owner-image-preview" alt="Preview anh quan" />
+                        <div class="fw-semibold">Keo anh vao day hoac bam de chon</div>
+                        <div class="text-muted small mt-1">Ho tro JPG, PNG, WEBP. Toi da 5 MB.</div>
+                        <input asp-for="Registration.UploadedImage" type="file" class="visually-hidden" id="ownerImageFile" accept="image/*" />
+                    </div>
+                    <span asp-validation-for="Registration.UploadedImage" class="text-danger small"></span>
                 </div>
                 <div class="col-12">
                     <label asp-for="Registration.Description" class="form-label">Mo ta</label>
@@ -199,8 +237,46 @@
 @section Scripts {
     <script>
         (() => {
+            const imageDropzone = document.getElementById("ownerImageDropzone");
+            const imageInput = document.getElementById("ownerImageFile");
+            const imagePreview = document.getElementById("ownerImagePreview");
             const container = document.getElementById("owner-history-content");
             const refreshStatus = document.getElementById("owner-refresh-status");
+
+            const previewFile = (file) => {
+                if (!file || !file.type.startsWith("image/") || !imagePreview) return;
+
+                const reader = new FileReader();
+                reader.addEventListener("load", () => {
+                    imagePreview.src = reader.result;
+                    imagePreview.classList.add("has-image");
+                });
+                reader.readAsDataURL(file);
+            };
+
+            imageDropzone?.addEventListener("click", () => imageInput?.click());
+            imageDropzone?.addEventListener("dragover", (event) => {
+                event.preventDefault();
+                imageDropzone.classList.add("is-dragover");
+            });
+            imageDropzone?.addEventListener("dragleave", () => {
+                imageDropzone.classList.remove("is-dragover");
+            });
+            imageDropzone?.addEventListener("drop", (event) => {
+                event.preventDefault();
+                imageDropzone.classList.remove("is-dragover");
+
+                const file = event.dataTransfer?.files?.[0];
+                if (!file || !imageInput) return;
+
+                const files = new DataTransfer();
+                files.items.add(file);
+                imageInput.files = files.files;
+                previewFile(file);
+            });
+            imageInput?.addEventListener("change", () => {
+                previewFile(imageInput.files?.[0]);
+            });
 
             if (!container) {
                 return;

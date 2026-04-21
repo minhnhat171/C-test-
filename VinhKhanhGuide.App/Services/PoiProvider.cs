@@ -41,7 +41,7 @@ public class PoiProvider : IPoiProvider
             var pois = await _httpClient.GetFromJsonAsync<List<PoiDto>>("api/pois", cancellationToken) ?? [];
             var mappedPois = pois
                 .Where(dto => dto.IsActive)
-                .Select(dto => dto.ToDomain())
+                .Select(ToDomainWithResolvedImageSource)
                 .ToList();
             var normalizedPois = MergeWithSeedPois(mappedPois);
 
@@ -100,7 +100,7 @@ public class PoiProvider : IPoiProvider
             var dto = await _httpClient.GetFromJsonAsync<PoiDto>($"api/pois/{poiId}", cancellationToken);
             if (dto is not null)
             {
-                return dto.ToDomain();
+                return ToDomainWithResolvedImageSource(dto);
             }
         }
         catch (Exception ex)
@@ -196,6 +196,7 @@ public class PoiProvider : IPoiProvider
             .ToList();
     }
 
+<<<<<<< HEAD
     private static IReadOnlyList<POI> MergeWithSeedPois(IEnumerable<POI> pois)
     {
         var mergedPois = FallbackPois
@@ -245,5 +246,30 @@ public class PoiProvider : IPoiProvider
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
+=======
+    private POI ToDomainWithResolvedImageSource(PoiDto dto)
+    {
+        var poi = dto.ToDomain();
+        poi.ImageSource = ResolveImageSource(poi.ImageSource);
+        return poi;
+    }
+
+    private string ResolveImageSource(string? imageSource)
+    {
+        var value = imageSource?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(value) ||
+            Uri.TryCreate(value, UriKind.Absolute, out _))
+        {
+            return value;
+        }
+
+        if (value.StartsWith("/", StringComparison.Ordinal) &&
+            _httpClient.BaseAddress is not null)
+        {
+            return new Uri(_httpClient.BaseAddress, value.TrimStart('/')).ToString();
+        }
+
+        return value;
+>>>>>>> 5c1f925156adcfc9c693616638279c7b35c12a05
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using VinhKhanhGuide.Core.Contracts;
 
 namespace CTest.WebAdmin.Models;
@@ -48,6 +49,7 @@ public class PoiEditorViewModel
     public string Description { get; set; } = string.Empty;
     public string SpecialDish { get; set; } = string.Empty;
     public string ImageSource { get; set; } = string.Empty;
+    public IFormFile? UploadedImage { get; set; }
     public string MapLink { get; set; } = string.Empty;
     public string NarrationScript { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
