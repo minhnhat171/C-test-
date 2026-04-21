@@ -94,7 +94,7 @@
 
     .map-poi-layout {
         display: grid;
-        grid-template-columns: 320px minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
         gap: 1.2rem;
     }
 
@@ -103,59 +103,6 @@
         border-radius: 28px;
         box-shadow: var(--map-shadow);
         overflow: hidden;
-    }
-
-    .map-poi-sidebar {
-        padding: 1.2rem;
-    }
-
-    .map-poi-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        max-height: calc(100vh - 270px);
-        overflow: auto;
-        padding-right: 0.2rem;
-    }
-
-    .map-poi-item {
-        display: block;
-        padding: 0.95rem 1rem;
-        border-radius: 20px;
-        text-decoration: none;
-        color: inherit;
-        background: #f8fafc;
-        border: 1px solid rgba(148, 163, 184, 0.14);
-        transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
-    }
-
-    .map-poi-item:hover {
-        transform: translateX(3px);
-        border-color: rgba(37, 99, 235, 0.26);
-    }
-
-    .map-poi-item.is-active {
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        border-color: rgba(37, 99, 235, 0.28);
-    }
-
-    .map-poi-item-name {
-        font-weight: 800;
-    }
-
-    .map-poi-item-address {
-        margin-top: 0.25rem;
-        color: var(--map-muted);
-        font-size: 0.9rem;
-    }
-
-    .map-poi-item-meta {
-        display: flex;
-        justify-content: space-between;
-        gap: 0.75rem;
-        margin-top: 0.7rem;
-        font-size: 0.8rem;
-        color: var(--map-muted);
     }
 
     .map-poi-content {
@@ -184,7 +131,7 @@
 
     .map-poi-map-shell {
         display: grid;
-        grid-template-columns: minmax(0, 1.3fr) 320px;
+        grid-template-columns: minmax(0, 1fr) 300px;
         gap: 1rem;
         margin-bottom: 1rem;
     }
@@ -208,7 +155,7 @@
 
     .map-poi-map-frame {
         position: relative;
-        height: 460px;
+        height: 620px;
         border-radius: 22px;
         overflow: hidden;
         border: 1px solid rgba(148, 163, 184, 0.18);
@@ -519,16 +466,6 @@
         }
     }
 
-    @@media (max-width: 1199.98px) {
-        .map-poi-layout {
-            grid-template-columns: 1fr;
-        }
-
-        .map-poi-list {
-            max-height: none;
-        }
-    }
-
     @@media (max-width: 767.98px) {
         .map-poi-head,
         .map-poi-toolbar {
@@ -541,7 +478,7 @@
         }
 
         .map-poi-map-frame {
-            height: 340px;
+            height: 420px;
         }
     }
 </style>
@@ -574,38 +511,6 @@
     }
 
     <div class="map-poi-layout">
-        <div class="map-poi-panel">
-            <div class="map-poi-sidebar">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="fw-bold">Danh sách POI</div>
-                <span class="text-muted small">@Model.Pois.Count điểm, @activePoiCount đang hoạt động</span>
-                </div>
-
-                @if (Model.Pois.Any())
-                {
-                    <div class="map-poi-list">
-                        @foreach (var poi in Model.Pois)
-                        {
-                            <a asp-action="Index"
-                               asp-route-poiId="@poi.Id"
-                               class="map-poi-item @(poi.Id == Model.SelectedPoiId ? "is-active" : null)">
-                                <div class="map-poi-item-name">@poi.Name</div>
-                                <div class="map-poi-item-address">@poi.Address</div>
-                                <div class="map-poi-item-meta">
-                                    <span>@poi.Latitude, @poi.Longitude</span>
-                                    <span>@(poi.IsActive ? "Đang hoạt động" : "Tạm khóa")</span>
-                                </div>
-                            </a>
-                        }
-                    </div>
-                }
-                else
-                {
-                <div class="map-poi-empty">Chưa có POI để hiển thị trên bản đồ.</div>
-                }
-            </div>
-        </div>
-
         <div class="map-poi-panel">
             <div class="map-poi-content">
                 @if (!Model.HasSelection)
@@ -647,17 +552,17 @@
                                     Chưa có GPS hoặc route point để vẽ heatmap. Khi app gửi heartbeat kèm tọa độ, lớp analytics sẽ tự cập nhật trên map này.
                                 </div>
                                 <div class="analytics-map-legend">
-                                    <div class="map-poi-kicker">Heatmap vi tri</div>
+                                    <div class="map-poi-kicker">Heatmap vị trí</div>
                                     <div class="analytics-gradient"></div>
                                     <div class="analytics-legend-scale">
-                                        <span>Thap</span>
+                                        <span>Thấp</span>
                                         <span>Cao</span>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="map-poi-status" id="mapPoiStatus">
-                                Map dang doc @Model.Pois.Count POI tu API, @routePoints.Count route point an danh va @locatedActiveDevices.Count thiết bị online co GPS.
+                                Map đang đọc @Model.Pois.Count POI từ API, @routePoints.Count điểm tuyến ẩn danh và @locatedActiveDevices.Count thiết bị online có GPS.
                             </div>
                         </div>
 
@@ -667,7 +572,7 @@
 
                             <div class="map-poi-metrics">
                                 <div class="map-poi-metric">
-                                    <span class="map-poi-kicker">Tuyen an danh</span>
+                                    <span class="map-poi-kicker">Tuyến ẩn danh</span>
                                     <strong id="analyticsRoutePointCount">@routePoints.Count</strong>
                                 </div>
                                 <div class="map-poi-metric">
@@ -723,19 +628,19 @@
 
                             <div class="map-poi-metrics">
                                 <div class="map-poi-metric">
-                                    <span class="map-poi-kicker">Latitude</span>
+                                    <span class="map-poi-kicker">Vĩ độ</span>
                                     <strong id="mapPoiLatValue">@initialLatitude</strong>
                                 </div>
                                 <div class="map-poi-metric">
-                                    <span class="map-poi-kicker">Longitude</span>
+                                    <span class="map-poi-kicker">Kinh độ</span>
                                     <strong id="mapPoiLngValue">@initialLongitude</strong>
                                 </div>
                                 <div class="map-poi-metric">
-                                    <span class="map-poi-kicker">Radius</span>
+                                    <span class="map-poi-kicker">Bán kính</span>
                                     <strong id="mapPoiRadiusValue">@Model.Editor.RadiusInMeters m</strong>
                                 </div>
                                 <div class="map-poi-metric">
-                                    <span class="map-poi-kicker">Priority</span>
+                                    <span class="map-poi-kicker">Ưu tiên</span>
                                     <strong id="mapPoiPriorityValue">#@Model.Editor.Priority</strong>
                                 </div>
                                 <div class="map-poi-metric">
@@ -757,18 +662,18 @@
                             @if (!string.IsNullOrWhiteSpace(Model.Editor.MapLink))
                             {
                                 <a href="@Model.Editor.MapLink" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary rounded-pill px-4 mt-3" id="mapPoiOpenLink">
-                                    Mo map link
+                                    Mở bản đồ
                                 </a>
                             }
                             else
                             {
                                 <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary rounded-pill px-4 mt-3 d-none" id="mapPoiOpenLink">
-                                    Mo map link
+                                    Mở bản đồ
                                 </a>
                             }
 
                             <a href="@selectedAppLaunchUrl" class="btn btn-primary rounded-pill px-4 mt-3">
-                                Mo POI nay trong app
+                                Mở POI này trong app
                             </a>
                         </div>
                     </div>
@@ -822,25 +727,25 @@
                                 </div>
 
                                 <div class="full">
-                                    <label asp-for="Editor.NarrationScript" class="form-label">Narration script</label>
+                                    <label asp-for="Editor.NarrationScript" class="form-label">Nội dung thuyết minh</label>
                                     <textarea asp-for="Editor.NarrationScript" class="form-control" rows="5"></textarea>
                                     <span asp-validation-for="Editor.NarrationScript" class="text-danger small"></span>
                                 </div>
 
                                 <div>
-                                    <label asp-for="Editor.Latitude" class="form-label">Latitude</label>
+                                    <label asp-for="Editor.Latitude" class="form-label">Vĩ độ</label>
                                     <input asp-for="Editor.Latitude" class="form-control" id="mapPoiLatitude" />
                                     <span asp-validation-for="Editor.Latitude" class="text-danger small"></span>
                                 </div>
 
                                 <div>
-                                    <label asp-for="Editor.Longitude" class="form-label">Longitude</label>
+                                    <label asp-for="Editor.Longitude" class="form-label">Kinh độ</label>
                                     <input asp-for="Editor.Longitude" class="form-control" id="mapPoiLongitude" />
                                     <span asp-validation-for="Editor.Longitude" class="text-danger small"></span>
                                 </div>
 
                                 <div>
-                                    <label asp-for="Editor.RadiusInMeters" class="form-label">Trigger radius (m)</label>
+                                    <label asp-for="Editor.RadiusInMeters" class="form-label">Bán kính kích hoạt (m)</label>
                                     <input asp-for="Editor.RadiusInMeters" class="form-control" id="mapPoiRadiusInput" />
                                     <span asp-validation-for="Editor.RadiusInMeters" class="text-danger small"></span>
                                 </div>

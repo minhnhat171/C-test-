@@ -29,7 +29,7 @@
     "IsActive": true,
     "IsDeleted": false,
     "CreatedAtUtc": "2026-04-18T08:00:00Z",
-    "UpdatedAtUtc": "2026-04-21T08:00:00Z",
+    "UpdatedAtUtc": "2026-04-21T18:04:16.5383707Z",
     "DeletedAtUtc": null,
     "NarrationTranslations": {
       "vi": "Bạn đang ở gần quán Ốc Oanh. Đây là một trong những quán ốc nổi tiếng nhất trên phố ẩm thực Vĩnh Khánh, nổi bật với ốc hương xào bơ tỏi, ốc len xào dừa và sò điệp nướng mỡ hành.",
@@ -429,6 +429,39 @@
     "NarrationTranslations": {
       "vi": "Bạn đang ở gần quán Ốc Phát trên đường Vĩnh Khánh. Đây là POI được đăng ký từ WebAdmin, có hình ảnh, tọa độ và nội dung thuyết minh đồng bộ xuống app.",
       "en": "You are near Oc Phat on Vinh Khanh Street. This POI was registered from WebAdmin and synchronized to the mobile app with image, location, and narration."
+    }
+  },
+  {
+    "Id": "c78f4a6c-f7bf-4222-90c4-5d2e36451923",
+    "Code": "VK-FOOD-12",
+    "Name": "Ốc Mã",
+    "Category": "Ẩm thực",
+    "ImageSource": "/uploads/pois/7d1472e8d7864b3ebb8ad91b2d51bd2f.jpg",
+    "Address": "123 Vĩnh Khánh",
+    "Description": "Quán ăn thơm ngon",
+    "SpecialDish": "Ốc len xào dừa, ốc móng tay rau muốn",
+    "PriceRange": "",
+    "OpeningHours": "",
+    "FirstDishSuggestion": "",
+    "FeaturedCategories": [],
+    "NarrationText": "Quán ốc mã với sự thơm ngon",
+    "MapLink": "https://maps.google.com/?q=0,0",
+    "AudioAssetPath": "",
+    "OwnerUserCode": "owner",
+    "OwnerDisplayName": "Chủ nhà hàng",
+    "OwnerEmail": "owner@local.vinhkhanh",
+    "Priority": 4,
+    "Latitude": 0,
+    "Longitude": 0,
+    "TriggerRadiusMeters": 50,
+    "CooldownMinutes": 5,
+    "IsActive": false,
+    "IsDeleted": true,
+    "CreatedAtUtc": "2026-04-21T17:37:09.1187274Z",
+    "UpdatedAtUtc": "2026-04-21T17:38:15.477129Z",
+    "DeletedAtUtc": "2026-04-21T17:38:15.477129Z",
+    "NarrationTranslations": {
+      "vi": "Quán ốc mã với sự thơm ngon"
     }
   }
 ]
