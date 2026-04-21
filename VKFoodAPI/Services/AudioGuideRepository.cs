@@ -35,6 +35,7 @@ public class AudioGuideRepository
         lock (_syncRoot)
         {
             return _audioGuides
+                .Where(item => !item.IsDeleted)
                 .Select(item => HydratePoiMetadata(item))
                 .OrderByDescending(item => item.UpdatedAtUtc)
                 .ThenBy(item => item.PoiName)
@@ -48,7 +49,7 @@ public class AudioGuideRepository
     {
         lock (_syncRoot)
         {
-            var item = _audioGuides.FirstOrDefault(x => x.Id == id);
+            var item = _audioGuides.FirstOrDefault(x => x.Id == id && !x.IsDeleted);
             return item is null ? null : HydratePoiMetadata(item).ToDto();
         }
     }
@@ -64,7 +65,12 @@ public class AudioGuideRepository
         {
             var created = Normalize(dto);
             created.Id = created.Id == Guid.Empty ? Guid.NewGuid() : created.Id;
+            created.IsDeleted = false;
+            created.DeletedAtUtc = null;
+            created.CreatedAtUtc = DateTime.UtcNow;
             created.UpdatedAtUtc = DateTime.UtcNow;
+
+            ValidateForSave(created);
 
             _audioGuides.Add(created);
             SaveUnsafe();
@@ -78,7 +84,7 @@ public class AudioGuideRepository
     {
         lock (_syncRoot)
         {
-            var index = _audioGuides.FindIndex(item => item.Id == id);
+            var index = _audioGuides.FindIndex(item => item.Id == id && !item.IsDeleted);
             if (index < 0)
             {
                 return false;
@@ -86,7 +92,12 @@ public class AudioGuideRepository
 
             var updated = Normalize(dto);
             updated.Id = id;
+            updated.IsDeleted = false;
+            updated.DeletedAtUtc = null;
+            updated.CreatedAtUtc = _audioGuides[index].CreatedAtUtc;
             updated.UpdatedAtUtc = DateTime.UtcNow;
+
+            ValidateForSave(updated, id);
 
             _audioGuides[index] = updated;
             SaveUnsafe();
@@ -100,12 +111,19 @@ public class AudioGuideRepository
     {
         lock (_syncRoot)
         {
-            var removed = _audioGuides.RemoveAll(item => item.Id == id);
-            if (removed == 0)
+            var index = _audioGuides.FindIndex(item => item.Id == id && !item.IsDeleted);
+            if (index < 0)
             {
                 return false;
             }
 
+            var deleted = _audioGuides[index].Clone();
+            deleted.IsPublished = false;
+            deleted.IsDeleted = true;
+            deleted.DeletedAtUtc = DateTime.UtcNow;
+            deleted.UpdatedAtUtc = deleted.DeletedAtUtc.Value;
+
+            _audioGuides[index] = deleted;
             SaveUnsafe();
             SyncPoisUnsafe();
             return true;
@@ -151,7 +169,9 @@ public class AudioGuideRepository
 
     private void SyncPoisUnsafe()
     {
-        _poiRepository.ApplyPublishedAudioGuides(_audioGuides.Select(item => item.ToDto()));
+        _poiRepository.ApplyPublishedAudioGuides(_audioGuides
+            .Where(item => !item.IsDeleted)
+            .Select(item => item.ToDto()));
     }
 
     private AudioGuideRecord HydratePoiMetadata(AudioGuideRecord record)
@@ -189,9 +209,15 @@ public class AudioGuideRepository
         normalized.EstimatedSeconds = normalized.EstimatedSeconds <= 0
             ? EstimateSeconds(normalized.Script)
             : normalized.EstimatedSeconds;
+        normalized.CreatedAtUtc = NormalizeUtc(normalized.CreatedAtUtc);
         normalized.UpdatedAtUtc = normalized.UpdatedAtUtc == default
             ? DateTime.UtcNow
             : normalized.UpdatedAtUtc.ToUniversalTime();
+        normalized.DeletedAtUtc = NormalizeUtc(normalized.DeletedAtUtc);
+        if (normalized.IsDeleted && normalized.DeletedAtUtc is null)
+        {
+            normalized.DeletedAtUtc = DateTime.UtcNow;
+        }
 
         if (string.Equals(normalized.SourceType, "tts", StringComparison.OrdinalIgnoreCase))
         {
@@ -199,6 +225,56 @@ public class AudioGuideRepository
         }
 
         return normalized;
+    }
+
+    private void ValidateForSave(AudioGuideRecord record, Guid? currentId = null)
+    {
+        if (record.PoiId == Guid.Empty || _poiRepository.GetById(record.PoiId) is null)
+        {
+            throw new ArgumentException("Audio guide must reference an active POI.", nameof(record));
+        }
+
+        if (string.Equals(record.SourceType, "file", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(record.FilePath))
+            {
+                throw new ArgumentException("FilePath is required when SourceType is file.", nameof(record));
+            }
+        }
+        else if (string.IsNullOrWhiteSpace(record.Script))
+        {
+            throw new ArgumentException("Script is required when SourceType is tts.", nameof(record));
+        }
+
+        if (_audioGuides.Any(item =>
+                !item.IsDeleted &&
+                (!currentId.HasValue || item.Id != currentId.Value) &&
+                item.PoiId == record.PoiId &&
+                string.Equals(item.LanguageCode, record.LanguageCode, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(item.SourceType, record.SourceType, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException(
+                $"Audio guide for POI '{record.PoiCode}' language '{record.LanguageCode}' source '{record.SourceType}' already exists.");
+        }
+    }
+
+    private static DateTime NormalizeUtc(DateTime value)
+    {
+        if (value == default)
+        {
+            return DateTime.UtcNow;
+        }
+
+        return value.Kind == DateTimeKind.Utc
+            ? value
+            : value.ToUniversalTime();
+    }
+
+    private static DateTime? NormalizeUtc(DateTime? value)
+    {
+        return value.HasValue
+            ? NormalizeUtc(value.Value)
+            : null;
     }
 
     private static string NormalizeLanguageCode(string? languageCode)

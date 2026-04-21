@@ -46,7 +46,7 @@ public sealed class UserProfileSyncService : IUserProfileSyncService
             };
 
             var response = await _httpClient.PostAsJsonAsync(
-                "api/admin/users/profile-sync",
+                "api/users/profile-sync",
                 request,
                 cancellationToken);
 
@@ -55,7 +55,7 @@ public sealed class UserProfileSyncService : IUserProfileSyncService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Could not sync current user profile to admin.");
+            _logger.LogWarning(ex, "Could not sync current user profile to API.");
             return false;
         }
     }

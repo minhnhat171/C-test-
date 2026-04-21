@@ -35,6 +35,7 @@ public class TourRepository
             SyncPoisUnsafe();
 
             return _tours
+                .Where(item => !item.IsDeleted)
                 .OrderByDescending(item => item.UpdatedAtUtc)
                 .ThenBy(item => item.Name)
                 .Select(item => item.Clone())
@@ -47,7 +48,7 @@ public class TourRepository
         lock (_syncRoot)
         {
             SyncPoisUnsafe();
-            return _tours.FirstOrDefault(item => item.Id == id)?.Clone();
+            return _tours.FirstOrDefault(item => item.Id == id && !item.IsDeleted)?.Clone();
         }
     }
 
@@ -59,7 +60,12 @@ public class TourRepository
 
             var created = Normalize(dto);
             created.Id = created.Id > 0 ? created.Id : GetNextIdUnsafe();
+            created.IsDeleted = false;
+            created.DeletedAtUtc = null;
+            created.CreatedAtUtc = DateTime.UtcNow;
             created.UpdatedAtUtc = DateTime.UtcNow;
+
+            ValidateForSave(created);
 
             _tours.Add(created);
             SaveUnsafe();
@@ -74,7 +80,7 @@ public class TourRepository
         {
             SyncPoisUnsafe();
 
-            var index = _tours.FindIndex(item => item.Id == id);
+            var index = _tours.FindIndex(item => item.Id == id && !item.IsDeleted);
             if (index < 0)
             {
                 return false;
@@ -82,7 +88,12 @@ public class TourRepository
 
             var updated = Normalize(dto);
             updated.Id = id;
+            updated.IsDeleted = false;
+            updated.DeletedAtUtc = null;
+            updated.CreatedAtUtc = _tours[index].CreatedAtUtc;
             updated.UpdatedAtUtc = DateTime.UtcNow;
+
+            ValidateForSave(updated, id);
 
             _tours[index] = updated;
             SaveUnsafe();
@@ -95,12 +106,20 @@ public class TourRepository
     {
         lock (_syncRoot)
         {
-            var removed = _tours.RemoveAll(item => item.Id == id);
-            if (removed == 0)
+            var index = _tours.FindIndex(item => item.Id == id && !item.IsDeleted);
+            if (index < 0)
             {
                 return false;
             }
 
+            var deleted = _tours[index].Clone();
+            deleted.IsActive = false;
+            deleted.IsQrEnabled = false;
+            deleted.IsDeleted = true;
+            deleted.DeletedAtUtc = DateTime.UtcNow;
+            deleted.UpdatedAtUtc = deleted.DeletedAtUtc.Value;
+
+            _tours[index] = deleted;
             SaveUnsafe();
             return true;
         }
@@ -176,15 +195,66 @@ public class TourRepository
         normalized.Name = normalized.Name?.Trim() ?? string.Empty;
         normalized.Description = normalized.Description?.Trim() ?? string.Empty;
         normalized.EstimatedMinutes = normalized.EstimatedMinutes <= 0 ? 45 : normalized.EstimatedMinutes;
+        normalized.CreatedAtUtc = NormalizeUtc(normalized.CreatedAtUtc);
         normalized.UpdatedAtUtc = normalized.UpdatedAtUtc == default
             ? DateTime.UtcNow
             : normalized.UpdatedAtUtc.ToUniversalTime();
+        normalized.DeletedAtUtc = NormalizeUtc(normalized.DeletedAtUtc);
+        if (normalized.IsDeleted && normalized.DeletedAtUtc is null)
+        {
+            normalized.DeletedAtUtc = DateTime.UtcNow;
+        }
         normalized.PoiIds = (normalized.PoiIds ?? [])
             .Where(poiId => poiId != Guid.Empty && _poiRepository.GetById(poiId) is not null)
             .Distinct()
             .ToList();
 
         return normalized;
+    }
+
+    private void ValidateForSave(TourDto dto, int? currentId = null)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Code))
+        {
+            throw new ArgumentException("Tour code is required.", nameof(dto));
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.Name))
+        {
+            throw new ArgumentException("Tour name is required.", nameof(dto));
+        }
+
+        if (dto.PoiIds.Count == 0)
+        {
+            throw new ArgumentException("Tour must include at least one active POI.", nameof(dto));
+        }
+
+        if (_tours.Any(item =>
+                !item.IsDeleted &&
+                (!currentId.HasValue || item.Id != currentId.Value) &&
+                string.Equals(item.Code, dto.Code, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException($"Tour code '{dto.Code}' already exists.");
+        }
+    }
+
+    private static DateTime NormalizeUtc(DateTime value)
+    {
+        if (value == default)
+        {
+            return DateTime.UtcNow;
+        }
+
+        return value.Kind == DateTimeKind.Utc
+            ? value
+            : value.ToUniversalTime();
+    }
+
+    private static DateTime? NormalizeUtc(DateTime? value)
+    {
+        return value.HasValue
+            ? NormalizeUtc(value.Value)
+            : null;
     }
 
     private static bool AreEquivalent(TourDto left, TourDto right)

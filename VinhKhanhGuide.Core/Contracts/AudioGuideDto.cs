@@ -13,7 +13,10 @@ public class AudioGuideDto
     public string FilePath { get; set; } = string.Empty;
     public int EstimatedSeconds { get; set; } = 30;
     public bool IsPublished { get; set; } = true;
+    public bool IsDeleted { get; set; }
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime? DeletedAtUtc { get; set; }
 
     public AudioGuideDto Clone()
     {
@@ -30,7 +33,10 @@ public class AudioGuideDto
             FilePath = FilePath,
             EstimatedSeconds = EstimatedSeconds,
             IsPublished = IsPublished,
-            UpdatedAtUtc = UpdatedAtUtc
+            IsDeleted = IsDeleted,
+            CreatedAtUtc = CreatedAtUtc,
+            UpdatedAtUtc = UpdatedAtUtc,
+            DeletedAtUtc = DeletedAtUtc
         };
     }
 }

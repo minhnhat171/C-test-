@@ -7,6 +7,7 @@ using VinhKhanhGuide.Core.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 var poiApiBaseUrl = builder.Configuration["PoiApi:BaseUrl"];
+var adminApiKey = builder.Configuration["AdminApi:ApiKey"];
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -36,7 +37,6 @@ builder.Services.Configure<WebAdminAuthOptions>(builder.Configuration.GetSection
 builder.Services.AddSingleton<IWebAdminAuthService, WebAdminAuthService>();
 builder.Services.AddScoped<IWebAdminCurrentUser, WebAdminCurrentUser>();
 builder.Services.AddSingleton<WebDisplayClock>();
-builder.Services.AddSingleton<AppDataService>();
 builder.Services.Configure<QrCodeOptions>(builder.Configuration.GetSection("QrCode"));
 builder.Services.AddHttpClient<PoiApiClient>(ConfigureSharedApiClient);
 builder.Services.AddHttpClient<TourApiClient>(ConfigureSharedApiClient);
@@ -87,5 +87,10 @@ void ConfigureSharedApiClient(HttpClient client)
     if (client.BaseAddress.Host.EndsWith(".ngrok-free.dev", StringComparison.OrdinalIgnoreCase))
     {
         client.DefaultRequestHeaders.TryAddWithoutValidation("ngrok-skip-browser-warning", "true");
+    }
+
+    if (!string.IsNullOrWhiteSpace(adminApiKey))
+    {
+        client.DefaultRequestHeaders.TryAddWithoutValidation("X-Admin-Api-Key", adminApiKey);
     }
 }

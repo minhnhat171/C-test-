@@ -11,7 +11,6 @@ public class DashboardService
     private readonly ListeningHistoryApiClient _listeningHistoryApiClient;
     private readonly UserManagementApiClient _userManagementApiClient;
     private readonly ActiveDeviceApiClient _activeDeviceApiClient;
-    private readonly AppDataService _fallbackData;
     private readonly WebDisplayClock _clock;
 
     public DashboardService(
@@ -21,7 +20,6 @@ public class DashboardService
         ListeningHistoryApiClient listeningHistoryApiClient,
         UserManagementApiClient userManagementApiClient,
         ActiveDeviceApiClient activeDeviceApiClient,
-        AppDataService fallbackData,
         WebDisplayClock clock)
     {
         _poiApiClient = poiApiClient;
@@ -30,7 +28,6 @@ public class DashboardService
         _listeningHistoryApiClient = listeningHistoryApiClient;
         _userManagementApiClient = userManagementApiClient;
         _activeDeviceApiClient = activeDeviceApiClient;
-        _fallbackData = fallbackData;
         _clock = clock;
     }
 
@@ -63,11 +60,8 @@ public class DashboardService
             ex is TaskCanceledException ||
             ex is InvalidOperationException)
         {
-            var fallback = BuildFromSampleData();
-            fallback.LoadErrorMessage = "Khong the ket noi VKFoodAPI. Dashboard dang tam hien thi du lieu mau cua WebAdmin.";
-            fallback.DataSourceLabel = "Du lieu mau";
-            fallback.DataSourceDescription = "Chua ket noi duoc nguon du lieu dung chung nen dashboard chua phan anh dung thong tin dang co trong app.";
-            return fallback;
+            return BuildUnavailableDashboard(
+                "Khong the ket noi VKFoodAPI. Dashboard chi doc du lieu tu API nen tam thoi de trong so lieu.");
         }
     }
 
@@ -196,7 +190,7 @@ public class DashboardService
         return new DashboardViewModel
         {
             TotalPois = pois.Count,
-            TotalAudioGuides = pois.Count,
+            TotalAudioGuides = audioGuides.Count,
             MappedPoiCount = pois.Count(HasMapData),
             TotalQrCodes = pois.Count(poi => poi.IsActive && !string.IsNullOrWhiteSpace(poi.Code)),
             TodayListenCount = localizedHistory.Count(x => x.LocalStartedAt.Date == today),
@@ -256,63 +250,13 @@ public class DashboardService
         };
     }
 
-    private DashboardViewModel BuildFromSampleData()
+    private DashboardViewModel BuildUnavailableDashboard(string loadErrorMessage)
     {
         var today = _clock.Now.Date;
-        var lastSyncedAt = _fallbackData.UsageLogs
-            .OrderByDescending(x => x.StartedAt)
-            .Select(x => (DateTime?)x.StartedAt)
-            .FirstOrDefault();
-
-        var dailyListenPoints = Enumerable.Range(0, 7)
-            .Select(offset => today.AddDays(offset - 6))
-            .Select(date => new DashboardDailyListenPoint
-            {
-                Date = date,
-                Label = date.ToString("dd/MM"),
-                Count = _fallbackData.UsageLogs.Count(x => x.StartedAt.Date == date)
-            })
-            .ToList();
-
-        var topPois = _fallbackData.UsageLogs
-            .GroupBy(x => x.PoiName)
-            .Select(group => new DashboardTopPoiItem
-            {
-                Name = group.Key,
-                Count = group.Count()
-            })
-            .OrderByDescending(x => x.Count)
-            .ThenBy(x => x.Name)
-            .Take(5)
-            .ToList();
-
-        var totalUsageLogs = _fallbackData.UsageLogs.Count;
-        var totalQrCodes = _fallbackData.Pois.Count(x =>
-            x.Description.Contains("QR", StringComparison.OrdinalIgnoreCase) ||
-            x.NarrationScript.Contains("QR", StringComparison.OrdinalIgnoreCase));
-
-        var mostPlayed = _fallbackData.UsageLogs
-            .GroupBy(x => x.PoiName)
-            .OrderByDescending(g => g.Count())
-            .Select(g => g.Key)
-            .FirstOrDefault() ?? "Chua co du lieu";
 
         return new DashboardViewModel
         {
-            TotalPois = _fallbackData.Pois.Count,
-            TotalAudioGuides = _fallbackData.Pois.Count,
-            MappedPoiCount = _fallbackData.Pois.Count(HasMapData),
-            TotalQrCodes = totalQrCodes,
-            TodayListenCount = _fallbackData.UsageLogs.Count(x => x.StartedAt.Date == today),
-            TotalTours = _fallbackData.Tours.Count,
-            TotalUsageLogs = totalUsageLogs,
-            MostPlayedPoi = mostPlayed,
-            AverageListenSeconds = totalUsageLogs == 0 ? 0 : _fallbackData.UsageLogs.Average(x => x.ListenSeconds),
-            CompletionRate = totalUsageLogs == 0 ? 0 : (int)Math.Round(_fallbackData.UsageLogs.Count(x => x.Completed) * 100.0 / totalUsageLogs),
-            QrListenRate = totalUsageLogs == 0 ? 0 : (int)Math.Round(_fallbackData.UsageLogs.Count(x => x.TriggerType == "QR") * 100.0 / totalUsageLogs),
-            PublishedAudioCount = _fallbackData.Pois.Count(poi =>
-                _fallbackData.AudioGuides.Any(audioGuide => audioGuide.PoiId == poi.Id && audioGuide.IsPublished)),
-            ActivePoiCount = _fallbackData.Pois.Count(x => x.IsActive),
+            MostPlayedPoi = "Chua co du lieu",
             ActiveDeviceStats = new ActiveDeviceStatsDto
             {
                 ActiveDeviceCount = 0,
@@ -322,37 +266,20 @@ public class DashboardService
             },
             ActiveDeviceCount = 0,
             IsSyncOnline = false,
-            LastSyncedAt = lastSyncedAt,
-            DataSourceLabel = "Du lieu mau",
-            DataSourceDescription = "Dashboard dang dung du lieu noi bo cua WebAdmin nen co the chua giong voi du lieu dang hien co trong app.",
-            DailyListenPoints = dailyListenPoints,
-            TopPois = topPois,
-            RecentUsers = new List<DashboardRecentUserItem>(),
-            RecentLogs = _fallbackData.UsageLogs.OrderByDescending(x => x.StartedAt).Take(8).ToList()
+            LastSyncedAt = null,
+            DataSourceLabel = "VKFoodAPI",
+            DataSourceDescription = "Dashboard chi doc tu VKFoodAPI; khi API offline, WebAdmin giu trang thai trong de tranh lech du lieu voi app.",
+            LoadErrorMessage = loadErrorMessage,
+            DailyListenPoints = Enumerable.Range(0, 7)
+                .Select(offset => today.AddDays(offset - 6))
+                .Select(date => new DashboardDailyListenPoint
+                {
+                    Date = date,
+                    Label = date.ToString("dd/MM"),
+                    Count = 0
+                })
+                .ToList()
         };
-    }
-
-    private static int CountAudioVariants(PoiDto poi)
-    {
-        var translationCount = CountNarrations(poi, includeVietnamese: true);
-        var fallbackNarrationCount = translationCount > 0
-            ? 0
-            : string.IsNullOrWhiteSpace(poi.NarrationText) ? 0 : 1;
-        var audioFileCount = string.IsNullOrWhiteSpace(poi.AudioAssetPath) ? 0 : 1;
-
-        return translationCount + fallbackNarrationCount + audioFileCount;
-    }
-
-    private static int CountNarrations(PoiDto poi, bool includeVietnamese)
-    {
-        if (poi.NarrationTranslations is null || poi.NarrationTranslations.Count == 0)
-        {
-            return 0;
-        }
-
-        return poi.NarrationTranslations.Count(entry =>
-            !string.IsNullOrWhiteSpace(entry.Value) &&
-            (includeVietnamese || !string.Equals(entry.Key, "vi", StringComparison.OrdinalIgnoreCase)));
     }
 
     private static string ResolvePoiName(ListeningHistoryEntryDto item)
@@ -398,11 +325,6 @@ public class DashboardService
     }
 
     private static bool HasMapData(PoiDto poi)
-    {
-        return HasMapData(poi.Latitude, poi.Longitude, poi.MapLink);
-    }
-
-    private static bool HasMapData(Poi poi)
     {
         return HasMapData(poi.Latitude, poi.Longitude, poi.MapLink);
     }

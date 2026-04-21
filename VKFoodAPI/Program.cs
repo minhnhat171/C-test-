@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using VKFoodAPI.Security;
 using VKFoodAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -5,6 +7,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services
+    .AddAuthentication(AdminApiKeyDefaults.SchemeName)
+    .AddScheme<AuthenticationSchemeOptions, AdminApiKeyAuthenticationHandler>(
+        AdminApiKeyDefaults.SchemeName,
+        _ => { });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AdminApiKeyDefaults.PolicyName, policy =>
+    {
+        policy.AddAuthenticationSchemes(AdminApiKeyDefaults.SchemeName);
+        policy.RequireAuthenticatedUser();
+    });
+});
 builder.Services.AddSingleton<PoiRepository>();
 builder.Services.AddSingleton<AudioGuideRepository>();
 builder.Services.AddSingleton<TourRepository>();
@@ -34,6 +49,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowAll");
 
 app.UseStaticFiles();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

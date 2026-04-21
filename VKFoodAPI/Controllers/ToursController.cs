@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VinhKhanhGuide.Core.Contracts;
+using VKFoodAPI.Security;
 using VKFoodAPI.Services;
 
 namespace VKFoodAPI.Controllers;
@@ -34,6 +36,7 @@ public class ToursController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = AdminApiKeyDefaults.PolicyName)]
     public ActionResult<TourDto> Create([FromBody] TourDto dto)
     {
         if (dto.PoiIds is null || dto.PoiIds.Count == 0)
@@ -42,11 +45,23 @@ public class ToursController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var created = _repo.Create(dto);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        try
+        {
+            var created = _repo.Create(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = AdminApiKeyDefaults.PolicyName)]
     public IActionResult Update(int id, [FromBody] TourDto dto)
     {
         if (dto.PoiIds is null || dto.PoiIds.Count == 0)
@@ -55,15 +70,27 @@ public class ToursController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        if (!_repo.Update(id, dto))
+        try
         {
-            return NotFound();
-        }
+            if (!_repo.Update(id, dto))
+            {
+                return NotFound();
+            }
 
-        return NoContent();
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = AdminApiKeyDefaults.PolicyName)]
     public IActionResult Delete(int id)
     {
         if (!_repo.Delete(id))

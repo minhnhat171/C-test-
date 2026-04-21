@@ -13,7 +13,10 @@ public class TourDto
     public bool IsQrEnabled { get; set; } = true;
 
     public List<Guid> PoiIds { get; set; } = [];
+    public bool IsDeleted { get; set; }
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime? DeletedAtUtc { get; set; }
 
     public TourDto Clone()
     {
@@ -29,7 +32,10 @@ public class TourDto
             PoiIds = PoiIds
                 .Where(poiId => poiId != Guid.Empty)
                 .ToList(),
-            UpdatedAtUtc = UpdatedAtUtc
+            IsDeleted = IsDeleted,
+            CreatedAtUtc = CreatedAtUtc,
+            UpdatedAtUtc = UpdatedAtUtc,
+            DeletedAtUtc = DeletedAtUtc
         };
     }
 }

@@ -32,6 +32,10 @@ public class PoiDto
 
     public int CooldownMinutes { get; set; } = 5;
     public bool IsActive { get; set; } = true;
+    public bool IsDeleted { get; set; }
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime? DeletedAtUtc { get; set; }
 
     public Dictionary<string, string> NarrationTranslations { get; set; } =
         new(StringComparer.OrdinalIgnoreCase);
@@ -68,6 +72,10 @@ public class PoiDto
             TriggerRadiusMeters = TriggerRadiusMeters,
             CooldownMinutes = CooldownMinutes,
             IsActive = IsActive,
+            IsDeleted = IsDeleted,
+            CreatedAtUtc = CreatedAtUtc,
+            UpdatedAtUtc = UpdatedAtUtc,
+            DeletedAtUtc = DeletedAtUtc,
             NarrationTranslations = new Dictionary<string, string>(
                 NarrationTranslations ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
                 StringComparer.OrdinalIgnoreCase)

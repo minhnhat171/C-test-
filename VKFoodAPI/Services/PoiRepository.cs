@@ -30,6 +30,7 @@ public class PoiRepository
         lock (_syncRoot)
         {
             return _pois
+                .Where(dto => !dto.IsDeleted)
                 .Select(dto => dto.Clone())
                 .ToList();
         }
@@ -39,7 +40,7 @@ public class PoiRepository
     {
         lock (_syncRoot)
         {
-            return _pois.FirstOrDefault(x => x.Id == id)?.Clone();
+            return _pois.FirstOrDefault(x => x.Id == id && !x.IsDeleted)?.Clone();
         }
     }
 
@@ -49,6 +50,12 @@ public class PoiRepository
         {
             var created = Normalize(dto);
             created.Id = created.Id == Guid.Empty ? Guid.NewGuid() : created.Id;
+            created.IsDeleted = false;
+            created.DeletedAtUtc = null;
+            created.CreatedAtUtc = DateTime.UtcNow;
+            created.UpdatedAtUtc = created.CreatedAtUtc;
+
+            ValidateForSave(created);
 
             _pois.Add(created);
             SaveUnsafe();
@@ -61,7 +68,7 @@ public class PoiRepository
     {
         lock (_syncRoot)
         {
-            var index = _pois.FindIndex(x => x.Id == id);
+            var index = _pois.FindIndex(x => x.Id == id && !x.IsDeleted);
             if (index < 0)
             {
                 return false;
@@ -69,6 +76,12 @@ public class PoiRepository
 
             var updated = Normalize(dto);
             updated.Id = id;
+            updated.IsDeleted = false;
+            updated.DeletedAtUtc = null;
+            updated.CreatedAtUtc = _pois[index].CreatedAtUtc;
+            updated.UpdatedAtUtc = DateTime.UtcNow;
+
+            ValidateForSave(updated, id);
 
             _pois[index] = updated;
             SaveUnsafe();
@@ -81,12 +94,19 @@ public class PoiRepository
     {
         lock (_syncRoot)
         {
-            var removed = _pois.RemoveAll(x => x.Id == id);
-            if (removed == 0)
+            var index = _pois.FindIndex(x => x.Id == id && !x.IsDeleted);
+            if (index < 0)
             {
                 return false;
             }
 
+            var deleted = _pois[index].Clone();
+            deleted.IsActive = false;
+            deleted.IsDeleted = true;
+            deleted.DeletedAtUtc = DateTime.UtcNow;
+            deleted.UpdatedAtUtc = deleted.DeletedAtUtc.Value;
+
+            _pois[index] = deleted;
             SaveUnsafe();
             return true;
         }
@@ -112,6 +132,11 @@ public class PoiRepository
             for (var index = 0; index < _pois.Count; index++)
             {
                 var poi = _pois[index];
+                if (poi.IsDeleted)
+                {
+                    continue;
+                }
+
                 var updatedPoi = poi.Clone();
                 updatedPoi.AudioAssetPath = string.Empty;
 
@@ -120,6 +145,7 @@ public class PoiRepository
                     var normalizedWithoutAudio = Normalize(updatedPoi);
                     if (!AreEquivalent(poi, normalizedWithoutAudio))
                     {
+                        normalizedWithoutAudio.UpdatedAtUtc = DateTime.UtcNow;
                         _pois[index] = normalizedWithoutAudio;
                         hasChanges = true;
                     }
@@ -160,6 +186,7 @@ public class PoiRepository
                 var normalizedUpdatedPoi = Normalize(updatedPoi);
                 if (!AreEquivalent(poi, normalizedUpdatedPoi))
                 {
+                    normalizedUpdatedPoi.UpdatedAtUtc = DateTime.UtcNow;
                     _pois[index] = normalizedUpdatedPoi;
                     hasChanges = true;
                 }
@@ -212,32 +239,89 @@ public class PoiRepository
     {
         var normalized = dto.Clone();
         normalized.NarrationTranslations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        normalized.Code ??= string.Empty;
-        normalized.Name ??= string.Empty;
-        normalized.Category = string.IsNullOrWhiteSpace(normalized.Category) ? "Ẩm thực" : normalized.Category;
-        normalized.ImageSource ??= string.Empty;
-        normalized.Address ??= string.Empty;
-        normalized.Description ??= string.Empty;
-        normalized.SpecialDish ??= string.Empty;
-        normalized.PriceRange ??= string.Empty;
-        normalized.OpeningHours ??= string.Empty;
-        normalized.FirstDishSuggestion ??= string.Empty;
+        normalized.Code = normalized.Code?.Trim() ?? string.Empty;
+        normalized.Name = normalized.Name?.Trim() ?? string.Empty;
+        normalized.Category = string.IsNullOrWhiteSpace(normalized.Category) ? "Ẩm thực" : normalized.Category.Trim();
+        normalized.ImageSource = normalized.ImageSource?.Trim() ?? string.Empty;
+        normalized.Address = normalized.Address?.Trim() ?? string.Empty;
+        normalized.Description = normalized.Description?.Trim() ?? string.Empty;
+        normalized.SpecialDish = normalized.SpecialDish?.Trim() ?? string.Empty;
+        normalized.PriceRange = normalized.PriceRange?.Trim() ?? string.Empty;
+        normalized.OpeningHours = normalized.OpeningHours?.Trim() ?? string.Empty;
+        normalized.FirstDishSuggestion = normalized.FirstDishSuggestion?.Trim() ?? string.Empty;
         normalized.FeaturedCategories = (normalized.FeaturedCategories ?? [])
             .Where(item => !string.IsNullOrWhiteSpace(item))
             .Select(item => item.Trim().ToLowerInvariant())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
-        normalized.NarrationText ??= string.Empty;
-        normalized.MapLink ??= string.Empty;
-        normalized.AudioAssetPath ??= string.Empty;
-        normalized.OwnerUserCode ??= string.Empty;
-        normalized.OwnerDisplayName ??= string.Empty;
-        normalized.OwnerEmail ??= string.Empty;
+        normalized.NarrationText = normalized.NarrationText?.Trim() ?? string.Empty;
+        normalized.MapLink = normalized.MapLink?.Trim() ?? string.Empty;
+        normalized.AudioAssetPath = normalized.AudioAssetPath?.Trim() ?? string.Empty;
+        normalized.OwnerUserCode = normalized.OwnerUserCode?.Trim() ?? string.Empty;
+        normalized.OwnerDisplayName = normalized.OwnerDisplayName?.Trim() ?? string.Empty;
+        normalized.OwnerEmail = normalized.OwnerEmail?.Trim().ToLowerInvariant() ?? string.Empty;
         normalized.CooldownMinutes = normalized.CooldownMinutes <= 0 ? 5 : normalized.CooldownMinutes;
         normalized.TriggerRadiusMeters = normalized.TriggerRadiusMeters <= 0 ? 50 : normalized.TriggerRadiusMeters;
         normalized.Priority = normalized.Priority <= 0 ? 1 : normalized.Priority;
+        normalized.CreatedAtUtc = NormalizeUtc(normalized.CreatedAtUtc);
+        normalized.UpdatedAtUtc = NormalizeUtc(normalized.UpdatedAtUtc);
+        normalized.DeletedAtUtc = NormalizeUtc(normalized.DeletedAtUtc);
+        if (normalized.IsDeleted && normalized.DeletedAtUtc is null)
+        {
+            normalized.DeletedAtUtc = DateTime.UtcNow;
+        }
 
         return normalized;
+    }
+
+    private void ValidateForSave(PoiDto dto, Guid? currentId = null)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Code))
+        {
+            throw new ArgumentException("POI code is required.", nameof(dto));
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.Name))
+        {
+            throw new ArgumentException("POI name is required.", nameof(dto));
+        }
+
+        if (dto.Latitude < -90 || dto.Latitude > 90)
+        {
+            throw new ArgumentException("POI latitude must be between -90 and 90.", nameof(dto));
+        }
+
+        if (dto.Longitude < -180 || dto.Longitude > 180)
+        {
+            throw new ArgumentException("POI longitude must be between -180 and 180.", nameof(dto));
+        }
+
+        if (_pois.Any(item =>
+                !item.IsDeleted &&
+                (!currentId.HasValue || item.Id != currentId.Value) &&
+                string.Equals(item.Code, dto.Code, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException($"POI code '{dto.Code}' already exists.");
+        }
+    }
+
+    private static DateTime NormalizeUtc(DateTime value)
+    {
+        if (value == default)
+        {
+            return DateTime.UtcNow;
+        }
+
+        return value.Kind == DateTimeKind.Utc
+            ? value
+            : value.ToUniversalTime();
+    }
+
+    private static DateTime? NormalizeUtc(DateTime? value)
+    {
+        return value.HasValue
+            ? NormalizeUtc(value.Value)
+            : null;
     }
 
     private static string NormalizeLanguageCode(string? languageCode)

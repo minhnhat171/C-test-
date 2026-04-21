@@ -154,26 +154,6 @@ public class TourEditorStopViewModel
     public bool IsActive { get; set; }
 }
 
-public class AudioManagementViewModel
-{
-    public List<AudioGuide> Items { get; set; } = new();
-    public List<Poi> Pois { get; set; } = new();
-    public AudioGuideEditorViewModel Editor { get; set; } = new();
-}
-
-public class AudioGuideEditorViewModel
-{
-    public int Id { get; set; }
-    public int PoiId { get; set; }
-    public string Language { get; set; } = "vi-VN";
-    public string VoiceType { get; set; } = "Female";
-    public string SourceType { get; set; } = "TTS";
-    public string Script { get; set; } = string.Empty;
-    public string FilePath { get; set; } = string.Empty;
-    public int EstimatedSeconds { get; set; }
-    public bool IsPublished { get; set; } = true;
-}
-
 public class TranslationManagementViewModel
 {
     public string LoadErrorMessage { get; set; } = string.Empty;

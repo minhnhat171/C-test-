@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VinhKhanhGuide.Core.Contracts;
+using VKFoodAPI.Security;
 using VKFoodAPI.Services;
 
 namespace VKFoodAPI.Controllers;
@@ -32,22 +34,49 @@ public class PoisController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = AdminApiKeyDefaults.PolicyName)]
     public ActionResult<PoiDto> Create([FromBody] PoiDto dto)
     {
-        var created = _repo.Create(dto);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        try
+        {
+            var created = _repo.Create(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = AdminApiKeyDefaults.PolicyName)]
     public IActionResult Update(Guid id, [FromBody] PoiDto dto)
     {
-        if (!_repo.Update(id, dto))
-            return NotFound();
+        try
+        {
+            if (!_repo.Update(id, dto))
+            {
+                return NotFound();
+            }
 
-        return NoContent();
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = AdminApiKeyDefaults.PolicyName)]
     public IActionResult Delete(Guid id)
     {
         if (!_repo.Delete(id))

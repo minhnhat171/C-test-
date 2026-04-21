@@ -125,6 +125,8 @@ public class UserManagementRepository
                 (!string.IsNullOrWhiteSpace(normalizedRequest.Email) &&
                  string.Equals(profile.Email, normalizedRequest.Email, StringComparison.OrdinalIgnoreCase)));
 
+            ValidateForUpsert(normalizedRequest, existingProfile?.Id);
+
             if (existingProfile is null)
             {
                 existingProfile = NormalizeProfile(new UserProfileRecord
@@ -567,6 +569,37 @@ public class UserManagementRepository
                 : request.PreferredLanguage.Trim(),
             DevicePlatform = request.DevicePlatform?.Trim() ?? string.Empty
         };
+    }
+
+    private void ValidateForUpsert(AdminUserProfileUpsertRequest request, Guid? existingProfileId)
+    {
+        if (string.IsNullOrWhiteSpace(request.UserCode))
+        {
+            throw new ArgumentException("UserCode is required.", nameof(request));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Email) &&
+            !request.Email.Contains('@', StringComparison.Ordinal))
+        {
+            throw new ArgumentException("Email is invalid.", nameof(request));
+        }
+
+        var hasDuplicateUserCode = _profiles.Any(profile =>
+            (!existingProfileId.HasValue || profile.Id != existingProfileId.Value) &&
+            string.Equals(profile.UserCode, request.UserCode, StringComparison.OrdinalIgnoreCase));
+        if (hasDuplicateUserCode)
+        {
+            throw new InvalidOperationException($"UserCode '{request.UserCode}' already exists.");
+        }
+
+        var hasDuplicateEmail = !string.IsNullOrWhiteSpace(request.Email) &&
+            _profiles.Any(profile =>
+                (!existingProfileId.HasValue || profile.Id != existingProfileId.Value) &&
+                string.Equals(profile.Email, request.Email, StringComparison.OrdinalIgnoreCase));
+        if (hasDuplicateEmail)
+        {
+            throw new InvalidOperationException($"Email '{request.Email}' already exists.");
+        }
     }
 
     private static string NormalizeLookup(string? value)

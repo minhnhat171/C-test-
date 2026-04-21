@@ -1,133 +1,134 @@
-using Microsoft.AspNetCore.Mvc;
 using CTest.WebAdmin.Models;
+using CTest.WebAdmin.Security;
 using CTest.WebAdmin.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using VinhKhanhGuide.Core.Contracts;
 
 namespace CTest.WebAdmin.Controllers;
 
+[Authorize(Policy = WebAdminPolicies.AdminOnly)]
 public class TranslationsController : Controller
 {
-    private readonly AppDataService _data;
-    private readonly WebDisplayClock _clock;
+    private readonly PoiApiClient _poiApiClient;
     private static readonly (string Code, string Label)[] SupportedLanguages =
     [
-        ("vi", "Tiếng Việt"),
-        ("en", "Tiếng Anh"),
-        ("zh", "Tiếng Trung"),
-        ("ko", "Tiếng Hàn")
+        ("vi", "Tieng Viet"),
+        ("en", "Tieng Anh"),
+        ("zh", "Tieng Trung"),
+        ("ko", "Tieng Han"),
+        ("fr", "Tieng Phap")
     ];
 
-    public TranslationsController(AppDataService data, WebDisplayClock clock)
+    public TranslationsController(PoiApiClient poiApiClient)
     {
-        _data = data;
-        _clock = clock;
+        _poiApiClient = poiApiClient;
     }
 
-    public IActionResult Index(int? poiId)
+    public async Task<IActionResult> Index(Guid? poiId, CancellationToken cancellationToken = default)
     {
-        var pois = _data.Pois.OrderBy(x => x.Name).ToList();
-        if (!pois.Any())
+        var vm = new TranslationManagementViewModel();
+
+        try
         {
-            return View("Manage", new TranslationManagementViewModel());
+            vm.Pois = (await _poiApiClient.GetPoisAsync(cancellationToken))
+                .OrderBy(x => x.Name)
+                .Select(x => x.ToLookupItem())
+                .ToList();
+
+            if (!vm.Pois.Any())
+            {
+                return View("Manage", vm);
+            }
+
+            var selectedPoi = vm.Pois.FirstOrDefault(x => x.Id == poiId) ?? vm.Pois.First();
+            var poi = await _poiApiClient.GetPoiAsync(selectedPoi.Id, cancellationToken);
+            if (poi is null)
+            {
+                vm.LoadErrorMessage = "Khong tai duoc du lieu POI tu API.";
+                return View("Manage", vm);
+            }
+
+            vm.SelectedPoiId = poi.Id;
+            vm.SelectedPoiName = poi.Name;
+            vm.Languages = SupportedLanguages
+                .Select(language => BuildLanguageEditor(poi, language.Code, language.Label))
+                .ToList();
         }
-
-        var selectedPoi = pois.FirstOrDefault(x => x.Id == poiId) ?? pois.First();
-
-        var vm = new TranslationManagementViewModel
+        catch (HttpRequestException)
         {
-            Pois = pois,
-            SelectedPoiId = selectedPoi.Id,
-            SelectedPoiName = selectedPoi.Name,
-            Languages = SupportedLanguages.Select(language => BuildLanguageEditor(selectedPoi, language.Code, language.Label)).ToList()
-        };
+            vm.LoadErrorMessage = "Khong the ket noi VKFoodAPI. Trang ban dich chi dong bo khi API dang chay.";
+        }
 
         return View("Manage", vm);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Save(TranslationLanguageEditorViewModel model)
+    public async Task<IActionResult> Save(TranslationLanguageEditorViewModel model, CancellationToken cancellationToken = default)
     {
-        var poi = _data.Pois.FirstOrDefault(x => x.Id == model.PoiId);
-        if (poi is null)
+        if (model.PoiId == Guid.Empty)
         {
-            TempData["TranslationMessage"] = "Không tìm thấy POI để lưu bản dịch.";
+            TempData["TranslationMessage"] = "Khong xac dinh duoc POI de luu ban dich.";
             return RedirectToAction(nameof(Index));
         }
 
-        var entry = _data.Translations.FirstOrDefault(x => x.Id == model.TranslationId);
-        if (entry is null)
+        try
         {
-            entry = _data.Translations.FirstOrDefault(x => x.PoiId == model.PoiId && NormalizeLanguageCode(x.Language) == model.LanguageCode);
-        }
-
-        if (entry is null)
-        {
-            entry = new TranslationEntry
+            var poi = await _poiApiClient.GetPoiAsync(model.PoiId, cancellationToken);
+            if (poi is null)
             {
-                Id = _data.Translations.Any() ? _data.Translations.Max(x => x.Id) + 1 : 1,
-                PoiId = poi.Id,
-                PoiName = poi.Name,
-                Language = model.LanguageLabel
-            };
+                TempData["TranslationMessage"] = "POI khong con ton tai tren API.";
+                return RedirectToAction(nameof(Index));
+            }
 
-            _data.Translations.Add(entry);
+            poi.NarrationTranslations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            var narration = model.NarrationScript?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(narration))
+            {
+                poi.NarrationTranslations.Remove(model.LanguageCode);
+            }
+            else
+            {
+                poi.NarrationTranslations[model.LanguageCode] = narration;
+            }
+
+            if (string.Equals(model.LanguageCode, "vi", StringComparison.OrdinalIgnoreCase))
+            {
+                poi.NarrationText = narration;
+            }
+
+            await _poiApiClient.UpdatePoiAsync(poi.Id, poi, cancellationToken);
+
+            TempData["TranslationMessage"] = $"Da cap nhat script {model.LanguageLabel} cho app MAUI.";
+            return RedirectToAction(nameof(Index), new { poiId = poi.Id });
         }
-
-        entry.PoiId = poi.Id;
-        entry.PoiName = poi.Name;
-        entry.Language = model.LanguageLabel;
-        entry.Title = model.Title;
-        entry.Description = model.Description;
-        entry.NarrationScript = model.NarrationScript;
-        entry.Body = model.NarrationScript;
-        entry.IsApproved = model.IsTranslated;
-        entry.UpdatedAt = _clock.Now.DateTime;
-
-        TempData["TranslationMessage"] = $"Đã cập nhật nội dung {model.LanguageLabel} cho {poi.Name}.";
-        return RedirectToAction(nameof(Index), new { poiId = poi.Id });
+        catch (HttpRequestException)
+        {
+            TempData["TranslationMessage"] = "Khong the ket noi VKFoodAPI nen chua luu duoc ban dich.";
+            return RedirectToAction(nameof(Index), new { poiId = model.PoiId });
+        }
     }
 
-    private TranslationLanguageEditorViewModel BuildLanguageEditor(Poi poi, string languageCode, string languageLabel)
+    private static TranslationLanguageEditorViewModel BuildLanguageEditor(PoiDto poi, string languageCode, string languageLabel)
     {
-        var entry = _data.Translations.FirstOrDefault(x => x.PoiId == poi.Id && NormalizeLanguageCode(x.Language) == languageCode);
+        var translations = poi.NarrationTranslations ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        translations.TryGetValue(languageCode, out var translatedNarration);
+
+        var narrationScript = string.Equals(languageCode, "vi", StringComparison.OrdinalIgnoreCase)
+            ? (!string.IsNullOrWhiteSpace(poi.NarrationText) ? poi.NarrationText : translatedNarration ?? string.Empty)
+            : translatedNarration ?? string.Empty;
 
         return new TranslationLanguageEditorViewModel
         {
-            TranslationId = entry?.Id ?? 0,
             PoiId = poi.Id,
             LanguageCode = languageCode,
             LanguageLabel = languageLabel,
-            Title = entry?.Title ?? poi.Name,
-            Description = entry?.Description ?? poi.Description,
-            NarrationScript = entry?.NarrationScript ?? entry?.Body ?? poi.NarrationScript,
-            IsTranslated = entry?.IsApproved ?? false
+            Title = poi.Name,
+            Description = poi.Description,
+            NarrationScript = narrationScript,
+            IsTranslated = !string.IsNullOrWhiteSpace(narrationScript)
         };
-    }
-
-    private static string NormalizeLanguageCode(string language)
-    {
-        var value = language.ToLowerInvariant();
-
-        if (value.Contains("vi"))
-        {
-            return "vi";
-        }
-
-        if (value.Contains("en"))
-        {
-            return "en";
-        }
-
-        if (value.Contains("zh") || value.Contains("trung") || value.Contains("chinese"))
-        {
-            return "zh";
-        }
-
-        if (value.Contains("ko") || value.Contains("hàn") || value.Contains("korean"))
-        {
-            return "ko";
-        }
-
-        return value;
     }
 }

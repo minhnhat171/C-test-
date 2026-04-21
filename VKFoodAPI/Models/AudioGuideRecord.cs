@@ -15,7 +15,10 @@ public class AudioGuideRecord
     public string FilePath { get; set; } = string.Empty;
     public int EstimatedSeconds { get; set; } = 30;
     public bool IsPublished { get; set; } = true;
+    public bool IsDeleted { get; set; }
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime? DeletedAtUtc { get; set; }
 
     public AudioGuideRecord Clone()
     {
@@ -32,7 +35,10 @@ public class AudioGuideRecord
             FilePath = FilePath,
             EstimatedSeconds = EstimatedSeconds,
             IsPublished = IsPublished,
-            UpdatedAtUtc = UpdatedAtUtc
+            IsDeleted = IsDeleted,
+            CreatedAtUtc = CreatedAtUtc,
+            UpdatedAtUtc = UpdatedAtUtc,
+            DeletedAtUtc = DeletedAtUtc
         };
     }
 
@@ -51,7 +57,10 @@ public class AudioGuideRecord
             FilePath = FilePath,
             EstimatedSeconds = EstimatedSeconds,
             IsPublished = IsPublished,
-            UpdatedAtUtc = UpdatedAtUtc
+            IsDeleted = IsDeleted,
+            CreatedAtUtc = CreatedAtUtc,
+            UpdatedAtUtc = UpdatedAtUtc,
+            DeletedAtUtc = DeletedAtUtc
         };
     }
 
@@ -70,7 +79,10 @@ public class AudioGuideRecord
             FilePath = dto.FilePath,
             EstimatedSeconds = dto.EstimatedSeconds,
             IsPublished = dto.IsPublished,
-            UpdatedAtUtc = dto.UpdatedAtUtc
+            IsDeleted = dto.IsDeleted,
+            CreatedAtUtc = dto.CreatedAtUtc,
+            UpdatedAtUtc = dto.UpdatedAtUtc,
+            DeletedAtUtc = dto.DeletedAtUtc
         };
     }
 }

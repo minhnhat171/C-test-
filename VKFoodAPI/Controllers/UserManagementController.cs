@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VinhKhanhGuide.Core.Contracts;
+using VKFoodAPI.Security;
 using VKFoodAPI.Services;
 
 namespace VKFoodAPI.Controllers;
 
 [ApiController]
 [Route("api/admin/users")]
+[Authorize(Policy = AdminApiKeyDefaults.PolicyName)]
 public class UserManagementController : ControllerBase
 {
     private readonly UserManagementRepository _repository;
@@ -50,7 +53,30 @@ public class UserManagementController : ControllerBase
     [HttpPost("profile-sync")]
     public ActionResult<AdminUserDetailDto> UpsertProfile([FromBody] AdminUserProfileUpsertRequest request)
     {
-        var detail = _repository.UpsertProfile(request);
-        return Ok(detail);
+        return UpsertProfileCore(request);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("/api/users/profile-sync")]
+    public ActionResult<AdminUserDetailDto> UpsertPublicProfile([FromBody] AdminUserProfileUpsertRequest request)
+    {
+        return UpsertProfileCore(request);
+    }
+
+    private ActionResult<AdminUserDetailDto> UpsertProfileCore(AdminUserProfileUpsertRequest request)
+    {
+        try
+        {
+            var detail = _repository.UpsertProfile(request);
+            return Ok(detail);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 }

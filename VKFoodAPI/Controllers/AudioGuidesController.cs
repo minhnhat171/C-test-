@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VinhKhanhGuide.Core.Contracts;
+using VKFoodAPI.Security;
 using VKFoodAPI.Services;
 
 namespace VKFoodAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Policy = AdminApiKeyDefaults.PolicyName)]
 public class AudioGuidesController : ControllerBase
 {
     private readonly AudioGuideRepository _repo;
@@ -37,8 +40,19 @@ public class AudioGuidesController : ControllerBase
             return validationProblem;
         }
 
-        var created = _repo.Create(dto);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        try
+        {
+            var created = _repo.Create(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpPut("{id:guid}")]
@@ -50,9 +64,20 @@ public class AudioGuidesController : ControllerBase
             return validationProblem;
         }
 
-        return _repo.Update(id, dto)
-            ? NoContent()
-            : NotFound();
+        try
+        {
+            return _repo.Update(id, dto)
+                ? NoContent()
+                : NotFound();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpDelete("{id:guid}")]
