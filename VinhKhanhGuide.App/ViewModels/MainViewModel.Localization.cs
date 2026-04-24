@@ -181,7 +181,12 @@ public partial class MainViewModel
     public string AccountStatusValue => LocalizeUi("Sẵn sàng", "Ready", "已准备好", "준비됨", "Prêt");
     public string PersonalInfoSectionTitle => LocalizeUi("Thông tin khách", "Visitor Info", "访客信息", "방문객 정보", "Infos visiteur");
     public string FullNameLabel => LocalizeUi("Họ và tên", "Full Name", "姓名", "이름", "Nom complet");
-    public string FullNamePlaceholder => LocalizeUi("Nhập họ và tên", "Enter full name", "输入姓名", "이름 입력", "Saisir le nom complet");
+    public string FullNamePlaceholder => LocalizeUi(
+        "Để trống để dùng Khách tham quan",
+        "Leave blank to use Guest Visitor",
+        "留空则显示为访客",
+        "비워두면 방문객으로 표시됩니다",
+        "Laisser vide pour utiliser Visiteur");
     public string EmailLabel => LocalizeUi("Email", "Email", "电子邮箱", "이메일", "E-mail");
     public string EmailPlaceholder => LocalizeUi("Nhập email", "Enter email", "输入邮箱", "이메일 입력", "Saisir l'e-mail");
     public string PhoneLabel => LocalizeUi("Số điện thoại", "Phone Number", "电话号码", "전화번호", "Numéro de téléphone");

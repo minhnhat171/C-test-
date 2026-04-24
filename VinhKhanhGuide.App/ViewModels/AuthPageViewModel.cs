@@ -33,11 +33,11 @@ public class AuthPageViewModel : INotifyPropertyChanged
 
     public IReadOnlyList<AudioSettingsOption> SupportedLanguages { get; } =
     [
-        new() { Code = "vi", Label = "Tiếng Việt", Description = "Phù hợp cho khách nội địa và giọng đọc tiếng Việt." },
-        new() { Code = "en", Label = "English", Description = "Good for international visitors who want English narration." },
-        new() { Code = "zh", Label = "中文", Description = "适合希望使用中文界面和中文讲解的游客。" },
-        new() { Code = "ko", Label = "한국어", Description = "한국어 화면과 음성 안내를 원하는 방문객에게 적합합니다." },
-        new() { Code = "fr", Label = "Français", Description = "Adapté aux visiteurs qui souhaitent une interface et une narration en français." }
+        new() { Code = "vi", Label = "Tiếng Việt", FlagEmoji = "🇻🇳", Description = "Phù hợp cho khách nội địa và giọng đọc tiếng Việt." },
+        new() { Code = "en", Label = "English", FlagEmoji = "🇺🇸", Description = "Good for international visitors who want English narration." },
+        new() { Code = "zh", Label = "中文", FlagEmoji = "🇨🇳", Description = "适合希望使用中文界面和中文讲解的游客。" },
+        new() { Code = "ko", Label = "한국어", FlagEmoji = "🇰🇷", Description = "한국어 화면과 음성 안내를 원하는 방문객에게 적합합니다." },
+        new() { Code = "fr", Label = "Français", FlagEmoji = "🇫🇷", Description = "Adapté aux visiteurs qui souhaitent une interface et une narration en français." }
     ];
 
     public bool IsBusy
@@ -178,6 +178,7 @@ public class AuthPageViewModel : INotifyPropertyChanged
 
             OnPropertyChanged(nameof(SelectedLanguageOption));
             OnPropertyChanged(nameof(SelectedLanguageDisplayName));
+            OnPropertyChanged(nameof(SelectedLanguageDisplayLabel));
             OnPropertyChanged(nameof(SelectedLanguageSummary));
             OnPropertyChanged(nameof(WelcomeTitle));
             OnPropertyChanged(nameof(WelcomeSubtitle));
@@ -202,6 +203,9 @@ public class AuthPageViewModel : INotifyPropertyChanged
     }
 
     public string SelectedLanguageDisplayName => GetLanguageDisplayName(SelectedLanguage);
+
+    public string SelectedLanguageDisplayLabel =>
+        SelectedLanguageOption?.DisplayLabel ?? SelectedLanguageDisplayName;
 
     public string SelectedLanguageSummary => SelectedLanguage switch
     {

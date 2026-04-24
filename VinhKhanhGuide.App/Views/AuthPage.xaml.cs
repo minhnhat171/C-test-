@@ -181,7 +181,7 @@ public partial class AuthPage : ContentPage
             Title = "Chọn ngôn ngữ",
             TitleColor = Color.FromArgb("#8AA1BF"),
             TextColor = Color.FromArgb("#102A43"),
-            ItemDisplayBinding = new Binding(nameof(AudioSettingsOption.Label))
+            ItemDisplayBinding = new Binding(nameof(AudioSettingsOption.DisplayLabel))
         };
         picker.SetBinding(Picker.ItemsSourceProperty, nameof(AuthPageViewModel.SupportedLanguages));
         picker.SetBinding(Picker.SelectedItemProperty, nameof(AuthPageViewModel.SelectedLanguageOption));

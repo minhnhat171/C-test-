@@ -211,11 +211,11 @@
                             StrokeShape="RoundRectangle 18">
                         <Picker Title="{Binding LanguagePickerTitle}"
                                 ItemsSource="{Binding SupportedLanguages}"
-                                ItemDisplayBinding="{Binding Label}"
+                                ItemDisplayBinding="{Binding DisplayLabel}"
                                 SelectedItem="{Binding DraftSelectedLanguageOption}" />
                     </Border>
 
-                    <Label Text="{Binding DraftSelectedLanguageDisplayName}"
+                    <Label Text="{Binding DraftSelectedLanguageDisplayLabel}"
                            FontSize="15"
                            FontAttributes="Bold"
                            TextColor="#163B6D" />

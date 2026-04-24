@@ -168,7 +168,7 @@ public class AuthService : IAuthService
         {
             var guestProfile = new GuestProfileRecord
             {
-                FullName = request.FullName.Trim(),
+                FullName = request.FullName?.Trim() ?? string.Empty,
                 Email = string.IsNullOrWhiteSpace(request.Email)
                     ? string.Empty
                     : NormalizeEmail(request.Email),
@@ -208,7 +208,7 @@ public class AuthService : IAuthService
             return Task.FromResult(AuthResult.Failure("Email này đã được sử dụng bởi tài khoản khác."));
         }
 
-        currentUser.FullName = request.FullName.Trim();
+        currentUser.FullName = request.FullName?.Trim() ?? string.Empty;
         currentUser.Email = normalizedEmail;
         currentUser.PhoneNumber = NormalizePhoneNumber(request.PhoneNumber);
 

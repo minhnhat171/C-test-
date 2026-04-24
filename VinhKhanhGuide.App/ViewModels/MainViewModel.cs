@@ -220,11 +220,11 @@ public partial class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<string> ViewHistory { get; } = new();
     public IReadOnlyList<AudioSettingsOption> SupportedLanguages { get; } =
     [
-        new() { Code = "vi", Label = "Tiếng Việt", Description = "Giọng tiếng Việt chuẩn cho khách nội địa." },
-        new() { Code = "en", Label = "English", Description = "English interface and narration for international visitors." },
-        new() { Code = "zh", Label = "中文", Description = "中文界面和中文讲解。" },
-        new() { Code = "ko", Label = "한국어", Description = "한국어 화면과 음성 안내." },
-        new() { Code = "fr", Label = "Français", Description = "Interface et narration en français." }
+        new() { Code = "vi", Label = "Tiếng Việt", FlagEmoji = "🇻🇳", Description = "Giọng tiếng Việt chuẩn cho khách nội địa." },
+        new() { Code = "en", Label = "English", FlagEmoji = "🇺🇸", Description = "English interface and narration for international visitors." },
+        new() { Code = "zh", Label = "中文", FlagEmoji = "🇨🇳", Description = "中文界面和中文讲解。" },
+        new() { Code = "ko", Label = "한국어", FlagEmoji = "🇰🇷", Description = "한국어 화면과 음성 안내." },
+        new() { Code = "fr", Label = "Français", FlagEmoji = "🇫🇷", Description = "Interface et narration en français." }
     ];
     public IReadOnlyList<AudioSettingsOption> SupportedPlaybackModes { get; } =
     [
@@ -682,6 +682,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             }
 
             OnPropertyChanged(nameof(SelectedLanguageDisplayName));
+            OnPropertyChanged(nameof(SelectedLanguageDisplayLabel));
             OnPropertyChanged(nameof(AudioSettingsSummary));
             OnPropertyChanged(nameof(HomeNarrationAvailabilityText));
             OnPropertyChanged(nameof(CurrentAudioSettingsSummary));
@@ -744,6 +745,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             }
 
             OnPropertyChanged(nameof(DraftSelectedLanguageDisplayName));
+            OnPropertyChanged(nameof(DraftSelectedLanguageDisplayLabel));
             OnPropertyChanged(nameof(DraftSelectedLanguageOption));
             OnPropertyChanged(nameof(DraftAudioSettingsSummary));
             OnPropertyChanged(nameof(HasPendingAudioSettingsChanges));
@@ -1119,6 +1121,9 @@ public partial class MainViewModel : INotifyPropertyChanged
 
     public string DraftSelectedLanguageDisplayName => GetLanguageDisplayName(DraftSelectedLanguage);
 
+    public string DraftSelectedLanguageDisplayLabel =>
+        DraftSelectedLanguageOption?.DisplayLabel ?? DraftSelectedLanguageDisplayName;
+
     public AudioSettingsOption? DraftSelectedLanguageOption
     {
         get => SupportedLanguages.FirstOrDefault(item =>
@@ -1210,6 +1215,11 @@ public partial class MainViewModel : INotifyPropertyChanged
         : "Chưa có lượt xem nào";
 
     public string SelectedLanguageDisplayName => GetLanguageDisplayName(SelectedLanguage);
+
+    public string SelectedLanguageDisplayLabel =>
+        SupportedLanguages.FirstOrDefault(item =>
+            string.Equals(item.Code, SelectedLanguage, StringComparison.OrdinalIgnoreCase))?.DisplayLabel ??
+        SelectedLanguageDisplayName;
 
     public string AudioSettingsSummary =>
         $"{(IsAutoNarrationEnabled
@@ -4141,6 +4151,7 @@ public partial class MainViewModel : INotifyPropertyChanged
 
         OnPropertyChanged(nameof(DraftSelectedLanguage));
         OnPropertyChanged(nameof(DraftSelectedLanguageDisplayName));
+        OnPropertyChanged(nameof(DraftSelectedLanguageDisplayLabel));
         OnPropertyChanged(nameof(DraftSelectedLanguageOption));
         OnPropertyChanged(nameof(DraftSelectedPlaybackMode));
         OnPropertyChanged(nameof(DraftPlaybackModeDisplay));

@@ -16,22 +16,17 @@ public sealed class AccountProfileValidationService : IAccountProfileValidationS
     public AccountProfileValidationResult Validate(AccountProfileUpdateRequest request)
     {
         var errors = new List<string>();
-        var fullName = request.FullName.Trim();
-        var email = request.Email.Trim();
-        var phoneNumber = request.PhoneNumber.Trim();
+        var fullName = request.FullName?.Trim() ?? string.Empty;
+        var email = request.Email?.Trim() ?? string.Empty;
+        var phoneNumber = request.PhoneNumber?.Trim() ?? string.Empty;
 
-        if (string.IsNullOrWhiteSpace(fullName))
-        {
-            errors.Add("Vui lòng nhập họ và tên.");
-        }
-        else
+        if (!string.IsNullOrWhiteSpace(fullName))
         {
             if (fullName.Length < 2)
             {
                 errors.Add("Họ và tên cần có ít nhất 2 ký tự.");
             }
-
-            if (fullName.Length > 80)
+            else if (fullName.Length > 80)
             {
                 errors.Add("Họ và tên không được vượt quá 80 ký tự.");
             }

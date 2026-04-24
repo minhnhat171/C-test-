@@ -71,7 +71,7 @@
                                         TitleColor="#8AA1BF"
                                         TextColor="#102A43"
                                         ItemsSource="{Binding SupportedLanguages}"
-                                        ItemDisplayBinding="{Binding Label}"
+                                        ItemDisplayBinding="{Binding DisplayLabel}"
                                         SelectedItem="{Binding SelectedLanguageOption}" />
                             </Border>
 

@@ -11,7 +11,9 @@ public sealed class AudioSettingsOption
 {
     public string Code { get; init; } = string.Empty;
     public string Label { get; init; } = string.Empty;
+    public string FlagEmoji { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
+    public string DisplayLabel => string.IsNullOrWhiteSpace(FlagEmoji) ? Label : $"{FlagEmoji} {Label}";
 
-    public override string ToString() => Label;
+    public override string ToString() => DisplayLabel;
 }
