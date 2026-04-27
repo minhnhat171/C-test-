@@ -64,5 +64,38 @@
     "PreferredLanguage": "vi-VN",
     "DevicePlatform": "Android",
     "CreatedAtUtc": "2026-04-27T14:25:14.1984464+00:00"
+  },
+  {
+    "Id": "9d37e539-551a-1c1a-8e30-83c9e38b9c80",
+    "UserCode": "guest-8c8efb8d",
+    "DisplayName": "kho",
+    "Email": "",
+    "Role": "guest",
+    "PhoneNumber": "",
+    "PreferredLanguage": "vi-VN",
+    "DevicePlatform": "Android",
+    "CreatedAtUtc": "2026-04-27T20:02:19.0058729+00:00"
+  },
+  {
+    "Id": "00951c6d-730f-895f-225f-24766f95291b",
+    "UserCode": "guest-22e6d4ef",
+    "DisplayName": "nhat",
+    "Email": "",
+    "Role": "guest",
+    "PhoneNumber": "",
+    "PreferredLanguage": "vi-VN",
+    "DevicePlatform": "Android",
+    "CreatedAtUtc": "2026-04-27T20:02:26.0691668+00:00"
+  },
+  {
+    "Id": "06e3c811-5471-9db4-20d7-d1efb7584847",
+    "UserCode": "guest-6157c4c5",
+    "DisplayName": "dat",
+    "Email": "",
+    "Role": "guest",
+    "PhoneNumber": "",
+    "PreferredLanguage": "vi-VN",
+    "DevicePlatform": "Android",
+    "CreatedAtUtc": "2026-04-27T20:02:33.6881667+00:00"
   }
 ]
