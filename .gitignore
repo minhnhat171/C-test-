@@ -36,3 +36,4 @@ tmp-*.png
 *.suo
 Thumbs.db
 Desktop.ini
+.codex-tmp/
