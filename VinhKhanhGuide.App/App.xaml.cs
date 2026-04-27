@@ -15,17 +15,20 @@ public partial class App : Application
     private readonly IServiceProvider _serviceProvider;
     private readonly IAuthService _authService;
     private readonly IActiveDeviceTracker _activeDeviceTracker;
+    private readonly IApiEndpointService _apiEndpointService;
     private bool _isHandlingQrRequests;
     private bool _isSigningInGuestForQr;
 
     public App(
         IServiceProvider serviceProvider,
         IAuthService authService,
-        IActiveDeviceTracker activeDeviceTracker)
+        IActiveDeviceTracker activeDeviceTracker,
+        IApiEndpointService apiEndpointService)
     {
         _serviceProvider = serviceProvider;
         _authService = authService;
         _activeDeviceTracker = activeDeviceTracker;
+        _apiEndpointService = apiEndpointService;
         _authService.SessionChanged += OnSessionChanged;
         QrDeepLinkBroker.PendingRequestAvailable += OnPendingQrRequestAvailable;
 
@@ -134,6 +137,11 @@ public partial class App : Application
     {
         try
         {
+            if (_apiEndpointService.TrySetBaseUrl(request.ApiBaseUrl))
+            {
+                _ = _activeDeviceTracker.SendHeartbeatAsync();
+            }
+
             if (!_authService.IsAuthenticated)
             {
                 if (_isSigningInGuestForQr)

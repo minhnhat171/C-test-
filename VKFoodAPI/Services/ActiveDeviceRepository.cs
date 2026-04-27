@@ -8,7 +8,7 @@ namespace VKFoodAPI.Services;
 
 public class ActiveDeviceRepository
 {
-    private static readonly TimeSpan ActiveTimeout = TimeSpan.FromSeconds(120);
+    private static readonly TimeSpan ActiveTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan RouteRetention = TimeSpan.FromHours(12);
     private const int MaxRoutePoints = 1200;
 

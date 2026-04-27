@@ -18,6 +18,7 @@ public class PoiProvider : IPoiProvider
     private readonly HttpClient _httpClient;
     private readonly ILogger<PoiProvider> _logger;
     private readonly IPoiOfflineStore _poiOfflineStore;
+    private readonly IApiEndpointService _apiEndpointService;
     private readonly object _syncRoot = new();
     private IReadOnlyList<POI> _lastSuccessfulRemotePois = Array.Empty<POI>();
     private bool _hasSuccessfulRemoteFetch;
@@ -27,11 +28,13 @@ public class PoiProvider : IPoiProvider
     public PoiProvider(
         HttpClient httpClient,
         ILogger<PoiProvider> logger,
-        IPoiOfflineStore poiOfflineStore)
+        IPoiOfflineStore poiOfflineStore,
+        IApiEndpointService apiEndpointService)
     {
         _httpClient = httpClient;
         _logger = logger;
         _poiOfflineStore = poiOfflineStore;
+        _apiEndpointService = apiEndpointService;
     }
 
     public async Task<IReadOnlyList<POI>> GetPoisAsync(CancellationToken cancellationToken = default)
@@ -222,10 +225,9 @@ public class PoiProvider : IPoiProvider
             return value;
         }
 
-        if (value.StartsWith("/", StringComparison.Ordinal) &&
-            _httpClient.BaseAddress is not null)
+        if (value.StartsWith("/", StringComparison.Ordinal))
         {
-            return new Uri(_httpClient.BaseAddress, value.TrimStart('/')).ToString();
+            return new Uri(_apiEndpointService.CurrentBaseUri, value.TrimStart('/')).ToString();
         }
 
         return value;

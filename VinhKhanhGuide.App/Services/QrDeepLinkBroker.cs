@@ -3,7 +3,12 @@ using VinhKhanhGuide.Core.Contracts;
 
 namespace VinhKhanhGuide.App.Services;
 
-public sealed record QrDeepLinkRequest(string TargetType, string TargetId, bool AutoPlay, string Source);
+public sealed record QrDeepLinkRequest(
+    string TargetType,
+    string TargetId,
+    bool AutoPlay,
+    string Source,
+    string ApiBaseUrl);
 
 public static class QrDeepLinkBroker
 {
@@ -111,7 +116,8 @@ public static class QrDeepLinkBroker
             autoPlay,
             query.TryGetValue("source", out var source) && !string.IsNullOrWhiteSpace(source)
                 ? source
-                : "qr");
+                : "qr",
+            query.TryGetValue("api", out var apiBaseUrl) ? apiBaseUrl : string.Empty);
 
         return true;
     }

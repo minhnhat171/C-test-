@@ -183,10 +183,10 @@ public class QrCodesController : Controller
     [HttpPost("/qr/analytics/active-devices/heartbeat")]
     [AllowAnonymous]
     public async Task<IActionResult> WebHeartbeat(
-        [FromBody] ActiveDeviceHeartbeatRequest request,
+        [FromBody] ActiveDeviceHeartbeatRequest? request,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.DeviceId))
+        if (request is null || string.IsNullOrWhiteSpace(request.DeviceId))
         {
             return BadRequest("DeviceId is required.");
         }
@@ -210,10 +210,10 @@ public class QrCodesController : Controller
     [HttpPost("/qr/analytics/active-devices/disconnect")]
     [AllowAnonymous]
     public async Task<IActionResult> WebDisconnect(
-        [FromBody] ActiveDeviceDisconnectRequest request,
+        [FromBody] ActiveDeviceDisconnectRequest? request,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.DeviceId))
+        if (request is null || string.IsNullOrWhiteSpace(request.DeviceId))
         {
             return BadRequest("DeviceId is required.");
         }
@@ -351,6 +351,8 @@ public class QrCodesController : Controller
 
     private QrScanViewModel BuildScanViewModel(QrTargetDescriptor target)
     {
+        var appLaunchUrl = BuildAppLaunchUrl(target.TargetType, target.TargetId);
+
         return new QrScanViewModel
         {
             TargetType = target.TargetType,
@@ -368,8 +370,8 @@ public class QrCodesController : Controller
             MapLink = target.MapLink,
             SpecialDish = target.SpecialDish,
             PublicUrl = BuildPublicQrUrl(target.TargetType, target.TargetId),
-            AppLaunchUrl = BuildAppLaunchUrl(target.TargetType, target.TargetId),
-            AutoOpenApp = !string.IsNullOrWhiteSpace(BuildAppLaunchUrl(target.TargetType, target.TargetId)),
+            AppLaunchUrl = appLaunchUrl,
+            AutoOpenApp = !string.IsNullOrWhiteSpace(appLaunchUrl),
             EstimatedDurationLabel = target.EstimatedDurationLabel,
             TourStops = target.TourStops
         };
@@ -548,7 +550,7 @@ public class QrCodesController : Controller
         return CombineWithPublicBase(relativePath);
     }
 
-    private static string BuildAppLaunchUrl(string targetType, string targetId)
+    private string BuildAppLaunchUrl(string targetType, string targetId)
     {
         var normalizedTargetType = QrTargetTypes.Normalize(targetType);
         if (string.IsNullOrWhiteSpace(targetId))
@@ -556,7 +558,17 @@ public class QrCodesController : Controller
             return string.Empty;
         }
 
-        return $"vinhkhanhguide://{normalizedTargetType}/{Uri.EscapeDataString(targetId)}?autoplay=1&source=bus-stop-qr";
+        var query = new Dictionary<string, string>
+        {
+            ["autoplay"] = "1",
+            ["source"] = "bus-stop-qr",
+            ["api"] = ResolveMobileApiBaseUrl()
+        };
+        var queryString = string.Join(
+            "&",
+            query.Select(item => $"{Uri.EscapeDataString(item.Key)}={Uri.EscapeDataString(item.Value)}"));
+
+        return $"vinhkhanhguide://{normalizedTargetType}/{Uri.EscapeDataString(targetId)}?{queryString}";
     }
 
     private string BuildQrSvgUrl(string targetType, string targetId)
@@ -582,6 +594,34 @@ public class QrCodesController : Controller
 
         var requestBase = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
         return new Uri(new Uri(EnsureTrailingSlash(requestBase)), relativePath).ToString();
+    }
+
+    private string ResolveMobileApiBaseUrl()
+    {
+        var apiBase = _poiApiBaseUri;
+        var requestHost = Request.Host.Host;
+
+        if (IsLocalHost(apiBase.Host) &&
+            !string.IsNullOrWhiteSpace(requestHost) &&
+            !IsLocalHost(requestHost))
+        {
+            var builder = new UriBuilder(apiBase)
+            {
+                Host = requestHost
+            };
+
+            return builder.Uri.ToString();
+        }
+
+        return apiBase.ToString();
+    }
+
+    private static bool IsLocalHost(string host)
+    {
+        return string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(host, "127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(host, "::1", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(host, "10.0.2.2", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string EnsureTrailingSlash(string baseUrl)

@@ -9,7 +9,6 @@ public class DashboardService
     private readonly TourApiClient _tourApiClient;
     private readonly AudioGuideApiClient _audioGuideApiClient;
     private readonly ListeningHistoryApiClient _listeningHistoryApiClient;
-    private readonly UserManagementApiClient _userManagementApiClient;
     private readonly ActiveDeviceApiClient _activeDeviceApiClient;
     private readonly WebDisplayClock _clock;
 
@@ -18,7 +17,6 @@ public class DashboardService
         TourApiClient tourApiClient,
         AudioGuideApiClient audioGuideApiClient,
         ListeningHistoryApiClient listeningHistoryApiClient,
-        UserManagementApiClient userManagementApiClient,
         ActiveDeviceApiClient activeDeviceApiClient,
         WebDisplayClock clock)
     {
@@ -26,7 +24,6 @@ public class DashboardService
         _tourApiClient = tourApiClient;
         _audioGuideApiClient = audioGuideApiClient;
         _listeningHistoryApiClient = listeningHistoryApiClient;
-        _userManagementApiClient = userManagementApiClient;
         _activeDeviceApiClient = activeDeviceApiClient;
         _clock = clock;
     }
@@ -42,17 +39,15 @@ public class DashboardService
                 sortBy: "time_desc",
                 period: "all",
                 cancellationToken: cancellationToken);
-            var usersTask = _userManagementApiClient.GetUsersAsync(cancellationToken);
             var activeDevicesTask = GetActiveDeviceStatsAsync(cancellationToken);
 
-            await Task.WhenAll(poisTask, toursTask, audioGuidesTask, historyTask, usersTask, activeDevicesTask);
+            await Task.WhenAll(poisTask, toursTask, audioGuidesTask, historyTask, activeDevicesTask);
 
             return BuildFromSharedData(
                 poisTask.Result,
                 audioGuidesTask.Result,
                 historyTask.Result,
                 toursTask.Result.Count,
-                usersTask.Result,
                 activeDevicesTask.Result);
         }
         catch (Exception ex) when (
@@ -152,7 +147,6 @@ public class DashboardService
         IReadOnlyList<AudioGuideDto> audioGuides,
         IReadOnlyList<ListeningHistoryEntryDto> history,
         int totalTours,
-        IReadOnlyList<AdminUserSummaryDto> users,
         ActiveDeviceStatsDto activeDevices)
     {
         var dashboardGeneratedAt = _clock.Now;
@@ -218,21 +212,6 @@ public class DashboardService
                 })
                 .ToList(),
             TopPois = topPois,
-            RecentUsers = users
-                .OrderByDescending(item => item.LastActiveAtUtc ?? DateTimeOffset.MinValue)
-                .ThenBy(item => item.DisplayName)
-                .Take(6)
-                .Select(item => new DashboardRecentUserItem
-                {
-                    DisplayName = item.DisplayName,
-                    Email = item.Email,
-                    PhoneNumber = item.PhoneNumber,
-                    PreferredLanguage = item.PreferredLanguage,
-                    Role = item.Role,
-                    Status = item.Status,
-                    LastActiveAtUtc = item.LastActiveAtUtc
-                })
-                .ToList(),
             RecentLogs = localizedHistory
                 .Take(8)
                 .Select((entry, index) => new UsageLog

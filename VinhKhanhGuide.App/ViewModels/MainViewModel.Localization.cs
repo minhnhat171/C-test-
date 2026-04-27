@@ -262,7 +262,7 @@ public partial class MainViewModel
         $"{GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)} 그룹 지도로 열기",
         $"Ouvrir la carte pour {GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)}");
     public string SelectedFeaturedDishMiniTourText => LocalizeUi(
-        $"B?t d?u mini tour {GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)}",
+        $"Bắt đầu mini tour {GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)}",
         $"Start {GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)} mini tour",
         $"开始 {GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)} 迷你路线",
         $"{GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)} 미니 투어 시작",

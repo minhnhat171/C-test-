@@ -126,7 +126,7 @@ public class AuthPageViewModel : INotifyPropertyChanged
         "zh" => "点击收听",
         "ko" => "터치해 듣기",
         "fr" => "Touchez pour écouter",
-        _ => "B?m d? nghe"
+        _ => "Bấm để nghe"
     };
 
     public string LanguagePickerPlaceholder => SelectedLanguage switch

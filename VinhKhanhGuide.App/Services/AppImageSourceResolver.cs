@@ -20,7 +20,7 @@ internal static class AppImageSourceResolver
 
         if (value.StartsWith("/", StringComparison.Ordinal))
         {
-            return CreateRemoteImageSource(new Uri(PoiApiEndpoint.CreateBaseUri(), value.TrimStart('/')));
+            return CreateRemoteImageSource(new Uri(PoiApiEndpoint.CreateBuildBaseUri(), value.TrimStart('/')));
         }
 
         return ImageSource.FromFile(value);

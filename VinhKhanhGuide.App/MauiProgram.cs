@@ -35,20 +35,16 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
-        builder.Services.AddSingleton(_ =>
+        builder.Services.AddSingleton<IApiEndpointService, ApiEndpointService>();
+        builder.Services.AddSingleton(sp =>
         {
-            var client = new HttpClient
+            return new HttpClient(new ApiEndpointMessageHandler(
+                sp.GetRequiredService<IApiEndpointService>(),
+                new HttpClientHandler()))
             {
-                BaseAddress = PoiApiEndpoint.CreateBaseUri(),
+                BaseAddress = ApiEndpointMessageHandler.PlaceholderBaseUri,
                 Timeout = TimeSpan.FromSeconds(8)
             };
-
-            if (client.BaseAddress.Host.EndsWith(".ngrok-free.dev", StringComparison.OrdinalIgnoreCase))
-            {
-                client.DefaultRequestHeaders.TryAddWithoutValidation("ngrok-skip-browser-warning", "true");
-            }
-
-            return client;
         });
 
         builder.Services.AddSingleton<IAuthService, AuthService>();

@@ -2,8 +2,8 @@
 
 ## Cấu hình môi trường
 
-- API Development: `http://localhost:5287/`
-- WebAdmin Development: `http://localhost:5088/`
+- API Development: `http://localhost:5287/` hoặc `http://<IP-máy-tính>:5287/` khi test bằng điện thoại thật.
+- WebAdmin Development: `http://localhost:5088/` hoặc `http://<IP-máy-tính>:5088/` khi quét QR bằng điện thoại thật.
 - APK Debug mặc định trỏ API emulator: `http://10.0.2.2:5287/`
 - APK Release phải truyền domain thật khi build:
 
@@ -39,6 +39,10 @@ dotnet run --project .\CTest.WebAdmin\CTest.WebAdmin.csproj --launch-profile htt
 dotnet build .\VinhKhanhGuide.sln --no-restore
 dotnet test .\VinhKhanhGuide.sln --no-restore
 ```
+
+Khi demo bằng điện thoại thật, mở WebAdmin bằng địa chỉ IP LAN của máy tính, ví dụ `http://192.168.1.10:5088/`. QR sẽ truyền API LAN tương ứng cho app để heartbeat và lịch sử nghe không bị gửi nhầm về `localhost`.
+
+Không mở `http://0.0.0.0:5088/` trong trình duyệt. `0.0.0.0` chỉ dùng cho server lắng nghe mạng LAN; trên chính máy tính hãy mở `http://localhost:5088/`.
 
 ## Lệnh publish server
 

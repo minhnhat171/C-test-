@@ -4,7 +4,7 @@ namespace VinhKhanhGuide.App.Services;
 
 internal static class PoiApiEndpoint
 {
-    public static Uri CreateBaseUri()
+    public static Uri CreateBuildBaseUri()
     {
         return PoiApiDefaults.CreateBaseUri(AppBuildConfiguration.ApiBaseUrl);
     }

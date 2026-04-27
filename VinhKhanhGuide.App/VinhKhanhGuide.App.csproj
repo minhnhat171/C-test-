@@ -90,4 +90,15 @@
     </ItemGroup>
   </Target>
 
+  <Target Name="CopyReleaseApkToWebAdminDownload" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' and '$(TargetFramework)' == 'net8.0-android'">
+    <PropertyGroup>
+      <WebAdminApkPath>..\CTest.WebAdmin\wwwroot\download\VinhKhanh.apk</WebAdminApkPath>
+      <SignedApkPath>$(OutDir)$(AssemblyName)-Signed.apk</SignedApkPath>
+    </PropertyGroup>
+    <Copy SourceFiles="$(SignedApkPath)"
+          DestinationFiles="$(WebAdminApkPath)"
+          SkipUnchangedFiles="false"
+          Condition="Exists('$(SignedApkPath)')" />
+  </Target>
+
 </Project>

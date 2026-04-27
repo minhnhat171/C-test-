@@ -59,7 +59,7 @@ start_service() {
 
   (
     cd "$workdir"
-    exec dotnet run --urls "http://localhost:$port"
+    exec dotnet run --urls "http://0.0.0.0:$port"
   ) >"$log_file" 2>&1 &!
 
   local pid=$!

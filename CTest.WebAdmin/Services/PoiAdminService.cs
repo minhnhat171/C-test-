@@ -135,7 +135,7 @@ public class PoiAdminService
             ex is TaskCanceledException ||
             ex is InvalidOperationException)
         {
-            vm.AnalyticsLoadErrorMessage = "Không thể tải dữ liệu analytics từ VKFoodAPI. Bản đồ vẫn cho phép chỉnh sửa POI.";
+            vm.AnalyticsLoadErrorMessage = "Không thể tải dữ liệu analytics từ VKFoodAPI. Bản đồ sẽ hiển thị lại heatmap và tuyến di chuyển khi API sẵn sàng.";
         }
 
         return vm;

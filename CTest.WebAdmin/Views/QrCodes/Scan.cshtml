@@ -315,14 +315,114 @@
     <script>
         (() => {
             const appLaunchUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AppLaunchUrl));
+            const heartbeatUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("WebHeartbeat", "QrCodes")));
             const openAppBtn = document.getElementById("openAppBtn");
             const openStatus = document.getElementById("openStatus");
+            const deviceStorageKey = "vinhkhanh.qr.deviceId.v1";
+            const createId = () => globalThis.crypto?.randomUUID
+                ? globalThis.crypto.randomUUID()
+                : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            const clientInstanceId = `${Date.now().toString(16)}-${createId()}`;
+            let lastLocation = null;
+            let heartbeatTimer = 0;
+
+            const getOrCreateDeviceId = () => {
+                try {
+                    const existing = localStorage.getItem(deviceStorageKey);
+                    if (existing) {
+                        return existing;
+                    }
+
+                    const next = `web-${createId()}`;
+                    localStorage.setItem(deviceStorageKey, next);
+                    return next;
+                } catch {
+                    return `web-${clientInstanceId}`;
+                }
+            };
+
+            const buildHeartbeatPayload = () => {
+                const payload = {
+                    deviceId: getOrCreateDeviceId(),
+                    clientInstanceId,
+                    userCode: "qr-web",
+                    userDisplayName: "Khách quét QR",
+                    userEmail: "",
+                    devicePlatform: navigator.platform || "Web",
+                    deviceModel: navigator.userAgent || "Trình duyệt",
+                    appVersion: "web-qr",
+                    sentAtUtc: new Date().toISOString()
+                };
+
+                if (lastLocation) {
+                    payload.latitude = lastLocation.latitude;
+                    payload.longitude = lastLocation.longitude;
+                    payload.accuracyMeters = lastLocation.accuracyMeters;
+                    payload.locationTimestampUtc = lastLocation.locationTimestampUtc;
+                }
+
+                return payload;
+            };
+
+            const postJson = (url, payload, keepalive = false) => {
+                if (!url) {
+                    return Promise.resolve();
+                }
+
+                return fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                    cache: "no-store",
+                    keepalive
+                }).catch(() => {});
+            };
+
+            const sendHeartbeat = () => postJson(heartbeatUrl, buildHeartbeatPayload());
+
+            const captureLocation = () => {
+                if (!("geolocation" in navigator)) {
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        lastLocation = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracyMeters: position.coords.accuracy,
+                            locationTimestampUtc: new Date(position.timestamp || Date.now()).toISOString()
+                        };
+                        void sendHeartbeat();
+                    },
+                    () => {},
+                    {
+                        enableHighAccuracy: true,
+                        maximumAge: 60000,
+                        timeout: 5000
+                    });
+            };
+
+            const startHeartbeat = () => {
+                void sendHeartbeat();
+                captureLocation();
+
+                heartbeatTimer = window.setInterval(() => {
+                    if (!document.hidden) {
+                        void sendHeartbeat();
+                    }
+                }, 8000);
+            };
 
             if (!openAppBtn || !appLaunchUrl) {
+                startHeartbeat();
                 return;
             }
 
             openAppBtn.addEventListener("click", () => {
+                void sendHeartbeat();
+                captureLocation();
+
                 if (openStatus) {
                     openStatus.textContent = "Đang mở ứng dụng trên thiết bị...";
                 }
@@ -335,6 +435,8 @@
 
                 window.location.href = appLaunchUrl;
             });
+
+            startHeartbeat();
         })();
     </script>
 </body>

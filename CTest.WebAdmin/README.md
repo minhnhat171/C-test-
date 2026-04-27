@@ -14,7 +14,7 @@ Web quản trị cho hệ thống thuyết minh tự động ẩm thực Vĩnh K
 ## Kiến trúc dữ liệu
 
 - WebAdmin không còn dùng `AppDataService` seed nội bộ.
-- WebAdmin d?c/ghi d? li?u qua `VKFoodAPI`.
+- WebAdmin đọc/ghi dữ liệu qua `VKFoodAPI`.
 - App mobile đọc POI/tour từ cùng API và có snapshot offline để chạy khi mất mạng.
 - Dữ liệu demo hiện nằm trong `VKFoodAPI/App_Data`.
 
