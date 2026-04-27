@@ -238,25 +238,19 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
     }
 
     private static string GetOrCreateDeviceId()
+{
+    var storedDeviceId = Preferences.Default.Get(DeviceIdPreferenceKey, string.Empty);
+    if (!string.IsNullOrWhiteSpace(storedDeviceId) &&
+        storedDeviceId.StartsWith("install-", StringComparison.OrdinalIgnoreCase))
     {
-        var storedDeviceId = Preferences.Default.Get(DeviceIdPreferenceKey, string.Empty);
-        if (IsReusableInstallDeviceId(storedDeviceId))
-        {
-            return storedDeviceId.Trim().ToLowerInvariant();
-        }
-
-        var legacyDeviceId = Preferences.Default.Get(LegacyDeviceIdPreferenceKey, string.Empty);
-        if (IsReusableInstallDeviceId(legacyDeviceId))
-        {
-            var normalizedLegacyDeviceId = legacyDeviceId.Trim().ToLowerInvariant();
-            Preferences.Default.Set(DeviceIdPreferenceKey, normalizedLegacyDeviceId);
-            return normalizedLegacyDeviceId;
-        }
-
-        var generatedDeviceId = $"install-{Guid.NewGuid():N}";
-        Preferences.Default.Set(DeviceIdPreferenceKey, generatedDeviceId);
-        return generatedDeviceId;
+        return storedDeviceId.Trim().ToLowerInvariant();
     }
+
+    var generatedDeviceId = $"install-{Guid.NewGuid():N}";
+    Preferences.Default.Set(DeviceIdPreferenceKey, generatedDeviceId);
+    Preferences.Default.Remove(LegacyDeviceIdPreferenceKey);
+    return generatedDeviceId;
+}
 
     private static bool IsReusableInstallDeviceId(string? deviceId)
     {

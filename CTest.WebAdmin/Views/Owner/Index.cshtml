@@ -1,6 +1,9 @@
 @model OwnerPortalViewModel
 @{
     ViewData["Title"] = "Chủ nhà hàng";
+    var ownerPoiCount = Model.Pois.Items.Count;
+    var activeOwnerPoiCount = Model.Pois.Items.Count(item => item.IsActive);
+    var pendingOwnerPoiCount = Model.Pois.Items.Count(item => item.IsPendingApproval);
 }
 
 <style>
@@ -8,6 +11,13 @@
         display: grid;
         grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
         gap: 1rem;
+    }
+
+    .owner-overview {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.85rem;
+        margin-bottom: 1rem;
     }
 
     .owner-panel {
@@ -72,10 +82,33 @@
         height: 1.75rem;
         margin-bottom: 0.55rem;
         border-radius: 999px;
-        background: #0f766e;
+        background: #2563eb;
         color: #fff;
         font-weight: 800;
         font-size: 0.82rem;
+    }
+
+    .owner-stat {
+        padding: 1rem;
+        border: 1px solid rgba(37, 99, 235, 0.14);
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .owner-stat-label {
+        color: #64748b;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .owner-stat-value {
+        margin-top: 0.45rem;
+        color: #0f172a;
+        font-size: 1.8rem;
+        font-weight: 850;
+        line-height: 1;
     }
 
     @@media (max-width: 1199.98px) {
@@ -86,13 +119,16 @@
         .owner-steps {
             grid-template-columns: 1fr;
         }
+
+        .owner-overview {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
     <div>
         <h1 class="mb-1">Khu vực chủ nhà hàng</h1>
-        <div class="text-muted">Đăng ký POI của quán và xem lịch sử nghe của các POI do bạn phụ trách.</div>
     </div>
     <div class="badge text-bg-light px-3 py-2">@Model.OwnerDisplayName</div>
 </div>
@@ -107,21 +143,18 @@
     <div class="alert alert-warning">@Model.Pois.LoadErrorMessage</div>
 }
 
-<div class="owner-steps">
-    <div class="owner-step">
-        <span class="owner-step-number">1</span>
-        <div class="fw-bold">Đăng ký POI</div>
-        <div class="text-muted small">Gửi thông tin quán, tọa độ và ảnh đại diện.</div>
+<div class="owner-overview">
+    <div class="owner-stat">
+        <div class="owner-stat-label">POI của tôi</div>
+        <div class="owner-stat-value">@ownerPoiCount</div>
     </div>
-    <div class="owner-step">
-        <span class="owner-step-number">2</span>
-        <div class="fw-bold">Chờ duyệt</div>
-        <div class="text-muted small">POI ở trạng thái chờ đến khi Admin duyệt.</div>
+    <div class="owner-stat">
+        <div class="owner-stat-label">Đang hoạt động</div>
+        <div class="owner-stat-value">@activeOwnerPoiCount</div>
     </div>
-    <div class="owner-step">
-        <span class="owner-step-number">3</span>
-        <div class="fw-bold">Xem thống kê</div>
-        <div class="text-muted small">Theo dõi lượt nghe sau khi POI hoạt động.</div>
+    <div class="owner-stat">
+        <div class="owner-stat-label">Chờ duyệt</div>
+        <div class="owner-stat-value">@pendingOwnerPoiCount</div>
     </div>
 </div>
 
@@ -249,7 +282,6 @@
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
         <div>
             <h2 class="h4 mb-1">Lịch sử nghe của quán</h2>
-            <div class="text-muted">Dữ liệu được lọc theo những POI do tài khoản này đang sở hữu.</div>
         </div>
         <div class="small text-muted" id="owner-refresh-status">Tự động cập nhật mỗi 8 giây</div>
     </div>

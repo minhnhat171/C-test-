@@ -20,204 +20,74 @@
     <title>@pageTitle - Vĩnh Khánh Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" />
-
-    <style>
-        :root {
-            --app-ink: #111827;
-            --app-muted: #6b7280;
-            --app-line: rgba(148, 163, 184, 0.22);
-            --app-panel: #ffffff;
-            --app-bg: #f4f6f8;
-            --app-sidebar: #102a2a;
-            --app-accent: #0f766e;
-        }
-
-        body {
-            min-height: 100vh;
-            color: var(--app-ink);
-            background: var(--app-bg);
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
-        }
-
-        .app-shell {
-            display: grid;
-            grid-template-columns: 260px minmax(0, 1fr);
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            background: var(--app-sidebar);
-            color: #fff;
-        }
-
-        .sidebar-shell {
-            position: sticky;
-            top: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            padding: 1rem;
-        }
-
-        .sidebar-brand {
-            padding: 0.9rem;
-            border-bottom: 1px solid rgba(255,255,255,0.12);
-        }
-
-        .sidebar-brand-title {
-            margin: 0;
-            font-size: 1.08rem;
-            font-weight: 800;
-            line-height: 1.25;
-        }
-
-        .sidebar-role {
-            display: inline-flex;
-            margin-top: 0.75rem;
-            padding: 0.28rem 0.65rem;
-            border-radius: 999px;
-            color: #0f766e;
-            background: #ccfbf1;
-            font-size: 0.78rem;
-            font-weight: 800;
-        }
-
-        .sidebar-nav {
-            display: grid;
-            gap: 0.25rem;
-            margin-top: 1rem;
-        }
-
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            min-height: 42px;
-            padding: 0.65rem 0.8rem;
-            border-radius: 8px;
-            color: rgba(255,255,255,0.82);
-            font-weight: 700;
-        }
-
-        .sidebar-link:hover {
-            color: #fff;
-            background: rgba(255,255,255,0.08);
-        }
-
-        .sidebar-link.is-active {
-            color: #0f2f2b;
-            background: #ffffff;
-        }
-
-        .sidebar-footer {
-            margin-top: auto;
-            padding-top: 1rem;
-            border-top: 1px solid rgba(255,255,255,0.12);
-        }
-
-        .content-area {
-            min-width: 0;
-        }
-
-        .content-header {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            padding: 1rem 1.25rem;
-            border-bottom: 1px solid var(--app-line);
-            background: rgba(244, 246, 248, 0.92);
-            backdrop-filter: blur(10px);
-        }
-
-        .content-title {
-            margin: 0;
-            font-size: 1.35rem;
-            font-weight: 800;
-        }
-
-        .role-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.38rem 0.7rem;
-            border-radius: 999px;
-            color: var(--app-accent);
-            background: #ccfbf1;
-            font-size: 0.82rem;
-            font-weight: 800;
-        }
-
-        .content-body {
-            padding: 1.25rem;
-        }
-
-        @@media (max-width: 991.98px) {
-            .app-shell {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar-shell {
-                position: static;
-                min-height: auto;
-            }
-
-            .sidebar-nav {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @@media (max-width: 640px) {
-            .sidebar-nav {
-                grid-template-columns: 1fr;
-            }
-
-            .content-header {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-        }
-    </style>
 </head>
 <body>
-    <div class="app-shell">
+    <div class="app-shell" id="appShell">
         <aside class="sidebar">
             <div class="sidebar-shell">
-                <div class="sidebar-brand">
-                    <p class="sidebar-brand-title">Vĩnh Khánh Admin</p>
-                    <span class="sidebar-role">@roleLabel</span>
+                <a class="sidebar-brand" asp-controller="Home" asp-action="Index">
+                    <span class="brand-mark">VK</span>
+                    <span>
+                        <span class="sidebar-brand-title">Vĩnh Khánh</span>
+                        <span class="sidebar-brand-subtitle">Admin Console</span>
+                    </span>
+                </a>
+
+                <div class="sidebar-account">
+                    <div class="sidebar-account-name text-truncate">@displayName</div>
+                    <div class="sidebar-role">@roleLabel</div>
                 </div>
 
-                <nav class="sidebar-nav">
+                <nav class="sidebar-nav" aria-label="Điều hướng quản trị">
                     @if (isAdmin)
                     {
-                        <a class="@SidebarLinkClass("Home")" asp-controller="Home" asp-action="Index">Tổng quan</a>
-                        <a class="@SidebarLinkClass("Pois")" asp-controller="Pois" asp-action="Index">POI</a>
-                        <a class="@SidebarLinkClass("MapPois")" asp-controller="MapPois" asp-action="Index">Bản đồ</a>
-                        <a class="@SidebarLinkClass("QrCodes")" asp-controller="QrCodes" asp-action="Index">QR</a>
-                        <a class="@SidebarLinkClass("Tours")" asp-controller="Tours" asp-action="Index">Tour</a>
-                        <a class="@SidebarLinkClass("UsageLogs")" asp-controller="UsageLogs" asp-action="Index">Lịch sử</a>
-                        <a class="@SidebarLinkClass("SystemAdmin")" asp-controller="SystemAdmin" asp-action="Index">Tài khoản</a>
+                        <div class="sidebar-section">Vận hành</div>
+                        <a class="@SidebarLinkClass("Home")" asp-controller="Home" asp-action="Index">
+                            <span class="nav-dot"></span><span>Tổng quan</span>
+                        </a>
+                        <a class="@SidebarLinkClass("Pois")" asp-controller="Pois" asp-action="Index">
+                            <span class="nav-dot"></span><span>Điểm kinh doanh</span>
+                        </a>
+                        <a class="@SidebarLinkClass("MapPois")" asp-controller="MapPois" asp-action="Index">
+                            <span class="nav-dot"></span><span>Bản đồ</span>
+                        </a>
+
+                        <div class="sidebar-section">Nội dung</div>
+                        <a class="@SidebarLinkClass("QrCodes")" asp-controller="QrCodes" asp-action="Index">
+                            <span class="nav-dot"></span><span>QR</span>
+                        </a>
+                        <a class="@SidebarLinkClass("Tours")" asp-controller="Tours" asp-action="Index">
+                            <span class="nav-dot"></span><span>Tour</span>
+                        </a>
+                        <a class="@SidebarLinkClass("UsageLogs")" asp-controller="UsageLogs" asp-action="Index">
+                            <span class="nav-dot"></span><span>Lịch sử nghe</span>
+                        </a>
+
+                        <div class="sidebar-section">Hệ thống</div>
+                        <a class="@SidebarLinkClass("SystemAdmin")" asp-controller="SystemAdmin" asp-action="Index">
+                            <span class="nav-dot"></span><span>Tài khoản</span>
+                        </a>
                     }
                     else if (isOwner)
                     {
-                        <a class="@SidebarLinkClass("Owner")" asp-controller="Owner" asp-action="Index">Chủ cửa hàng</a>
+                        <div class="sidebar-section">Chủ cửa hàng</div>
+                        <a class="@SidebarLinkClass("Owner")" asp-controller="Owner" asp-action="Index">
+                            <span class="nav-dot"></span><span>Khu vực của tôi</span>
+                        </a>
                     }
                 </nav>
 
                 <div class="sidebar-footer">
-                    <div class="fw-semibold text-truncate">@displayName</div>
                     @if (isAuthenticated)
                     {
-                        <form asp-controller="Account" asp-action="Logout" method="post" class="mt-3">
+                        <form asp-controller="Account" asp-action="Logout" method="post">
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-light btn-sm w-100">Đăng xuất</button>
+                            <button type="submit" class="btn btn-light w-100">Đăng xuất</button>
                         </form>
                     }
                     else
                     {
-                        <a asp-controller="Account" asp-action="Login" class="btn btn-light btn-sm w-100 mt-3">Đăng nhập</a>
+                        <a asp-controller="Account" asp-action="Login" class="btn btn-light w-100">Đăng nhập</a>
                     }
                 </div>
             </div>
@@ -225,8 +95,17 @@
 
         <main class="content-area">
             <header class="content-header">
-                <h1 class="content-title">@pageTitle</h1>
-                <span class="role-badge">@roleLabel</span>
+                <div class="header-left">
+                    <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Mở menu">Menu</button>
+                    <div>
+                        <div class="content-kicker">Quản lý vận hành</div>
+                        <h1 class="content-title">@pageTitle</h1>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <span class="system-pill">API + Web</span>
+                    <span class="role-badge">@roleLabel</span>
+                </div>
             </header>
 
             <div class="content-body">
@@ -236,6 +115,19 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (() => {
+            const toggle = document.getElementById("sidebarToggle");
+            const shell = document.getElementById("appShell");
+            if (!toggle || !shell) {
+                return;
+            }
+
+            toggle.addEventListener("click", () => {
+                shell.classList.toggle("is-sidebar-open");
+            });
+        })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
