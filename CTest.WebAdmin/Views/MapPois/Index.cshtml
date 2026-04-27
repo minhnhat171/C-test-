@@ -67,7 +67,7 @@
         --analytics-border: rgba(100, 116, 139, 0.18);
         --analytics-panel: #ffffff;
         --analytics-soft: #f7faf9;
-        --analytics-accent: #0f766e;
+        --analytics-accent: #2563eb;
         color: var(--analytics-ink);
         font-family: inherit;
     }
@@ -301,7 +301,7 @@
     .analytics-fill {
         height: 100%;
         border-radius: inherit;
-        background: linear-gradient(90deg, #0f766e 0%, #2563eb 100%);
+        background: linear-gradient(90deg, #1d4ed8 0%, #60a5fa 100%);
     }
 
     .analytics-poi-marker {
@@ -317,7 +317,7 @@
     }
 
     .analytics-poi-marker.has-listens {
-        color: #0f766e;
+        color: #1d4ed8;
     }
 
     .analytics-poi-marker.is-top-listening {
@@ -765,7 +765,7 @@
 
                     if (coordinates.length >= 2) {
                         L.polyline(coordinates, {
-                            color: routeIndex % 2 === 0 ? "#0f766e" : "#2563eb",
+                            color: routeIndex % 2 === 0 ? "#1d4ed8" : "#60a5fa",
                             weight: 4,
                             opacity: 0.72,
                             dashArray: "8 8"

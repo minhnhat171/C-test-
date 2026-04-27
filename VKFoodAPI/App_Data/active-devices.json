@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "DeviceId": "install-4e07d36d9a3b441aa05c953480b9ea79",
+    "ClientInstanceId": "19dd08bc88c-c51989ce1c4947bbb627e378166e418b",
+    "SessionKey": "install-4e07d36d9a3b441aa05c953480b9ea79:19dd08bc88c-c51989ce1c4947bbb627e378166e418b",
+    "UserCode": "guest",
+    "UserDisplayName": "nhat",
+    "UserEmail": "",
+    "DevicePlatform": "Android",
+    "DeviceModel": "Google sdk_gphone64_arm64",
+    "AppVersion": "1.0.0",
+    "ConnectedAtUtc": "2026-04-27T20:05:23.6534976+00:00",
+    "LastSeenAtUtc": "2026-04-27T20:07:42.8321168+00:00",
+    "SecondsSinceLastSeen": 0,
+    "IsActive": true,
+    "Latitude": 10.761818333333334,
+    "Longitude": 106.70220833333333,
+    "AccuracyMeters": 5,
+    "LocationTimestampUtc": "2026-04-27T20:07:30.574+00:00"
+  }
+]
