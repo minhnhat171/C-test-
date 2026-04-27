@@ -53,5 +53,16 @@
     "PreferredLanguage": "vi-VN",
     "DevicePlatform": "Android",
     "CreatedAtUtc": "2026-04-26T17:17:13.5795696+00:00"
+  },
+  {
+    "Id": "f853a231-629d-7e1a-9e93-1428364cb0bf",
+    "UserCode": "guest-6e9b7a5b",
+    "DisplayName": "Khách tham quan",
+    "Email": "",
+    "Role": "guest",
+    "PhoneNumber": "",
+    "PreferredLanguage": "vi-VN",
+    "DevicePlatform": "Android",
+    "CreatedAtUtc": "2026-04-27T14:25:14.1984464+00:00"
   }
 ]

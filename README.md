@@ -5,8 +5,9 @@
 - Domain public hiện tại cho QR/API demo: `https://jaywalker-eaten-squishier.ngrok-free.dev/`.
 - API Development local: `http://localhost:5287/` khi chạy nội bộ.
 - WebAdmin Development local: `http://localhost:5088/` khi chạy nội bộ.
-- APK Debug mặc định trỏ API emulator: `http://10.0.2.2:5287/`
-- APK Release phải truyền domain thật khi build:
+- APK Debug/Release mặc định trỏ cùng API public: `https://jaywalker-eaten-squishier.ngrok-free.dev/`
+- Nếu cần debug API local riêng, build app với `-p:ApiBaseUrl=http://10.0.2.2:5287/`.
+- APK Release có thể truyền domain thật khi build:
 
 ```powershell
 dotnet publish .\VinhKhanhGuide.App\VinhKhanhGuide.App.csproj -c Release -f net8.0-android -p:ApiBaseUrl=https://jaywalker-eaten-squishier.ngrok-free.dev/
