@@ -58,6 +58,7 @@ public class UserManagementController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("/api/users/profile-sync")]
+    [HttpPost("/api/app-users/sync")]
     public ActionResult<AdminUserDetailDto> UpsertPublicProfile([FromBody] AdminUserProfileUpsertRequest request)
     {
         return UpsertProfileCore(request);

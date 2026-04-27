@@ -1,19 +1,21 @@
 [
   {
-    "DeviceId": "c239ade3cc3c4225be40424773acef4f",
+    "DeviceId": "fe66bee21c324fc994aba5f7b77341af",
+    "ClientInstanceId": "8bf01509845644918bff36b2b6f7a3e2",
+    "SessionKey": "fe66bee21c324fc994aba5f7b77341af:8bf01509845644918bff36b2b6f7a3e2",
     "UserCode": "guest",
-    "UserDisplayName": "duy khoa",
-    "UserEmail": "123@gmail.com",
+    "UserDisplayName": "Khách tham quan",
+    "UserEmail": "",
     "DevicePlatform": "Android",
     "DeviceModel": "Google sdk_gphone64_x86_64",
     "AppVersion": "1.0.0",
-    "ConnectedAtUtc": "2026-04-21T20:00:30.5281359+00:00",
-    "LastSeenAtUtc": "2026-04-21T20:18:32.1127972+00:00",
+    "ConnectedAtUtc": "2026-04-27T03:59:38.5168016+00:00",
+    "LastSeenAtUtc": "2026-04-27T04:02:41.6000005+00:00",
     "SecondsSinceLastSeen": 0,
     "IsActive": true,
-    "Latitude": 37.421998333333335,
-    "Longitude": -122.084,
-    "AccuracyMeters": 5,
-    "LocationTimestampUtc": "2026-04-21T20:18:23.533+00:00"
+    "Latitude": null,
+    "Longitude": null,
+    "AccuracyMeters": null,
+    "LocationTimestampUtc": null
   }
 ]

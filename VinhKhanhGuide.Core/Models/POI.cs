@@ -81,7 +81,7 @@ public class POI
                translation.Contains(" P.", StringComparison.OrdinalIgnoreCase) ||
                translation.Contains(" Q.", StringComparison.OrdinalIgnoreCase) ||
                translation.Contains(" xào ", StringComparison.OrdinalIgnoreCase) ||
-               translation.Contains(" nướng ", StringComparison.OrdinalIgnoreCase);
+               translation.Contains(" nu?ng ", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool ContainsVietnameseCharacters(string value)
@@ -155,7 +155,7 @@ public class POI
         }
 
         var normalized = value
-            .Replace('đ', 'd')
+            .Replace('d', 'd')
             .Replace('Đ', 'D')
             .Normalize(NormalizationForm.FormD);
 

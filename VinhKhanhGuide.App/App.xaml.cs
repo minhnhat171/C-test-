@@ -1,10 +1,12 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
+using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Graphics;
 using VinhKhanhGuide.App.Services;
 using VinhKhanhGuide.App.ViewModels;
 using VinhKhanhGuide.App.Views;
+using VinhKhanhGuide.Core.Contracts;
 
 namespace VinhKhanhGuide.App;
 
@@ -163,23 +165,53 @@ public partial class App : Application
                 return;
             }
 
-            var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
-            var opened = await mainViewModel.OpenPoiFromQrAsync(request.PoiId, request.AutoPlay);
+            var opened = await OpenQrTargetAsync(request, shell);
             if (!opened)
             {
                 await shell.DisplayAlert(
                     "Chưa mở được mã QR",
                     "Mã QR này chưa liên kết với nội dung thuyết minh.",
                     "OK");
-                return;
             }
-
-            await OpenPoiDetailAsync(shell);
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[App] Failed to handle QR deep link: {ex}");
         }
+    }
+
+    private async Task<bool> OpenQrTargetAsync(QrDeepLinkRequest request, AppShell shell)
+    {
+        var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
+
+        if (string.Equals(request.TargetType, QrTargetKinds.Tour, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!int.TryParse(request.TargetId, NumberStyles.Integer, CultureInfo.InvariantCulture, out var tourId))
+            {
+                return false;
+            }
+
+            var openedTour = await mainViewModel.OpenTourFromQrAsync(tourId);
+            if (openedTour)
+            {
+                await OpenActiveTourPageAsync(shell);
+            }
+
+            return openedTour;
+        }
+
+        if (!Guid.TryParse(request.TargetId, out var poiId))
+        {
+            return false;
+        }
+
+        var openedPoi = await mainViewModel.OpenPoiFromQrAsync(poiId, request.AutoPlay);
+        if (openedPoi)
+        {
+            await OpenPoiDetailAsync(shell);
+        }
+
+        return openedPoi;
     }
 
     private async Task<AppShell?> WaitForShellAsync()
@@ -208,6 +240,18 @@ public partial class App : Application
 
         var detailPage = _serviceProvider.GetRequiredService<PoiDetailPage>();
         await navigation.PushAsync(detailPage);
+    }
+
+    private async Task OpenActiveTourPageAsync(AppShell shell)
+    {
+        var navigation = shell.Navigation;
+        if (navigation.NavigationStack.LastOrDefault() is ActiveTourPage)
+        {
+            return;
+        }
+
+        var activeTourPage = _serviceProvider.GetRequiredService<ActiveTourPage>();
+        await navigation.PushAsync(activeTourPage);
     }
 
     private NavigationPage CreateAuthRootPage()

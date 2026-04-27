@@ -6,6 +6,7 @@ namespace VKFoodAPI.Controllers;
 
 [ApiController]
 [Route("api/analytics/listening-history")]
+[Route("api/narration-histories")]
 public class ListeningHistoryController : ControllerBase
 {
     private readonly ListeningHistoryRepository _repository;

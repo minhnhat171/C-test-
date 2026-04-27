@@ -224,7 +224,7 @@ public class ListeningHistoryRepository
             PoiImageSource = request.PoiImageSource?.Trim() ?? string.Empty,
             PoiMapLink = request.PoiMapLink?.Trim() ?? string.Empty,
             UserCode = request.UserCode?.Trim() ?? "guest",
-            UserDisplayName = request.UserDisplayName?.Trim() ?? "Khach",
+            UserDisplayName = request.UserDisplayName?.Trim() ?? "Khách",
             UserEmail = request.UserEmail?.Trim() ?? string.Empty,
             TriggerType = string.IsNullOrWhiteSpace(request.TriggerType) ? "APP" : request.TriggerType.Trim(),
             Language = string.IsNullOrWhiteSpace(request.Language) ? "vi" : request.Language.Trim(),
@@ -257,7 +257,7 @@ public class ListeningHistoryRepository
         normalized.PoiImageSource ??= string.Empty;
         normalized.PoiMapLink ??= string.Empty;
         normalized.UserCode = string.IsNullOrWhiteSpace(normalized.UserCode) ? "guest" : normalized.UserCode;
-        normalized.UserDisplayName = string.IsNullOrWhiteSpace(normalized.UserDisplayName) ? "Khach" : normalized.UserDisplayName;
+        normalized.UserDisplayName = string.IsNullOrWhiteSpace(normalized.UserDisplayName) ? "Khách" : normalized.UserDisplayName;
         normalized.UserEmail ??= string.Empty;
         normalized.TriggerType = string.IsNullOrWhiteSpace(normalized.TriggerType) ? "APP" : normalized.TriggerType;
         normalized.Language = string.IsNullOrWhiteSpace(normalized.Language) ? "vi" : normalized.Language;

@@ -260,7 +260,7 @@
                     var selectedKindClass = Model.SelectedItem.TargetType == QrTargetTypes.Tour ? "qr-kind qr-kind-tour" : "qr-kind";
 
                     <div class="qr-preview-card">
-                        <div class="qr-preview-kicker">Xem trước</div>
+                    <div class="qr-preview-kicker">Xem trước</div>
                         <div class="@selectedKindClass mt-2">@Model.SelectedItem.TargetKindLabel</div>
                         <div class="qr-preview-title">@Model.SelectedItem.TargetName</div>
                         @if (!string.IsNullOrWhiteSpace(Model.SelectedItem.RouteSummary))

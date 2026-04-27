@@ -5,6 +5,12 @@
     var isAdmin = User.IsInRole("Admin");
     var isOwner = User.IsInRole("PoiOwner");
     var displayName = User.FindFirst("vkg.display_name")?.Value ?? User.Identity?.Name ?? "Tài khoản";
+    var roleLabel = isAdmin ? "Admin" : isOwner ? "Chủ nhà hàng" : "Chưa phân quyền";
+    var roleDescription = isAdmin
+        ? "Toàn quyền quản trị hệ thống"
+        : isOwner
+            ? "Đăng ký POI và xem thống kê điểm phụ trách"
+            : "Tài khoản chưa có khu vực làm việc";
 
     string SidebarLinkClass(string controller) =>
         string.Equals(currentController, controller, System.StringComparison.OrdinalIgnoreCase)
@@ -75,6 +81,30 @@
             font-size: 1.45rem;
             font-weight: 800;
             line-height: 1.2;
+        }
+
+        .sidebar-role,
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .sidebar-role {
+            margin-top: 0.85rem;
+            padding: 0.42rem 0.7rem;
+            color: #0f766e;
+            background: #ffffff;
+        }
+
+        .role-badge {
+            padding: 0.5rem 0.75rem;
+            color: #0f766e;
+            background: #e6fffb;
+            border: 1px solid rgba(15, 118, 110, 0.16);
         }
 
         .sidebar-kicker,
@@ -210,10 +240,11 @@
                 <div class="sidebar-brand">
                     <div class="sidebar-kicker">VK Admin</div>
                     <h1>Phố ẩm thực Vĩnh Khánh</h1>
+                    <div class="sidebar-role">@roleLabel</div>
                 </div>
 
                 <div>
-                    <div class="sidebar-section-label">Điều hướng</div>
+                    <div class="sidebar-section-label">Điều hướng @roleLabel</div>
                     <nav class="nav sidebar-nav mt-2">
                         @if (isAdmin)
                         {
@@ -304,7 +335,9 @@
                     <div>
                         <div class="content-header-kicker">Hệ thống quản trị</div>
                         <div class="content-header-title">@pageTitle</div>
+                        <div class="text-muted small mt-1">@roleDescription</div>
                     </div>
+                    <span class="role-badge">@roleLabel</span>
                 </div>
             </header>
 

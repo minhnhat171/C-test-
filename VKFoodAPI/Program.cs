@@ -23,9 +23,12 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddSingleton<PoiRepository>();
 builder.Services.AddSingleton<AudioGuideRepository>();
 builder.Services.AddSingleton<TourRepository>();
+builder.Services.AddSingleton<QrCodeRepository>();
 builder.Services.AddSingleton<ListeningHistoryRepository>();
 builder.Services.AddSingleton<UserManagementRepository>();
 builder.Services.AddSingleton<ActiveDeviceRepository>();
+builder.Services.AddSingleton<MovementLogRepository>();
+builder.Services.AddSingleton<AuditLogRepository>();
 builder.Services.AddHostedService<ActiveDevicePruningService>();
 
 builder.Services.AddCors(options =>

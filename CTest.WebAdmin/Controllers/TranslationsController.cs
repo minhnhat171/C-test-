@@ -11,18 +11,22 @@ namespace CTest.WebAdmin.Controllers;
 public class TranslationsController : Controller
 {
     private readonly PoiApiClient _poiApiClient;
+    private readonly TtsTranslationService _ttsTranslationService;
     private static readonly (string Code, string Label)[] SupportedLanguages =
     [
         ("vi", "Tiếng Việt"),
         ("en", "Tiếng Anh"),
-        ("zh", "Tieng Trung"),
-        ("ko", "Tieng Han"),
-        ("fr", "Tieng Phap")
+        ("zh", "Tiếng Trung"),
+        ("ja", "Tiếng Nhật"),
+        ("de", "Tiếng Đức"),
     ];
 
-    public TranslationsController(PoiApiClient poiApiClient)
+    public TranslationsController(
+        PoiApiClient poiApiClient,
+        TtsTranslationService ttsTranslationService)
     {
         _poiApiClient = poiApiClient;
+        _ttsTranslationService = ttsTranslationService;
     }
 
     public async Task<IActionResult> Index(Guid? poiId, CancellationToken cancellationToken = default)
@@ -61,6 +65,43 @@ public class TranslationsController : Controller
         }
 
         return View("Manage", vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Generate(Guid poiId, CancellationToken cancellationToken = default)
+    {
+        if (poiId == Guid.Empty)
+        {
+            TempData["TranslationMessage"] = "Không xác định được POI để lưu bản dịch.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        try
+        {
+            var poi = await _poiApiClient.GetPoiAsync(poiId, cancellationToken);
+            if (poi is null)
+            {
+                TempData["TranslationMessage"] = "POI không còn tồn tại trên API.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            poi.NarrationTranslations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var generated in _ttsTranslationService.GenerateDemoScripts(poi, ["en", "zh", "ja", "de"]))
+            {
+                poi.NarrationTranslations[generated.Key] = generated.Value;
+            }
+
+            await _poiApiClient.UpdatePoiAsync(poi.Id, poi, cancellationToken);
+            TempData["TranslationMessage"] = "Đã tạo bản dịch demo cho EN/ZH/JA/DE.";
+        }
+        catch (HttpRequestException)
+        {
+            TempData["TranslationMessage"] = "Không thể kết nối VKFoodAPI nên chưa lưu được bản dịch.";
+        }
+
+        return RedirectToAction(nameof(Index), new { poiId });
     }
 
     [HttpPost]

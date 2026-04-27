@@ -369,7 +369,7 @@ public class QrCodesController : Controller
             SpecialDish = target.SpecialDish,
             PublicUrl = BuildPublicQrUrl(target.TargetType, target.TargetId),
             AppLaunchUrl = BuildAppLaunchUrl(target.TargetType, target.TargetId),
-            AutoOpenApp = string.Equals(target.TargetType, QrTargetTypes.Poi, StringComparison.OrdinalIgnoreCase),
+            AutoOpenApp = !string.IsNullOrWhiteSpace(BuildAppLaunchUrl(target.TargetType, target.TargetId)),
             EstimatedDurationLabel = target.EstimatedDurationLabel,
             TourStops = target.TourStops
         };
@@ -450,7 +450,7 @@ public class QrCodesController : Controller
     private static string GetPoiActivationType(PoiDto poi)
     {
         return PoiAdminMappings.ContainsQr(poi.Description, poi.NarrationText)
-            ? "QR + GPS"
+            ? "QR trong nội dung"
             : "QR tại điểm";
     }
 
@@ -550,12 +550,13 @@ public class QrCodesController : Controller
 
     private static string BuildAppLaunchUrl(string targetType, string targetId)
     {
-        if (!string.Equals(QrTargetTypes.Normalize(targetType), QrTargetTypes.Poi, StringComparison.Ordinal))
+        var normalizedTargetType = QrTargetTypes.Normalize(targetType);
+        if (string.IsNullOrWhiteSpace(targetId))
         {
             return string.Empty;
         }
 
-        return $"vinhkhanhguide://poi/{Uri.EscapeDataString(targetId)}?autoplay=1&source=bus-stop-qr";
+        return $"vinhkhanhguide://{normalizedTargetType}/{Uri.EscapeDataString(targetId)}?autoplay=1&source=bus-stop-qr";
     }
 
     private string BuildQrSvgUrl(string targetType, string targetId)

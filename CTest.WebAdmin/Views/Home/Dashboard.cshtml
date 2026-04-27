@@ -763,6 +763,13 @@
             right: 1rem;
             max-width: none;
         }
+
+        .history-table th:nth-child(4),
+        .history-table td:nth-child(4),
+        .history-table th:nth-child(6),
+        .history-table td:nth-child(6) {
+            display: none;
+        }
     }
 </style>
 
@@ -844,10 +851,10 @@
 
         <div class="col-sm-6 col-xl-4 col-xxl-2">
             <div class="metric-card metric-top">
-                <span class="metric-mark">Top</span>
-                <div class="metric-label">POI được nghe nhiều nhất</div>
-                <div class="metric-value-text" id="mostPlayedPoiValue">@Model.MostPlayedPoi</div>
-                <div class="metric-note">Tính theo toàn bộ lịch sử sử dụng</div>
+                <span class="metric-mark">Tour</span>
+                <div class="metric-label">Tour đang cấu hình</div>
+                <div class="metric-value">@Model.TotalTours</div>
+                <div class="metric-note">Lộ trình có thể gắn QR và mở trong app</div>
             </div>
         </div>
     </div>
@@ -872,15 +879,20 @@
                     var deviceName = string.IsNullOrWhiteSpace(item.UserDisplayName)
                         ? item.UserCode
                         : item.UserDisplayName;
+                    var platform = string.IsNullOrWhiteSpace(item.DevicePlatform) ? "App" : item.DevicePlatform;
                     var deviceModel = string.IsNullOrWhiteSpace(item.DeviceModel)
-                        ? item.DevicePlatform
-                        : $"{item.DevicePlatform} - {item.DeviceModel}";
+                        ? platform
+                        : $"{platform} - {item.DeviceModel}";
+                    var signalText = item.SecondsSinceLastSeen <= 30
+                        ? "vừa online"
+                        : "mất tín hiệu";
 
                     <div class="active-device-row">
                         <div class="active-device-main">
                             <div class="active-device-name">@deviceName</div>
                             <div class="active-device-meta">@deviceModel</div>
-                            <div class="active-device-meta">Device #@shortDeviceId</div>
+                            <div class="active-device-meta">UserCode: @item.UserCode | Platform: @platform</div>
+                            <div class="active-device-meta">Device #@shortDeviceId | Instance #@((item.ClientInstanceId.Length > 6 ? item.ClientInstanceId[^6..] : item.ClientInstanceId).ToUpperInvariant())</div>
                             @if (item.Latitude.HasValue && item.Longitude.HasValue)
                             {
                                 <div class="active-device-meta active-device-location">
@@ -898,7 +910,7 @@
                         </div>
                         <div class="active-device-status">
                             <span class="active-device-dot"></span>
-                            <span>@item.LastSeenAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</span>
+                            <span>@signalText - @item.LastSeenAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</span>
                         </div>
                     </div>
                 }
@@ -1011,7 +1023,7 @@
     <div class="dashboard-panel history-panel">
         <div class="history-head">
             <div>
-                <h2 class="panel-title">Lịch sử sử dụng gần đây</h2>
+                <h2 class="panel-title">Lịch sử nghe gần đây</h2>
                 <div class="panel-subtitle">Các phiên sử dụng mới nhất để theo dõi tình hình vận hành.</div>
             </div>
             <span class="panel-chip">@Model.RecentLogs.Count phiên gần nhất</span>
@@ -1052,7 +1064,7 @@
                             <td>@item.StartedAt.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>@item.ListenSeconds giây</td>
                             <td>
-                                <span class="status-badge @(item.Completed ? "done" : "pending")">
+                                <span class="status-pill @(item.Completed ? "complete" : "active")">
                                     @(item.Completed ? "Hoàn tất" : "Đang nghe")
                                 </span>
                             </td>
@@ -1073,7 +1085,7 @@
     <div class="dashboard-panel mt-4">
         <div class="panel-header">
             <div>
-                <h2 class="panel-title">Khách hàng gần đây</h2>
+
                 <div class="panel-subtitle">Tên, liên hệ và ngôn ngữ ưu tiên được đồng bộ từ app sang Web admin.</div>
             </div>
             <span class="panel-chip">@Model.RecentUsers.Count hồ sơ</span>
@@ -1379,8 +1391,12 @@
                     const name = device.userDisplayName || device.userCode || "Khách tham quan";
                     const platform = device.devicePlatform || "App";
                     const model = device.deviceModel ? `${platform} - ${device.deviceModel}` : platform;
+                    const userCode = device.userCode || "guest";
                     const version = device.appVersion ? `App ${device.appVersion}` : "";
                     const meta = version ? `${model} | ${version}` : model;
+                    const statusText = Number(device.secondsSinceLastSeen ?? 999) <= 30
+                        : "Chưa có";
+                        : "Chưa có";
                     const locationMeta = hasLocation(device)
                         ? `${formatCoordinate(device.latitude)}, ${formatCoordinate(device.longitude)}${formatAccuracy(device.accuracyMeters)}`
                         : "Chưa có GPS hiện tại";
@@ -1390,12 +1406,13 @@
                             <div class="active-device-main">
                                 <div class="active-device-name">${escapeHtml(name)}</div>
                                 <div class="active-device-meta">${escapeHtml(meta)}</div>
-                                <div class="active-device-meta">Device #${escapeHtml(shortDeviceId(device.deviceId))}</div>
+                                <div class="active-device-meta">UserCode: ${escapeHtml(userCode)} | Platform: ${escapeHtml(platform)}</div>
+                                <div class="active-device-meta">Device #${escapeHtml(shortDeviceId(device.deviceId))} | Instance #${escapeHtml(shortDeviceId(device.clientInstanceId || ""))}</div>
                                 <div class="active-device-meta active-device-location">${escapeHtml(locationMeta)}</div>
                             </div>
                             <div class="active-device-status">
                                 <span class="active-device-dot"></span>
-                                <span>${escapeHtml(formatTime(device.lastSeenAtUtc))}</span>
+                                <span>${escapeHtml(statusText)} - ${escapeHtml(formatTime(device.lastSeenAtUtc))}</span>
                             </div>
                         </div>`;
                 }).join("");
@@ -1415,7 +1432,7 @@
                 }
 
                 if (recentHistoryCountEl) {
-                    recentHistoryCountEl.textContent = `${logs.length} phien gan nhat`;
+                    recentHistoryCountEl.textContent = `${logs.length} phiên gần nhất`;
                 }
 
                 if (!recentHistoryBodyEl) {
@@ -1444,7 +1461,7 @@
                             </td>
                             <td>${escapeHtml(item?.language || "vi")}</td>
                             <td>${escapeHtml(formatHistoryTime(item?.startedAt))}</td>
-                            <td>${escapeHtml(Number.isFinite(listenSeconds) ? `${Math.max(0, Math.round(listenSeconds))} giây` : "0 giây")}</td>
+                            <td>${Number.isFinite(listenSeconds) ? listenSeconds : 0} giây</td>
                             <td>
                                 <span class="status-badge ${completed ? "done" : "pending"}">
                                     ${completed ? "Hoàn tất" : "Đang nghe"}
@@ -1464,8 +1481,8 @@
 
                 if (noteEl) {
                     noteEl.textContent = count === 1
-                        ? "1 thiết bị dang online"
-                        : `${count} thiết bị dang online`;
+                        ? "1 thiết bị đang online"
+                        : `${count} thiết bị đang online`;
                 }
 
                 if (panelCountEl) {

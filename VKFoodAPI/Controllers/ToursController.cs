@@ -11,10 +11,14 @@ namespace VKFoodAPI.Controllers;
 public class ToursController : ControllerBase
 {
     private readonly TourRepository _repo;
+    private readonly AuditLogRepository _auditLogRepository;
 
-    public ToursController(TourRepository repo)
+    public ToursController(
+        TourRepository repo,
+        AuditLogRepository auditLogRepository)
     {
         _repo = repo;
+        _auditLogRepository = auditLogRepository;
     }
 
     [HttpGet]
@@ -48,6 +52,7 @@ public class ToursController : ControllerBase
         try
         {
             var created = _repo.Create(dto);
+            WriteAudit("create", created);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
         catch (ArgumentException ex)
@@ -77,6 +82,12 @@ public class ToursController : ControllerBase
                 return NotFound();
             }
 
+            var updated = _repo.GetById(id);
+            if (updated is not null)
+            {
+                WriteAudit("update", updated);
+            }
+
             return NoContent();
         }
         catch (ArgumentException ex)
@@ -93,11 +104,30 @@ public class ToursController : ControllerBase
     [Authorize(Policy = AdminApiKeyDefaults.PolicyName)]
     public IActionResult Delete(int id)
     {
+        var existing = _repo.GetById(id);
         if (!_repo.Delete(id))
         {
             return NotFound();
         }
 
+        if (existing is not null)
+        {
+            WriteAudit("delete", existing);
+        }
+
         return NoContent();
+    }
+
+    private void WriteAudit(string action, TourDto tour)
+    {
+        _auditLogRepository.Create(new AuditLogCreateRequest
+        {
+            Username = User.Identity?.Name ?? "WebAdmin",
+            Action = action,
+            EntityName = "Tour",
+            EntityId = tour.Id.ToString(),
+            Description = $"{action} tour {tour.Code} - {tour.Name}",
+            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty
+        });
     }
 }

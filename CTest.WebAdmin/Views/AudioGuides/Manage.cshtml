@@ -387,7 +387,7 @@
                         </div>
 
                         <div>
-                            <label asp-for="Editor.VoiceType" class="form-label">Giọng đọc</label>
+                            <label asp-for="Editor.VoiceType" class="form-label">Gi?ng d?c</label>
                             <select asp-for="Editor.VoiceType" class="form-select" id="audioVoiceType">
                                 <option value="female">Nữ</option>
                                 <option value="male">Nam</option>
@@ -429,7 +429,7 @@
                 </form>
 
                 <div class="audio-preview">
-                    <div class="audio-preview-label">Xem trước</div>
+                        <div class="audio-preview-label">Xem trước</div>
                     <div class="audio-preview-title" id="audioPreviewPoi">@selectedPoiName</div>
                     <div class="text-muted mt-2" id="audioPreviewSummary">
                         @(string.Equals(Model.Editor.SourceType, "file", StringComparison.OrdinalIgnoreCase)
@@ -480,12 +480,12 @@
                 stopButton.type = "button";
                 stopButton.id = "stopPreviewButton";
                 stopButton.className = "btn btn-outline-secondary rounded-pill px-4";
-                stopButton.textContent = "Dung nghe thu";
+                stopButton.textContent = "Dừng nghe thử";
                 actionRow.insertBefore(stopButton, estimateButton);
             }
 
             const getDefaultSummary = () => sourceType?.value === "file"
-                ? "Ban ghi hien dung file audio. Web se uu tien phat dung file nay giong app neu file truy cap duoc."
+                ? "Bản ghi hiện dùng file audio. Web sẽ ưu tiên phát đúng file này giống app nếu file truy cập được."
                 : "Bản ghi hiện dùng TTS. Web sẽ đọc theo locale và giọng phù hợp với ngôn ngữ đang chọn.";
 
             const setSummary = (message) => {
@@ -506,7 +506,7 @@
                     return;
                 }
 
-                previewPoi.textContent = poiSelect.options[poiSelect.selectedIndex]?.text || "Chua chon POI";
+                previewPoi.textContent = poiSelect.options[poiSelect.selectedIndex]?.text || "Chưa chọn POI";
             };
 
             const previewEditor = () => {
@@ -525,13 +525,13 @@
                     allowAudioFallback: false,
                     baseUrl: apiBaseUrl,
                     messages: {
-                        playingAudio: "Dang phat dung file audio da luu...",
+                        playingAudio: "Đang phát đúng file audio đã lưu...",
                         audioEnded: "Đã phát xong file audio mẫu.",
-                        audioUnavailable: "Ban ghi nay chua co file audio hop le de preview tren web.",
+                        audioUnavailable: "Bản ghi này chưa có file audio hợp lệ để preview trên web.",
                         audioFailed: "Không phát được file audio này trên web.",
-                        playingTts: "Dang doc preview TTS theo tuy chon hien tai...",
-                        ttsEnded: "Da doc xong preview TTS.",
-                        ttsFailed: "Khong the phat preview TTS. Thu bam lai mot lan nua.",
+                        playingTts: "Đang đọc preview TTS theo tùy chọn hiện tại...",
+                        ttsEnded: "Đã đọc xong preview TTS.",
+                        ttsFailed: "Không thể phát preview TTS. Thử bấm lại một lần nữa.",
                         unsupportedTts: "Trình duyệt này không hỗ trợ TTS preview.",
                         empty: "Hay nhap script truoc khi nghe thu."
                     }
@@ -575,12 +575,12 @@
                         baseUrl: apiBaseUrl,
                         messages: {
                             playingAudio: "Đang phát file audio đã publish cho POI này...",
-                            audioEnded: "Da nghe xong ban ghi mau cua POI.",
+                            audioEnded: "Đã nghe xong bản ghi mẫu của POI.",
                             audioUnavailable: "POI này chưa có file audio hợp lệ để phát trên web.",
-                            audioFailed: "Khong phat duoc file audio da luu cho POI nay.",
-                            playingTts: "Dang doc preview TTS cua POI...",
-                            ttsEnded: "Da doc xong preview POI.",
-                            ttsFailed: "Khong the doc preview TTS cua POI nay.",
+                            audioFailed: "Không phát được file audio đã lưu cho POI này.",
+                            playingTts: "Đang đọc preview TTS của POI...",
+                            ttsEnded: "Đã đọc xong preview POI.",
+                            ttsFailed: "Không thể đọc preview TTS của POI này.",
                             unsupportedTts: "Trình duyệt này không hỗ trợ TTS preview.",
                             empty: "POI này chưa có nội dung để nghe thử."
                         }

@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Không có quyền truy cập";
+}
+
+<div class="dashboard-panel access-denied-panel">
+    <div class="panel-header">
+        <div>
+            <h2 class="panel-title">Không có quyền truy cập</h2>
+            <div class="panel-subtitle">Tài khoản hiện tại không được phép mở khu vực này.</div>
+        </div>
+    </div>
+
+    <div class="empty-state mb-3">
+        Dùng đúng khu vực theo quyền của tài khoản. Admin quản lý toàn hệ thống; Chủ nhà hàng đăng ký POI, chờ duyệt và xem thống kê của điểm mình phụ trách.
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+        @if (User.IsInRole("PoiOwner"))
+        {
+            <a class="btn btn-primary" asp-controller="Owner" asp-action="Index">Về khu vực Chủ nhà hàng</a>
+        }
+        else
+        {
+            <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Về Dashboard</a>
+        }
+        <form asp-controller="Account" asp-action="Logout" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-secondary">Đăng xuất</button>
+        </form>
+    </div>
+</div>

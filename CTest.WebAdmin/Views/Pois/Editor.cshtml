@@ -289,7 +289,7 @@
                                     <img id="poiImagePreview"
                                          class="poi-image-preview @(string.IsNullOrWhiteSpace(imagePreviewSource) ? "" : "has-image")"
                                          src="@imagePreviewSource"
-                                         alt="Xem trước ảnh POI" />
+                                          alt="Xem trước ảnh POI" />
                                     <div class="fw-semibold">Kéo ảnh vào đây hoặc bấm để chọn</div>
                                     <div class="text-muted small mt-1">Hỗ trợ JPG, PNG, WEBP. Tối đa 5 MB.</div>
                                     <input asp-for="UploadedImage" type="file" class="visually-hidden" id="poiImageFile" accept="image/*" />
@@ -304,12 +304,12 @@
                         <div class="poi-section-kicker">Vị trí</div>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label asp-for="Latitude" class="form-label">Vĩ độ</label>
+                                <label asp-for="Latitude" class="form-label">Vi d?</label>
                                 <input asp-for="Latitude" class="form-control" id="poiLatitude" />
                                 <span asp-validation-for="Latitude" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="Longitude" class="form-label">Kinh độ</label>
+                                <label asp-for="Longitude" class="form-label">Kinh d?</label>
                                 <input asp-for="Longitude" class="form-control" id="poiLongitude" />
                                 <span asp-validation-for="Longitude" class="text-danger small"></span>
                             </div>
@@ -411,7 +411,7 @@
 
                 @if (!string.IsNullOrWhiteSpace(Model.MapLink))
                 {
-                    <a href="@Model.MapLink" target="_blank" class="btn btn-outline-primary rounded-pill px-4">Mở bản đồ</a>
+                    <a href="@Model.MapLink" target="_blank" class="btn btn-outline-primary rounded-pill px-4">M? b?n d?</a>
                 }
 
                 <div class="mt-3 text-muted small">

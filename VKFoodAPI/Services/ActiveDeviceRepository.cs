@@ -8,7 +8,7 @@ namespace VKFoodAPI.Services;
 
 public class ActiveDeviceRepository
 {
-    private static readonly TimeSpan ActiveTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan ActiveTimeout = TimeSpan.FromSeconds(120);
     private static readonly TimeSpan RouteRetention = TimeSpan.FromHours(12);
     private const int MaxRoutePoints = 1200;
 
@@ -32,7 +32,7 @@ public class ActiveDeviceRepository
         _routeDataFilePath = Path.Combine(dataDirectory, "active-device-routes.json");
         _devices = LoadDevices()
             .Where(device => !string.IsNullOrWhiteSpace(device.DeviceId))
-            .GroupBy(device => NormalizeDeviceId(device.DeviceId), StringComparer.OrdinalIgnoreCase)
+            .GroupBy(device => BuildSessionKey(device.DeviceId, device.ClientInstanceId), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(group => group.Key, group => NormalizeStoredDevice(group.First()), StringComparer.OrdinalIgnoreCase);
         _routePoints = LoadRoutePoints();
     }
@@ -57,6 +57,29 @@ public class ActiveDeviceRepository
         return stats;
     }
 
+    public IReadOnlyList<ActiveDeviceSessionDto> GetRawSessions()
+    {
+        var nowUtc = DateTimeOffset.UtcNow;
+
+        lock (_syncRoot)
+        {
+            PruneInactiveUnsafe(nowUtc);
+
+            return _devices.Values
+                .OrderByDescending(device => device.LastSeenAtUtc)
+                .ThenBy(device => device.UserDisplayName)
+                .ThenBy(device => device.SessionKey)
+                .Select(device =>
+                {
+                    var snapshot = device.Clone();
+                    snapshot.IsActive = snapshot.LastSeenAtUtc >= nowUtc.Subtract(ActiveTimeout);
+                    snapshot.SecondsSinceLastSeen = Math.Max(0, (int)Math.Round((nowUtc - snapshot.LastSeenAtUtc).TotalSeconds));
+                    return snapshot;
+                })
+                .ToList();
+        }
+    }
+
     public ActiveDeviceStatsDto RegisterHeartbeat(ActiveDeviceHeartbeatRequest request)
     {
         var deviceId = NormalizeDeviceId(request.DeviceId);
@@ -65,6 +88,8 @@ public class ActiveDeviceRepository
             throw new ArgumentException("DeviceId is required.", nameof(request));
         }
 
+        var clientInstanceId = NormalizeClientInstanceId(request.ClientInstanceId);
+        var sessionKey = BuildSessionKey(deviceId, clientInstanceId);
         var nowUtc = DateTimeOffset.UtcNow;
         ActiveDeviceStatsDto stats;
 
@@ -73,16 +98,21 @@ public class ActiveDeviceRepository
             PruneInactiveUnsafe(nowUtc);
             PruneRoutePointsUnsafe(nowUtc);
 
-            if (!_devices.TryGetValue(deviceId, out var device))
+            if (!_devices.TryGetValue(sessionKey, out var device))
             {
                 device = new ActiveDeviceSessionDto
                 {
                     DeviceId = deviceId,
+                    ClientInstanceId = clientInstanceId,
+                    SessionKey = sessionKey,
                     ConnectedAtUtc = nowUtc
                 };
-                _devices[deviceId] = device;
+                _devices[sessionKey] = device;
             }
 
+            device.DeviceId = deviceId;
+            device.ClientInstanceId = clientInstanceId;
+            device.SessionKey = sessionKey;
             device.UserCode = NormalizeUserCode(request.UserCode);
             device.UserDisplayName = NormalizeDisplayName(request.UserDisplayName, device.UserCode);
             device.UserEmail = request.UserEmail?.Trim() ?? string.Empty;
@@ -93,7 +123,7 @@ public class ActiveDeviceRepository
             device.IsActive = true;
             device.SecondsSinceLastSeen = 0;
             UpdateLocationUnsafe(device, request);
-            TryAppendRoutePointUnsafe(deviceId, request, nowUtc);
+            TryAppendRoutePointUnsafe(sessionKey, request, nowUtc);
 
             SaveUnsafe();
             stats = BuildStatsUnsafe(nowUtc);
@@ -105,6 +135,7 @@ public class ActiveDeviceRepository
     public ActiveDeviceStatsDto Disconnect(ActiveDeviceDisconnectRequest request)
     {
         var deviceId = NormalizeDeviceId(request.DeviceId);
+        var clientInstanceId = NormalizeClientInstanceId(request.ClientInstanceId);
         var nowUtc = DateTimeOffset.UtcNow;
         ActiveDeviceStatsDto stats;
 
@@ -112,7 +143,22 @@ public class ActiveDeviceRepository
         {
             if (!string.IsNullOrWhiteSpace(deviceId))
             {
-                _devices.Remove(deviceId);
+                if (!string.IsNullOrWhiteSpace(clientInstanceId))
+                {
+                    _devices.Remove(BuildSessionKey(deviceId, clientInstanceId));
+                }
+                else
+                {
+                    var matchingKeys = _devices
+                        .Where(pair => string.Equals(pair.Value.DeviceId, deviceId, StringComparison.OrdinalIgnoreCase))
+                        .Select(pair => pair.Key)
+                        .ToList();
+
+                    foreach (var key in matchingKeys)
+                    {
+                        _devices.Remove(key);
+                    }
+                }
             }
 
             PruneInactiveUnsafe(nowUtc);
@@ -252,7 +298,7 @@ public class ActiveDeviceRepository
 
     private void SaveUnsafe()
     {
-        var json = JsonSerializer.Serialize(_devices.Values.OrderBy(device => device.DeviceId).ToList(), _jsonOptions);
+        var json = JsonSerializer.Serialize(_devices.Values.OrderBy(device => device.SessionKey).ToList(), _jsonOptions);
         File.WriteAllText(_dataFilePath, json);
 
         var routeJson = JsonSerializer.Serialize(
@@ -265,6 +311,8 @@ public class ActiveDeviceRepository
     {
         var normalized = device.Clone();
         normalized.DeviceId = NormalizeDeviceId(normalized.DeviceId);
+        normalized.ClientInstanceId = NormalizeClientInstanceId(normalized.ClientInstanceId);
+        normalized.SessionKey = BuildSessionKey(normalized.DeviceId, normalized.ClientInstanceId);
         normalized.UserCode = NormalizeUserCode(normalized.UserCode);
         normalized.UserDisplayName = NormalizeDisplayName(normalized.UserDisplayName, normalized.UserCode);
         normalized.UserEmail ??= string.Empty;
@@ -312,11 +360,15 @@ public class ActiveDeviceRepository
         ActiveDeviceHeartbeatRequest request,
         DateTimeOffset fallbackUtc)
     {
-        if (!HasValidLocation(request.Latitude, request.Longitude))
+        if (!HasValidLocation(request.Latitude, request.Longitude) ||
+            !request.Latitude.HasValue ||
+            !request.Longitude.HasValue)
         {
             return;
         }
 
+        var latitude = request.Latitude.Value;
+        var longitude = request.Longitude.Value;
         var anonymousRouteId = BuildAnonymousRouteId(deviceId);
         var recordedAtUtc = request.LocationTimestampUtc ?? request.SentAtUtc;
         if (recordedAtUtc == default)
@@ -330,8 +382,8 @@ public class ActiveDeviceRepository
             .FirstOrDefault();
 
         if (previousPoint is not null &&
-            Math.Abs(previousPoint.Latitude - request.Latitude.Value) < 0.00001 &&
-            Math.Abs(previousPoint.Longitude - request.Longitude.Value) < 0.00001 &&
+            Math.Abs(previousPoint.Latitude - latitude) < 0.00001 &&
+            Math.Abs(previousPoint.Longitude - longitude) < 0.00001 &&
             Math.Abs((recordedAtUtc - previousPoint.RecordedAtUtc).TotalSeconds) < 15)
         {
             return;
@@ -340,8 +392,8 @@ public class ActiveDeviceRepository
         _routePoints.Add(new ActiveDeviceRoutePointDto
         {
             AnonymousRouteId = anonymousRouteId,
-            Latitude = request.Latitude.Value,
-            Longitude = request.Longitude.Value,
+            Latitude = latitude,
+            Longitude = longitude,
             AccuracyMeters = request.AccuracyMeters is > 0 ? request.AccuracyMeters : null,
             RecordedAtUtc = recordedAtUtc
         });
@@ -351,8 +403,19 @@ public class ActiveDeviceRepository
 
     private static bool HasValidLocation(double? latitude, double? longitude)
     {
-        return latitude is >= -90 and <= 90 &&
-               longitude is >= -180 and <= 180;
+        if (!latitude.HasValue || !longitude.HasValue)
+        {
+            return false;
+        }
+
+        if (latitude.Value is < -90 or > 90 ||
+            longitude.Value is < -180 or > 180)
+        {
+            return false;
+        }
+
+        return Math.Abs(latitude.Value) > 0.000001 ||
+               Math.Abs(longitude.Value) > 0.000001;
     }
 
     private static string BuildAnonymousRouteId(string deviceId)
@@ -361,9 +424,24 @@ public class ActiveDeviceRepository
         return $"ANON-{Convert.ToHexString(hash.AsSpan(0, 3))}";
     }
 
+    private static string BuildSessionKey(string? deviceId, string? clientInstanceId)
+    {
+        var normalizedDeviceId = NormalizeDeviceId(deviceId);
+        var normalizedClientInstanceId = NormalizeClientInstanceId(clientInstanceId);
+
+        return string.IsNullOrWhiteSpace(normalizedClientInstanceId)
+            ? normalizedDeviceId
+            : $"{normalizedDeviceId}:{normalizedClientInstanceId}";
+    }
+
     private static string NormalizeDeviceId(string? deviceId)
     {
         return deviceId?.Trim().ToLowerInvariant() ?? string.Empty;
+    }
+
+    private static string NormalizeClientInstanceId(string? clientInstanceId)
+    {
+        return clientInstanceId?.Trim().ToLowerInvariant() ?? string.Empty;
     }
 
     private static string NormalizeUserCode(string? userCode)
@@ -380,6 +458,6 @@ public class ActiveDeviceRepository
             return displayName.Trim();
         }
 
-        return string.IsNullOrWhiteSpace(userCode) ? "Khach tham quan" : userCode;
+        return string.IsNullOrWhiteSpace(userCode) ? "Khách tham quan" : userCode;
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Extensions.DependencyInjection;
 using VinhKhanhGuide.App.ViewModels;
 
 namespace VinhKhanhGuide.App.Views;
@@ -6,11 +7,13 @@ namespace VinhKhanhGuide.App.Views;
 public partial class PoiDetailPage : ContentPage
 {
     private readonly MainViewModel _viewModel;
+    private readonly IServiceProvider _serviceProvider;
 
-    public PoiDetailPage(MainViewModel viewModel)
+    public PoiDetailPage(MainViewModel viewModel, IServiceProvider serviceProvider)
     {
         InitializeComponent();
         _viewModel = viewModel;
+        _serviceProvider = serviceProvider;
         BindingContext = _viewModel;
     }
 
@@ -36,6 +39,12 @@ public partial class PoiDetailPage : ContentPage
         }
 
         await Browser.Default.OpenAsync(_viewModel.SelectedPoiMapLink, BrowserLaunchMode.SystemPreferred);
+    }
+
+    private async void OnOpenHistoryClicked(object? sender, EventArgs e)
+    {
+        var historyPage = _serviceProvider.GetRequiredService<ListeningHistoryPage>();
+        await Navigation.PushAsync(historyPage);
     }
 
     private string GetLocalizedText(string vi, string en, string zh, string ko, string fr)

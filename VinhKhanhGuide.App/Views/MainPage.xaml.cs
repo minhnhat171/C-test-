@@ -288,8 +288,32 @@ public partial class MainPage : ContentPage
 
     private async void OnOpenPoiBrowsePageClicked(object? sender, EventArgs e)
     {
+        if (_isFullScreenMapVisible)
+        {
+            _isFullScreenMapVisible = false;
+            FullScreenMapOverlay.IsVisible = false;
+        }
+
         var poiBrowsePage = _serviceProvider.GetRequiredService<PoiBrowsePage>();
         await Navigation.PushAsync(poiBrowsePage);
+    }
+
+    private async void OnOpenDishFilterClicked(object? sender, EventArgs e)
+    {
+        if (_isFullScreenMapVisible)
+        {
+            _isFullScreenMapVisible = false;
+            FullScreenMapOverlay.IsVisible = false;
+        }
+
+        var featuredPage = _serviceProvider.GetRequiredService<FeaturedDishCategoryPage>();
+        await Navigation.PushAsync(featuredPage);
+    }
+
+    private async void OnOpenQrScannerClicked(object? sender, EventArgs e)
+    {
+        var scannerPage = _serviceProvider.GetRequiredService<QrScannerPage>();
+        await Navigation.PushAsync(scannerPage);
     }
 
     private void OnOpenFullScreenMapClicked(object? sender, EventArgs e)

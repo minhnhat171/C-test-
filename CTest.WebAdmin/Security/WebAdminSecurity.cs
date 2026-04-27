@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using VinhKhanhGuide.Core.Contracts;
@@ -33,6 +34,7 @@ public sealed class WebAdminAuthUserOptions
 {
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
     public string OwnerCode { get; set; } = string.Empty;
@@ -74,7 +76,7 @@ public sealed class WebAdminAuthService : IWebAdminAuthService
         var matchedUser = users.FirstOrDefault(user =>
             string.Equals(NormalizeLookup(user.Username), normalizedUsername, StringComparison.OrdinalIgnoreCase));
 
-        if (matchedUser is null || !string.Equals(matchedUser.Password, password, StringComparison.Ordinal))
+        if (matchedUser is null || !VerifyPassword(matchedUser, password))
         {
             return null;
         }
@@ -108,14 +110,14 @@ public sealed class WebAdminAuthService : IWebAdminAuthService
             new WebAdminAuthUserOptions
             {
                 Username = "user",
-                Password = "12345678",
+                PasswordHash = WebAdminPasswordHasher.HashPassword("12345678"),
                 DisplayName = "Admin",
                 Role = WebAdminRoles.Admin
             },
             new WebAdminAuthUserOptions
             {
                 Username = "owner",
-                Password = "12345678",
+                PasswordHash = WebAdminPasswordHasher.HashPassword("12345678"),
                 DisplayName = "Chủ nhà hàng",
                 Role = WebAdminRoles.PoiOwner,
                 OwnerCode = "owner",
@@ -139,6 +141,79 @@ public sealed class WebAdminAuthService : IWebAdminAuthService
     private static string NormalizeLookup(string? value)
     {
         return value?.Trim().ToLowerInvariant() ?? string.Empty;
+    }
+
+    private static bool VerifyPassword(WebAdminAuthUserOptions user, string password)
+    {
+        if (!string.IsNullOrWhiteSpace(user.PasswordHash))
+        {
+            return WebAdminPasswordHasher.VerifyPassword(user.PasswordHash, password);
+        }
+
+        return !string.IsNullOrWhiteSpace(user.Password) &&
+               string.Equals(user.Password, password, StringComparison.Ordinal);
+    }
+}
+
+public static class WebAdminPasswordHasher
+{
+    private const int SaltByteCount = 16;
+    private const int HashByteCount = 32;
+    private const int IterationCount = 100000;
+    private const string Prefix = "PBKDF2";
+
+    public static string HashPassword(string password)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            throw new ArgumentException("Password is required.", nameof(password));
+        }
+
+        var salt = RandomNumberGenerator.GetBytes(SaltByteCount);
+        var hash = Rfc2898DeriveBytes.Pbkdf2(
+            password,
+            salt,
+            IterationCount,
+            HashAlgorithmName.SHA256,
+            HashByteCount);
+
+        return $"{Prefix}${IterationCount}${Convert.ToBase64String(salt)}${Convert.ToBase64String(hash)}";
+    }
+
+    public static bool VerifyPassword(string storedHash, string password)
+    {
+        if (string.IsNullOrWhiteSpace(storedHash) ||
+            string.IsNullOrWhiteSpace(password))
+        {
+            return false;
+        }
+
+        var parts = storedHash.Split('$', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length != 4 ||
+            !string.Equals(parts[0], Prefix, StringComparison.Ordinal) ||
+            !int.TryParse(parts[1], out var iterations) ||
+            iterations <= 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            var salt = Convert.FromBase64String(parts[2]);
+            var expectedHash = Convert.FromBase64String(parts[3]);
+            var actualHash = Rfc2898DeriveBytes.Pbkdf2(
+                password,
+                salt,
+                iterations,
+                HashAlgorithmName.SHA256,
+                expectedHash.Length);
+
+            return CryptographicOperations.FixedTimeEquals(expectedHash, actualHash);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 }
 

@@ -50,8 +50,40 @@
         display: block;
     }
 
+    .owner-steps {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .owner-step {
+        padding: 0.9rem 1rem;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .owner-step-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        margin-bottom: 0.55rem;
+        border-radius: 999px;
+        background: #0f766e;
+        color: #fff;
+        font-weight: 800;
+        font-size: 0.82rem;
+    }
+
     @@media (max-width: 1199.98px) {
         .owner-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .owner-steps {
             grid-template-columns: 1fr;
         }
     }
@@ -75,8 +107,22 @@
     <div class="alert alert-warning">@Model.Pois.LoadErrorMessage</div>
 }
 
-<div class="alert alert-info">
-    POI mới gửi từ khu vực chủ nhà hàng sẽ ở trạng thái chờ duyệt. Admin duyệt xong POI mới hoạt động trên web và app.
+<div class="owner-steps">
+    <div class="owner-step">
+        <span class="owner-step-number">1</span>
+        <div class="fw-bold">Đăng ký POI</div>
+        <div class="text-muted small">Gửi thông tin quán, tọa độ và ảnh đại diện.</div>
+    </div>
+    <div class="owner-step">
+        <span class="owner-step-number">2</span>
+        <div class="fw-bold">Chờ duyệt</div>
+        <div class="text-muted small">POI ở trạng thái chờ đến khi Admin duyệt.</div>
+    </div>
+    <div class="owner-step">
+        <span class="owner-step-number">3</span>
+        <div class="fw-bold">Xem thống kê</div>
+        <div class="text-muted small">Theo dõi lượt nghe sau khi POI hoạt động.</div>
+    </div>
 </div>
 
 <div class="owner-grid mb-4">
@@ -100,6 +146,7 @@
                 <div class="col-md-6">
                     <label asp-for="Registration.Code" class="form-label">Mã POI</label>
                     <input asp-for="Registration.Code" class="form-control" placeholder="VD: VK-FOOD-NEW" />
+                    <div id="ownerCodeWarning" class="text-danger small mt-1 d-none">Mã POI này đã tồn tại. Hãy chọn mã khác.</div>
                     <span asp-validation-for="Registration.Code" class="text-danger small"></span>
                 </div>
                 <div class="col-md-6">
@@ -113,12 +160,12 @@
                 </div>
                 <div class="col-md-6">
                     <label asp-for="Registration.Latitude" class="form-label">Vĩ độ</label>
-                    <input asp-for="Registration.Latitude" class="form-control" />
+                    <input asp-for="Registration.Latitude" class="form-control" min="-90" max="90" step="0.000001" />
                     <span asp-validation-for="Registration.Latitude" class="text-danger small"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="Registration.Longitude" class="form-label">Kinh độ</label>
-                    <input asp-for="Registration.Longitude" class="form-control" />
+                    <input asp-for="Registration.Longitude" class="form-control" min="-180" max="180" step="0.000001" />
                     <span asp-validation-for="Registration.Longitude" class="text-danger small"></span>
                 </div>
                 <div class="col-md-6">
@@ -246,6 +293,11 @@
             const imagePreview = document.getElementById("ownerImagePreview");
             const container = document.getElementById("owner-history-content");
             const refreshStatus = document.getElementById("owner-refresh-status");
+            const existingCodes = new Set(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Pois.Items.Select(item => item.Code.ToUpperInvariant()))));
+            const codeInput = document.getElementById("Registration_Code");
+            const codeWarning = document.getElementById("ownerCodeWarning");
+            const latitudeInput = document.getElementById("Registration_Latitude");
+            const longitudeInput = document.getElementById("Registration_Longitude");
 
             const previewFile = (file) => {
                 if (!file || !file.type.startsWith("image/") || !imagePreview) return;
@@ -281,6 +333,28 @@
             imageInput?.addEventListener("change", () => {
                 previewFile(imageInput.files?.[0]);
             });
+
+            const validateCode = () => {
+                if (!codeInput || !codeWarning) return;
+                const value = codeInput.value.trim().toUpperCase();
+                const duplicated = value.length > 0 && existingCodes.has(value);
+                codeWarning.classList.toggle("d-none", !duplicated);
+                codeInput.setCustomValidity(duplicated ? "Mã POI này đã tồn tại." : "");
+            };
+
+            const validateCoordinate = (input, min, max, label) => {
+                if (!input) return;
+                const value = Number(input.value);
+                const invalid = input.value.trim().length > 0 && (!Number.isFinite(value) || value < min || value > max);
+                input.setCustomValidity(invalid ? `${label} phải nằm trong khoảng ${min} đến ${max}.` : "");
+            };
+
+            codeInput?.addEventListener("input", validateCode);
+            latitudeInput?.addEventListener("input", () => validateCoordinate(latitudeInput, -90, 90, "Vĩ độ"));
+            longitudeInput?.addEventListener("input", () => validateCoordinate(longitudeInput, -180, 180, "Kinh độ"));
+            validateCode();
+            validateCoordinate(latitudeInput, -90, 90, "Vĩ độ");
+            validateCoordinate(longitudeInput, -180, 180, "Kinh độ");
 
             if (!container) {
                 return;

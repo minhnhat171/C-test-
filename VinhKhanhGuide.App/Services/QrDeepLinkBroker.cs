@@ -1,6 +1,9 @@
+using System.Globalization;
+using VinhKhanhGuide.Core.Contracts;
+
 namespace VinhKhanhGuide.App.Services;
 
-public sealed record QrDeepLinkRequest(Guid PoiId, bool AutoPlay, string Source);
+public sealed record QrDeepLinkRequest(string TargetType, string TargetId, bool AutoPlay, string Source);
 
 public static class QrDeepLinkBroker
 {
@@ -62,9 +65,37 @@ public static class QrDeepLinkBroker
             segments = segments.Skip(1).ToArray();
         }
 
-        if (!string.Equals(targetType, "poi", StringComparison.OrdinalIgnoreCase) ||
-            segments.Length == 0 ||
-            !Guid.TryParse(segments[^1], out var poiId))
+        if (segments.Length == 0)
+        {
+            return false;
+        }
+
+        if (!QrTargetKinds.IsSupported(targetType))
+        {
+            return false;
+        }
+
+        targetType = QrTargetKinds.Normalize(targetType);
+        var targetId = segments[^1];
+        if (string.Equals(targetType, QrTargetKinds.Poi, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!Guid.TryParse(targetId, out var poiId))
+            {
+                return false;
+            }
+
+            targetId = poiId.ToString();
+        }
+        else if (string.Equals(targetType, QrTargetKinds.Tour, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!int.TryParse(targetId, NumberStyles.Integer, CultureInfo.InvariantCulture, out var tourId))
+            {
+                return false;
+            }
+
+            targetId = tourId.ToString(CultureInfo.InvariantCulture);
+        }
+        else
         {
             return false;
         }
@@ -75,7 +106,8 @@ public static class QrDeepLinkBroker
                        !string.Equals(autoPlayValue, "false", StringComparison.OrdinalIgnoreCase);
 
         request = new QrDeepLinkRequest(
-            poiId,
+            targetType,
+            targetId,
             autoPlay,
             query.TryGetValue("source", out var source) && !string.IsNullOrWhiteSpace(source)
                 ? source

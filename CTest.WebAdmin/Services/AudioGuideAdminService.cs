@@ -136,7 +136,7 @@ public class AudioGuideAdminService
         {
             var created = await _audioGuideApiClient.CreateAudioGuideAsync(dto, cancellationToken);
             return AudioGuideOperationResult.Success(
-                "Da tao audio moi va dong bo sang VKFoodAPI.",
+                "Đã tạo audio mới và đồng bộ sang VKFoodAPI.",
                 created.Id);
         }
 
@@ -161,7 +161,7 @@ public class AudioGuideAdminService
         var deleted = await _audioGuideApiClient.DeleteAudioGuideAsync(id, cancellationToken);
 
         return deleted
-            ? AudioGuideOperationResult.Success("Da xoa audio khoi VKFoodAPI.", id)
+            ? AudioGuideOperationResult.Success("Đã xóa audio khỏi VKFoodAPI.", id)
             : AudioGuideOperationResult.Missing("Không tìm thấy audio để xóa.");
     }
 
@@ -293,7 +293,7 @@ public class AudioGuideAdminService
                         ? "female"
                         : AudioGuideAdminMappings.NormalizeVoiceType(selectedLanguageGuide.VoiceType),
                     VoiceLabel = selectedLanguageGuide is null
-                        ? "TTS mac dinh"
+                        ? "TTS mặc định"
                         : AudioGuideAdminMappings.GetVoiceLabel(selectedLanguageGuide.VoiceType),
                     SourceType = selectedLanguageGuide is null
                         ? "tts"

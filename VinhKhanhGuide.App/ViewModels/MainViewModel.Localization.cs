@@ -17,14 +17,14 @@ public partial class MainViewModel
     public string GreetingText => LocalizeUi(
         $"Xin chào, {CurrentUserDisplayName}",
         $"Hello, {CurrentUserDisplayName}",
-        $"您好，{CurrentUserDisplayName}",
+        $"你好，{CurrentUserDisplayName}",
         $"{CurrentUserDisplayName}님, 안녕하세요",
         $"Bonjour, {CurrentUserDisplayName}");
 
     public string HomeIntroText => LocalizeUi(
         "Bắt đầu nhanh từ tour, tìm quán ngay từ ô search hoặc mở bản đồ nếu bạn đang đứng ngoài đường.",
         "Start with a tour, search for a place, or open the map if you are already on the street.",
-        "可以从路线开始、直接搜索店铺，或在路上时打开地图。",
+        "从路线开始、搜索店铺，或在街上时打开地图。",
         "투어로 시작하거나 검색으로 찾고, 길 위에 있다면 지도를 여세요.",
         "Commencez par un parcours, recherchez un lieu, ou ouvrez la carte si vous êtes déjà sur place.");
     public string FirstTimeGuideTitle => LocalizeUi(
@@ -70,12 +70,12 @@ public partial class MainViewModel
         "지도 열기",
         "Ouvrir la carte");
     public string HomePrimaryCtaText => HasActiveTour
-        ? LocalizeUi("Xem tour đang chạy", "View Active Tour", "查看进行中的路线", "진행 중인 투어 보기", "Voir le parcours en cours")
+        ? LocalizeUi("Xem tour đang chạy", "View Active Tour", "查看当前路线", "진행 중인 투어 보기", "Voir le parcours en cours")
         : LocalizeUi("Bắt đầu tour", "Start a Tour", "开始路线", "투어 시작", "Commencer un parcours");
     public string HomePrimaryCtaHintText => LocalizeUi(
         "Home chỉ giữ những điểm quan trọng nhất. Các danh sách chi tiết đã được đưa sang màn riêng để đỡ rối hơn.",
         "Home now keeps only the key actions, while longer lists live on their own pages.",
-        "首页只保留关键入口，详细列表已移动到单独页面。",
+        "首页只保留最重要的操作，详细列表已移到单独页面。",
         "홈에는 핵심 동선만 남기고 긴 목록은 별도 화면으로 옮겼습니다.",
         "L'accueil conserve les actions principales et les listes détaillées sont déplacées vers des pages dédiées.");
     public string SearchSectionTitle => LocalizeUi("Tìm quán", "Find a Place", "查找店铺", "매장 찾기", "Trouver un lieu");
@@ -102,7 +102,7 @@ public partial class MainViewModel
     public string ActiveTourMapSummary => LocalizeUi(
         "Các điểm dừng được nối theo thứ tự tour để khách thấy toàn bộ đường đi.",
         "Stops are connected in tour order so guests can see the full route.",
-        "站点按路线顺序连接，方便查看完整路线。",
+        "各站点按路线顺序连接，方便查看完整行程。",
         "투어 순서대로 지점을 연결해 전체 경로를 볼 수 있습니다.",
         "Les étapes sont reliées dans l'ordre du parcours pour voir l'itinéraire complet.");
     public string StopTourButtonText => LocalizeUi("Dừng tour", "Stop Tour", "结束路线", "투어 중지", "Arrêter le parcours");
@@ -117,14 +117,14 @@ public partial class MainViewModel
     public string FeaturedSectionSummary => LocalizeUi(
         "Không chỉ xem món đẹp mắt, bạn còn có thể chọn quán gần nhất, quán nên đi trước, mở map đúng nhóm món hoặc bắt đầu mini tour.",
         "Use dish groups to pick the nearest place, the recommended first stop, the right map filter, or a mini tour.",
-        "不仅能看菜，还能直接找最近店铺、推荐首站、打开对应地图或开始迷你路线。",
+        "不只是看菜品，还可以选择最近店铺、推荐先去的店、按菜品筛地图或开始迷你路线。",
         "메뉴 그룹에서 가까운 매장, 추천 첫 매장, 지도 필터, 미니 투어까지 바로 시작할 수 있습니다.",
         "Les groupes de plats servent aussi à choisir le lieu proche, la première adresse recommandée, la carte filtrée ou un mini parcours.");
     public string ListeningHistorySectionTitle => LocalizeUi("Lịch sử nghe", "Listening History", "收听记录", "청취 기록", "Historique d'écoute");
     public string ListeningHistorySectionSummary => LocalizeUi(
         "Những quán bạn đã nghe sẽ nằm ở đây để mở lại nhanh.",
         "Places you listened to will appear here for quick return.",
-        "已收听的店铺会显示在这里，方便再次打开。",
+        "你听过的店铺会显示在这里，方便快速再次打开。",
         "들은 매장은 여기에서 다시 열 수 있습니다.",
         "Les lieux écoutés apparaissent ici pour les retrouver vite.");
     public string ListeningHistorySeeAllText => LocalizeUi("Xem tất cả", "View All", "查看全部", "전체 보기", "Tout afficher");
@@ -140,16 +140,28 @@ public partial class MainViewModel
         _offlineContentStatus.HasSnapshot &&
         _poiRepository.CurrentDataSource is PoiDataSource.OfflineSnapshot or PoiDataSource.CachedSnapshot or PoiDataSource.Seed;
     public string OfflineSnapshotNoticeText => LocalizeUi(
-        "Đang dùng dữ liệu đã lưu gần nhất",
-        "Using the most recently saved data",
-        "正在使用最近保存的数据",
-        "가장 최근에 저장된 데이터를 사용 중입니다",
-        "Utilisation des dernières données enregistrées");
+        _poiRepository.CurrentDataSource switch
+        {
+            PoiDataSource.CachedSnapshot => "API đang mất kết nối, app dùng dữ liệu cache gần nhất.",
+            PoiDataSource.OfflineSnapshot => "Bạn đang offline, app dùng gói dữ liệu đã tải.",
+            PoiDataSource.Seed => "Chưa lấy được API, app dùng dữ liệu mẫu để bạn xem thử.",
+            _ => "Đang dùng dữ liệu đã lưu gần nhất."
+        },
+        _poiRepository.CurrentDataSource switch
+        {
+            PoiDataSource.CachedSnapshot => "The API is unreachable, so the app is using cached data.",
+            PoiDataSource.OfflineSnapshot => "You are offline, so the app is using the downloaded package.",
+            PoiDataSource.Seed => "The API is unavailable, so the app is using sample data.",
+            _ => "Using the most recently saved data."
+        },
+        "正在使用可用的离线数据。",
+        "사용 가능한 오프라인 데이터를 사용 중입니다.",
+        "Utilisation des données hors ligne disponibles.");
     public bool HasManualLocationNotice => _isInitialized && _lastLocation is null;
     public string ManualLocationNoticeText => LocalizeUi(
         "Không lấy được vị trí hiện tại, bạn vẫn có thể nghe thủ công",
         "Current location is unavailable, but you can still listen manually",
-        "暂时无法获取当前位置，但您仍可手动收听",
+        "暂时无法获取当前位置，你仍然可以手动收听",
         "현재 위치를 가져오지 못했지만 수동 청취는 가능합니다",
         "La position actuelle est indisponible, mais l'écoute manuelle reste possible");
     public bool HasNoTourNotice => _isInitialized && !HasTours;
@@ -197,7 +209,7 @@ public partial class MainViewModel
     public string LanguageSectionSummary => LocalizeUi(
         "Khi đổi ngôn ngữ, giao diện và phần thuyết minh sẽ đổi theo cùng lúc.",
         "Changing the language updates both the interface and narration together.",
-        "切换语言时，界面和语音讲解会一起更新。",
+        "切换语言后，界面和语音讲解会一起更新。",
         "언어를 바꾸면 화면과 음성 안내가 함께 바뀝니다.",
         "Quand vous changez de langue, l'interface et la narration changent ensemble.");
     public string LanguagePickerTitle => LocalizeUi("Chọn ngôn ngữ", "Choose language", "选择语言", "언어 선택", "Choisir la langue");
@@ -217,6 +229,7 @@ public partial class MainViewModel
     public string PoiTravelEstimateTitle => LocalizeUi("Khoảng cách / di chuyển", "Distance / Travel", "距离 / 预计路程", "거리 / 이동 예상", "Distance / trajet");
     public string PoiNarrationSectionTitle => LocalizeUi("Nghe thuyết minh", "Listen to the Story", "收听讲解", "안내 듣기", "Écouter le récit");
     public string PoiDirectionButtonText => LocalizeUi("Chỉ đường", "Directions", "导航", "길찾기", "Itinéraire");
+    public string PoiSaveOrHistoryButtonText => LocalizeUi("Lưu / xem lại", "Save / Review", "保存 / 回看", "저장 / 다시 보기", "Enregistrer / revoir");
 
     public string FeaturedDishPageTitle => LocalizeUi("Món nổi bật", "Featured Dishes", "招牌菜", "추천 메뉴", "Plats phares");
     public string FeaturedDishGroupPrefix => LocalizeUi("Nhóm món", "Category", "分组", "카테고리", "Catégorie");
@@ -229,7 +242,7 @@ public partial class MainViewModel
             var poi = GetNearestPoiForFeaturedCategory(_selectedFeaturedDishCategoryKey);
             return poi is null
                 ? LocalizeUi("Chưa có quán gần nhất", "No nearby place yet", "暂无最近店铺", "가까운 매장이 아직 없습니다", "Aucun lieu proche")
-                : LocalizeUi($"Gần nhất: {poi.Name}", $"Nearest: {poi.Name}", $"最近：{poi.Name}", $"가장 가까움: {poi.Name}", $"Plus proche : {poi.Name}");
+                : LocalizeUi($"G?n nh?t: {poi.Name}", $"Nearest: {poi.Name}", $"??:{poi.Name}", $"?? ???: {poi.Name}", $"Plus proche : {poi.Name}");
         }
     }
     public string SelectedFeaturedDishRecommendedPoiText
@@ -249,7 +262,7 @@ public partial class MainViewModel
         $"{GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)} 그룹 지도로 열기",
         $"Ouvrir la carte pour {GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)}");
     public string SelectedFeaturedDishMiniTourText => LocalizeUi(
-        $"Bắt đầu mini tour {GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)}",
+        $"B?t d?u mini tour {GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)}",
         $"Start {GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)} mini tour",
         $"开始 {GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)} 迷你路线",
         $"{GetFeaturedCategoryDisplayName(_selectedFeaturedDishCategoryKey)} 미니 투어 시작",
@@ -556,7 +569,7 @@ public partial class MainViewModel
         if (syncedCount > 0)
         {
             return LocalizeUi(
-                $"{syncedCount} lượt nghe gần nhất",
+                $"{syncedCount} lu?t nghe g?n nh?t",
                 $"{syncedCount} recent listens",
                 $"{syncedCount} 条最近收听记录",
                 $"최근 청취 {syncedCount}건",
@@ -733,6 +746,7 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(PoiTravelEstimateTitle));
         OnPropertyChanged(nameof(PoiNarrationSectionTitle));
         OnPropertyChanged(nameof(PoiDirectionButtonText));
+        OnPropertyChanged(nameof(PoiSaveOrHistoryButtonText));
         OnPropertyChanged(nameof(SelectedPoiNarrationStateText));
         OnPropertyChanged(nameof(FeaturedDishPageTitle));
         OnPropertyChanged(nameof(FeaturedDishGroupPrefix));
@@ -765,7 +779,7 @@ public partial class MainViewModel
                 Description = LocalizeUi(
                     "Món bò nướng đậm vị, dễ chọn cho khách mới.",
                     "Rich grilled beef picks that are easy for first-time visitors.",
-                    "味道浓郁的烤牛肉，适合第一次来的客人。",
+                    "风味浓郁的烤牛肉，第一次来的人也容易选择。",
                     "처음 방문한 손님도 고르기 쉬운 진한 풍미의 소고기 메뉴.",
                     "Des plats de boeuf grillé faciles à choisir pour une première visite."),
                 DishCount = CountFeaturedDishes("bo"),
@@ -807,7 +821,7 @@ public partial class MainViewModel
                 Description = LocalizeUi(
                     "Món ốc nổi bật với vị sốt và nướng quen thuộc.",
                     "Popular shellfish dishes with signature sauces and grills.",
-                    "招牌贝类料理，酱香与烧烤风味突出。",
+                    "以招牌酱汁和烤制风味为特色的人气贝类菜。",
                     "소스와 구이 풍미가 돋보이는 대표 조개 메뉴.",
                     "Des coquillages remarquables, entre sauces maison et grillades."),
                 DishCount = CountFeaturedDishes("oc"),
@@ -894,13 +908,13 @@ public partial class MainViewModel
             "Sườn bò nướng" => LocalizeUi(
                 "Phần sườn bò nướng đậm vị, phù hợp cho khách thích món nướng.",
                 "Bold grilled beef ribs for guests who love charcoal flavors.",
-                "风味浓郁的烤牛肋排，适合喜欢烧烤的客人。",
+                "风味浓郁的烤牛肋排，适合喜欢炭火香气的客人。",
                 "진한 구이 맛을 좋아하는 손님에게 어울리는 소갈비 메뉴.",
                 "Des côtes de boeuf grillées au goût intense."),
             "Bò nướng miếng" => LocalizeUi(
                 "Bò nướng cắt miếng dễ dùng, hợp để gọi chia sẻ theo nhóm.",
                 "Easy-to-share grilled beef slices for groups.",
-                "切片烤牛肉，适合多人分享。",
+                "切片烤牛肉，适合多人一起分享。",
                 "함께 나눠 먹기 좋은 소고기 구이 메뉴.",
                 "Des morceaux de boeuf grillé faciles à partager."),
             "Bò nướng lá lốt" => LocalizeUi(
@@ -912,37 +926,37 @@ public partial class MainViewModel
             "Lẩu Thái" => LocalizeUi(
                 "Nước lẩu chua cay kiểu Thái, hợp nhóm khách thích vị đậm và nóng.",
                 "A spicy Thai-style broth ideal for groups.",
-                "酸辣泰式锅底，适合喜欢重口味的客人。",
+                "酸辣泰式锅底，适合喜欢浓郁热辣口味的多人聚餐。",
                 "매콤한 태국식 국물로 여러 명이 함께 먹기 좋습니다.",
                 "Un bouillon thaï épicé, parfait pour les groupes."),
             "Lẩu Hàn Quốc" => LocalizeUi(
                 "Lẩu cay phong cách Hàn Quốc với topping phong phú và dễ gọi theo nhóm.",
                 "A Korean-style hotpot with generous toppings for groups.",
-                "韩式辣火锅，配料丰富，适合多人点用。",
+                "韩式辣锅，配料丰富，很适合多人一起点。",
                 "푸짐한 토핑의 한식 전골로 단체 손님에게 좋습니다.",
                 "Une fondue coréenne généreuse et facile à partager."),
             "Ốc hương sốt trứng muối" => LocalizeUi(
                 "Ốc hương phủ sốt trứng muối béo mặn, là món nổi bật dễ thu hút khách mới.",
                 "Sea snails coated in salted egg sauce, a strong signature dish.",
-                "咸蛋黄酱海螺，辨识度很高，适合新客尝试。",
+                "螺肉裹咸蛋黄酱，风味突出，很容易吸引新客。",
                 "짭조름한 소금달걀 소스가 특징인 대표 메뉴입니다.",
                 "Des bulots nappés de sauce oeuf salé, très signature."),
             "Ốc nướng mỡ hành" => LocalizeUi(
                 "Ốc nướng mỡ hành quen vị, dễ ăn và có mức giá khởi điểm nhẹ hơn.",
                 "A familiar grilled shellfish dish with a gentler starting price.",
-                "经典葱油烤螺，容易入口，起步价也更轻松。",
+                "经典葱油烤螺，味道熟悉，入门价格也更轻松。",
                 "익숙하고 부담 없는 가격의 조개 구이 메뉴입니다.",
                 "Un coquillage grillé classique, facile d'accès et plus abordable."),
             "Cua Hoàng đế" => LocalizeUi(
                 "Món cua cao cấp nổi bật, phù hợp nhóm khách muốn trải nghiệm đặc biệt.",
                 "A premium crab experience for special occasions.",
-                "高端帝王蟹料理，适合想要特别体验的客人。",
+                "高端蟹类体验，适合想要特别用餐感受的客人。",
                 "특별한 경험을 원하는 손님에게 어울리는 프리미엄 게 요리.",
                 "Un plat premium pour une expérience plus marquante."),
             "Cua Cà Mau" => LocalizeUi(
                 "Cua Cà Mau là lựa chọn dễ tiếp cận hơn với mức giá mở đầu rõ ràng.",
                 "A more approachable crab option with a clear entry price.",
-                "更容易入门的金瓯蟹选择，价格起点清晰。",
+                "更容易入手的金瓯蟹选择，起步价格清楚。",
                 "비교적 부담 없이 고를 수 있는 까마우 게 메뉴입니다.",
                 "Une option plus accessible avec un prix de départ lisible."),
             _ => seed.ShortDescription

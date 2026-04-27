@@ -196,7 +196,7 @@
                            TextColor="#486581"
                            LineBreakMode="WordWrap" />
 
-                    <Grid ColumnDefinitions="*,*"
+                    <Grid ColumnDefinitions="*,*,*"
                           ColumnSpacing="12">
                         <Button Text="{Binding SelectedPoiNarrationActionText}"
                                 Clicked="OnNarrateSelectedClicked"
@@ -212,6 +212,15 @@
                                 BackgroundColor="#E8F1FF"
                                 TextColor="#2F80FF"
                                 FontSize="16"
+                                CornerRadius="18"
+                                HeightRequest="50" />
+
+                        <Button Grid.Column="2"
+                                Text="{Binding PoiSaveOrHistoryButtonText}"
+                                Clicked="OnOpenHistoryClicked"
+                                BackgroundColor="#F4F8FF"
+                                TextColor="#102A43"
+                                FontSize="15"
                                 CornerRadius="18"
                                 HeightRequest="50" />
                     </Grid>

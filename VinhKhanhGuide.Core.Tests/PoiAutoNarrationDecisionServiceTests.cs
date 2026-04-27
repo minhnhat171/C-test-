@@ -153,7 +153,7 @@ public class PoiAutoNarrationDecisionServiceTests
     [Fact]
     public void NoDuplicateSimultaneousPlayback()
     {
-        var active = CreatePoi(name: "Quan dang phat");
+        var active = CreatePoi(name: "Quán đang phát");
         var candidates = _service.CreateCandidates(
             [CreateEvaluation(active, distanceMeters: 10)],
             languageCode: "vi");
@@ -244,7 +244,7 @@ public class PoiAutoNarrationDecisionServiceTests
         double radiusMeters = 50,
         int cooldownMinutes = 5,
         bool isActive = true,
-        string narrationText = "Noi dung thuyet minh")
+        string narrationText = "Nội dung thuyết minh")
     {
         return new POI
         {

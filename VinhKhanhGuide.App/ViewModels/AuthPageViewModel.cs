@@ -69,7 +69,7 @@ public class AuthPageViewModel : INotifyPropertyChanged
     public string WelcomeSubtitle => SelectedLanguage switch
     {
         "en" => "Visitors can pick their language before entering the main interface. Narration will follow this choice automatically.",
-        "zh" => "游客可以在进入主界面前先选择语言，语音讲解也会自动跟随这个选择。",
+        "zh" => "游客可以先选择语言，再进入主界面。语音讲解会自动跟随这个选择。",
         "ko" => "방문객은 메인 화면에 들어가기 전에 언어를 먼저 고를 수 있고, 음성 안내도 그 선택을 따라갑니다.",
         "fr" => "Les visiteurs peuvent choisir leur langue avant d'entrer dans l'interface principale. La narration suivra automatiquement ce choix.",
         _ => "Du khách có thể chọn ngôn ngữ phù hợp trước khi vào app. Phần thuyết minh sẽ đổi theo lựa chọn này."
@@ -78,7 +78,7 @@ public class AuthPageViewModel : INotifyPropertyChanged
     public string WelcomeHint => SelectedLanguage switch
     {
         "en" => "The app still runs in visitor mode, with no sign-in or registration required.",
-        "zh" => "应用仍以访客模式运行，无需登录或注册。",
+        "zh" => "App 会以游客模式运行，不需要登录或注册。",
         "ko" => "앱은 방문객 모드로 동작하므로 로그인이나 회원가입이 필요하지 않습니다.",
         "fr" => "L'application fonctionne en mode visiteur, sans connexion ni inscription.",
         _ => "App vẫn chạy ở chế độ khách tham quan, không cần đăng nhập hoặc đăng ký."
@@ -87,7 +87,7 @@ public class AuthPageViewModel : INotifyPropertyChanged
     public string HeroDescription => SelectedLanguage switch
     {
         "en" => "Pick a language once and the guide will speak in that language.",
-        "zh" => "先选择语言，导览讲解会随之切换。",
+        "zh" => "选择一次语言，导览就会用该语言讲解。",
         "ko" => "언어를 먼저 고르면 안내 음성이 그 언어로 재생됩니다.",
         "fr" => "Choisissez la langue une fois, puis le guide parlera dans cette langue.",
         _ => "Chọn ngôn ngữ một lần để app và thuyết minh đổi theo."
@@ -126,7 +126,7 @@ public class AuthPageViewModel : INotifyPropertyChanged
         "zh" => "点击收听",
         "ko" => "터치해 듣기",
         "fr" => "Touchez pour écouter",
-        _ => "Bấm để nghe"
+        _ => "B?m d? nghe"
     };
 
     public string LanguagePickerPlaceholder => SelectedLanguage switch

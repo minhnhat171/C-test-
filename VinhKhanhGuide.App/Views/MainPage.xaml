@@ -196,6 +196,34 @@
                                             VerticalOptions="Center" />
                                 </Grid>
                             </Border>
+
+                            <Border BackgroundColor="#F4F8FF"
+                                    Padding="10"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 18">
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="8">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="QR"
+                                               FontSize="12"
+                                               TextColor="#6B7C93" />
+                                        <Label Text="Quét QR để mở nhanh POI hoặc tour."
+                                               FontSize="15"
+                                               FontAttributes="Bold"
+                                               TextColor="#102A43" />
+                                    </VerticalStackLayout>
+
+                                    <Button Grid.Column="1"
+                                            Text="Quét"
+                                            Clicked="OnOpenQrScannerClicked"
+                                            BackgroundColor="#2F80FF"
+                                            TextColor="White"
+                                            FontSize="12"
+                                            CornerRadius="15"
+                                            Padding="10,7"
+                                            VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
@@ -826,7 +854,7 @@
                     StrokeShape="RoundRectangle 30">
                 <Grid ColumnDefinitions="*,*,*,*,*"
                       ColumnSpacing="7">
-                    <Border BackgroundColor="#F8FBFF"
+                    <Border BackgroundColor="#2F80FF"
                             Padding="6"
                             HeightRequest="70"
                             StrokeThickness="0"
@@ -846,7 +874,7 @@
                                    FontSize="10"
                                    FontAttributes="Bold"
                                    HorizontalTextAlignment="Center"
-                                   TextColor="#2F80FF" />
+                                   TextColor="White" />
                         </VerticalStackLayout>
                     </Border>
 
@@ -1005,6 +1033,34 @@
                                     RotationLock="True" />
                 </Border>
 
+                <HorizontalStackLayout Grid.Row="1"
+                                       Spacing="8"
+                                       HorizontalOptions="Start"
+                                       VerticalOptions="End"
+                                       Margin="18,0,0,18">
+                    <Button Text="Vị trí của tôi"
+                            Clicked="OnFullScreenCenterCurrentLocationClicked"
+                            BackgroundColor="#FFFFFF"
+                            TextColor="#2F80FF"
+                            FontSize="13"
+                            CornerRadius="18"
+                            Padding="12,8" />
+                    <Button Text="Gần đây"
+                            Clicked="OnOpenPoiBrowsePageClicked"
+                            BackgroundColor="#FFFFFF"
+                            TextColor="#2F80FF"
+                            FontSize="13"
+                            CornerRadius="18"
+                            Padding="12,8" />
+                    <Button Text="Lọc món"
+                            Clicked="OnOpenDishFilterClicked"
+                            BackgroundColor="#FFFFFF"
+                            TextColor="#2F80FF"
+                            FontSize="13"
+                            CornerRadius="18"
+                            Padding="12,8" />
+                </HorizontalStackLayout>
+
                 <VerticalStackLayout Grid.Row="1"
                                      Spacing="12"
                                      HorizontalOptions="End"
@@ -1028,7 +1084,7 @@
                             HeightRequest="54"
                             CornerRadius="27" />
 
-                    <Button Text="◎"
+                    <Button Text="⌖"
                             Clicked="OnFullScreenCenterCurrentLocationClicked"
                             BackgroundColor="#FFFFFF"
                             TextColor="#2F80FF"

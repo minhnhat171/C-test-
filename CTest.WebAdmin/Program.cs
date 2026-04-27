@@ -17,7 +17,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
-        options.AccessDeniedPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
         options.Cookie.Name = "CTest.WebAdmin.Auth";
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
@@ -52,6 +52,7 @@ builder.Services.AddScoped<TourAdminService>();
 builder.Services.AddScoped<ListeningHistoryService>();
 builder.Services.AddScoped<PoiValidationService>();
 builder.Services.AddScoped<PoiImageStorageService>();
+builder.Services.AddScoped<TtsTranslationService>();
 
 var app = builder.Build();
 
@@ -65,9 +66,12 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+else
+{
+    app.UseDeveloperExceptionPage();
+}
 
 app.UseHttpsRedirection();
-app.UseDeveloperExceptionPage();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();

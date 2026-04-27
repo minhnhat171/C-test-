@@ -12,6 +12,7 @@ namespace VinhKhanhGuide.App.Services;
 public class ActiveDeviceTracker : IActiveDeviceTracker
 {
     private const string DeviceIdPreferenceKey = "vinhkhanh.active_device.id.v1";
+    private readonly string _clientInstanceId = Guid.NewGuid().ToString("N");
     private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(8);
     private static readonly TimeSpan MaxCachedLocationAge = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan LocationRefreshInterval = TimeSpan.FromSeconds(20);
@@ -75,6 +76,7 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
             var request = new ActiveDeviceDisconnectRequest
             {
                 DeviceId = GetOrCreateDeviceId(),
+                ClientInstanceId = _clientInstanceId,
                 DisconnectedAtUtc = DateTimeOffset.UtcNow
             };
 
@@ -161,12 +163,13 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
         var displayName = session?.FullName;
         if (string.IsNullOrWhiteSpace(displayName))
         {
-            displayName = "Khach tham quan";
+            displayName = "Khách tham quan";
         }
 
         var request = new ActiveDeviceHeartbeatRequest
         {
             DeviceId = GetOrCreateDeviceId(),
+            ClientInstanceId = _clientInstanceId,
             UserCode = userCode,
             UserDisplayName = displayName,
             UserEmail = session?.Email ?? string.Empty,

@@ -273,9 +273,9 @@
                         </label>
 
                         <label class="scan-control">
-                            <span class="scan-meta-label">Chế độ nghe</span>
+                    <span class="scan-meta-label">Chế độ nghe</span>
                             <select class="scan-select" id="playbackModeSelect">
-                                <option value="tts">Giọng đọc tự động</option>
+                            <option value="tts">Giọng đọc tự động</option>
                                 <option value="audio">Bản thu sẵn</option>
                             </select>
                         </label>
@@ -286,16 +286,16 @@
                         {
                             <button type="button" class="scan-btn scan-btn-primary" id="openAppBtn">Mở app và nghe ngay</button>
                             <button type="button" class="scan-btn scan-btn-secondary" id="speakBtn">Nghe trên web</button>
-                            <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">Dừng đọc web</button>
+                            <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">D?ng d?c web</button>
                         }
                         else
                         {
                             <button type="button" class="scan-btn scan-btn-primary" id="speakBtn">Nghe ngay</button>
-                            <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">Dừng đọc</button>
+                            <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">D?ng d?c</button>
                         }
                         @if (!string.IsNullOrWhiteSpace(Model.MapLink))
                         {
-                            <a class="scan-btn scan-btn-secondary" href="@Model.MapLink" target="_blank" rel="noopener noreferrer">Mở bản đồ</a>
+                            <a class="scan-btn scan-btn-secondary" href="@Model.MapLink" target="_blank" rel="noopener noreferrer">M? b?n d?</a>
                         }
                         <a class="scan-btn scan-btn-secondary" href="/download-app">Tải ứng dụng</a>
                     </div>

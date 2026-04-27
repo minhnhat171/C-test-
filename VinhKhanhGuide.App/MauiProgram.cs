@@ -6,6 +6,7 @@ using VinhKhanhGuide.App.ViewModels;
 using VinhKhanhGuide.App.Views;
 using VinhKhanhGuide.Core.Interfaces;
 using VinhKhanhGuide.Core.Services;
+using ZXing.Net.Maui.Controls;
 
 namespace VinhKhanhGuide.App;
 
@@ -22,6 +23,7 @@ public static class MauiProgram
 
         builder
             .UseMauiApp<App>()
+            .UseBarcodeReader()
             .UseSkiaSharp()
             .ConfigureFonts(fonts =>
             {
@@ -57,6 +59,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IUsageHistoryService, UsageHistoryService>();
         builder.Services.AddSingleton<IListeningHistorySyncService, ListeningHistorySyncService>();
         builder.Services.AddSingleton<IActiveDeviceTracker, ActiveDeviceTracker>();
+        builder.Services.AddSingleton<IQrResolveService, QrResolveService>();
         builder.Services.AddSingleton<ILocationService, LocationService>();
         builder.Services.AddSingleton<IMapOfflineTileService, MapOfflineTileService>();
         builder.Services.AddSingleton<IPoiOfflineStore, PoiOfflineStore>();
@@ -81,6 +84,7 @@ public static class MauiProgram
         builder.Services.AddTransient<Views.TourPage>();
         builder.Services.AddTransient<Views.ActiveTourPage>();
         builder.Services.AddTransient<Views.ListeningHistoryPage>();
+        builder.Services.AddTransient<Views.QrScannerPage>();
 
         var app = builder.Build();
         MapTileHttpClientFactory.ConfigureOfflineTileService(

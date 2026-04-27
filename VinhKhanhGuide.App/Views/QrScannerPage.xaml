@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+    x:Class="VinhKhanhGuide.App.Views.QrScannerPage"
+    BackgroundColor="#0F172A"
+    Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Grid Padding="18,48,18,14"
+              ColumnDefinitions="Auto,*,Auto"
+              ColumnSpacing="12"
+              BackgroundColor="#0F172A">
+            <Button Text="‹"
+                    Clicked="OnCancelClicked"
+                    BackgroundColor="#1E293B"
+                    TextColor="White"
+                    WidthRequest="48"
+                    HeightRequest="48"
+                    CornerRadius="24"
+                    Padding="0" />
+
+            <VerticalStackLayout Grid.Column="1"
+                                 Spacing="2"
+                                 VerticalOptions="Center">
+                <Label Text="Quét QR"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       TextColor="White" />
+                <Label x:Name="StatusLabel"
+                       Text="Đưa mã QR vào khung camera"
+                       FontSize="13"
+                       TextColor="#CBD5E1" />
+            </VerticalStackLayout>
+
+            <Button x:Name="TorchButton"
+                    Grid.Column="2"
+                    Text="Đèn"
+                    Clicked="OnTorchClicked"
+                    BackgroundColor="#1E293B"
+                    TextColor="White"
+                    FontSize="13"
+                    CornerRadius="18"
+                    Padding="12,8" />
+        </Grid>
+
+        <Grid Grid.Row="1"
+              BackgroundColor="#020617">
+            <zxing:CameraBarcodeReaderView
+                x:Name="CameraReader"
+                BarcodesDetected="OnBarcodesDetected"
+                IsDetecting="False" />
+
+            <Border WidthRequest="260"
+                    HeightRequest="260"
+                    Stroke="#FFFFFF"
+                    StrokeThickness="3"
+                    BackgroundColor="Transparent"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    StrokeShape="RoundRectangle 18" />
+        </Grid>
+
+        <Grid Grid.Row="2"
+              Padding="18,14,18,28"
+              RowDefinitions="Auto,Auto"
+              ColumnDefinitions="*,Auto"
+              ColumnSpacing="12"
+              RowSpacing="12"
+              BackgroundColor="#0F172A">
+            <Label Text="Hỗ trợ /qr/poi, /qr/tour, deep link và mã QR độc lập."
+                   TextColor="#CBD5E1"
+                   FontSize="13"
+                   LineBreakMode="WordWrap"
+                   VerticalTextAlignment="Center" />
+
+            <Button x:Name="ResumeButton"
+                    Grid.Column="1"
+                    Text="Quét lại"
+                    Clicked="OnResumeClicked"
+                    BackgroundColor="#2F80FF"
+                    TextColor="White"
+                    IsVisible="False"
+                    CornerRadius="18"
+                    Padding="14,9" />
+
+            <Grid Grid.Row="1"
+                  Grid.ColumnSpan="2"
+                  ColumnDefinitions="*,Auto"
+                  ColumnSpacing="10">
+                <Entry x:Name="ManualCodeEntry"
+                       Placeholder="Nhập mã nếu camera lỗi"
+                       BackgroundColor="#1E293B"
+                       TextColor="White"
+                       PlaceholderColor="#94A3B8"
+                       HeightRequest="48"
+                       ReturnType="Go"
+                       Completed="OnManualCodeCompleted" />
+                <Button Grid.Column="1"
+                        Text="Mở"
+                        Clicked="OnManualSubmitClicked"
+                        BackgroundColor="#FFFFFF"
+                        TextColor="#0F172A"
+                        CornerRadius="18"
+                        Padding="18,9" />
+            </Grid>
+        </Grid>
+    </Grid>
+</ContentPage>

@@ -528,7 +528,7 @@
 
                         <div class="d-flex flex-wrap gap-2">
                             <a href="@selectedAppLaunchUrl" class="btn btn-primary rounded-pill px-4">Mở trong app</a>
-                            <a asp-controller="Pois" asp-action="Edit" asp-route-id="@Model.Editor.Id" class="btn btn-outline-primary rounded-pill px-4">Mở form đầy đủ</a>
+                            <a asp-controller="Pois" asp-action="Edit" asp-route-id="@Model.Editor.Id" class="btn btn-outline-primary rounded-pill px-4">M? form d?y d?</a>
                             <a asp-controller="QrCodes" asp-action="Index" asp-route-selectedTargetType="poi" asp-route-selectedTargetId="@Model.Editor.Id" class="btn btn-outline-success rounded-pill px-4">Tạo QR</a>
                         </div>
                     </div>
@@ -537,7 +537,7 @@
                         <div class="map-poi-map-card">
                             <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
                                 <div>
-                        <div class="map-poi-kicker">Bản đồ analytics</div>
+                        <div class="map-poi-kicker">B?n d? analytics</div>
                         <div class="fw-semibold">POI, tuyến di chuyển ẩn danh và heatmap người dùng cùng hiển thị trên bản đồ</div>
                                 </div>
                                 <div class="d-flex flex-wrap gap-2">
@@ -580,7 +580,7 @@
                                     <strong id="analyticsHeatmapPointCount">@heatmapPointCount</strong>
                                 </div>
                                 <div class="map-poi-metric">
-                        <span class="map-poi-kicker">Top địa điểm</span>
+                        <span class="map-poi-kicker">Top d?a di?m</span>
                                     <strong id="analyticsTopPoiName">@topListeningPoi</strong>
                                 </div>
                                 <div class="map-poi-metric">
@@ -628,11 +628,11 @@
 
                             <div class="map-poi-metrics">
                                 <div class="map-poi-metric">
-                                    <span class="map-poi-kicker">Vĩ độ</span>
+                                    <span class="map-poi-kicker">Vi d?</span>
                                     <strong id="mapPoiLatValue">@initialLatitude</strong>
                                 </div>
                                 <div class="map-poi-metric">
-                                    <span class="map-poi-kicker">Kinh độ</span>
+                                    <span class="map-poi-kicker">Kinh d?</span>
                                     <strong id="mapPoiLngValue">@initialLongitude</strong>
                                 </div>
                                 <div class="map-poi-metric">
@@ -662,13 +662,13 @@
                             @if (!string.IsNullOrWhiteSpace(Model.Editor.MapLink))
                             {
                                 <a href="@Model.Editor.MapLink" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary rounded-pill px-4 mt-3" id="mapPoiOpenLink">
-                                    Mở bản đồ
+                                    M? b?n d?
                                 </a>
                             }
                             else
                             {
                                 <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary rounded-pill px-4 mt-3 d-none" id="mapPoiOpenLink">
-                                    Mở bản đồ
+                                    M? b?n d?
                                 </a>
                             }
 
@@ -733,13 +733,13 @@
                                 </div>
 
                                 <div>
-                                    <label asp-for="Editor.Latitude" class="form-label">Vĩ độ</label>
+                                    <label asp-for="Editor.Latitude" class="form-label">Vi d?</label>
                                     <input asp-for="Editor.Latitude" class="form-control" id="mapPoiLatitude" />
                                     <span asp-validation-for="Editor.Latitude" class="text-danger small"></span>
                                 </div>
 
                                 <div>
-                                    <label asp-for="Editor.Longitude" class="form-label">Kinh độ</label>
+                                    <label asp-for="Editor.Longitude" class="form-label">Kinh d?</label>
                                     <input asp-for="Editor.Longitude" class="form-control" id="mapPoiLongitude" />
                                     <span asp-validation-for="Editor.Longitude" class="text-danger small"></span>
                                 </div>
@@ -765,7 +765,7 @@
                             </div>
 
                             <div class="map-poi-actions">
-                                <button type="submit" class="btn btn-primary rounded-pill px-4">Lưu thay đổi</button>
+                                <button type="submit" class="btn btn-primary rounded-pill px-4">Luu thay d?i</button>
                                 <a asp-controller="Pois" asp-action="Details" asp-route-id="@Model.Editor.Id" class="btn btn-outline-dark rounded-pill px-4">Xem chi tiết</a>
                                 <a asp-action="Index" asp-route-poiId="@Model.Editor.Id" class="btn btn-outline-secondary rounded-pill px-4">Tải lại dữ liệu</a>
                             </div>

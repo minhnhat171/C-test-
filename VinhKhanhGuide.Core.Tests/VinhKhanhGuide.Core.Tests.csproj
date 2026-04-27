@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VinhKhanhGuide.Core\VinhKhanhGuide.Core.csproj" />
+    <ProjectReference Include="..\VKFoodAPI\VKFoodAPI.csproj" />
   </ItemGroup>
 
 </Project>

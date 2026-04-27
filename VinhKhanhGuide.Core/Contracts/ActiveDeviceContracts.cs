@@ -3,6 +3,7 @@ namespace VinhKhanhGuide.Core.Contracts;
 public sealed class ActiveDeviceHeartbeatRequest
 {
     public string DeviceId { get; set; } = string.Empty;
+    public string ClientInstanceId { get; set; } = string.Empty;
     public string UserCode { get; set; } = string.Empty;
     public string UserDisplayName { get; set; } = string.Empty;
     public string UserEmail { get; set; } = string.Empty;
@@ -19,12 +20,15 @@ public sealed class ActiveDeviceHeartbeatRequest
 public sealed class ActiveDeviceDisconnectRequest
 {
     public string DeviceId { get; set; } = string.Empty;
+    public string ClientInstanceId { get; set; } = string.Empty;
     public DateTimeOffset DisconnectedAtUtc { get; set; } = DateTimeOffset.UtcNow;
 }
 
 public sealed class ActiveDeviceSessionDto
 {
     public string DeviceId { get; set; } = string.Empty;
+    public string ClientInstanceId { get; set; } = string.Empty;
+    public string SessionKey { get; set; } = string.Empty;
     public string UserCode { get; set; } = string.Empty;
     public string UserDisplayName { get; set; } = string.Empty;
     public string UserEmail { get; set; } = string.Empty;
@@ -45,6 +49,8 @@ public sealed class ActiveDeviceSessionDto
         return new ActiveDeviceSessionDto
         {
             DeviceId = DeviceId,
+            ClientInstanceId = ClientInstanceId,
+            SessionKey = SessionKey,
             UserCode = UserCode,
             UserDisplayName = UserDisplayName,
             UserEmail = UserEmail,
