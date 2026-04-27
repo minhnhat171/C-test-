@@ -62,3 +62,5 @@ dotnet publish .\CTest.WebAdmin\CTest.WebAdmin.csproj -c Release -o .\build-outp
 - Owner portal có màn hình riêng; owner không được vào màn hình Admin.
 - APK release dùng domain API thật, không dùng `localhost`.
 - Video/log demo cần có 2 máy thật hoặc 2 emulator cùng gọi heartbeat lên cùng domain API.
+Update by MinhNhat
+Contribution check by minhnhat171
