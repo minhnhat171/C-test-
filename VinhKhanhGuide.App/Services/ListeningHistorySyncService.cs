@@ -194,6 +194,71 @@ public class ListeningHistorySyncService : IListeningHistorySyncService
         }
     }
 
+    public async Task<bool> DeleteCurrentUserHistoryAsync(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var (userCode, userEmail) = GetCurrentUserScope();
+            var requestUri = BuildRequestUri(
+                "api/analytics/listening-history",
+                ("userCode", userCode),
+                ("userEmail", userEmail));
+
+            var response = await _httpClient.DeleteAsync(requestUri, cancellationToken);
+
+            if (response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return true;
+            }
+
+            _logger.LogWarning(
+                "Bulk listening history delete returned {StatusCode}. Falling back to per-entry delete.",
+                response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not bulk delete listening history for the current app user. Falling back to per-entry delete.");
+        }
+
+        return await DeleteCurrentUserHistoryByEntriesAsync(cancellationToken);
+    }
+
+    private async Task<bool> DeleteCurrentUserHistoryByEntriesAsync(CancellationToken cancellationToken)
+    {
+        IReadOnlyList<ListeningHistoryEntryDto> entries;
+
+        try
+        {
+            var (userCode, userEmail) = GetCurrentUserScope();
+            var requestUri = BuildRequestUri(
+                "api/analytics/listening-history",
+                ("userCode", userCode),
+                ("userEmail", userEmail));
+
+            entries = await _httpClient.GetFromJsonAsync<List<ListeningHistoryEntryDto>>(requestUri, cancellationToken)
+                ?? [];
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not load listening history before per-entry delete.");
+            return false;
+        }
+
+        if (entries.Count == 0)
+        {
+            return true;
+        }
+
+        var deletedAll = true;
+        foreach (var historyId in entries.Select(item => item.Id).Where(id => id != Guid.Empty).Distinct())
+        {
+            deletedAll = await DeleteAsync(historyId, cancellationToken) && deletedAll;
+        }
+
+        return deletedAll;
+    }
+
     private (string? UserCode, string? UserEmail) GetCurrentUserScope()
     {
         var session = _authService.CurrentSession;

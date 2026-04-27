@@ -13,19 +13,13 @@
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="20,20,20,24"
                                  Spacing="16">
-                <Border StrokeThickness="0"
-                        StrokeShape="RoundRectangle 30">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0"
-                                             EndPoint="1,1">
-                            <GradientStop Color="#102A43" Offset="0" />
-                            <GradientStop Color="#2F80FF" Offset="1" />
-                        </LinearGradientBrush>
-                    </Border.Background>
-
+                <Border BackgroundColor="#FFFFFF"
+                        Stroke="#D9E6F7"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 16">
                     <VerticalStackLayout Padding="20"
                                          Spacing="10">
-                        <Border BackgroundColor="#FFFFFF"
+                        <Border BackgroundColor="#E8F1FF"
                                 Padding="12,8"
                                 HorizontalOptions="Start"
                                 StrokeThickness="0"
@@ -39,12 +33,12 @@
                         <Label Text="{Binding ActiveTourName}"
                                FontSize="27"
                                FontAttributes="Bold"
-                               TextColor="White"
+                               TextColor="#102A43"
                                LineBreakMode="WordWrap" />
 
                         <Label Text="{Binding ActiveTourSummary}"
                                FontSize="15"
-                               TextColor="#DCEBFF"
+                               TextColor="#486581"
                                LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
                 </Border>
@@ -52,7 +46,7 @@
                 <Border BackgroundColor="#FFFFFF"
                         Padding="0"
                         StrokeThickness="0"
-                        StrokeShape="RoundRectangle 28">
+                        StrokeShape="RoundRectangle 16">
                     <Grid>
                         <mapsui:MapView x:Name="TourRouteMap"
                                         HeightRequest="320"
@@ -85,27 +79,23 @@
                                              HorizontalOptions="End"
                                              VerticalOptions="End"
                                              Margin="0,0,14,14">
-                            <Button Text="+"
-                                    Clicked="OnZoomInClicked"
-                                    BackgroundColor="#FFFFFF"
-                                    TextColor="#1685FF"
-                                    FontSize="22"
-                                    FontAttributes="Bold"
-                                    WidthRequest="42"
-                                    HeightRequest="42"
-                                    CornerRadius="21"
-                                    Padding="0" />
+                            <ImageButton Source="zoom_in_icon.svg"
+                                         Clicked="OnZoomInClicked"
+                                         BackgroundColor="#FFFFFF"
+                                         WidthRequest="42"
+                                         HeightRequest="42"
+                                         CornerRadius="21"
+                                         Padding="9"
+                                         Aspect="AspectFit" />
 
-                            <Button Text="-"
-                                    Clicked="OnZoomOutClicked"
-                                    BackgroundColor="#FFFFFF"
-                                    TextColor="#1685FF"
-                                    FontSize="22"
-                                    FontAttributes="Bold"
-                                    WidthRequest="42"
-                                    HeightRequest="42"
-                                    CornerRadius="21"
-                                    Padding="0" />
+                            <ImageButton Source="zoom_out_icon.svg"
+                                         Clicked="OnZoomOutClicked"
+                                         BackgroundColor="#FFFFFF"
+                                         WidthRequest="42"
+                                         HeightRequest="42"
+                                         CornerRadius="21"
+                                         Padding="9"
+                                         Aspect="AspectFit" />
                         </VerticalStackLayout>
                     </Grid>
                 </Border>

@@ -32,4 +32,7 @@ public interface IListeningHistorySyncService
     Task<bool> DeleteAsync(
         Guid historyId,
         CancellationToken cancellationToken = default);
+
+    Task<bool> DeleteCurrentUserHistoryAsync(
+        CancellationToken cancellationToken = default);
 }

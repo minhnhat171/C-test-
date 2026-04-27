@@ -116,14 +116,51 @@ public class ListeningHistoryRepository
     {
         lock (_syncRoot)
         {
+            var affectedPoiIds = _items
+                .Where(item => item.Id == id && item.PoiId != Guid.Empty)
+                .Select(item => item.PoiId)
+                .Distinct()
+                .ToList();
+
             var removed = _items.RemoveAll(item => item.Id == id);
             if (removed == 0)
             {
                 return false;
             }
 
+            foreach (var poiId in affectedPoiIds)
+            {
+                RecalculateQueuePositionsUnsafe(poiId);
+            }
+
             SaveUnsafe();
             return true;
+        }
+    }
+
+    public int DeleteForUserScope(string? userCode, string? userEmail)
+    {
+        lock (_syncRoot)
+        {
+            if (string.IsNullOrWhiteSpace(NormalizeLookupValue(userCode)) &&
+                string.IsNullOrWhiteSpace(NormalizeLookupValue(userEmail)))
+            {
+                return 0;
+            }
+
+            var idsToRemove = ApplyUserScope(_items, userCode, userEmail)
+                .Select(item => item.Id)
+                .ToHashSet();
+
+            if (idsToRemove.Count == 0)
+            {
+                return 0;
+            }
+
+            var removed = _items.RemoveAll(item => idsToRemove.Contains(item.Id));
+            RecalculateQueuePositions(_items);
+            SaveUnsafe();
+            return removed;
         }
     }
 

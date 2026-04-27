@@ -12,14 +12,14 @@
               ColumnDefinitions="Auto,*,Auto"
               ColumnSpacing="12"
               BackgroundColor="#0F172A">
-            <Button Text="‹"
-                    Clicked="OnCancelClicked"
-                    BackgroundColor="#1E293B"
-                    TextColor="White"
-                    WidthRequest="48"
-                    HeightRequest="48"
-                    CornerRadius="24"
-                    Padding="0" />
+            <ImageButton Source="back_light_icon.svg"
+                         Clicked="OnCancelClicked"
+                         BackgroundColor="#1E293B"
+                         WidthRequest="48"
+                         HeightRequest="48"
+                         CornerRadius="24"
+                         Padding="12"
+                         Aspect="AspectFit" />
 
             <VerticalStackLayout Grid.Column="1"
                                  Spacing="2"

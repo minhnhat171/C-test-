@@ -6,5 +6,5 @@ public class SearchSuggestionItem
     public string SupportingText { get; set; } = string.Empty;
     public bool IsRecent { get; set; }
 
-    public string LeadingIcon => IsRecent ? "↺" : "⌕";
+    public string LeadingIconSource => IsRecent ? "refresh_icon.svg" : "search_icon.svg";
 }

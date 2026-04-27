@@ -8,7 +8,7 @@ public partial class FeaturedDishCategoryPage : ContentPage
 {
     private readonly MainViewModel _viewModel;
     private readonly IServiceProvider _serviceProvider;
-    private bool _isNavigatingToPoiDetail;
+    private bool _isOpeningActiveTour;
 
     public FeaturedDishCategoryPage(MainViewModel viewModel, IServiceProvider serviceProvider)
     {
@@ -18,75 +18,50 @@ public partial class FeaturedDishCategoryPage : ContentPage
         BindingContext = _viewModel;
     }
 
-    private async void OnOpenNearestPoiClicked(object? sender, EventArgs e)
-    {
-        if (!_viewModel.TrySelectNearestPoiForFeaturedCategory(_viewModel.SelectedFeaturedDishCategoryKey))
-        {
-            return;
-        }
-
-        await OpenPoiDetailAsync();
-    }
-
-    private async void OnOpenRecommendedPoiClicked(object? sender, EventArgs e)
-    {
-        if (!_viewModel.TrySelectRecommendedPoiForFeaturedCategory(_viewModel.SelectedFeaturedDishCategoryKey))
-        {
-            return;
-        }
-
-        await OpenPoiDetailAsync();
-    }
-
     private async void OnOpenFilteredMapClicked(object? sender, EventArgs e)
     {
-        _viewModel.SetMapCategoryFilter(_viewModel.SelectedFeaturedDishCategoryKey);
-
-        if (Navigation.NavigationStack.OfType<MainPage>().FirstOrDefault() is not MainPage mainPage)
+        if (Navigation.NavigationStack.OfType<MainPage>().FirstOrDefault() is not MainPage mainPage ||
+            !Navigation.NavigationStack.Contains(this))
         {
-            await Navigation.PopAsync();
             return;
         }
 
-        await Navigation.PopAsync();
         mainPage.OpenMapForFeaturedCategory(_viewModel.SelectedFeaturedDishCategoryKey);
+        await Navigation.PopAsync();
     }
 
     private async void OnStartMiniTourClicked(object? sender, EventArgs e)
     {
+        if (_isOpeningActiveTour)
+        {
+            return;
+        }
+
         var started = await _viewModel.StartFeaturedCategoryTourAsync(_viewModel.SelectedFeaturedDishCategoryKey);
         if (!started)
         {
             return;
         }
 
-        if (Navigation.NavigationStack.OfType<MainPage>().FirstOrDefault() is not MainPage mainPage)
-        {
-            await Navigation.PopAsync();
-            return;
-        }
-
-        await Navigation.PopAsync();
-        mainPage.OpenMapForActiveTour();
-    }
-
-    private async Task OpenPoiDetailAsync()
-    {
-        if (_isNavigatingToPoiDetail)
-        {
-            return;
-        }
-
-        _isNavigatingToPoiDetail = true;
+        _isOpeningActiveTour = true;
 
         try
         {
-            var detailPage = _serviceProvider.GetRequiredService<PoiDetailPage>();
-            await Navigation.PushAsync(detailPage);
+            var activeTourPage = _serviceProvider.GetRequiredService<ActiveTourPage>();
+
+            if (Navigation.NavigationStack.OfType<MainPage>().FirstOrDefault() is MainPage &&
+                Navigation.NavigationStack.Contains(this))
+            {
+                Navigation.InsertPageBefore(activeTourPage, this);
+                await Navigation.PopAsync();
+                return;
+            }
+
+            await Navigation.PushAsync(activeTourPage);
         }
         finally
         {
-            _isNavigatingToPoiDetail = false;
+            _isOpeningActiveTour = false;
         }
     }
 }

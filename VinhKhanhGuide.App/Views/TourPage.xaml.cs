@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using VinhKhanhGuide.App.Models;
 using VinhKhanhGuide.App.ViewModels;
@@ -27,7 +28,7 @@ public partial class TourPage : ContentPage
         }
 
         await _viewModel.ActivateTourAsync(item.TourId);
-        await OpenActiveTourPageAsync();
+        await OpenActiveTourPageAsync(replaceCurrentPage: true);
     }
 
     private async void OnStopActiveTourClicked(object? sender, EventArgs e)
@@ -63,9 +64,17 @@ public partial class TourPage : ContentPage
         }
     }
 
-    private async Task OpenActiveTourPageAsync()
+    private async Task OpenActiveTourPageAsync(bool replaceCurrentPage = false)
     {
         var activeTourPage = _serviceProvider.GetRequiredService<ActiveTourPage>();
+
+        if (replaceCurrentPage && Navigation.NavigationStack.Contains(this))
+        {
+            Navigation.InsertPageBefore(activeTourPage, this);
+            await Navigation.PopAsync();
+            return;
+        }
+
         await Navigation.PushAsync(activeTourPage);
     }
 }
