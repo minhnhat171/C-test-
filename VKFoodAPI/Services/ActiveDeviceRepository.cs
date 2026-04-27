@@ -25,7 +25,7 @@ public class ActiveDeviceRepository
 
     public ActiveDeviceRepository(IHostEnvironment environment)
     {
-        var dataDirectory = Path.Combine(environment.ContentRootPath, "App_Data");
+        var dataDirectory = AppDataPathResolver.GetDataDirectory(environment);
         Directory.CreateDirectory(dataDirectory);
 
         _dataFilePath = Path.Combine(dataDirectory, "active-devices.json");

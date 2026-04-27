@@ -5,7 +5,7 @@ namespace CTest.WebAdmin.Controllers;
 public class DownloadController : Controller
 {
     private readonly IWebHostEnvironment _env;
-    private const string ApkFileName = "com.companyname.vkfoodarea-Signed.apk";
+    private const string ApkFileName = "VinhKhanh.apk";
 
     public DownloadController(IWebHostEnvironment env)
     {
@@ -21,7 +21,7 @@ public class DownloadController : Controller
     [HttpGet("/download-apk")]
     public IActionResult Apk()
     {
-        var apkPath = Path.Combine(_env.WebRootPath, "apk", ApkFileName);
+        var apkPath = Path.Combine(_env.WebRootPath, "download", ApkFileName);
 
         if (!System.IO.File.Exists(apkPath))
         {

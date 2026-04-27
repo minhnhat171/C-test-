@@ -26,7 +26,7 @@ public sealed class QrCodeRepository
         _poiRepository = poiRepository;
         _tourRepository = tourRepository;
 
-        var dataDirectory = Path.Combine(environment.ContentRootPath, "App_Data");
+        var dataDirectory = AppDataPathResolver.GetDataDirectory(environment);
         Directory.CreateDirectory(dataDirectory);
 
         _dataFilePath = Path.Combine(dataDirectory, "qr-codes.json");
@@ -162,10 +162,13 @@ public sealed class QrCodeRepository
                 var items = JsonSerializer.Deserialize<List<QrCodeItemDto>>(json, _jsonOptions);
                 if (items is not null)
                 {
-                    return items
+                    var normalizedItems = items
                         .Select(Normalize)
                         .Where(item => !string.IsNullOrWhiteSpace(item.Code))
                         .ToList();
+                    _items = normalizedItems;
+                    SaveUnsafe();
+                    return normalizedItems;
                 }
             }
             catch
@@ -238,8 +241,8 @@ public sealed class QrCodeRepository
         normalized.Code = NormalizeCode(normalized.Code);
         normalized.TargetType = QrTargetKinds.Normalize(normalized.TargetType);
         normalized.TargetId = normalized.TargetId?.Trim() ?? string.Empty;
-        normalized.DisplayName = normalized.DisplayName?.Trim() ?? string.Empty;
-        normalized.Description = normalized.Description?.Trim() ?? string.Empty;
+        normalized.DisplayName = RepairText(normalized.DisplayName);
+        normalized.Description = RepairText(normalized.Description);
         normalized.CreatedAtUtc = NormalizeUtc(normalized.CreatedAtUtc);
         normalized.UpdatedAtUtc = NormalizeUtc(normalized.UpdatedAtUtc);
         normalized.DeletedAtUtc = normalized.DeletedAtUtc.HasValue
@@ -249,6 +252,12 @@ public sealed class QrCodeRepository
         if (string.IsNullOrWhiteSpace(normalized.DisplayName))
         {
             normalized.DisplayName = ResolveTargetDisplayName(normalized.TargetType, normalized.TargetId);
+        }
+
+        if (string.IsNullOrWhiteSpace(normalized.Description) ||
+            LegacyTextRepair.NeedsSeedFallback(normalized.Description))
+        {
+            normalized.Description = ResolveTargetDescription(normalized.TargetType, normalized.TargetId);
         }
 
         return normalized;
@@ -307,6 +316,19 @@ public sealed class QrCodeRepository
             : string.Empty;
     }
 
+    private string ResolveTargetDescription(string targetType, string targetId)
+    {
+        if (string.Equals(targetType, QrTargetKinds.Tour, StringComparison.OrdinalIgnoreCase) &&
+            int.TryParse(targetId, NumberStyles.Integer, CultureInfo.InvariantCulture, out var tourId))
+        {
+            return RepairText(_tourRepository.GetById(tourId)?.Description);
+        }
+
+        return Guid.TryParse(targetId, out var poiId)
+            ? RepairText(_poiRepository.GetById(poiId)?.Address)
+            : string.Empty;
+    }
+
     private static DateTimeOffset NormalizeUtc(DateTimeOffset value)
     {
         return value == default
@@ -317,5 +339,13 @@ public sealed class QrCodeRepository
     private static string NormalizeCode(string? code)
     {
         return code?.Trim().ToUpperInvariant() ?? string.Empty;
+    }
+
+    private static string RepairText(string? value)
+    {
+        var repaired = LegacyTextRepair.Clean(value);
+        return LegacyTextRepair.NeedsSeedFallback(repaired)
+            ? string.Empty
+            : repaired;
     }
 }

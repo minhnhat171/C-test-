@@ -20,7 +20,7 @@ public class TourRepository
     {
         _poiRepository = poiRepository;
 
-        var dataDirectory = Path.Combine(environment.ContentRootPath, "App_Data");
+        var dataDirectory = AppDataPathResolver.GetDataDirectory(environment);
         Directory.CreateDirectory(dataDirectory);
 
         _dataFilePath = Path.Combine(dataDirectory, "tours.json");

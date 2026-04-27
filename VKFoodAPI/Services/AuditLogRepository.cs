@@ -19,7 +19,7 @@ public sealed class AuditLogRepository
 
     public AuditLogRepository(IHostEnvironment environment)
     {
-        var dataDirectory = Path.Combine(environment.ContentRootPath, "App_Data");
+        var dataDirectory = AppDataPathResolver.GetDataDirectory(environment);
         Directory.CreateDirectory(dataDirectory);
 
         _dataFilePath = Path.Combine(dataDirectory, "audit-logs.json");

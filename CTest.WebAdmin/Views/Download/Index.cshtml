@@ -6,44 +6,56 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tải ứng dụng VKFoodArea</title>
+    <title>Tải ứng dụng VinhKhanh Guide</title>
     <style>
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f7fb;
-            color: #1f2937;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             min-height: 100vh;
             padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #fff7ed 0%, #f8fafc 100%);
+            color: #1f2937;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
         }
 
         .card {
             width: 100%;
             max-width: 520px;
-            background: white;
-            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 22px;
             padding: 28px;
-            box-shadow: 0 10px 30px rgba(0,0,0,.08);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
         }
 
         h1 {
-            margin-top: 0;
-            font-size: 28px;
+            margin: 0 0 12px;
+            font-size: 1.9rem;
+            line-height: 1.15;
         }
 
         p {
-            line-height: 1.6;
+            margin: 0;
+            line-height: 1.7;
             color: #4b5563;
         }
 
+        .actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 18px;
+        }
+
         .btn {
-            display: inline-block;
-            margin-top: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 52px;
             padding: 14px 18px;
-            border-radius: 12px;
+            border-radius: 16px;
             text-decoration: none;
             font-weight: 700;
         }
@@ -56,13 +68,14 @@
         .btn-secondary {
             background: #eef2ff;
             color: #1f2937;
-            margin-left: 8px;
+            border: 1px solid rgba(99, 102, 241, 0.12);
         }
 
         .note {
             margin-top: 18px;
             font-size: 14px;
             color: #6b7280;
+            line-height: 1.7;
         }
 
         code {
@@ -70,19 +83,27 @@
             padding: 2px 6px;
             border-radius: 6px;
         }
+
+        @@media (max-width: 560px) {
+            .actions {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>Tải ứng dụng VKFoodArea</h1>
-        <p>Nhấn nút bên dưới để tải file APK về điện thoại Android.</p>
+        <h1>Tải ứng dụng VinhKhanh Guide</h1>
+        <p>Tải file APK về điện thoại Android rồi cài đặt để nghe nội dung từ mã QR trực tiếp trên ứng dụng.</p>
 
-        <a class="btn btn-primary" href="/download-apk">Tải APK</a>
-        <a class="btn btn-secondary" href="/">Về trang chủ</a>
+        <div class="actions">
+            <a class="btn btn-primary" href="/download-apk">Tải APK</a>
+            <a class="btn btn-secondary" href="/">Về trang chủ</a>
+        </div>
 
         <div class="note">
-            Tên file: <code>com.companyname.vkfoodarea-Signed.apk</code><br />
-            Sau khi tải xong, mở file APK để cài đặt ứng dụng.
+            Tên file: <code>VinhKhanh.apk</code><br />
+            Sau khi tải xong, mở file APK để cài đặt ứng dụng rồi quét lại mã QR.
         </div>
     </div>
 </body>

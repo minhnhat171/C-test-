@@ -30,6 +30,7 @@ builder.Services.AddSingleton<ActiveDeviceRepository>();
 builder.Services.AddSingleton<MovementLogRepository>();
 builder.Services.AddSingleton<AuditLogRepository>();
 builder.Services.AddHostedService<ActiveDevicePruningService>();
+builder.Services.AddHostedService<DataRepairWarmupService>();
 
 builder.Services.AddCors(options =>
 {

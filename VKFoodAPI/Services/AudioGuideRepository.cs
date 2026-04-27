@@ -22,7 +22,7 @@ public class AudioGuideRepository
     {
         _poiRepository = poiRepository;
 
-        var dataDirectory = Path.Combine(environment.ContentRootPath, "App_Data");
+        var dataDirectory = AppDataPathResolver.GetDataDirectory(environment);
         Directory.CreateDirectory(dataDirectory);
 
         _dataFilePath = Path.Combine(dataDirectory, "audio-guides.json");
@@ -140,9 +140,12 @@ public class AudioGuideRepository
                 var items = JsonSerializer.Deserialize<List<AudioGuideRecord>>(json, _jsonOptions);
                 if (items is not null)
                 {
-                    return items
+                    var normalizedItems = items
                         .Select(Normalize)
                         .ToList();
+                    _audioGuides = normalizedItems;
+                    SaveUnsafe();
+                    return normalizedItems;
                 }
             }
             catch
@@ -184,6 +187,11 @@ public class AudioGuideRepository
             hydrated.PoiCode = poi.Code;
             hydrated.PoiName = poi.Name;
         }
+        else
+        {
+            hydrated.PoiCode = LegacyTextRepair.Clean(hydrated.PoiCode);
+            hydrated.PoiName = LegacyTextRepair.Clean(hydrated.PoiName);
+        }
 
         return hydrated;
     }
@@ -199,13 +207,13 @@ public class AudioGuideRepository
         var poi = _poiRepository.GetById(normalized.PoiId);
 
         normalized.PoiId = poi?.Id ?? normalized.PoiId;
-        normalized.PoiCode = poi?.Code ?? string.Empty;
-        normalized.PoiName = poi?.Name ?? string.Empty;
+        normalized.PoiCode = poi?.Code ?? LegacyTextRepair.Clean(normalized.PoiCode);
+        normalized.PoiName = poi?.Name ?? LegacyTextRepair.Clean(normalized.PoiName);
         normalized.LanguageCode = NormalizeLanguageCode(normalized.LanguageCode);
         normalized.VoiceType = NormalizeVoiceType(normalized.VoiceType);
         normalized.SourceType = NormalizeSourceType(normalized.SourceType);
-        normalized.Script = normalized.Script?.Trim() ?? string.Empty;
-        normalized.FilePath = NormalizeFilePath(normalized.FilePath);
+        normalized.Script = RepairScript(normalized.Script, poi, normalized.LanguageCode);
+        normalized.FilePath = NormalizeFilePath(LegacyTextRepair.Clean(normalized.FilePath));
         normalized.EstimatedSeconds = normalized.EstimatedSeconds <= 0
             ? EstimateSeconds(normalized.Script)
             : normalized.EstimatedSeconds;
@@ -222,6 +230,11 @@ public class AudioGuideRepository
         if (string.Equals(normalized.SourceType, "tts", StringComparison.OrdinalIgnoreCase))
         {
             normalized.FilePath = string.Empty;
+            if (string.IsNullOrWhiteSpace(normalized.Script))
+            {
+                normalized.Script = ResolvePoiNarration(poi, normalized.LanguageCode);
+                normalized.EstimatedSeconds = EstimateSeconds(normalized.Script);
+            }
         }
 
         return normalized;
@@ -256,6 +269,39 @@ public class AudioGuideRepository
             throw new InvalidOperationException(
                 $"Audio guide for POI '{record.PoiCode}' language '{record.LanguageCode}' source '{record.SourceType}' already exists.");
         }
+    }
+
+    private static string RepairScript(string? script, PoiDto? poi, string languageCode)
+    {
+        var repaired = LegacyTextRepair.Clean(script);
+        if (!LegacyTextRepair.NeedsSeedFallback(repaired))
+        {
+            return repaired;
+        }
+
+        return ResolvePoiNarration(poi, languageCode);
+    }
+
+    private static string ResolvePoiNarration(PoiDto? poi, string languageCode)
+    {
+        if (poi is null)
+        {
+            return string.Empty;
+        }
+
+        if (poi.NarrationTranslations.TryGetValue(languageCode, out var localizedNarration) &&
+            !string.IsNullOrWhiteSpace(localizedNarration))
+        {
+            return localizedNarration;
+        }
+
+        if (poi.NarrationTranslations.TryGetValue("vi", out var vietnameseNarration) &&
+            !string.IsNullOrWhiteSpace(vietnameseNarration))
+        {
+            return vietnameseNarration;
+        }
+
+        return poi.NarrationText;
     }
 
     private static DateTime NormalizeUtc(DateTime value)

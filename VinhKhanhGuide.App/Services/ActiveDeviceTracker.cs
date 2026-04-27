@@ -1,3 +1,6 @@
+#if ANDROID
+using Android.Provider;
+#endif
 using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
@@ -12,7 +15,6 @@ namespace VinhKhanhGuide.App.Services;
 public class ActiveDeviceTracker : IActiveDeviceTracker
 {
     private const string DeviceIdPreferenceKey = "vinhkhanh.active_device.id.v1";
-    private readonly string _clientInstanceId = Guid.NewGuid().ToString("N");
     private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(8);
     private static readonly TimeSpan MaxCachedLocationAge = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan LocationRefreshInterval = TimeSpan.FromSeconds(20);
@@ -28,6 +30,7 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
     private Task? _heartbeatTask;
     private LocationDto? _lastKnownLocation;
     private DateTimeOffset _lastLocationRefreshAttemptUtc = DateTimeOffset.MinValue;
+    private string _clientInstanceId = string.Empty;
 
     public ActiveDeviceTracker(
         HttpClient httpClient,
@@ -51,6 +54,7 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
                 return SendHeartbeatAsync(cancellationToken);
             }
 
+            _clientInstanceId = CreateClientInstanceId();
             _heartbeatCancellation = new CancellationTokenSource();
             _heartbeatTask = RunHeartbeatLoopAsync(_heartbeatCancellation.Token);
         }
@@ -61,22 +65,30 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
     public async Task StopAsync(CancellationToken cancellationToken = default)
     {
         CancellationTokenSource? heartbeatCancellation;
+        string clientInstanceId;
 
         lock (_syncRoot)
         {
             heartbeatCancellation = _heartbeatCancellation;
             _heartbeatCancellation = null;
             _heartbeatTask = null;
+            clientInstanceId = _clientInstanceId;
+            _clientInstanceId = string.Empty;
         }
 
         heartbeatCancellation?.Cancel();
 
         try
         {
+            if (string.IsNullOrWhiteSpace(clientInstanceId))
+            {
+                return;
+            }
+
             var request = new ActiveDeviceDisconnectRequest
             {
                 DeviceId = GetOrCreateDeviceId(),
-                ClientInstanceId = _clientInstanceId,
+                ClientInstanceId = clientInstanceId,
                 DisconnectedAtUtc = DateTimeOffset.UtcNow
             };
 
@@ -169,7 +181,7 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
         var request = new ActiveDeviceHeartbeatRequest
         {
             DeviceId = GetOrCreateDeviceId(),
-            ClientInstanceId = _clientInstanceId,
+            ClientInstanceId = GetCurrentClientInstanceId(),
             UserCode = userCode,
             UserDisplayName = displayName,
             UserEmail = session?.Email ?? string.Empty,
@@ -189,6 +201,24 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
         }
 
         return request;
+    }
+
+    private string GetCurrentClientInstanceId()
+    {
+        lock (_syncRoot)
+        {
+            if (string.IsNullOrWhiteSpace(_clientInstanceId))
+            {
+                _clientInstanceId = CreateClientInstanceId();
+            }
+
+            return _clientInstanceId;
+        }
+    }
+
+    private static string CreateClientInstanceId()
+    {
+        return $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds():x}-{Guid.NewGuid():N}";
     }
 
     private static string BuildDeviceModel()
@@ -211,15 +241,40 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
 
     private static string GetOrCreateDeviceId()
     {
-        var deviceId = Preferences.Default.Get(DeviceIdPreferenceKey, string.Empty);
-        if (!string.IsNullOrWhiteSpace(deviceId))
+        var storedDeviceId = Preferences.Default.Get(DeviceIdPreferenceKey, string.Empty);
+
+#if ANDROID
+        try
         {
-            return deviceId;
+            var androidId = Settings.Secure.GetString(
+                Android.App.Application.Context.ContentResolver,
+                Settings.Secure.AndroidId);
+
+            if (!string.IsNullOrWhiteSpace(androidId))
+            {
+                var normalizedAndroidId = $"android-{androidId.Trim().ToLowerInvariant()}";
+                if (!string.Equals(storedDeviceId, normalizedAndroidId, StringComparison.Ordinal))
+                {
+                    Preferences.Default.Set(DeviceIdPreferenceKey, normalizedAndroidId);
+                }
+
+                return normalizedAndroidId;
+            }
+        }
+        catch
+        {
+            // Fall back to the cached install identifier below.
+        }
+#endif
+
+        if (!string.IsNullOrWhiteSpace(storedDeviceId))
+        {
+            return storedDeviceId;
         }
 
-        deviceId = Guid.NewGuid().ToString("N");
-        Preferences.Default.Set(DeviceIdPreferenceKey, deviceId);
-        return deviceId;
+        var generatedDeviceId = Guid.NewGuid().ToString("N");
+        Preferences.Default.Set(DeviceIdPreferenceKey, generatedDeviceId);
+        return generatedDeviceId;
     }
 
     private async Task<LocationDto?> GetLocationSnapshotAsync(CancellationToken cancellationToken)

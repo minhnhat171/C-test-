@@ -13,11 +13,14 @@ public class ListeningHistoryRepository
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
     private readonly string _dataFilePath;
+    private readonly PoiRepository _poiRepository;
     private List<ListeningHistoryEntryDto> _items;
 
-    public ListeningHistoryRepository(IHostEnvironment environment)
+    public ListeningHistoryRepository(IHostEnvironment environment, PoiRepository poiRepository)
     {
-        var dataDirectory = Path.Combine(environment.ContentRootPath, "App_Data");
+        _poiRepository = poiRepository;
+
+        var dataDirectory = AppDataPathResolver.GetDataDirectory(environment);
         Directory.CreateDirectory(dataDirectory);
 
         _dataFilePath = Path.Combine(dataDirectory, "listening-history.json");
@@ -78,7 +81,7 @@ public class ListeningHistoryRepository
     {
         lock (_syncRoot)
         {
-            var created = NormalizeCreateRequest(request);
+            var created = NormalizeCreateRequest(request, ResolvePoi(request.PoiId, request.PoiCode, request.PoiName));
             created.ReceivedAtUtc = DateTimeOffset.UtcNow;
             _items.Add(created);
             RecalculateQueuePositionsUnsafe(created.PoiId);
@@ -102,7 +105,7 @@ public class ListeningHistoryRepository
             existing.CompletedAtUtc = request.CompletedAtUtc.HasValue
                 ? request.CompletedAtUtc.Value.ToUniversalTime()
                 : DateTimeOffset.UtcNow;
-            existing.ErrorMessage = request.ErrorMessage?.Trim() ?? string.Empty;
+            existing.ErrorMessage = RepairText(request.ErrorMessage);
 
             SaveUnsafe();
             return true;
@@ -135,8 +138,12 @@ public class ListeningHistoryRepository
         {
             var json = File.ReadAllText(_dataFilePath);
             var items = JsonSerializer.Deserialize<List<ListeningHistoryEntryDto>>(json, _jsonOptions);
-            var normalizedItems = items?.Select(NormalizeStoredEntry).ToList() ?? [];
+            var normalizedItems = (items ?? [])
+                .Select(item => NormalizeStoredEntry(item, ResolvePoi(item.PoiId, item.PoiCode, item.PoiName)))
+                .ToList();
             RecalculateQueuePositions(normalizedItems);
+            _items = normalizedItems;
+            SaveUnsafe();
             return normalizedItems;
         }
         catch
@@ -210,29 +217,33 @@ public class ListeningHistoryRepository
         };
     }
 
-    private static ListeningHistoryEntryDto NormalizeCreateRequest(ListeningHistoryCreateRequest request)
+    private ListeningHistoryEntryDto NormalizeCreateRequest(
+        ListeningHistoryCreateRequest request,
+        PoiDto? poi)
     {
+        var language = NormalizeLanguage(request.Language);
+
         return new ListeningHistoryEntryDto
         {
             Id = Guid.NewGuid(),
-            PoiId = request.PoiId,
-            PoiCode = request.PoiCode?.Trim() ?? string.Empty,
-            PoiName = request.PoiName?.Trim() ?? string.Empty,
-            PoiAddress = request.PoiAddress?.Trim() ?? string.Empty,
-            PoiDescription = request.PoiDescription?.Trim() ?? string.Empty,
-            PoiSpecialDish = request.PoiSpecialDish?.Trim() ?? string.Empty,
-            PoiImageSource = request.PoiImageSource?.Trim() ?? string.Empty,
-            PoiMapLink = request.PoiMapLink?.Trim() ?? string.Empty,
-            UserCode = request.UserCode?.Trim() ?? "guest",
-            UserDisplayName = request.UserDisplayName?.Trim() ?? "Khách",
-            UserEmail = request.UserEmail?.Trim() ?? string.Empty,
-            TriggerType = string.IsNullOrWhiteSpace(request.TriggerType) ? "APP" : request.TriggerType.Trim(),
-            Language = string.IsNullOrWhiteSpace(request.Language) ? "vi" : request.Language.Trim(),
+            PoiId = poi?.Id ?? request.PoiId,
+            PoiCode = ResolvePoiValue(request.PoiCode, poi?.Code),
+            PoiName = ResolvePoiValue(request.PoiName, poi?.Name),
+            PoiAddress = ResolvePoiValue(request.PoiAddress, poi?.Address),
+            PoiDescription = ResolvePoiValue(request.PoiDescription, poi?.Description),
+            PoiSpecialDish = ResolvePoiValue(request.PoiSpecialDish, poi?.SpecialDish),
+            PoiImageSource = ResolvePoiValue(request.PoiImageSource, poi?.ImageSource),
+            PoiMapLink = ResolvePoiUrl(request.PoiMapLink, poi?.MapLink),
+            UserCode = RepairText(request.UserCode, "guest"),
+            UserDisplayName = RepairText(request.UserDisplayName, "Khách"),
+            UserEmail = NormalizeEmail(request.UserEmail),
+            TriggerType = RepairText(request.TriggerType, "APP"),
+            Language = language,
             PlaybackMode = NormalizePlaybackMode(request.PlaybackMode),
-            NarrationSnapshot = request.NarrationSnapshot?.Trim() ?? string.Empty,
-            AudioAssetPath = request.AudioAssetPath?.Trim() ?? string.Empty,
-            Source = string.IsNullOrWhiteSpace(request.Source) ? "app" : request.Source.Trim(),
-            DevicePlatform = request.DevicePlatform?.Trim() ?? string.Empty,
+            NarrationSnapshot = ResolveNarrationSnapshot(request.NarrationSnapshot, poi, language),
+            AudioAssetPath = ResolvePoiUrl(request.AudioAssetPath, poi?.AudioAssetPath),
+            Source = RepairText(request.Source, "app"),
+            DevicePlatform = RepairText(request.DevicePlatform),
             AutoTriggered = request.AutoTriggered,
             StartedAtUtc = request.StartedAtUtc == default
                 ? DateTimeOffset.UtcNow
@@ -245,28 +256,31 @@ public class ListeningHistoryRepository
         };
     }
 
-    private static ListeningHistoryEntryDto NormalizeStoredEntry(ListeningHistoryEntryDto item)
+    private ListeningHistoryEntryDto NormalizeStoredEntry(
+        ListeningHistoryEntryDto item,
+        PoiDto? poi)
     {
         var normalized = item.Clone();
         normalized.Id = normalized.Id == Guid.Empty ? Guid.NewGuid() : normalized.Id;
-        normalized.PoiCode ??= string.Empty;
-        normalized.PoiName ??= string.Empty;
-        normalized.PoiAddress ??= string.Empty;
-        normalized.PoiDescription ??= string.Empty;
-        normalized.PoiSpecialDish ??= string.Empty;
-        normalized.PoiImageSource ??= string.Empty;
-        normalized.PoiMapLink ??= string.Empty;
-        normalized.UserCode = string.IsNullOrWhiteSpace(normalized.UserCode) ? "guest" : normalized.UserCode;
-        normalized.UserDisplayName = string.IsNullOrWhiteSpace(normalized.UserDisplayName) ? "Khách" : normalized.UserDisplayName;
-        normalized.UserEmail ??= string.Empty;
-        normalized.TriggerType = string.IsNullOrWhiteSpace(normalized.TriggerType) ? "APP" : normalized.TriggerType;
-        normalized.Language = string.IsNullOrWhiteSpace(normalized.Language) ? "vi" : normalized.Language;
+        normalized.PoiId = poi?.Id ?? normalized.PoiId;
+        normalized.PoiCode = ResolvePoiValue(normalized.PoiCode, poi?.Code);
+        normalized.PoiName = ResolvePoiValue(normalized.PoiName, poi?.Name);
+        normalized.PoiAddress = ResolvePoiValue(normalized.PoiAddress, poi?.Address);
+        normalized.PoiDescription = ResolvePoiValue(normalized.PoiDescription, poi?.Description);
+        normalized.PoiSpecialDish = ResolvePoiValue(normalized.PoiSpecialDish, poi?.SpecialDish);
+        normalized.PoiImageSource = ResolvePoiValue(normalized.PoiImageSource, poi?.ImageSource);
+        normalized.PoiMapLink = ResolvePoiUrl(normalized.PoiMapLink, poi?.MapLink);
+        normalized.UserCode = RepairText(normalized.UserCode, "guest");
+        normalized.UserDisplayName = RepairText(normalized.UserDisplayName, "Khách");
+        normalized.UserEmail = NormalizeEmail(normalized.UserEmail);
+        normalized.TriggerType = RepairText(normalized.TriggerType, "APP");
+        normalized.Language = NormalizeLanguage(normalized.Language);
         normalized.PlaybackMode = NormalizePlaybackMode(normalized.PlaybackMode);
-        normalized.NarrationSnapshot ??= string.Empty;
-        normalized.AudioAssetPath ??= string.Empty;
-        normalized.Source = string.IsNullOrWhiteSpace(normalized.Source) ? "app" : normalized.Source;
-        normalized.DevicePlatform ??= string.Empty;
-        normalized.ErrorMessage ??= string.Empty;
+        normalized.NarrationSnapshot = ResolveNarrationSnapshot(normalized.NarrationSnapshot, poi, normalized.Language);
+        normalized.AudioAssetPath = ResolvePoiUrl(normalized.AudioAssetPath, poi?.AudioAssetPath);
+        normalized.Source = RepairText(normalized.Source, "app");
+        normalized.DevicePlatform = RepairText(normalized.DevicePlatform);
+        normalized.ErrorMessage = RepairText(normalized.ErrorMessage);
         normalized.ListenSeconds = Math.Max(0, normalized.ListenSeconds);
         normalized.StartedAtUtc = normalized.StartedAtUtc == default
             ? DateTimeOffset.UtcNow
@@ -277,6 +291,94 @@ public class ListeningHistoryRepository
         normalized.CompletedAtUtc = normalized.CompletedAtUtc?.ToUniversalTime();
         normalized.TtsQueuePosition = Math.Max(1, normalized.TtsQueuePosition);
         return normalized;
+    }
+
+    private PoiDto? ResolvePoi(Guid poiId, string? poiCode, string? poiName)
+    {
+        if (poiId != Guid.Empty)
+        {
+            var poiById = _poiRepository.GetById(poiId);
+            if (poiById is not null)
+            {
+                return poiById;
+            }
+        }
+
+        var allPois = _poiRepository.GetAll();
+        var normalizedPoiCode = NormalizeLookupValue(poiCode);
+        if (!string.IsNullOrWhiteSpace(normalizedPoiCode))
+        {
+            var poiByCode = allPois.FirstOrDefault(poi =>
+                string.Equals(NormalizeLookupValue(poi.Code), normalizedPoiCode, StringComparison.OrdinalIgnoreCase));
+            if (poiByCode is not null)
+            {
+                return poiByCode;
+            }
+        }
+
+        var normalizedPoiName = NormalizeLookupValue(LegacyTextRepair.Clean(poiName));
+        return string.IsNullOrWhiteSpace(normalizedPoiName)
+            ? null
+            : allPois.FirstOrDefault(poi =>
+                string.Equals(NormalizeLookupValue(poi.Name), normalizedPoiName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string ResolvePoiValue(string? currentValue, string? poiValue)
+    {
+        var repaired = LegacyTextRepair.Clean(currentValue);
+        if (!LegacyTextRepair.NeedsSeedFallback(repaired))
+        {
+            return repaired;
+        }
+
+        return LegacyTextRepair.Clean(poiValue);
+    }
+
+    private static string ResolvePoiUrl(string? currentValue, string? poiValue)
+    {
+        var repaired = LegacyTextRepair.Clean(currentValue);
+        if (!string.IsNullOrWhiteSpace(repaired))
+        {
+            return repaired;
+        }
+
+        return LegacyTextRepair.Clean(poiValue);
+    }
+
+    private static string ResolveNarrationSnapshot(string? snapshot, PoiDto? poi, string language)
+    {
+        var repaired = LegacyTextRepair.Clean(snapshot);
+        if (!LegacyTextRepair.NeedsSeedFallback(repaired))
+        {
+            return repaired;
+        }
+
+        if (poi is null)
+        {
+            return repaired;
+        }
+
+        if (poi.NarrationTranslations.TryGetValue(language, out var localizedNarration) &&
+            !string.IsNullOrWhiteSpace(localizedNarration))
+        {
+            return localizedNarration;
+        }
+
+        if (poi.NarrationTranslations.TryGetValue("vi", out var vietnameseNarration) &&
+            !string.IsNullOrWhiteSpace(vietnameseNarration))
+        {
+            return vietnameseNarration;
+        }
+
+        return poi.NarrationText;
+    }
+
+    private static string RepairText(string? value, string fallback = "")
+    {
+        var repaired = LegacyTextRepair.Clean(value);
+        return LegacyTextRepair.NeedsSeedFallback(repaired)
+            ? fallback
+            : repaired;
     }
 
     private void RecalculateQueuePositionsUnsafe(Guid poiId)
@@ -346,6 +448,17 @@ public class ListeningHistoryRepository
             "audio" => "audio",
             _ => "tts"
         };
+    }
+
+    private static string NormalizeLanguage(string? language)
+    {
+        var normalized = LegacyTextRepair.Clean(language);
+        return string.IsNullOrWhiteSpace(normalized) ? "vi" : normalized.Trim();
+    }
+
+    private static string NormalizeEmail(string? email)
+    {
+        return email?.Trim().ToLowerInvariant() ?? string.Empty;
     }
 
     private static string NormalizeLookupValue(string? value)

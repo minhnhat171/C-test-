@@ -29,7 +29,7 @@ public class UserManagementRepository
         _listeningHistoryRepository = listeningHistoryRepository;
         _poiRepository = poiRepository;
 
-        var dataDirectory = Path.Combine(environment.ContentRootPath, "App_Data");
+        var dataDirectory = AppDataPathResolver.GetDataDirectory(environment);
         Directory.CreateDirectory(dataDirectory);
 
         _dataFilePath = Path.Combine(dataDirectory, "user-profiles.json");
@@ -395,7 +395,10 @@ public class UserManagementRepository
                 var items = JsonSerializer.Deserialize<List<UserProfileRecord>>(json, _jsonOptions);
                 if (items is not null)
                 {
-                    return items.Select(NormalizeProfile).ToList();
+                    var normalizedItems = items.Select(NormalizeProfile).ToList();
+                    _profiles = normalizedItems;
+                    SaveProfilesUnsafe();
+                    return normalizedItems;
                 }
             }
             catch
@@ -518,17 +521,29 @@ public class UserManagementRepository
     private static UserProfileRecord NormalizeProfile(UserProfileRecord profile)
     {
         var normalized = profile.Clone();
+        normalized.UserCode = LegacyTextRepair.Clean(normalized.UserCode);
+        normalized.DisplayName = LegacyTextRepair.Clean(normalized.DisplayName);
+        normalized.Email = LegacyTextRepair.Clean(normalized.Email).Trim().ToLowerInvariant();
+        normalized.Role = LegacyTextRepair.Clean(normalized.Role);
+        normalized.PhoneNumber = LegacyTextRepair.Clean(normalized.PhoneNumber);
+        normalized.PreferredLanguage = LegacyTextRepair.Clean(normalized.PreferredLanguage);
+        normalized.DevicePlatform = LegacyTextRepair.Clean(normalized.DevicePlatform);
         normalized.Id = normalized.Id == Guid.Empty
             ? CreateDeterministicGuid($"{normalized.UserCode}|{normalized.Email}|{normalized.DisplayName}")
             : normalized.Id;
         normalized.UserCode ??= string.Empty;
-        normalized.DisplayName = string.IsNullOrWhiteSpace(normalized.DisplayName)
+        normalized.DisplayName = string.IsNullOrWhiteSpace(normalized.DisplayName) ||
+                                 LegacyTextRepair.NeedsSeedFallback(normalized.DisplayName)
             ? normalized.UserCode
             : normalized.DisplayName;
         normalized.Email ??= string.Empty;
-        normalized.Role = string.IsNullOrWhiteSpace(normalized.Role) ? "User" : normalized.Role;
+        normalized.Role = string.IsNullOrWhiteSpace(normalized.Role) ||
+                          LegacyTextRepair.NeedsSeedFallback(normalized.Role)
+            ? "User"
+            : normalized.Role;
         normalized.PhoneNumber ??= string.Empty;
-        normalized.PreferredLanguage = string.IsNullOrWhiteSpace(normalized.PreferredLanguage)
+        normalized.PreferredLanguage = string.IsNullOrWhiteSpace(normalized.PreferredLanguage) ||
+                                       LegacyTextRepair.NeedsSeedFallback(normalized.PreferredLanguage)
             ? "vi-VN"
             : normalized.PreferredLanguage;
         normalized.DevicePlatform ??= string.Empty;
@@ -542,7 +557,9 @@ public class UserManagementRepository
     {
         var userCode = NormalizeLookup(request.UserCode);
         var email = NormalizeLookup(request.Email);
-        var displayName = request.DisplayName?.Trim() ?? string.Empty;
+        var displayName = LegacyTextRepair.Clean(request.DisplayName);
+        var role = LegacyTextRepair.Clean(request.Role);
+        var preferredLanguage = LegacyTextRepair.Clean(request.PreferredLanguage);
 
         if (string.IsNullOrWhiteSpace(userCode))
         {
@@ -562,12 +579,14 @@ public class UserManagementRepository
             UserCode = userCode,
             DisplayName = displayName,
             Email = email,
-            Role = string.IsNullOrWhiteSpace(request.Role) ? "Guest" : request.Role.Trim(),
-            PhoneNumber = request.PhoneNumber?.Trim() ?? string.Empty,
-            PreferredLanguage = string.IsNullOrWhiteSpace(request.PreferredLanguage)
+            Role = string.IsNullOrWhiteSpace(role) || LegacyTextRepair.NeedsSeedFallback(role)
+                ? "Guest"
+                : role,
+            PhoneNumber = LegacyTextRepair.Clean(request.PhoneNumber),
+            PreferredLanguage = string.IsNullOrWhiteSpace(preferredLanguage) || LegacyTextRepair.NeedsSeedFallback(preferredLanguage)
                 ? "vi-VN"
-                : request.PreferredLanguage.Trim(),
-            DevicePlatform = request.DevicePlatform?.Trim() ?? string.Empty
+                : preferredLanguage,
+            DevicePlatform = LegacyTextRepair.Clean(request.DevicePlatform)
         };
     }
 

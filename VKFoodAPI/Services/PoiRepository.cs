@@ -7,6 +7,8 @@ namespace VKFoodAPI.Services;
 
 public class PoiRepository
 {
+    private static readonly string[] SupportedNarrationLanguages = ["vi", "en", "zh", "ko", "fr"];
+
     private readonly object _syncRoot = new();
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -14,14 +16,16 @@ public class PoiRepository
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
     private readonly string _dataFilePath;
+    private readonly IReadOnlyDictionary<Guid, PoiDto> _seedPois;
     private List<PoiDto> _pois;
 
     public PoiRepository(IHostEnvironment environment)
     {
-        var dataDirectory = Path.Combine(environment.ContentRootPath, "App_Data");
+        var dataDirectory = AppDataPathResolver.GetDataDirectory(environment);
         Directory.CreateDirectory(dataDirectory);
 
         _dataFilePath = Path.Combine(dataDirectory, "pois.json");
+        _seedPois = BuildSeedPois();
         _pois = LoadPois();
     }
 
@@ -162,12 +166,15 @@ public class PoiRepository
                         .First()))
                 {
                     var languageCode = NormalizeLanguageCode(guide.LanguageCode);
-                    var script = guide.Script.Trim();
+                    var script = LegacyTextRepair.Clean(guide.Script);
 
-                    updatedPoi.NarrationTranslations[languageCode] = script;
-                    if (string.Equals(languageCode, "vi", StringComparison.OrdinalIgnoreCase))
+                    if (!string.IsNullOrWhiteSpace(script))
                     {
-                        updatedPoi.NarrationText = script;
+                        updatedPoi.NarrationTranslations[languageCode] = script;
+                        if (string.Equals(languageCode, "vi", StringComparison.OrdinalIgnoreCase))
+                        {
+                            updatedPoi.NarrationText = script;
+                        }
                     }
                 }
 
@@ -209,7 +216,10 @@ public class PoiRepository
                 var items = JsonSerializer.Deserialize<List<PoiDto>>(json, _jsonOptions);
                 if (items is not null)
                 {
-                    return items.Select(Normalize).ToList();
+                    var normalizedItems = items.Select(Normalize).ToList();
+                    _pois = normalizedItems;
+                    SaveUnsafe();
+                    return normalizedItems;
                 }
             }
             catch
@@ -218,9 +228,9 @@ public class PoiRepository
             }
         }
 
-        var seeded = PoiSeedData.CreateDefaultDtos()
+        var seeded = _seedPois.Values
             .Select(dto => dto.Clone())
-            .Select(Normalize)
+            .OrderBy(dto => dto.Code, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         _pois = seeded;
@@ -235,37 +245,59 @@ public class PoiRepository
         File.WriteAllText(_dataFilePath, json);
     }
 
-    private static PoiDto Normalize(PoiDto dto)
+    private PoiDto Normalize(PoiDto dto)
     {
+        var seedPoi = GetSeedPoi(dto.Id);
         var normalized = dto.Clone();
         normalized.NarrationTranslations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        normalized.Code = normalized.Code?.Trim() ?? string.Empty;
-        normalized.Name = normalized.Name?.Trim() ?? string.Empty;
-        normalized.Category = string.IsNullOrWhiteSpace(normalized.Category) ? "Ẩm thực" : normalized.Category.Trim();
-        normalized.ImageSource = normalized.ImageSource?.Trim() ?? string.Empty;
-        normalized.Address = normalized.Address?.Trim() ?? string.Empty;
-        normalized.Description = normalized.Description?.Trim() ?? string.Empty;
-        normalized.SpecialDish = normalized.SpecialDish?.Trim() ?? string.Empty;
-        normalized.PriceRange = normalized.PriceRange?.Trim() ?? string.Empty;
-        normalized.OpeningHours = normalized.OpeningHours?.Trim() ?? string.Empty;
-        normalized.FirstDishSuggestion = normalized.FirstDishSuggestion?.Trim() ?? string.Empty;
-        normalized.FeaturedCategories = (normalized.FeaturedCategories ?? [])
+        normalized.Code = RepairText(normalized.Code, seedPoi?.Code);
+        normalized.Name = RepairText(normalized.Name, seedPoi?.Name);
+        normalized.Category = RepairText(normalized.Category, seedPoi?.Category, "Ẩm thực");
+        normalized.ImageSource = RepairText(normalized.ImageSource, seedPoi?.ImageSource);
+        normalized.Address = RepairText(normalized.Address, seedPoi?.Address);
+        normalized.Description = RepairText(normalized.Description, seedPoi?.Description);
+        normalized.SpecialDish = RepairText(normalized.SpecialDish, seedPoi?.SpecialDish);
+        normalized.PriceRange = RepairText(normalized.PriceRange, seedPoi?.PriceRange);
+        normalized.OpeningHours = RepairText(normalized.OpeningHours, seedPoi?.OpeningHours);
+        normalized.FirstDishSuggestion = RepairText(normalized.FirstDishSuggestion, seedPoi?.FirstDishSuggestion);
+        normalized.FeaturedCategories = (normalized.FeaturedCategories ?? seedPoi?.FeaturedCategories ?? [])
             .Where(item => !string.IsNullOrWhiteSpace(item))
-            .Select(item => item.Trim().ToLowerInvariant())
+            .Select(item => LegacyTextRepair.Clean(item).Trim().ToLowerInvariant())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
-        normalized.NarrationText = normalized.NarrationText?.Trim() ?? string.Empty;
-        normalized.MapLink = normalized.MapLink?.Trim() ?? string.Empty;
-        normalized.AudioAssetPath = normalized.AudioAssetPath?.Trim() ?? string.Empty;
-        normalized.OwnerUserCode = normalized.OwnerUserCode?.Trim() ?? string.Empty;
-        normalized.OwnerDisplayName = normalized.OwnerDisplayName?.Trim() ?? string.Empty;
-        normalized.OwnerEmail = normalized.OwnerEmail?.Trim().ToLowerInvariant() ?? string.Empty;
-        normalized.CooldownMinutes = normalized.CooldownMinutes <= 0 ? 5 : normalized.CooldownMinutes;
-        normalized.TriggerRadiusMeters = normalized.TriggerRadiusMeters <= 0 ? 50 : normalized.TriggerRadiusMeters;
-        normalized.Priority = normalized.Priority <= 0 ? 1 : normalized.Priority;
+        if (normalized.FeaturedCategories.Count == 0 && seedPoi is not null)
+        {
+            normalized.FeaturedCategories = seedPoi.FeaturedCategories
+                .Select(item => item.Trim().ToLowerInvariant())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        normalized.MapLink = RepairUrl(normalized.MapLink, seedPoi?.MapLink);
+        normalized.AudioAssetPath = RepairUrl(normalized.AudioAssetPath, seedPoi?.AudioAssetPath);
+        normalized.OwnerUserCode = RepairText(normalized.OwnerUserCode, seedPoi?.OwnerUserCode);
+        normalized.OwnerDisplayName = RepairText(normalized.OwnerDisplayName, seedPoi?.OwnerDisplayName);
+        normalized.OwnerEmail = NormalizeEmail(RepairText(normalized.OwnerEmail, seedPoi?.OwnerEmail));
+        normalized.CooldownMinutes = normalized.CooldownMinutes <= 0
+            ? seedPoi?.CooldownMinutes > 0
+                ? seedPoi.CooldownMinutes
+                : 5
+            : normalized.CooldownMinutes;
+        normalized.TriggerRadiusMeters = normalized.TriggerRadiusMeters <= 0
+            ? seedPoi?.TriggerRadiusMeters > 0
+                ? seedPoi.TriggerRadiusMeters
+                : 50
+            : normalized.TriggerRadiusMeters;
+        normalized.Priority = normalized.Priority <= 0
+            ? seedPoi?.Priority > 0
+                ? seedPoi.Priority
+                : 1
+            : normalized.Priority;
         normalized.CreatedAtUtc = NormalizeUtc(normalized.CreatedAtUtc);
         normalized.UpdatedAtUtc = NormalizeUtc(normalized.UpdatedAtUtc);
         normalized.DeletedAtUtc = NormalizeUtc(normalized.DeletedAtUtc);
+        normalized.NarrationTranslations = NormalizeNarrationTranslations(normalized, seedPoi);
+        normalized.NarrationText = ResolveNarrationText(normalized, seedPoi);
         if (normalized.IsDeleted && normalized.DeletedAtUtc is null)
         {
             normalized.DeletedAtUtc = DateTime.UtcNow;
@@ -303,6 +335,175 @@ public class PoiRepository
         {
             throw new InvalidOperationException($"POI code '{dto.Code}' already exists.");
         }
+    }
+
+    private PoiDto? GetSeedPoi(Guid id)
+    {
+        return id != Guid.Empty && _seedPois.TryGetValue(id, out var seedPoi)
+            ? seedPoi
+            : null;
+    }
+
+    private static IReadOnlyDictionary<Guid, PoiDto> BuildSeedPois()
+    {
+        return PoiSeedData.CreateDefaultDtos()
+            .Select(NormalizeSeedPoi)
+            .Where(dto => dto.Id != Guid.Empty)
+            .GroupBy(dto => dto.Id)
+            .ToDictionary(group => group.Key, group => group.First());
+    }
+
+    private static PoiDto NormalizeSeedPoi(PoiDto dto)
+    {
+        var normalized = dto.Clone();
+        normalized.NarrationTranslations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        normalized.Code = LegacyTextRepair.Clean(normalized.Code);
+        normalized.Name = LegacyTextRepair.Clean(normalized.Name);
+        normalized.Category = LegacyTextRepair.Clean(normalized.Category);
+        normalized.ImageSource = LegacyTextRepair.Clean(normalized.ImageSource);
+        normalized.Address = LegacyTextRepair.Clean(normalized.Address);
+        normalized.Description = LegacyTextRepair.Clean(normalized.Description);
+        normalized.SpecialDish = LegacyTextRepair.Clean(normalized.SpecialDish);
+        normalized.PriceRange = LegacyTextRepair.Clean(normalized.PriceRange);
+        normalized.OpeningHours = LegacyTextRepair.Clean(normalized.OpeningHours);
+        normalized.FirstDishSuggestion = LegacyTextRepair.Clean(normalized.FirstDishSuggestion);
+        normalized.FeaturedCategories = (normalized.FeaturedCategories ?? [])
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Select(item => LegacyTextRepair.Clean(item).Trim().ToLowerInvariant())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        normalized.MapLink = LegacyTextRepair.Clean(normalized.MapLink);
+        normalized.AudioAssetPath = LegacyTextRepair.Clean(normalized.AudioAssetPath);
+        normalized.OwnerUserCode = LegacyTextRepair.Clean(normalized.OwnerUserCode);
+        normalized.OwnerDisplayName = LegacyTextRepair.Clean(normalized.OwnerDisplayName);
+        normalized.OwnerEmail = NormalizeEmail(LegacyTextRepair.Clean(normalized.OwnerEmail));
+        normalized.Category = string.IsNullOrWhiteSpace(normalized.Category) ? "Ẩm thực" : normalized.Category;
+        normalized.CooldownMinutes = normalized.CooldownMinutes <= 0 ? 5 : normalized.CooldownMinutes;
+        normalized.TriggerRadiusMeters = normalized.TriggerRadiusMeters <= 0 ? 50 : normalized.TriggerRadiusMeters;
+        normalized.Priority = normalized.Priority <= 0 ? 1 : normalized.Priority;
+        normalized.CreatedAtUtc = NormalizeUtc(normalized.CreatedAtUtc);
+        normalized.UpdatedAtUtc = NormalizeUtc(normalized.UpdatedAtUtc);
+        normalized.DeletedAtUtc = NormalizeUtc(normalized.DeletedAtUtc);
+        normalized.NarrationTranslations = BuildLanguageLookup(normalized.NarrationTranslations);
+        normalized.NarrationText = ResolveSeedNarrationText(normalized.NarrationText, normalized.NarrationTranslations);
+        return normalized;
+    }
+
+    private Dictionary<string, string> NormalizeNarrationTranslations(PoiDto poi, PoiDto? seedPoi)
+    {
+        var currentTranslations = BuildLanguageLookup(poi.NarrationTranslations);
+        var seedTranslations = seedPoi?.NarrationTranslations is null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>(seedPoi.NarrationTranslations, StringComparer.OrdinalIgnoreCase);
+        var languages = SupportedNarrationLanguages
+            .Concat(currentTranslations.Keys)
+            .Concat(seedTranslations.Keys)
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+        var translations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var languageCode in languages)
+        {
+            currentTranslations.TryGetValue(languageCode, out var currentValue);
+            seedTranslations.TryGetValue(languageCode, out var seedValue);
+
+            var repaired = RepairText(currentValue, seedValue);
+            if (string.IsNullOrWhiteSpace(repaired))
+            {
+                repaired = BuildFallbackNarration(languageCode, poi, seedPoi);
+            }
+
+            if (!string.IsNullOrWhiteSpace(repaired))
+            {
+                translations[NormalizeLanguageCode(languageCode)] = repaired;
+            }
+        }
+
+        return translations;
+    }
+
+    private string ResolveNarrationText(PoiDto poi, PoiDto? seedPoi)
+    {
+        var repaired = RepairText(poi.NarrationText, seedPoi?.NarrationText);
+        if (!LegacyTextRepair.NeedsSeedFallback(repaired))
+        {
+            return repaired;
+        }
+
+        if (poi.NarrationTranslations.TryGetValue("vi", out var vietnameseNarration) &&
+            !string.IsNullOrWhiteSpace(vietnameseNarration))
+        {
+            return vietnameseNarration;
+        }
+
+        return BuildFallbackNarration("vi", poi, seedPoi);
+    }
+
+    private static Dictionary<string, string> BuildLanguageLookup(
+        IDictionary<string, string>? translations)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (translations is null)
+        {
+            return result;
+        }
+
+        foreach (var entry in translations)
+        {
+            var languageCode = NormalizeLanguageCode(entry.Key);
+            var text = LegacyTextRepair.Clean(entry.Value);
+            if (!string.IsNullOrWhiteSpace(languageCode) && !string.IsNullOrWhiteSpace(text))
+            {
+                result[languageCode] = text;
+            }
+        }
+
+        return result;
+    }
+
+    private static string ResolveSeedNarrationText(
+        string? narrationText,
+        IReadOnlyDictionary<string, string> translations)
+    {
+        var repaired = LegacyTextRepair.Clean(narrationText);
+        if (!string.IsNullOrWhiteSpace(repaired))
+        {
+            return repaired;
+        }
+
+        return translations.TryGetValue("vi", out var vietnameseNarration)
+            ? vietnameseNarration
+            : string.Empty;
+    }
+
+    private static string RepairText(string? value, string? seedValue = null, string fallback = "")
+    {
+        var repaired = LegacyTextRepair.Clean(value);
+        if (LegacyTextRepair.NeedsSeedFallback(repaired) && !string.IsNullOrWhiteSpace(seedValue))
+        {
+            var repairedSeed = LegacyTextRepair.Clean(seedValue);
+            if (!string.IsNullOrWhiteSpace(repairedSeed))
+            {
+                return repairedSeed;
+            }
+        }
+
+        return string.IsNullOrWhiteSpace(repaired) ? fallback : repaired;
+    }
+
+    private static string RepairUrl(string? value, string? seedValue = null)
+    {
+        var repaired = LegacyTextRepair.Clean(value);
+        if (!string.IsNullOrWhiteSpace(repaired))
+        {
+            return repaired;
+        }
+
+        return LegacyTextRepair.Clean(seedValue);
+    }
+
+    private static string NormalizeEmail(string? email)
+    {
+        return email?.Trim().ToLowerInvariant() ?? string.Empty;
     }
 
     private static DateTime NormalizeUtc(DateTime value)
@@ -354,6 +555,61 @@ public class PoiRepository
         }
 
         return string.IsNullOrWhiteSpace(normalized) ? "vi" : normalized;
+    }
+
+    private static string BuildFallbackNarration(string languageCode, PoiDto poi, PoiDto? seedPoi)
+    {
+        var name = string.IsNullOrWhiteSpace(poi.Name) ? seedPoi?.Name ?? "địa điểm này" : poi.Name;
+        var address = string.IsNullOrWhiteSpace(poi.Address) ? seedPoi?.Address ?? string.Empty : poi.Address;
+        var description = string.IsNullOrWhiteSpace(poi.Description) ? seedPoi?.Description ?? string.Empty : poi.Description;
+        var specialDish = string.IsNullOrWhiteSpace(poi.SpecialDish) ? seedPoi?.SpecialDish ?? string.Empty : poi.SpecialDish;
+
+        return NormalizeLanguageCode(languageCode) switch
+        {
+            "en" => JoinSentences(
+                $"You are near {name}.",
+                string.IsNullOrWhiteSpace(description) ? $"Address: {address}." : description,
+                string.IsNullOrWhiteSpace(specialDish) ? string.Empty : $"Signature dishes: {specialDish}."),
+            "zh" => JoinSentences(
+                $"您现在在{name}附近。",
+                string.IsNullOrWhiteSpace(description) ? $"地址：{address}。" : description,
+                string.IsNullOrWhiteSpace(specialDish) ? string.Empty : $"推荐菜品：{specialDish}。"),
+            "ko" => JoinSentences(
+                $"지금 {name} 근처에 있습니다.",
+                string.IsNullOrWhiteSpace(description) ? $"주소는 {address}입니다." : description,
+                string.IsNullOrWhiteSpace(specialDish) ? string.Empty : $"추천 메뉴는 {specialDish}입니다."),
+            "fr" => JoinSentences(
+                $"Vous êtes près de {name}.",
+                string.IsNullOrWhiteSpace(description) ? $"Adresse : {address}." : description,
+                string.IsNullOrWhiteSpace(specialDish) ? string.Empty : $"Plats recommandés : {specialDish}."),
+            _ => JoinSentences(
+                $"Bạn đang ở gần {name}.",
+                description,
+                string.IsNullOrWhiteSpace(specialDish) ? string.Empty : $"Món nên thử: {specialDish}.")
+        };
+    }
+
+    private static string JoinSentences(params string[] segments)
+    {
+        return string.Join(
+            " ",
+            segments
+                .Select(EnsureSentence)
+                .Where(segment => !string.IsNullOrWhiteSpace(segment)));
+    }
+
+    private static string EnsureSentence(string? value)
+    {
+        var trimmed = value?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            return string.Empty;
+        }
+
+        var lastCharacter = trimmed[^1];
+        return lastCharacter is '.' or '!' or '?'
+            ? trimmed
+            : $"{trimmed}.";
     }
 
     private static bool AreEquivalent(PoiDto left, PoiDto right)

@@ -1,37 +1,29 @@
 @model QrScanViewModel
-@using System.Text.Json
 @{
     Layout = null;
     var narrationText = string.IsNullOrWhiteSpace(Model.NarrationText)
         ? Model.Description
         : Model.NarrationText;
-    var shouldAutoOpenApp = Model.AutoOpenApp && !string.IsNullOrWhiteSpace(Model.AppLaunchUrl);
-    var hasAudioAsset = !string.IsNullOrWhiteSpace(Model.AudioAssetPath);
-    var analyticsPoiId = Guid.Empty;
-    var canTrackListeningHistory = string.Equals(Model.TargetType, "poi", StringComparison.OrdinalIgnoreCase) &&
-                                   Guid.TryParse(Model.TargetId, out analyticsPoiId);
+    var hasAppLaunchUrl = !string.IsNullOrWhiteSpace(Model.AppLaunchUrl);
 }
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@Model.TargetName - QR Audio Guide</title>
+    <title>@Model.TargetName - Mở trên ứng dụng</title>
     <meta name="description" content="@Model.Description" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-top: #fff4d6;
-            --bg-bottom: #f7efe4;
-            --card: rgba(255, 255, 255, 0.92);
-            --ink: #1f2937;
-            --muted: #6b7280;
+            --bg-top: #fff5df;
+            --bg-bottom: #f4efe8;
+            --card: rgba(255, 255, 255, 0.94);
+            --ink: #18212f;
+            --muted: #5b6472;
             --accent: #c2410c;
             --accent-dark: #9a3412;
             --line: rgba(148, 163, 184, 0.18);
-            --shadow: 0 28px 60px rgba(31, 41, 55, 0.12);
+            --shadow: 0 24px 60px rgba(24, 33, 47, 0.14);
         }
 
         * {
@@ -41,10 +33,10 @@
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: "Be Vietnam Pro", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
             color: var(--ink);
             background:
-                radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 30%),
+                radial-gradient(circle at top left, rgba(255, 255, 255, 0.85), transparent 32%),
                 linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
             display: flex;
             justify-content: center;
@@ -65,10 +57,10 @@
         }
 
         .scan-hero {
-            padding: 22px 22px 18px;
+            padding: 24px 24px 20px;
             background:
                 radial-gradient(circle at right top, rgba(251, 191, 36, 0.28), transparent 36%),
-                linear-gradient(135deg, rgba(255, 247, 237, 0.96), rgba(255, 255, 255, 0.96));
+                linear-gradient(135deg, rgba(255, 247, 237, 0.96), rgba(255, 255, 255, 0.97));
             border-bottom: 1px solid var(--line);
         }
 
@@ -109,8 +101,13 @@
         .scan-panel {
             border-radius: 22px;
             border: 1px solid var(--line);
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.84);
             padding: 18px;
+        }
+
+        .scan-panel-highlight {
+            background: linear-gradient(180deg, rgba(255, 247, 237, 0.95), rgba(255, 255, 255, 0.92));
+            border-color: rgba(194, 65, 12, 0.18);
         }
 
         .scan-panel-label {
@@ -120,29 +117,6 @@
             font-weight: 800;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-        }
-
-        .scan-control-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .scan-control {
-            display: grid;
-            gap: 8px;
-        }
-
-        .scan-select {
-            width: 100%;
-            min-height: 48px;
-            border: 1px solid rgba(194, 65, 12, 0.16);
-            border-radius: 16px;
-            background: #fff7ed;
-            color: var(--ink);
-            font: inherit;
-            padding: 0 14px;
         }
 
         .scan-text {
@@ -180,19 +154,22 @@
         }
 
         .scan-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 14px;
         }
 
         .scan-btn {
             appearance: none;
             border: 0;
-            border-radius: 999px;
+            border-radius: 20px;
+            min-height: 56px;
             padding: 14px 18px;
             font: inherit;
             font-weight: 700;
             text-decoration: none;
+            text-align: center;
             cursor: pointer;
             transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
         }
@@ -235,14 +212,8 @@
                 padding: 18px;
             }
 
-            .scan-control-grid,
             .scan-actions {
                 grid-template-columns: 1fr;
-                display: grid;
-            }
-
-            .scan-btn {
-                text-align: center;
             }
         }
     </style>
@@ -251,74 +222,34 @@
     <main class="scan-shell">
         <section class="scan-card">
             <header class="scan-hero">
-                <div class="scan-badge">@Model.TargetKindLabel QR thuyết minh</div>
+                <div class="scan-badge">@Model.TargetKindLabel thuyết minh</div>
                 <h1 class="scan-title">@Model.TargetName</h1>
                 <p class="scan-description">@Model.Description</p>
             </header>
 
             <div class="scan-body">
-                <section class="scan-panel">
-                    <p class="scan-panel-label">Nghe thuyết minh</p>
-
-                    <div class="scan-control-grid">
-                        <label class="scan-control">
-                            <span class="scan-meta-label">Ngôn ngữ</span>
-                            <select class="scan-select" id="languageSelect">
-                                <option value="vi">Tiếng Việt</option>
-                                <option value="en">Tiếng Anh</option>
-                                <option value="zh">Tiếng Trung</option>
-                                <option value="ko">Tiếng Hàn</option>
-                                <option value="fr">Tiếng Pháp</option>
-                            </select>
-                        </label>
-
-                        <label class="scan-control">
-                    <span class="scan-meta-label">Chế độ nghe</span>
-                            <select class="scan-select" id="playbackModeSelect">
-                            <option value="tts">Giọng đọc tự động</option>
-                                <option value="audio">Bản thu sẵn</option>
-                            </select>
-                        </label>
-                    </div>
+                <section class="scan-panel scan-panel-highlight">
+                    <p class="scan-panel-label">Nghe trên ứng dụng</p>
+                    <p class="scan-note">Trang QR này chỉ mở nội dung trên ứng dụng. Nếu máy chưa cài app, hãy tải ứng dụng để tiếp tục nghe.</p>
 
                     <div class="scan-actions">
-                        @if (shouldAutoOpenApp)
+                        @if (hasAppLaunchUrl)
                         {
-                            <button type="button" class="scan-btn scan-btn-primary" id="openAppBtn">Mở app và nghe ngay</button>
-                            <button type="button" class="scan-btn scan-btn-secondary" id="speakBtn">Nghe trên web</button>
-                            <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">D?ng d?c web</button>
+                            <button type="button" class="scan-btn scan-btn-primary" id="openAppBtn">Nghe trên ứng dụng</button>
                         }
-                        else
-                        {
-                            <button type="button" class="scan-btn scan-btn-primary" id="speakBtn">Nghe ngay</button>
-                            <button type="button" class="scan-btn scan-btn-secondary" id="stopBtn">D?ng d?c</button>
-                        }
-                        @if (!string.IsNullOrWhiteSpace(Model.MapLink))
-                        {
-                            <a class="scan-btn scan-btn-secondary" href="@Model.MapLink" target="_blank" rel="noopener noreferrer">M? b?n d?</a>
-                        }
-                        <a class="scan-btn scan-btn-secondary" href="/download-app">Tải ứng dụng</a>
+                        <a class="scan-btn scan-btn-secondary" href="/download-app">Tải ứng dụng để nghe</a>
                     </div>
 
-                    <p class="scan-note" id="playbackHint">
-                        @(hasAudioAsset
-                            ? "POI này đã có bản thu sẵn. Nếu chọn chế độ audio, web sẽ ưu tiên phát cùng nguồn audio mà app đang dùng."
-                            : "POI này chưa có bản thu sẵn. Nếu chọn chế độ audio, web sẽ tự động chuyển về TTS giống app.")
+                    <p class="scan-note" id="openStatus">
+                        @(hasAppLaunchUrl
+                            ? "Nếu điện thoại hỏi xác nhận, hãy chọn Mở ứng dụng. Nếu chưa mở được app, hãy dùng nút tải ứng dụng."
+                            : "Ứng dụng chưa sẵn sàng trên thiết bị này. Hãy tải ứng dụng để tiếp tục nghe.")
                     </p>
-                    <p class="scan-note" id="speechStatus">
-                        @(shouldAutoOpenApp
-                            ? "Trang sẽ thử mở app trước. Nếu app chưa mở được, web sẽ phát theo tùy chọn đang chọn."
-                            : "Trang sẽ thử phát nội dung theo tùy chọn đang chọn sau khi mở.")
-                    </p>
-                    @if (shouldAutoOpenApp)
-                    {
-                        <p class="scan-note">Dùng cho điểm dừng xe buýt tại Khánh Hội, Vĩnh Hội, Xóm Chiếu. Quét là nghe ngay, không cần GPS.</p>
-                    }
                 </section>
 
                 <section class="scan-panel">
                     <p class="scan-panel-label">Nội dung thuyết minh</p>
-                    <p class="scan-text" id="scanNarrationText">@narrationText</p>
+                    <p class="scan-text">@narrationText</p>
                 </section>
 
                 @if (Model.TourStops.Count > 0)
@@ -364,6 +295,14 @@
                         <div>@Model.TargetCode</div>
                     </div>
 
+                    @if (!string.IsNullOrWhiteSpace(Model.MapLink))
+                    {
+                        <div class="scan-meta-item">
+                            <span class="scan-meta-label">Bản đồ</span>
+                            <a class="scan-link" href="@Model.MapLink" target="_blank" rel="noopener noreferrer">@Model.MapLink</a>
+                        </div>
+                    }
+
                     <div class="scan-meta-item">
                         <span class="scan-meta-label">Liên kết công khai</span>
                         <a class="scan-link" href="@Model.PublicUrl">@Model.PublicUrl</a>
@@ -373,435 +312,29 @@
         </section>
     </main>
 
-    <script src="@Url.Content("~/js/narration-player.js")"></script>
     <script>
         (() => {
-            const fallbackNarrationText = @Html.Raw(JsonSerializer.Serialize(narrationText));
-            const narrationByLanguage = @Html.Raw(JsonSerializer.Serialize(Model.NarrationByLanguage));
-            const audioAssetPath = @Html.Raw(JsonSerializer.Serialize(Model.AudioAssetPath));
-            const appLaunchUrl = @Html.Raw(JsonSerializer.Serialize(Model.AppLaunchUrl));
-            const autoOpenApp = @Html.Raw(JsonSerializer.Serialize(shouldAutoOpenApp));
-            const hasAudioAsset = @Html.Raw(JsonSerializer.Serialize(hasAudioAsset));
-            const canTrackListeningHistory = @Html.Raw(JsonSerializer.Serialize(canTrackListeningHistory));
-            const poiId = @Html.Raw(JsonSerializer.Serialize(canTrackListeningHistory ? analyticsPoiId : Guid.Empty));
-            const heartbeatUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("WebHeartbeat", "QrCodes")));
-            const disconnectUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("WebDisconnect", "QrCodes")));
-            const listeningHistoryUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("CreateListeningHistory", "QrCodes")));
-            const storageKeys = {
-                deviceId: "vk-web-device-id",
-                language: "vk-web-language",
-                playbackMode: "vk-web-playback-mode"
-            };
-            const narrationTextElement = document.getElementById("scanNarrationText");
-            const playbackHint = document.getElementById("playbackHint");
-            const speechStatus = document.getElementById("speechStatus");
-            const languageSelect = document.getElementById("languageSelect");
-            const playbackModeSelect = document.getElementById("playbackModeSelect");
+            const appLaunchUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AppLaunchUrl));
             const openAppBtn = document.getElementById("openAppBtn");
-            const speakBtn = document.getElementById("speakBtn");
-            const stopBtn = document.getElementById("stopBtn");
-            const narrationPlayer = window.VinhKhanhNarrationPlayer?.createPlayer({
-                onTrạng thái: (message, state) => {
-                    if (speechStatus) {
-                        speechStatus.textContent = message;
+            const openStatus = document.getElementById("openStatus");
+
+            if (!openAppBtn || !appLaunchUrl) {
+                return;
+            }
+
+            openAppBtn.addEventListener("click", () => {
+                if (openStatus) {
+                    openStatus.textContent = "Đang mở ứng dụng trên thiết bị...";
+                }
+
+                window.setTimeout(() => {
+                    if (!document.hidden && openStatus) {
+                        openStatus.textContent = "Nếu ứng dụng chưa mở, hãy cài app bằng nút tải ứng dụng rồi quét lại mã QR.";
                     }
-
-                    if (state === "ended") {
-                        void finalizeListeningSession(true);
-                    } else if (state === "error") {
-                        void finalizeListeningSession(false, message);
-                    }
-                }
-            });
-            const heartbeatIntervalMs = 8000;
-            const browserPlatform = "Web";
-            const browserModel = [
-                navigator.platform || "Browser",
-                navigator.language || ""
-            ].filter(Boolean).join(" | ");
-            const appVersion = "web-qr";
-            let fallbackTimer = 0;
-            let heartbeatTimer = 0;
-            let currentListeningSession = null;
-
-            const normalizeLanguage = (value) =>
-                window.VinhKhanhNarrationPlayer?.normalizeLanguageCode(value) || "vi";
-
-            const normalizePlaybackMode = (value) =>
-                window.VinhKhanhNarrationPlayer?.normalizePlaybackMode(value) || "tts";
-
-            const updateStatus = (message) => {
-                if (speechStatus) {
-                    speechStatus.textContent = message;
-                }
-            };
-
-            const buildDeviceId = () => {
-                try {
-                    const storedDeviceId = window.localStorage.getItem(storageKeys.deviceId);
-                    if (storedDeviceId) {
-                        return storedDeviceId;
-                    }
-
-                    const createdDeviceId = (window.crypto?.randomUUID?.() || `web-${Date.now()}-${Math.random().toString(16).slice(2)}`)
-                        .replaceAll("-", "")
-                        .toLowerCase();
-                    window.localStorage.setItem(storageKeys.deviceId, createdDeviceId);
-                    return createdDeviceId;
-                } catch (error) {
-                    return `web${Date.now().toString(16)}${Math.random().toString(16).slice(2, 10)}`;
-                }
-            };
-
-            const browserDeviceId = buildDeviceId();
-            const visitorSuffix = browserDeviceId.slice(-6).toUpperCase();
-            const visitorCode = `web-${visitorSuffix}`;
-            const visitorName = `Khách web ${visitorSuffix}`;
-
-            const postJson = async (url, payload, options = {}) => {
-                if (!url) {
-                    return null;
-                }
-
-                const response = await fetch(url, {
-                    method: options.method || "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(payload),
-                    cache: "no-store",
-                    credentials: "same-origin",
-                    keepalive: options.keepalive === true
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-
-                if (options.expectJson === false || response.status === 204) {
-                    return null;
-                }
-
-                return await response.json();
-            };
-
-            const sendHeartbeat = async () => {
-                try {
-                    await postJson(heartbeatUrl, {
-                        deviceId: browserDeviceId,
-                        userCode: visitorCode,
-                        userDisplayName: visitorName,
-                        userEmail: "",
-                        devicePlatform: browserPlatform,
-                        deviceModel: browserModel,
-                        appVersion: appVersion,
-                        sentAtUtc: new Date().toISOString()
-                    }, { expectJson: false });
-                } catch (error) {
-                }
-            };
-
-            const startHeartbeat = () => {
-                if (heartbeatTimer) {
-                    return;
-                }
-
-                void sendHeartbeat();
-                heartbeatTimer = window.setInterval(() => {
-                    void sendHeartbeat();
-                }, heartbeatIntervalMs);
-            };
-
-            const disconnectHeartbeat = async (keepalive) => {
-                if (heartbeatTimer) {
-                    window.clearInterval(heartbeatTimer);
-                    heartbeatTimer = 0;
-                }
-
-                try {
-                    await postJson(disconnectUrl, {
-                        deviceId: browserDeviceId,
-                        disconnectedAtUtc: new Date().toISOString()
-                    }, { expectJson: false, keepalive: keepalive === true });
-                } catch (error) {
-                }
-            };
-
-            const startListeningSession = async () => {
-                if (!canTrackListeningHistory || !poiId || !listeningHistoryUrl) {
-                    currentListeningSession = null;
-                    return;
-                }
-
-                const session = {
-                    historyId: null,
-                    startedAtMs: Date.now(),
-                    finalized: false,
-                    createTask: null
-                };
-
-                currentListeningSession = session;
-
-                session.createTask = (async () => {
-                    try {
-                    const response = await postJson(listeningHistoryUrl, {
-                        poiId: poiId,
-                        poiCode: @Html.Raw(JsonSerializer.Serialize(Model.TargetCode)),
-                        poiName: @Html.Raw(JsonSerializer.Serialize(Model.TargetName)),
-                        poiAddress: @Html.Raw(JsonSerializer.Serialize(Model.Address)),
-                        poiDescription: @Html.Raw(JsonSerializer.Serialize(Model.Description)),
-                        poiSpecialDish: @Html.Raw(JsonSerializer.Serialize(Model.SpecialDish)),
-                        poiImageSource: "",
-                        poiMapLink: @Html.Raw(JsonSerializer.Serialize(Model.MapLink)),
-                        userCode: visitorCode,
-                        userDisplayName: visitorName,
-                        userEmail: "",
-                        triggerType: "QR",
-                        language: languageSelect?.value || "vi",
-                        playbackMode: playbackModeSelect?.value || "tts",
-                        narrationSnapshot: resolveNarrationText(languageSelect?.value),
-                        audioAssetPath: audioAssetPath || "",
-                        source: "web",
-                        devicePlatform: browserPlatform,
-                        autoTriggered: false,
-                        startedAtUtc: new Date(session.startedAtMs).toISOString()
-                    });
-
-                        session.historyId = response?.id || null;
-                    } catch (error) {
-                    }
-                })();
-
-                await session.createTask;
-            };
-
-            const finalizeListeningSession = async (completed, errorMessage) => {
-                const session = currentListeningSession;
-                if (!session || session.finalized) {
-                    return;
-                }
-
-                session.finalized = true;
-                currentListeningSession = null;
-
-                if (session.createTask) {
-                    await session.createTask;
-                }
-
-                if (!session.historyId) {
-                    return;
-                }
-
-                const listenSeconds = Math.max(1, Math.round((Date.now() - session.startedAtMs) / 1000));
-
-                try {
-                    await postJson(`${listeningHistoryUrl}/${encodeURIComponent(session.historyId)}`, {
-                        listenSeconds: listenSeconds,
-                        completed: completed === true,
-                        completedAtUtc: new Date().toISOString(),
-                        errorMessage: errorMessage || ""
-                    }, { method: "PUT", expectJson: false, keepalive: true });
-                } catch (error) {
-                }
-            };
-
-            const resolveNarrationText = (languageCode) => {
-                const normalizedLanguage = normalizeLanguage(languageCode);
-                if (narrationByLanguage && narrationByLanguage[normalizedLanguage]) {
-                    return narrationByLanguage[normalizedLanguage];
-                }
-
-                return fallbackNarrationText;
-            };
-
-            const persistSelections = () => {
-                try {
-                    window.localStorage.setItem(storageKeys.language, normalizeLanguage(languageSelect?.value));
-                    window.localStorage.setItem(storageKeys.playbackMode, normalizePlaybackMode(playbackModeSelect?.value));
-                } catch (error) {
-                }
-            };
-
-            const restoreSelections = () => {
-                try {
-                    const storedLanguage = normalizeLanguage(window.localStorage.getItem(storageKeys.language));
-                    const storedPlaybackMode = normalizePlaybackMode(window.localStorage.getItem(storageKeys.playbackMode));
-
-                    if (languageSelect) {
-                        languageSelect.value = storedLanguage;
-                    }
-
-                    if (playbackModeSelect) {
-                        playbackModeSelect.value = storedPlaybackMode;
-                    }
-                } catch (error) {
-                    if (languageSelect) {
-                        languageSelect.value = "vi";
-                    }
-
-                    if (playbackModeSelect) {
-                        playbackModeSelect.value = "tts";
-                    }
-                }
-            };
-
-            const syncNarrationText = () => {
-                if (narrationTextElement) {
-                    narrationTextElement.textContent = resolveNarrationText(languageSelect?.value);
-                }
-            };
-
-            const syncPlaybackHint = () => {
-                if (!playbackHint) {
-                    return;
-                }
-
-                if (normalizePlaybackMode(playbackModeSelect?.value) === "audio") {
-                    playbackHint.textContent = hasAudioAsset
-                        ? "Web đang ưu tiên bản thu sẵn cùng nguồn audio với app."
-                        : "Điểm này chưa có bản thu sẵn, web sẽ tự động chuyển về TTS nếu bạn bấm nghe.";
-                    return;
-                }
-
-                playbackHint.textContent = "Web đang dùng TTS theo ngôn ngữ đã chọn, giống logic fallback bên app.";
-            };
-
-            const stopSpeaking = (message) => {
-                if (fallbackTimer) {
-                    window.clearTimeout(fallbackTimer);
-                    fallbackTimer = 0;
-                }
-
-                void finalizeListeningSession(false);
-
-                if (!narrationPlayer) {
-                    updateStatus(message || "Đã dừng phát thuyết minh.");
-                    return;
-                }
-
-                narrationPlayer.stop(message || "Đã dừng phát thuyết minh.");
-            };
-
-            const playOnWeb = () => {
-                if (fallbackTimer) {
-                    window.clearTimeout(fallbackTimer);
-                    fallbackTimer = 0;
-                }
-
-                persistSelections();
-                syncNarrationText();
-                syncPlaybackHint();
-
-                if (!narrationPlayer) {
-                    updateStatus("Web chưa tải được bộ phát thuyết minh.");
-                    return;
-                }
-
-                const currentNarrationText = resolveNarrationText(languageSelect?.value);
-                const currentPlaybackMode = playbackModeSelect?.value || "tts";
-                if (!currentNarrationText && !audioAssetPath) {
-                    updateStatus("Chưa có nội dung thuyết minh để phát.");
-                    return;
-                }
-
-                void finalizeListeningSession(false);
-                void startListeningSession();
-
-                narrationPlayer.play({
-                    playbackMode: currentPlaybackMode,
-                    audioAssetPath: audioAssetPath || "",
-                    narrationText: currentNarrationText,
-                    languageCode: languageSelect?.value || "vi",
-                    voiceType: "neutral",
-                    allowAudioFallback: true,
-                    baseUrl: window.location.origin,
-                    messages: {
-                        playingAudio: "Đang phát bản thu sẵn giống app...",
-                        audioEnded: "Đã phát xong. Bạn có thể bấm nghe lại bất cứ lúc nào.",
-                        audioFallback: hasAudioAsset
-                            ? "Web không mở được file audio này. Đang chuyển sang TTS dự phòng."
-                            : "Điểm này chưa có bản thu sẵn. Web đang chuyển sang TTS giống app.",
-                        audioUnavailable: "Điểm này chưa có bản thu sẵn để phát trên web.",
-                        audioFailed: "Không phát được bản thu sẵn này trên web.",
-                        playingTts: "Đang đọc thuyết minh trên web...",
-                        ttsEnded: "Đã đọc xong. Bạn có thể bấm nghe lại để nghe tiếp.",
-                        ttsFailed: "Không thể phát TTS. Thử bấm nghe lại một lần nữa.",
-                        unsupportedTts: "Trình duyệt này không hỗ trợ TTS.",
-                        empty: "Chưa có nội dung thuyết minh để phát."
-                    }
-                });
-            };
-
-            const openApp = () => {
-                if (!autoOpenApp || !appLaunchUrl) {
-                    playOnWeb();
-                    return;
-                }
-
-                stopSpeaking();
-                updateStatus("Đang chuyển qua app trên điện thoại...");
-
-                fallbackTimer = window.setTimeout(() => {
-                    if (!document.hidden) {
-                        updateStatus("Chưa mở được app. Web đang phát theo tùy chọn hiện tại.");
-                        playOnWeb();
-                    }
-                }, 1800);
+                }, 1500);
 
                 window.location.href = appLaunchUrl;
-            };
-
-            document.addEventListener("visibilitychange", () => {
-                if (!document.hidden || !fallbackTimer) {
-                    return;
-                }
-
-                window.clearTimeout(fallbackTimer);
-                fallbackTimer = 0;
-                void finalizeListeningSession(false);
-                narrationPlayer?.stop();
-                updateStatus("Đã chuyển sang app. Nếu điện thoại hỏi xác nhận, hãy chọn Mở.");
             });
-
-            languageSelect?.addEventListener("change", () => {
-                persistSelections();
-                syncNarrationText();
-                syncPlaybackHint();
-                stopSpeaking("Đã cập nhật ngôn ngữ. Bấm nghe lại để áp dụng.");
-            });
-
-            playbackModeSelect?.addEventListener("change", () => {
-                persistSelections();
-                syncPlaybackHint();
-                stopSpeaking("Đã cập nhật chế độ nghe. Bấm nghe lại để áp dụng.");
-            });
-
-            openAppBtn?.addEventListener("click", openApp);
-            speakBtn?.addEventListener("click", playOnWeb);
-            stopBtn?.addEventListener("click", () => stopSpeaking("Đã dừng phát thuyết minh."));
-
-            window.addEventListener("beforeunload", () => {
-                narrationPlayer?.stop();
-                void finalizeListeningSession(false);
-                void disconnectHeartbeat(true);
-            });
-
-            window.addEventListener("pagehide", () => {
-                narrationPlayer?.stop();
-                void finalizeListeningSession(false);
-                void disconnectHeartbeat(true);
-            });
-
-            restoreSelections();
-            syncNarrationText();
-            syncPlaybackHint();
-            startHeartbeat();
-
-            if (autoOpenApp) {
-                window.setTimeout(openApp, 400);
-            } else {
-                window.setTimeout(playOnWeb, 600);
-            }
         })();
     </script>
 </body>

@@ -15,7 +15,7 @@
       "oc",
       "cua"
     ],
-    "NarrationText": "B?n ?ang ? g?n qu?n Ốc Oanh. Ốc Oanh là một trong những quán ốc nổi tiếng nhất trên phố ẩm thực Vĩnh Khánh, đông khách từ chiều đến tối. M?n n?n th?: Ốc hương xào bơ tỏi, ốc len xào dừa, sò điệp nướng mỡ hành.",
+    "NarrationText": "Bạn đang đến gần quán Ốc Oanh — một trong những quán ốc nổi tiếng nhất trên phố ẩm thực Vĩnh Khánh, luôn nhộn nhịp từ chiều đến tối. Đừng bỏ lỡ ốc hương xào bơ tỏi, ốc len xào dừa và sò điệp nướng mỡ hành thơm lừng, hấp dẫn.",
     "MapLink": "https://maps.google.com/?q=10.7607247,106.7007223",
     "AudioAssetPath": "",
     "OwnerUserCode": "",
@@ -29,10 +29,10 @@
     "IsActive": true,
     "IsDeleted": false,
     "CreatedAtUtc": "2026-04-27T02:04:38.7430166Z",
-    "UpdatedAtUtc": "2026-04-27T02:45:19.9589694Z",
+    "UpdatedAtUtc": "2026-04-27T04:16:49.5727107Z",
     "DeletedAtUtc": null,
     "NarrationTranslations": {
-      "vi": "B?n ?ang ? g?n qu?n Ốc Oanh. Ốc Oanh là một trong những quán ốc nổi tiếng nhất trên phố ẩm thực Vĩnh Khánh, đông khách từ chiều đến tối. M?n n?n th?: Ốc hương xào bơ tỏi, ốc len xào dừa, sò điệp nướng mỡ hành.",
+      "vi": "Bạn đang đến gần quán Ốc Oanh — một trong những quán ốc nổi tiếng nhất trên phố ẩm thực Vĩnh Khánh, luôn nhộn nhịp từ chiều đến tối. Đừng bỏ lỡ ốc hương xào bơ tỏi, ốc len xào dừa và sò điệp nướng mỡ hành thơm lừng, hấp dẫn.",
       "en": "You are near Oc Oanh, one of the most popular seafood spots on Vinh Khanh Food Street.",
       "zh": "您正在靠近 Ốc Oanh。地址：534 Vĩnh Khánh, P. Khánh Hội, Q.4。推荐菜品：Ốc hương xào bơ tỏi, ốc len xào dừa, sò điệp nướng mỡ hành。",
       "ko": "지금 Ốc Oanh 근처에 있습니다. 주소는 534 Vĩnh Khánh, P. Khánh Hội, Q.4이며 추천 메뉴는 Ốc hương xào bơ tỏi, ốc len xào dừa, sò điệp nướng mỡ hành 입니다.",
@@ -54,7 +54,7 @@
     "FeaturedCategories": [
       "oc"
     ],
-    "NarrationText": "B?n ?ang ? g?n qu?n Ốc Thảo. Ốc Thảo phát triển từ xe ốc nhỏ thành địa chỉ hải sản bình dân quen thuộc với thực khách quận 4. M?n n?n th?: Ốc móng tay xào rau muống, nghêu hấp sả, hàu nướng phô mai.",
+    "NarrationText": "Bạn đang ở gần quán Ốc Thảo. Quán nổi tiếng với hải sản tươi, giá hợp lý và các món như ốc móng tay xào rau muống, nghêu hấp sả, hàu nướng phô mai.",
     "MapLink": "https://maps.google.com/?q=10.7616799,106.7023636",
     "AudioAssetPath": "",
     "OwnerUserCode": "",
@@ -71,7 +71,7 @@
     "UpdatedAtUtc": "2026-04-27T02:04:38.7490572Z",
     "DeletedAtUtc": null,
     "NarrationTranslations": {
-      "vi": "B?n ?ang ? g?n qu?n Ốc Thảo. Ốc Thảo phát triển từ xe ốc nhỏ thành địa chỉ hải sản bình dân quen thuộc với thực khách quận 4. M?n n?n th?: Ốc móng tay xào rau muống, nghêu hấp sả, hàu nướng phô mai.",
+      "vi": "Bạn đang ở gần quán Ốc Thảo. Quán nổi tiếng với hải sản tươi, giá hợp lý và các món như ốc móng tay xào rau muống, nghêu hấp sả, hàu nướng phô mai.",
       "en": "You are near Ốc Thảo. Address: 383 Vĩnh Khánh, P. Khánh Hội, Q.4. Signature dishes: Ốc móng tay xào rau muống, nghêu hấp sả, hàu nướng phô mai.",
       "zh": "您正在靠近 Ốc Thảo。地址：383 Vĩnh Khánh, P. Khánh Hội, Q.4。推荐菜品：Ốc móng tay xào rau muống, nghêu hấp sả, hàu nướng phô mai。",
       "ko": "지금 Ốc Thảo 근처에 있습니다. 주소는 383 Vĩnh Khánh, P. Khánh Hội, Q.4이며 추천 메뉴는 Ốc móng tay xào rau muống, nghêu hấp sả, hàu nướng phô mai 입니다.",
@@ -93,7 +93,7 @@
     "FeaturedCategories": [
       "oc"
     ],
-    "NarrationText": "B?n ?ang ? g?n qu?n Ốc Vũ. Ốc Vũ là quán ăn đêm lâu năm, đông khách đến khuya và mang không khí sôi động đặc trưng của phố ẩm thực quận 4. M?n n?n th?: Ốc cà na rang muối, ốc mỡ xào me, sò huyết rang me.",
+    "NarrationText": "Bạn đang ở gần quán Ốc Vũ. Đây là điểm ăn khuya quen thuộc trên phố Vĩnh Khánh với các món nổi bật như ốc cà na rang muối, ốc mỡ xào me và sò huyết rang me.",
     "MapLink": "https://maps.google.com/?q=10.7614025,106.7027047",
     "AudioAssetPath": "",
     "OwnerUserCode": "",
@@ -110,7 +110,7 @@
     "UpdatedAtUtc": "2026-04-27T02:04:38.7494288Z",
     "DeletedAtUtc": null,
     "NarrationTranslations": {
-      "vi": "B?n ?ang ? g?n qu?n Ốc Vũ. Ốc Vũ là quán ăn đêm lâu năm, đông khách đến khuya và mang không khí sôi động đặc trưng của phố ẩm thực quận 4. M?n n?n th?: Ốc cà na rang muối, ốc mỡ xào me, sò huyết rang me.",
+      "vi": "Bạn đang ở gần quán Ốc Vũ. Đây là điểm ăn khuya quen thuộc trên phố Vĩnh Khánh với các món nổi bật như ốc cà na rang muối, ốc mỡ xào me và sò huyết rang me.",
       "en": "You are near Ốc Vũ. Address: 37 Vĩnh Khánh, P. Khánh Hội, Q.4. Signature dishes: Ốc cà na rang muối, ốc mỡ xào me, sò huyết rang me.",
       "zh": "您正在靠近 Ốc Vũ。地址：37 Vĩnh Khánh, P. Khánh Hội, Q.4。推荐菜品：Ốc cà na rang muối, ốc mỡ xào me, sò huyết rang me。",
       "ko": "지금 Ốc Vũ 근처에 있습니다. 주소는 37 Vĩnh Khánh, P. Khánh Hội, Q.4이며 추천 메뉴는 Ốc cà na rang muối, ốc mỡ xào me, sò huyết rang me 입니다.",
@@ -133,7 +133,7 @@
       "oc",
       "cua"
     ],
-    "NarrationText": "B?n ?ang ? g?n qu?n Ốc Sáu Nở. Ốc Sáu Nở được nhiều thực khách nhớ đến nhờ nước chấm đậm vị và các món hải sản đầy đặn, dễ ăn. M?n n?n th?: Cua rang me, sò điệp nướng phô mai, ốc hương xào bơ.",
+    "NarrationText": "Bạn đang ở gần quán Ốc Sáu Nở. Quán nổi tiếng với nước chấm đậm đà cùng các món như cua rang me, sò điệp nướng phô mai và ốc hương xào bơ.",
     "MapLink": "https://maps.google.com/?q=10.7609643,106.702942",
     "AudioAssetPath": "",
     "OwnerUserCode": "",
@@ -150,7 +150,7 @@
     "UpdatedAtUtc": "2026-04-27T02:04:38.7494415Z",
     "DeletedAtUtc": null,
     "NarrationTranslations": {
-      "vi": "B?n ?ang ? g?n qu?n Ốc Sáu Nở. Ốc Sáu Nở được nhiều thực khách nhớ đến nhờ nước chấm đậm vị và các món hải sản đầy đặn, dễ ăn. M?n n?n th?: Cua rang me, sò điệp nướng phô mai, ốc hương xào bơ.",
+      "vi": "Bạn đang ở gần quán Ốc Sáu Nở. Quán nổi tiếng với nước chấm đậm đà cùng các món như cua rang me, sò điệp nướng phô mai và ốc hương xào bơ.",
       "en": "You are near Ốc Sáu Nở. Address: 128 Vĩnh Khánh, P. Khánh Hội, Q.4. Signature dishes: Cua rang me, sò điệp nướng phô mai, ốc hương xào bơ.",
       "zh": "您正在靠近 Ốc Sáu Nở。地址：128 Vĩnh Khánh, P. Khánh Hội, Q.4。推荐菜品：Cua rang me, sò điệp nướng phô mai, ốc hương xào bơ。",
       "ko": "지금 Ốc Sáu Nở 근처에 있습니다. 주소는 128 Vĩnh Khánh, P. Khánh Hội, Q.4이며 추천 메뉴는 Cua rang me, sò điệp nướng phô mai, ốc hương xào bơ 입니다.",
@@ -172,7 +172,7 @@
     "FeaturedCategories": [
       "oc"
     ],
-    "NarrationText": "B?n ?ang ? g?n qu?n Bé Ốc. Bé Ốc là quán vỉa hè bình dân, phù hợp cho nhóm bạn thích không khí đường phố Sài Gòn và các món ốc giá mềm. M?n n?n th?: Ốc mỡ xào bơ tỏi, ốc len xào dừa, sò lông nướng.",
+    "NarrationText": "Bạn đang ở gần quán Bé Ốc. Đây là quán bình dân được nhiều bạn trẻ yêu thích với ốc mỡ xào bơ tỏi, ốc len xào dừa và sò lông nướng.",
     "MapLink": "https://maps.google.com/?q=10.7633886,106.7020606",
     "AudioAssetPath": "",
     "OwnerUserCode": "",
@@ -189,7 +189,7 @@
     "UpdatedAtUtc": "2026-04-27T02:04:38.7494581Z",
     "DeletedAtUtc": null,
     "NarrationTranslations": {
-      "vi": "B?n ?ang ? g?n qu?n Bé Ốc. Bé Ốc là quán vỉa hè bình dân, phù hợp cho nhóm bạn thích không khí đường phố Sài Gòn và các món ốc giá mềm. M?n n?n th?: Ốc mỡ xào bơ tỏi, ốc len xào dừa, sò lông nướng.",
+      "vi": "Bạn đang ở gần quán Bé Ốc. Đây là quán bình dân được nhiều bạn trẻ yêu thích với ốc mỡ xào bơ tỏi, ốc len xào dừa và sò lông nướng.",
       "en": "You are near Bé Ốc. Address: 58/44 Vĩnh Khánh, P. Khánh Hội, Q.4. Signature dishes: Ốc mỡ xào bơ tỏi, ốc len xào dừa, sò lông nướng.",
       "zh": "您正在靠近 Bé Ốc。地址：58/44 Vĩnh Khánh, P. Khánh Hội, Q.4。推荐菜品：Ốc mỡ xào bơ tỏi, ốc len xào dừa, sò lông nướng。",
       "ko": "지금 Bé Ốc 근처에 있습니다. 주소는 58/44 Vĩnh Khánh, P. Khánh Hội, Q.4이며 추천 메뉴는 Ốc mỡ xào bơ tỏi, ốc len xào dừa, sò lông nướng 입니다.",
@@ -211,7 +211,7 @@
     "FeaturedCategories": [
       "oc"
     ],
-    "NarrationText": "B?n ?ang ? g?n qu?n Ốc Ty. Ốc Ty có thực đơn đa dạng, không khí trẻ trung và là một điểm hẹn nhộn nhịp của khu phố ẩm thực về đêm. M?n n?n th?: Ốc móng tay xào bơ tỏi, ốc hương rang muối, hàu nướng.",
+    "NarrationText": "Bạn đang ở gần quán Ốc Ty. Quán có không khí trẻ trung và nhiều món hấp dẫn như ốc móng tay xào bơ tỏi, ốc hương rang muối và hàu nướng.",
     "MapLink": "https://maps.google.com/?q=10.76195,106.70315",
     "AudioAssetPath": "",
     "OwnerUserCode": "",
@@ -228,7 +228,7 @@
     "UpdatedAtUtc": "2026-04-27T02:04:38.7494637Z",
     "DeletedAtUtc": null,
     "NarrationTranslations": {
-      "vi": "B?n ?ang ? g?n qu?n Ốc Ty. Ốc Ty có thực đơn đa dạng, không khí trẻ trung và là một điểm hẹn nhộn nhịp của khu phố ẩm thực về đêm. M?n n?n th?: Ốc móng tay xào bơ tỏi, ốc hương rang muối, hàu nướng.",
+      "vi": "Bạn đang ở gần quán Ốc Ty. Quán có không khí trẻ trung và nhiều món hấp dẫn như ốc móng tay xào bơ tỏi, ốc hương rang muối và hàu nướng.",
       "en": "You are near Ốc Ty. Address: 12 Vĩnh Khánh, P. Khánh Hội, Q.4. Signature dishes: Ốc móng tay xào bơ tỏi, ốc hương rang muối, hàu nướng.",
       "zh": "您正在靠近 Ốc Ty。地址：12 Vĩnh Khánh, P. Khánh Hội, Q.4。推荐菜品：Ốc móng tay xào bơ tỏi, ốc hương rang muối, hàu nướng。",
       "ko": "지금 Ốc Ty 근처에 있습니다. 주소는 12 Vĩnh Khánh, P. Khánh Hội, Q.4이며 추천 메뉴는 Ốc móng tay xào bơ tỏi, ốc hương rang muối, hàu nướng 입니다.",
@@ -251,7 +251,7 @@
       "oc",
       "cua"
     ],
-    "NarrationText": "B?n ?ang ? g?n qu?n Ốc Hoa Kiều. Ốc Hoa Kiều được nhiều người chọn nhờ giá khá rẻ, menu phong phú và phù hợp với nhóm bạn trẻ hoặc sinh viên. M?n n?n th?: Cua Cà Mau rang me, sò điệp nướng mỡ hành, nghêu hấp Thái.",
+    "NarrationText": "Bạn đang ở gần quán Ốc Hoa Kiều. Quán nổi bật bởi giá dễ tiếp cận, thực đơn phong phú và các món như cua Cà Mau rang me, sò điệp nướng mỡ hành, nghêu hấp Thái.",
     "MapLink": "https://maps.google.com/?q=10.7608829,106.7007709",
     "AudioAssetPath": "",
     "OwnerUserCode": "",
@@ -268,7 +268,7 @@
     "UpdatedAtUtc": "2026-04-27T02:04:38.7494668Z",
     "DeletedAtUtc": null,
     "NarrationTranslations": {
-      "vi": "B?n ?ang ? g?n qu?n Ốc Hoa Kiều. Ốc Hoa Kiều được nhiều người chọn nhờ giá khá rẻ, menu phong phú và phù hợp với nhóm bạn trẻ hoặc sinh viên. M?n n?n th?: Cua Cà Mau rang me, sò điệp nướng mỡ hành, nghêu hấp Thái.",
+      "vi": "Bạn đang ở gần quán Ốc Hoa Kiều. Quán nổi bật bởi giá dễ tiếp cận, thực đơn phong phú và các món như cua Cà Mau rang me, sò điệp nướng mỡ hành, nghêu hấp Thái.",
       "en": "You are near Ốc Hoa Kiều. Address: 598 Vĩnh Khánh, P. Khánh Hội, Q.4. Signature dishes: Cua Cà Mau rang me, sò điệp nướng mỡ hành, nghêu hấp Thái.",
       "zh": "您正在靠近 Ốc Hoa Kiều。地址：598 Vĩnh Khánh, P. Khánh Hội, Q.4。推荐菜品：Cua Cà Mau rang me, sò điệp nướng mỡ hành, nghêu hấp Thái。",
       "ko": "지금 Ốc Hoa Kiều 근처에 있습니다. 주소는 598 Vĩnh Khánh, P. Khánh Hội, Q.4이며 추천 메뉴는 Cua Cà Mau rang me, sò điệp nướng mỡ hành, nghêu hấp Thái 입니다.",
@@ -291,7 +291,7 @@
       "lau",
       "cua"
     ],
-    "NarrationText": "B?n ?ang ? g?n qu?n Ớt Xiêm Quán. Ớt Xiêm Quán là điểm đổi vị quen thuộc với lẩu và nướng, phù hợp cho những buổi tụ họp đông vui cùng bạn bè. M?n n?n th?: Lẩu hải sản, bạch tuộc nướng, tôm nướng muối ớt.",
+    "NarrationText": "Bạn đang ở gần Ớt Xiêm Quán. Đây là địa điểm phù hợp nếu bạn muốn đổi vị với lẩu hải sản, bạch tuộc nướng và tôm nướng muối ớt.",
     "MapLink": "https://maps.google.com/?q=10.7611663,106.7057009",
     "AudioAssetPath": "",
     "OwnerUserCode": "",
@@ -308,7 +308,7 @@
     "UpdatedAtUtc": "2026-04-27T02:04:38.7494695Z",
     "DeletedAtUtc": null,
     "NarrationTranslations": {
-      "vi": "B?n ?ang ? g?n qu?n Ớt Xiêm Quán. Ớt Xiêm Quán là điểm đổi vị quen thuộc với lẩu và nướng, phù hợp cho những buổi tụ họp đông vui cùng bạn bè. M?n n?n th?: Lẩu hải sản, bạch tuộc nướng, tôm nướng muối ớt.",
+      "vi": "Bạn đang ở gần Ớt Xiêm Quán. Đây là địa điểm phù hợp nếu bạn muốn đổi vị với lẩu hải sản, bạch tuộc nướng và tôm nướng muối ớt.",
       "en": "You are near Ớt Xiêm Quán. Address: 568 Vĩnh Khánh, P. Khánh Hội, Q.4. Signature dishes: Lẩu hải sản, bạch tuộc nướng, tôm nướng muối ớt.",
       "zh": "您正在靠近 Ớt Xiêm Quán。地址：568 Vĩnh Khánh, P. Khánh Hội, Q.4。推荐菜品：Lẩu hải sản, bạch tuộc nướng, tôm nướng muối ớt。",
       "ko": "지금 Ớt Xiêm Quán 근처에 있습니다. 주소는 568 Vĩnh Khánh, P. Khánh Hội, Q.4이며 추천 메뉴는 Lẩu hải sản, bạch tuộc nướng, tôm nướng muối ớt 입니다.",
@@ -331,7 +331,7 @@
       "lau",
       "bo"
     ],
-    "NarrationText": "B?n ?ang ? g?n qu?n Chilli - Lẩu nướng. Chilli - Lẩu nướng nổi bật với vị cay kiểu Thái, không khí trẻ trung và rất hợp cho các bữa ăn theo nhóm. M?n n?n th?: Lẩu kim chi hải sản, bạch tuộc nướng, tôm sốt cay.",
+    "NarrationText": "Bạn đang ở gần quán Chilli - Lẩu nướng. Quán có phong cách cay đậm, phù hợp nếu bạn muốn đổi nhịp sang lẩu và nướng ở cuối hành trình.",
     "MapLink": "https://maps.google.com/?q=10.760693,106.7036324",
     "AudioAssetPath": "",
     "OwnerUserCode": "",
@@ -348,7 +348,7 @@
     "UpdatedAtUtc": "2026-04-27T02:04:38.7494742Z",
     "DeletedAtUtc": null,
     "NarrationTranslations": {
-      "vi": "B?n ?ang ? g?n qu?n Chilli - Lẩu nướng. Chilli - Lẩu nướng nổi bật với vị cay kiểu Thái, không khí trẻ trung và rất hợp cho các bữa ăn theo nhóm. M?n n?n th?: Lẩu kim chi hải sản, bạch tuộc nướng, tôm sốt cay.",
+      "vi": "Bạn đang ở gần quán Chilli - Lẩu nướng. Quán có phong cách cay đậm, phù hợp nếu bạn muốn đổi nhịp sang lẩu và nướng ở cuối hành trình.",
       "en": "You are near Chilli - Lẩu nướng. Address: 232 Vĩnh Khánh, P. Khánh Hội, Q.4. Signature dishes: Lẩu kim chi hải sản, bạch tuộc nướng, tôm sốt cay.",
       "zh": "您正在靠近 Chilli - Lẩu nướng。地址：232 Vĩnh Khánh, P. Khánh Hội, Q.4。推荐菜品：Lẩu kim chi hải sản, bạch tuộc nướng, tôm sốt cay。",
       "ko": "지금 Chilli - Lẩu nướng 근처에 있습니다. 주소는 232 Vĩnh Khánh, P. Khánh Hội, Q.4이며 추천 메뉴는 Lẩu kim chi hải sản, bạch tuộc nướng, tôm sốt cay 입니다.",
@@ -358,20 +358,20 @@
   {
     "Id": "11111111-1111-1111-1111-111111111110",
     "Code": "VK-FOOD-10",
-    "Name": "Th? Gi?i B? - N??ng & L?u",
+    "Name": "Thế Giới Bò - Nướng & Lẩu",
     "Category": "Ẩm thực",
     "ImageSource": "thegioibo.png",
-    "Address": "6 V?nh Kh?nh, P. Kh?nh H?i, Q.4",
-    "Description": "Th? Gi?i B? l? l?a ch?n th? v? khi mu?n ??i t? h?i s?n sang c?c m?n b? n??ng, l?u b? v? ?? nh?m bu?i t?i.",
-    "SpecialDish": "S??n b? n??ng, b? cu?n n?m, l?u b?",
+    "Address": "6 Vĩnh Khánh, P. Khánh Hội, Q.4",
+    "Description": "Thế Giới Bò là lựa chọn thú vị khi muốn đổi từ hải sản sang các món bò nướng, lẩu bò và đồ nhắm buổi tối.",
+    "SpecialDish": "Sườn bò nướng, bò cuộn nấm, lẩu bò",
     "PriceRange": "189.000d - 490.000d",
     "OpeningHours": "15:30 - 23:00",
-    "FirstDishSuggestion": "S??n b? n??ng",
+    "FirstDishSuggestion": "Sườn bò nướng",
     "FeaturedCategories": [
       "bo",
       "lau"
     ],
-    "vi": "Bạn đang ở gần quán Thế Giới Bò - Nướng và Lẩu. Đây là điểm đổi vị hấp dẫn với sườn bò nướng, bò cuộn nấm và lẩu bò.",
+    "NarrationText": "Bạn đang ở gần quán Thế Giới Bò - Nướng và Lẩu. Đây là điểm đổi vị hấp dẫn với sườn bò nướng, bò cuộn nấm và lẩu bò.",
     "MapLink": "https://maps.google.com/?q=10.7640355,106.7012784",
     "AudioAssetPath": "",
     "OwnerUserCode": "",
@@ -388,12 +388,11 @@
     "UpdatedAtUtc": "2026-04-27T02:04:38.7494766Z",
     "DeletedAtUtc": null,
     "NarrationTranslations": {
-      "vi": "B?n ?ang ? g?n qu?n Th? Gi?i B? - N??ng & L?u. Th? Gi?i B? l? l?a ch?n th? v? khi mu?n ??i t? h?i s?n sang c?c m?n b? n??ng, l?u b? v? ?? nh?m bu?i t?i. M?n n?n th?: S??n b? n??ng, b? cu?n n?m, l?u b?.",
-      "en": "You are near Th? Gi?i B? - N??ng & L?u. Address: 6 V?nh Kh?nh, P. Kh?nh H?i, Q.4. Signature dishes: S??n b? n??ng, b? cu?n n?m, l?u b?.",
-      "zh": "????? Th? Gi?i B? - N??ng & L?u????6 V?nh Kh?nh, P. Kh?nh H?i, Q.4??????S??n b? n??ng, b? cu?n n?m, l?u b??",
-      "ko": "?? Th? Gi?i B? - N??ng & L?u ??? ????. ??? 6 V?nh Kh?nh, P. Kh?nh H?i, Q.4?? ?? ??? S??n b? n??ng, b? cu?n n?m, l?u b? ???.",
-      "fr": "Vous ?tes pr?s de Th? Gi?i B? - N??ng & L?u. Adresse : 6 V?nh Kh?nh, P. Kh?nh H?i, Q.4. Sp?cialit?s : S??n b? n??ng, b? cu?n n?m, l?u b?."
-    },
-    "NarrationText": "B?n ?ang ? g?n qu?n Th? Gi?i B? - N??ng & L?u. Th? Gi?i B? l? l?a ch?n th? v? khi mu?n ??i t? h?i s?n sang c?c m?n b? n??ng, l?u b? v? ?? nh?m bu?i t?i. M?n n?n th?: S??n b? n??ng, b? cu?n n?m, l?u b?."
+      "vi": "Bạn đang ở gần quán Thế Giới Bò - Nướng và Lẩu. Đây là điểm đổi vị hấp dẫn với sườn bò nướng, bò cuộn nấm và lẩu bò.",
+      "en": "You are near Thế Giới Bò - Nướng & Lẩu. Address: 6 Vĩnh Khánh, P. Khánh Hội, Q.4. Signature dishes: Sườn bò nướng, bò cuộn nấm, lẩu bò.",
+      "zh": "????? Thế Giới Bò - Nướng & Lẩu???:6 Vĩnh Khánh, P. Khánh Hội, Q.4?????:Sườn bò nướng, bò cuộn nấm, lẩu bò?",
+      "ko": "지금 Thế Giới Bò - Nướng & Lẩu 근처에 있습니다. 주소는 6 Vĩnh Khánh, P. Khánh Hội, Q.4이며 추천 메뉴는 Sườn bò nướng, bò cuộn nấm, lẩu bò 입니다.",
+      "fr": "Vous êtes près de Thế Giới Bò - Nướng & Lẩu. Adresse : 6 Vĩnh Khánh, P. Khánh Hội, Q.4. Spécialités : Sườn bò nướng, bò cuộn nấm, lẩu bò."
+    }
   }
 ]
