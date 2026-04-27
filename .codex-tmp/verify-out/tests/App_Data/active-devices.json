@@ -1,0 +1,21 @@
+[
+  {
+    "DeviceId": "android-4b364d9efeabceb6",
+    "ClientInstanceId": "19dcf1b02b4-f7edff61ee434d02b0239ec636d474da",
+    "SessionKey": "android-4b364d9efeabceb6:19dcf1b02b4-f7edff61ee434d02b0239ec636d474da",
+    "UserCode": "guest",
+    "UserDisplayName": "Khách tham quan",
+    "UserEmail": "",
+    "DevicePlatform": "Android",
+    "DeviceModel": "Google sdk_gphone64_x86_64",
+    "AppVersion": "1.0.0",
+    "ConnectedAtUtc": "2026-04-27T13:22:27.7938128+00:00",
+    "LastSeenAtUtc": "2026-04-27T14:00:01.5892332+00:00",
+    "SecondsSinceLastSeen": 0,
+    "IsActive": true,
+    "Latitude": null,
+    "Longitude": null,
+    "AccuracyMeters": null,
+    "LocationTimestampUtc": null
+  }
+]

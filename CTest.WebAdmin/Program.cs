@@ -34,6 +34,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<WebAdminAuthOptions>(builder.Configuration.GetSection("WebAdminAuth"));
+builder.Services.AddSingleton<IWebAdminAccountStore, WebAdminAccountStore>();
 builder.Services.AddSingleton<IWebAdminAuthService, WebAdminAuthService>();
 builder.Services.AddScoped<IWebAdminCurrentUser, WebAdminCurrentUser>();
 builder.Services.AddSingleton<WebDisplayClock>();
@@ -43,6 +44,11 @@ builder.Services.AddHttpClient<TourApiClient>(ConfigureSharedApiClient);
 builder.Services.AddHttpClient<AudioGuideApiClient>(ConfigureSharedApiClient);
 builder.Services.AddHttpClient<ListeningHistoryApiClient>(ConfigureSharedApiClient);
 builder.Services.AddHttpClient<ActiveDeviceApiClient>(ConfigureSharedApiClient);
+builder.Services.AddHttpClient<UserManagementApiClient>(ConfigureSharedApiClient);
+builder.Services.AddHttpClient("PublicApiProxy", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<AudioGuideAdminService>();
 builder.Services.AddScoped<AudioGuideValidationService>();

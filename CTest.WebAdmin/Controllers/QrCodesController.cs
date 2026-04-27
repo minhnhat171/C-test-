@@ -598,6 +598,12 @@ public class QrCodesController : Controller
 
     private string ResolveMobileApiBaseUrl()
     {
+        var configuredMobileApiBase = _qrCodeOptions.MobileApiBaseUrl?.Trim();
+        if (TryNormalizePublicHttpBaseUrl(configuredMobileApiBase, out var normalizedMobileApiBase))
+        {
+            return normalizedMobileApiBase;
+        }
+
         var apiBase = _poiApiBaseUri;
         var requestHost = Request.Host.Host;
 
@@ -614,6 +620,22 @@ public class QrCodesController : Controller
         }
 
         return apiBase.ToString();
+    }
+
+    private static bool TryNormalizePublicHttpBaseUrl(string? baseUrl, out string normalizedBaseUrl)
+    {
+        normalizedBaseUrl = string.Empty;
+        if (string.IsNullOrWhiteSpace(baseUrl) ||
+            !Uri.TryCreate(baseUrl.Trim(), UriKind.Absolute, out var uri) ||
+            !string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
+            IsLocalHost(uri.Host))
+        {
+            return false;
+        }
+
+        normalizedBaseUrl = EnsureTrailingSlash(uri.ToString());
+        return true;
     }
 
     private static bool IsLocalHost(string host)

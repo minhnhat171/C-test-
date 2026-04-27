@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "LqLVFvdptY8=",
+  "success": true,
+  "projectFilePath": "C:\\xampp\\htdocs\\C-test--main\\C-test-\\CTest.WebAdmin\\CTest.WebAdmin.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Admin\\.nuget\\packages\\qrcoder\\1.6.0\\qrcoder.1.6.0.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,6 @@
+C:\xampp\htdocs\C-test--main\C-test-\.codex-tmp\obj-new\api\Debug\net8.0\VinhKhanhGuide.Core.csproj.AssemblyReference.cache
+C:\xampp\htdocs\C-test--main\C-test-\.codex-tmp\obj-new\api\Debug\net8.0\VinhKhanhGuide.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\xampp\htdocs\C-test--main\C-test-\.codex-tmp\obj-new\api\Debug\net8.0\VinhKhanhGuide.Core.AssemblyInfoInputs.cache
+C:\xampp\htdocs\C-test--main\C-test-\.codex-tmp\obj-new\api\Debug\net8.0\VinhKhanhGuide.Core.AssemblyInfo.cs
+C:\xampp\htdocs\C-test--main\C-test-\.codex-tmp\obj-new\api\Debug\net8.0\VinhKhanhGuide.Core.csproj.CoreCompileInputs.cache
+C:\xampp\htdocs\C-test--main\C-test-\.codex-tmp\obj-new\api\Debug\net8.0\VinhKhanhGuide.Core.sourcelink.json

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0-android</TargetFrameworks>
     <ApiBaseUrl Condition="'$(ApiBaseUrl)' == '' and '$(Configuration)' == 'Debug'">http://10.0.2.2:5287/</ApiBaseUrl>
-    <ApiBaseUrl Condition="'$(ApiBaseUrl)' == '' and '$(Configuration)' == 'Release'">https://api.vinhkhanhguide.example/</ApiBaseUrl>
+    <ApiBaseUrl Condition="'$(ApiBaseUrl)' == '' and '$(Configuration)' == 'Release'">https://jaywalker-eaten-squishier.ngrok-free.dev/</ApiBaseUrl>
 
     <OutputType>Exe</OutputType>
     <RootNamespace>VinhKhanhGuide.App</RootNamespace>

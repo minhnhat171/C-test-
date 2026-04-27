@@ -1,6 +1,3 @@
-#if ANDROID
-using Android.Provider;
-#endif
 using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
@@ -14,7 +11,8 @@ namespace VinhKhanhGuide.App.Services;
 
 public class ActiveDeviceTracker : IActiveDeviceTracker
 {
-    private const string DeviceIdPreferenceKey = "vinhkhanh.active_device.id.v1";
+    private const string LegacyDeviceIdPreferenceKey = "vinhkhanh.active_device.id.v1";
+    private const string DeviceIdPreferenceKey = "vinhkhanh.active_device.installation-id.v2";
     private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(8);
     private static readonly TimeSpan MaxCachedLocationAge = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan LocationRefreshInterval = TimeSpan.FromSeconds(20);
@@ -242,39 +240,29 @@ public class ActiveDeviceTracker : IActiveDeviceTracker
     private static string GetOrCreateDeviceId()
     {
         var storedDeviceId = Preferences.Default.Get(DeviceIdPreferenceKey, string.Empty);
-
-#if ANDROID
-        try
+        if (IsReusableInstallDeviceId(storedDeviceId))
         {
-            var androidId = Settings.Secure.GetString(
-                Android.App.Application.Context.ContentResolver,
-                Settings.Secure.AndroidId);
-
-            if (!string.IsNullOrWhiteSpace(androidId))
-            {
-                var normalizedAndroidId = $"android-{androidId.Trim().ToLowerInvariant()}";
-                if (!string.Equals(storedDeviceId, normalizedAndroidId, StringComparison.Ordinal))
-                {
-                    Preferences.Default.Set(DeviceIdPreferenceKey, normalizedAndroidId);
-                }
-
-                return normalizedAndroidId;
-            }
-        }
-        catch
-        {
-            // Fall back to the cached install identifier below.
-        }
-#endif
-
-        if (!string.IsNullOrWhiteSpace(storedDeviceId))
-        {
-            return storedDeviceId;
+            return storedDeviceId.Trim().ToLowerInvariant();
         }
 
-        var generatedDeviceId = Guid.NewGuid().ToString("N");
+        var legacyDeviceId = Preferences.Default.Get(LegacyDeviceIdPreferenceKey, string.Empty);
+        if (IsReusableInstallDeviceId(legacyDeviceId))
+        {
+            var normalizedLegacyDeviceId = legacyDeviceId.Trim().ToLowerInvariant();
+            Preferences.Default.Set(DeviceIdPreferenceKey, normalizedLegacyDeviceId);
+            return normalizedLegacyDeviceId;
+        }
+
+        var generatedDeviceId = $"install-{Guid.NewGuid():N}";
         Preferences.Default.Set(DeviceIdPreferenceKey, generatedDeviceId);
         return generatedDeviceId;
+    }
+
+    private static bool IsReusableInstallDeviceId(string? deviceId)
+    {
+        var normalized = deviceId?.Trim();
+        return !string.IsNullOrWhiteSpace(normalized) &&
+               !normalized.StartsWith("android-", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<LocationDto?> GetLocationSnapshotAsync(CancellationToken cancellationToken)

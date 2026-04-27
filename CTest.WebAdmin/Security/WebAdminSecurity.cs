@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
 using VinhKhanhGuide.Core.Contracts;
 
 namespace CTest.WebAdmin.Security;
@@ -57,11 +56,11 @@ public interface IWebAdminAuthService
 
 public sealed class WebAdminAuthService : IWebAdminAuthService
 {
-    private readonly WebAdminAuthOptions _options;
+    private readonly IWebAdminAccountStore _accountStore;
 
-    public WebAdminAuthService(IOptions<WebAdminAuthOptions> options)
+    public WebAdminAuthService(IWebAdminAccountStore accountStore)
     {
-        _options = options.Value;
+        _accountStore = accountStore;
     }
 
     public WebAdminAuthenticatedUser? ValidateCredentials(string? username, string? password)
@@ -72,7 +71,7 @@ public sealed class WebAdminAuthService : IWebAdminAuthService
             return null;
         }
 
-        var users = GetConfiguredUsers();
+        var users = _accountStore.GetAll();
         var matchedUser = users.FirstOrDefault(user =>
             string.Equals(NormalizeLookup(user.Username), normalizedUsername, StringComparison.OrdinalIgnoreCase));
 
@@ -96,34 +95,6 @@ public sealed class WebAdminAuthService : IWebAdminAuthService
             OwnerCode = ownerCode,
             OwnerEmail = matchedUser.OwnerEmail?.Trim().ToLowerInvariant() ?? string.Empty
         };
-    }
-
-    private IReadOnlyList<WebAdminAuthUserOptions> GetConfiguredUsers()
-    {
-        if (_options.Users.Count > 0)
-        {
-            return _options.Users;
-        }
-
-        return
-        [
-            new WebAdminAuthUserOptions
-            {
-                Username = "user",
-                PasswordHash = WebAdminPasswordHasher.HashPassword("12345678"),
-                DisplayName = "Admin",
-                Role = WebAdminRoles.Admin
-            },
-            new WebAdminAuthUserOptions
-            {
-                Username = "owner",
-                PasswordHash = WebAdminPasswordHasher.HashPassword("12345678"),
-                DisplayName = "Chủ nhà hàng",
-                Role = WebAdminRoles.PoiOwner,
-                OwnerCode = "owner",
-                OwnerEmail = "owner@local.vinhkhanh"
-            }
-        ];
     }
 
     private static string NormalizeRole(string? role)
