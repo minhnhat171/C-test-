@@ -21,6 +21,12 @@ internal static class AppDataPathResolver
                 return currentDirectory.FullName;
             }
 
+            var siblingProjectFilePath = Path.Combine(currentDirectory.FullName, "VKFoodAPI", "VKFoodAPI.csproj");
+            if (File.Exists(siblingProjectFilePath))
+            {
+                return Path.GetDirectoryName(siblingProjectFilePath);
+            }
+
             currentDirectory = currentDirectory.Parent;
         }
 

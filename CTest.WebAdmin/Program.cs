@@ -1,9 +1,12 @@
 using CTest.WebAdmin.Models;
 using CTest.WebAdmin.Security;
 using CTest.WebAdmin.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 using VinhKhanhGuide.Core.Configuration;
+using VKFoodAPI.Security;
+using VKFoodAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var poiApiBaseUrl = builder.Configuration["PoiApi:BaseUrl"];
@@ -21,7 +24,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.Name = "CTest.WebAdmin.Auth";
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
-    });
+    })
+    .AddScheme<AuthenticationSchemeOptions, AdminApiKeyAuthenticationHandler>(
+        AdminApiKeyDefaults.SchemeName,
+        _ => { });
 
 builder.Services.AddAuthorization(options =>
 {
@@ -29,9 +35,25 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole(WebAdminRoles.Admin));
     options.AddPolicy(WebAdminPolicies.OwnerArea, policy =>
         policy.RequireRole(WebAdminRoles.Admin, WebAdminRoles.PoiOwner));
+    options.AddPolicy(AdminApiKeyDefaults.PolicyName, policy =>
+    {
+        policy.AddAuthenticationSchemes(AdminApiKeyDefaults.SchemeName);
+        policy.RequireAuthenticatedUser();
+    });
 });
 
-builder.Services.AddControllersWithViews();
+builder.Services
+    .AddControllersWithViews()
+    .AddApplicationPart(typeof(VKFoodAPI.Controllers.PoisController).Assembly);
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<WebAdminAuthOptions>(builder.Configuration.GetSection("WebAdminAuth"));
 builder.Services.AddSingleton<IWebAdminAccountStore, WebAdminAccountStore>();
@@ -45,10 +67,17 @@ builder.Services.AddHttpClient<AudioGuideApiClient>(ConfigureSharedApiClient);
 builder.Services.AddHttpClient<ListeningHistoryApiClient>(ConfigureSharedApiClient);
 builder.Services.AddHttpClient<ActiveDeviceApiClient>(ConfigureSharedApiClient);
 builder.Services.AddHttpClient<UserManagementApiClient>(ConfigureSharedApiClient);
-builder.Services.AddHttpClient("PublicApiProxy", client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(30);
-});
+builder.Services.AddSingleton<PoiRepository>();
+builder.Services.AddSingleton<AudioGuideRepository>();
+builder.Services.AddSingleton<TourRepository>();
+builder.Services.AddSingleton<QrCodeRepository>();
+builder.Services.AddSingleton<ListeningHistoryRepository>();
+builder.Services.AddSingleton<UserManagementRepository>();
+builder.Services.AddSingleton<ActiveDeviceRepository>();
+builder.Services.AddSingleton<MovementLogRepository>();
+builder.Services.AddSingleton<AuditLogRepository>();
+builder.Services.AddHostedService<ActiveDevicePruningService>();
+builder.Services.AddHostedService<DataRepairWarmupService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<AudioGuideAdminService>();
 builder.Services.AddScoped<AudioGuideValidationService>();
@@ -79,6 +108,7 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 

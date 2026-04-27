@@ -3,8 +3,7 @@
 ## Cấu hình môi trường
 
 - Domain public hiện tại cho QR/API demo: `https://jaywalker-eaten-squishier.ngrok-free.dev/`.
-- API Development local: `http://localhost:5287/` khi chạy nội bộ.
-- WebAdmin Development local: `http://localhost:5088/` khi chạy nội bộ.
+- WebAdmin/API Development local: `http://localhost:5088/` khi chạy nội bộ.
 - APK Debug/Release mặc định trỏ cùng API public: `https://jaywalker-eaten-squishier.ngrok-free.dev/`
 - Nếu cần debug API local riêng, build app với `-p:ApiBaseUrl=http://10.0.2.2:5287/`.
 - APK Release có thể truyền domain thật khi build:
@@ -20,7 +19,6 @@ Không để `localhost` trong APK release. Nếu build trên máy thật, dùng
 `AdminApi:ApiKey` trong `appsettings.json` để trống. Khi chạy thật, đặt bằng environment variable hoặc user-secrets:
 
 ```powershell
-dotnet user-secrets set "AdminApi:ApiKey" "your-strong-admin-key" --project .\VKFoodAPI\VKFoodAPI.csproj
 dotnet user-secrets set "AdminApi:ApiKey" "your-strong-admin-key" --project .\CTest.WebAdmin\CTest.WebAdmin.csproj
 ```
 
@@ -36,11 +34,12 @@ Owner bị chặn khi vào `/Pois` và thấy màn hình `Không có quyền tru
 ## Lệnh chạy local
 
 ```powershell
-dotnet run --project .\VKFoodAPI\VKFoodAPI.csproj --launch-profile http
 dotnet run --project .\CTest.WebAdmin\CTest.WebAdmin.csproj --launch-profile http
 dotnet build .\VinhKhanhGuide.sln --no-restore
 dotnet test .\VinhKhanhGuide.sln --no-restore
 ```
+
+`CTest.WebAdmin` hiện host luôn các endpoint `VKFoodAPI` dưới `/api/*`, nên không cần chạy riêng project `VKFoodAPI` khi demo.
 
 QR public được lấy từ `CTest.WebAdmin/appsettings*.json` qua `QrCode:PublicBaseUrl`; app deeplink lấy API từ `QrCode:MobileApiBaseUrl`. Không để hai giá trị này là `localhost` khi in hoặc chia sẻ QR.
 
@@ -49,7 +48,6 @@ Không mở `http://0.0.0.0:5088/` trong trình duyệt. `0.0.0.0` chỉ dùng c
 ## Lệnh publish server
 
 ```powershell
-dotnet publish .\VKFoodAPI\VKFoodAPI.csproj -c Release -o .\build-output\api
 dotnet publish .\CTest.WebAdmin\CTest.WebAdmin.csproj -c Release -o .\build-output\webadmin
 ```
 
