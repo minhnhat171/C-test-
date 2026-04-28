@@ -391,14 +391,14 @@ public partial class MainViewModel : INotifyPropertyChanged
             if (activeTour is not null)
             {
                 var currentPoi = GetCurrentActiveTourPoi();
-            if (currentPoi is null)
-            {
-                return $"Tour {activeTour.Name} đã hoàn tất. Bạn có thể chọn tour khác hoặc tự do khám phá các quán gần đây.";
-            }
+                if (currentPoi is null)
+                {
+                    return $"Tour {activeTour.Name} đã hoàn tất. Bạn có thể chọn tour khác hoặc tự do khám phá các quán gần đây.";
+                }
 
-            var totalStops = GetActiveTourStopIds().Count;
-            return $"Tour {activeTour.Name} đang ở điểm {Math.Min(_activeTourStopIndex + 1, totalStops)}/{totalStops}: {currentPoi.Name}. Khi bạn đến gần, app sẽ phát thuyết minh và chuyển sang điểm tiếp theo.";
-        }
+                var totalStops = GetActiveTourStopIds().Count;
+                return $"Tour {activeTour.Name} đang ở điểm {Math.Min(_activeTourStopIndex + 1, totalStops)}/{totalStops}: {currentPoi.Name}. Khi bạn đến gần, app sẽ phát thuyết minh và chuyển sang điểm tiếp theo.";
+            }
 
             var activePoi = _activeNarrationPoiId.HasValue
                 ? _pois.FirstOrDefault(item => item.Id == _activeNarrationPoiId.Value)
@@ -1701,19 +1701,19 @@ public partial class MainViewModel : INotifyPropertyChanged
             SetSelectedPoi(currentPoi, false, EvaluateCurrentPoiStatuses());
         }
 
-            StatusText = currentPoi is null
-                ? LocalizeUi(
-                $"Tour {tour.Name} chưa có điểm dừng khả dụng",
-                $"{tour.Name} does not have an available stop yet.",
-                $"{tour.Name} 暂时没有可跟踪的有效站点。",
-                $"{tour.Name} 투어에는 아직 유효한 경유지가 없습니다.",
-                $"{tour.Name} ne dispose pas encore d'étape valide à suivre.")
-            : LocalizeUi(
-                $"Đã bắt đầu {tour.Name}. Điểm đầu tiên: {currentPoi.Name}.",
-                $"{tour.Name} started. First stop: {currentPoi.Name}.",
-                $"已开始 {tour.Name}。第一站：{currentPoi.Name}。",
-                $"{tour.Name} 투어를 시작했습니다. 첫 지점: {currentPoi.Name}.",
-                $"{tour.Name} commencé. Première étape : {currentPoi.Name}.");
+        StatusText = currentPoi is null
+            ? LocalizeUi(
+            $"Tour {tour.Name} chưa có điểm dừng khả dụng",
+            $"{tour.Name} does not have an available stop yet.",
+            $"{tour.Name} 暂时没有可跟踪的有效站点。",
+            $"{tour.Name} 투어에는 아직 유효한 경유지가 없습니다.",
+            $"{tour.Name} ne dispose pas encore d'étape valide à suivre.")
+        : LocalizeUi(
+            $"Đã bắt đầu {tour.Name}. Điểm đầu tiên: {currentPoi.Name}.",
+            $"{tour.Name} started. First stop: {currentPoi.Name}.",
+            $"已开始 {tour.Name}。第一站：{currentPoi.Name}。",
+            $"{tour.Name} 투어를 시작했습니다. 첫 지점: {currentPoi.Name}.",
+            $"{tour.Name} commencé. Première étape : {currentPoi.Name}.");
 
         AddLog($"{NowLabel()} Kích hoạt tour {tour.Name}");
         await NarrateTourActivationAsync(tour);
@@ -3821,7 +3821,7 @@ public partial class MainViewModel : INotifyPropertyChanged
 
         foreach (var suggestion in suggestions)
         {
-        SearchSuggestions.Add(suggestion);
+            SearchSuggestions.Add(suggestion);
         }
 
         IsSearchSuggestionsVisible = SearchSuggestions.Count > 0;

@@ -10,94 +10,21 @@ namespace CTest.WebAdmin.Controllers;
 [Authorize(Policy = WebAdminPolicies.AdminOnly)]
 public sealed class SystemAdminController : Controller
 {
-    private readonly IWebAdminAccountStore _accountStore;
     private readonly UserManagementApiClient _userManagementApiClient;
 
-    public SystemAdminController(
-        IWebAdminAccountStore accountStore,
-        UserManagementApiClient userManagementApiClient)
+    public SystemAdminController(UserManagementApiClient userManagementApiClient)
     {
-        _accountStore = accountStore;
         _userManagementApiClient = userManagementApiClient;
     }
 
     [HttpGet]
     public async Task<IActionResult> Index(
         string? keyword = null,
-        string? editAdmin = null,
         Guid? editAppUser = null,
         CancellationToken cancellationToken = default)
     {
-        var model = await BuildModelAsync(keyword, editAdmin, editAppUser, cancellationToken);
+        var model = await BuildModelAsync(keyword, editAppUser, cancellationToken);
         return View(model);
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SaveAccount(
-        SystemAdminViewModel model,
-        CancellationToken cancellationToken = default)
-    {
-        var form = model.AccountForm;
-        if (!string.Equals(form.Password, form.ConfirmPassword, StringComparison.Ordinal))
-        {
-            ModelState.AddModelError(
-                $"{nameof(SystemAdminViewModel.AccountForm)}.{nameof(WebAdminAccountFormViewModel.ConfirmPassword)}",
-                "Mật khẩu xác nhận không khớp.");
-        }
-
-        if (!ModelState.IsValid)
-        {
-            var invalidModel = await BuildModelAsync(model.AppUserKeyword, null, null, cancellationToken);
-            invalidModel.AccountForm = form;
-            return View("Index", invalidModel);
-        }
-
-        try
-        {
-            _accountStore.Upsert(
-                new WebAdminAuthUserOptions
-                {
-                    Username = form.Username,
-                    DisplayName = form.DisplayName,
-                    Role = form.Role,
-                    OwnerCode = form.OwnerCode,
-                    OwnerEmail = form.OwnerEmail
-                },
-                form.OriginalUsername,
-                form.Password);
-
-            TempData["SystemAdminMessage"] = form.IsEditMode
-                ? "Đã cập nhật tài khoản quản trị."
-                : "Đã tạo tài khoản quản trị.";
-            return RedirectToAction(nameof(Index));
-        }
-        catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException)
-        {
-            ModelState.AddModelError(string.Empty, ex.Message);
-            var invalidModel = await BuildModelAsync(model.AppUserKeyword, null, null, cancellationToken);
-            invalidModel.AccountForm = form;
-            return View("Index", invalidModel);
-        }
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public IActionResult DeleteAccount(string username)
-    {
-        if (string.Equals(username, User.Identity?.Name, StringComparison.OrdinalIgnoreCase))
-        {
-            TempData["SystemAdminError"] = "Không thể xóa tài khoản đang đăng nhập.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        var existedBeforeDelete = _accountStore.GetByUsername(username) is not null;
-        var deleted = _accountStore.Delete(username);
-        TempData[deleted ? "SystemAdminMessage" : "SystemAdminError"] = deleted
-            ? "Đã xóa tài khoản quản trị."
-            : existedBeforeDelete ? "Không thể xóa admin cuối cùng." : "Không tìm thấy tài khoản.";
-
-        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
@@ -117,7 +44,7 @@ public sealed class SystemAdminController : Controller
 
         if (!ModelState.IsValid)
         {
-            var invalidModel = await BuildModelAsync(model.AppUserKeyword, null, null, cancellationToken);
+            var invalidModel = await BuildModelAsync(model.AppUserKeyword, null, cancellationToken);
             invalidModel.AppUserForm = form;
             return View("Index", invalidModel);
         }
@@ -149,7 +76,7 @@ public sealed class SystemAdminController : Controller
             ex is TaskCanceledException)
         {
             ModelState.AddModelError(string.Empty, "Chưa cập nhật được người dùng app. Kiểm tra VKFoodAPI và API key admin.");
-            var invalidModel = await BuildModelAsync(model.AppUserKeyword, null, null, cancellationToken);
+            var invalidModel = await BuildModelAsync(model.AppUserKeyword, null, cancellationToken);
             invalidModel.AppUserForm = form;
             return View("Index", invalidModel);
         }
@@ -157,38 +84,13 @@ public sealed class SystemAdminController : Controller
 
     private async Task<SystemAdminViewModel> BuildModelAsync(
         string? keyword,
-        string? editAdmin,
         Guid? editAppUser,
         CancellationToken cancellationToken)
     {
         var model = new SystemAdminViewModel
         {
-            WebAdminAccounts = _accountStore.GetAll()
-                .Select(user => new WebAdminAccountViewModel
-                {
-                    Username = user.Username,
-                    DisplayName = user.DisplayName,
-                    Role = user.Role,
-                    OwnerCode = user.OwnerCode,
-                    OwnerEmail = user.OwnerEmail
-                })
-                .ToList(),
             AppUserKeyword = keyword?.Trim() ?? string.Empty
         };
-
-        var accountToEdit = _accountStore.GetByUsername(editAdmin);
-        if (accountToEdit is not null)
-        {
-            model.AccountForm = new WebAdminAccountFormViewModel
-            {
-                OriginalUsername = accountToEdit.Username,
-                Username = accountToEdit.Username,
-                DisplayName = accountToEdit.DisplayName,
-                Role = accountToEdit.Role,
-                OwnerCode = accountToEdit.OwnerCode,
-                OwnerEmail = accountToEdit.OwnerEmail
-            };
-        }
 
         try
         {

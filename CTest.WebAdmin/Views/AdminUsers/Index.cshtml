@@ -1,0 +1,170 @@
+@using System.Globalization
+@using CTest.WebAdmin.Security
+@model AdminUserIndexViewModel
+@{
+    ViewData["Title"] = "Tài khoản hệ thống";
+}
+
+<link rel="stylesheet" href="~/css/admin-users.css" asp-append-version="true" />
+
+<div class="admin-users-page">
+    @if (TempData["AdminUsersMessage"] is string message)
+    {
+        <div class="alert alert-success border-0 shadow-sm">@message</div>
+    }
+
+    @if (TempData["AdminUsersError"] is string error)
+    {
+        <div class="alert alert-danger border-0 shadow-sm">@error</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.LoadWarningMessage))
+    {
+        <div class="alert alert-warning border-0 shadow-sm">@Model.LoadWarningMessage</div>
+    }
+
+    <section class="account-page-header">
+        <div>
+            <p class="account-kicker mb-1">Quản lý tài khoản</p>
+            <h2>Tài khoản hệ thống</h2>
+            <p class="mb-0 mt-2">Quản lý Admin và chủ cửa hàng có quyền đăng nhập WebAdmin.</p>
+        </div>
+        <div class="account-actions">
+            <a asp-action="Create" class="btn btn-primary">Thêm tài khoản</a>
+        </div>
+    </section>
+
+    <section class="account-metrics" aria-label="Thống kê tài khoản">
+        <article class="account-metric">
+            <span>Tổng tài khoản</span>
+            <strong>@Model.TotalCount</strong>
+        </article>
+        <article class="account-metric">
+            <span>Đang hoạt động</span>
+            <strong>@Model.ActiveCount</strong>
+        </article>
+        <article class="account-metric">
+            <span>Đang khóa</span>
+            <strong>@Model.LockedCount</strong>
+        </article>
+        <article class="account-metric">
+            <span>Admin</span>
+            <strong>@Model.AdminCount</strong>
+        </article>
+        <article class="account-metric">
+            <span>Chủ cửa hàng</span>
+            <strong>@Model.OwnerCount</strong>
+        </article>
+    </section>
+
+    <section class="account-card">
+        <div class="account-card__header">
+            <div>
+                <h2>Tìm kiếm và lọc</h2>
+            </div>
+        </div>
+        <div class="account-card__body">
+            <form method="get" class="account-filter">
+                <div>
+                    <label asp-for="Query" class="form-label">Từ khóa</label>
+                    <input asp-for="Query" class="form-control" placeholder="Tên đăng nhập, tên hiển thị, owner code hoặc email" />
+                </div>
+                <div>
+                    <label asp-for="Role" class="form-label">Vai trò</label>
+                    <select asp-for="Role" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option value="@WebAdminRoles.Admin">Admin</option>
+                        <option value="@WebAdminRoles.PoiOwner">Chủ cửa hàng</option>
+                    </select>
+                </div>
+                <div>
+                    <label asp-for="Status" class="form-label">Trạng thái</label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option value="active">Đang hoạt động</option>
+                        <option value="locked">Đang khóa</option>
+                    </select>
+                </div>
+                <div class="account-actions">
+                    <button type="submit" class="btn btn-primary">Áp dụng</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Đặt lại</a>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="account-card">
+        <div class="account-card__header">
+            <div>
+                <h2>Danh sách tài khoản</h2>
+            </div>
+            <span class="text-muted small">@Model.Items.Count kết quả</span>
+        </div>
+
+        @if (!Model.Items.Any())
+        {
+            <div class="account-empty">Chưa có tài khoản phù hợp.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table account-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Tài khoản</th>
+                            <th>Vai trò</th>
+                            <th>Trạng thái</th>
+                            <th>POI sở hữu</th>
+                            <th>Đăng nhập gần nhất</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <div class="account-title">@item.Username</div>
+                                <div class="account-meta">@item.DisplayName</div>
+                                @if (!string.IsNullOrWhiteSpace(item.OwnerEmail))
+                                {
+                                    <div class="account-meta">@item.OwnerEmail</div>
+                                }
+                            </td>
+                            <td>
+                                <span class="account-pill @(item.Role == WebAdminRoles.Admin ? "account-pill--admin" : "account-pill--owner")">
+                                    @item.RoleLabel
+                                </span>
+                            </td>
+                            <td>
+                                <span class="account-pill @(item.IsActive ? "account-pill--active" : "account-pill--locked")">
+                                    @(item.IsActive ? "Đang hoạt động" : "Đang khóa")
+                                </span>
+                            </td>
+                            <td>@item.OwnedPoiCount</td>
+                            <td>
+                                @(item.LastLoginAtUtc.HasValue
+                                    ? item.LastLoginAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture)
+                                    : "Chưa đăng nhập")
+                            </td>
+                            <td>
+                                <div class="account-table-actions">
+                                    <form asp-action="ResetPassword"
+                                          asp-route-username="@item.Username"
+                                          method="post"
+                                          onsubmit="return confirm('Reset mật khẩu tài khoản này về 123456?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-warning">Reset MK</button>
+                                    </form>
+                                    <a asp-action="Edit" asp-route-username="@item.Username" class="btn btn-sm btn-outline-primary">Sửa</a>
+                                    <a asp-action="Delete" asp-route-username="@item.Username" class="btn btn-sm btn-outline-danger">Xóa</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>

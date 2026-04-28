@@ -38,6 +38,9 @@ public sealed class WebAdminAuthUserOptions
     public string Role { get; set; } = string.Empty;
     public string OwnerCode { get; set; } = string.Empty;
     public string OwnerEmail { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? LastLoginAtUtc { get; set; }
 }
 
 public sealed class WebAdminAuthenticatedUser
@@ -75,10 +78,14 @@ public sealed class WebAdminAuthService : IWebAdminAuthService
         var matchedUser = users.FirstOrDefault(user =>
             string.Equals(NormalizeLookup(user.Username), normalizedUsername, StringComparison.OrdinalIgnoreCase));
 
-        if (matchedUser is null || !VerifyPassword(matchedUser, password))
+        if (matchedUser is null ||
+            !matchedUser.IsActive ||
+            !VerifyPassword(matchedUser, password))
         {
             return null;
         }
+
+        _accountStore.RecordLogin(matchedUser.Username);
 
         var role = NormalizeRole(matchedUser.Role);
         var ownerCode = string.IsNullOrWhiteSpace(matchedUser.OwnerCode)

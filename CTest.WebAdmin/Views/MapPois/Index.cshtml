@@ -2,954 +2,442 @@
 @using System.Text.Json
 @model MapPoiManagementViewModel
 @{
-    ViewData["Title"] = "Map Analytics";
+    ViewData["Title"] = "Bản đồ Analytics";
 
-    var activeDevices = Model.ActiveDeviceStats.Devices;
-    var locatedActiveDevices = activeDevices
-        .Where(item => item.Latitude.HasValue && item.Longitude.HasValue)
-        .ToList();
-    var routePoints = Model.ActiveDeviceStats.RoutePoints;
-    var heatmapPointCount = routePoints.Count > 0 ? routePoints.Count : locatedActiveDevices.Count;
-    var latestLocationAt = routePoints.Count > 0
-        ? routePoints.Max(point => point.RecordedAtUtc)
-        : (locatedActiveDevices.Any()
-            ? locatedActiveDevices.Max(item => item.LocationTimestampUtc ?? item.LastSeenAtUtc)
-            : (DateTimeOffset?)null);
-    var maxTopListenCount = Math.Max(1, Model.TopListeningPois.Select(x => x.ListenCount).DefaultIfEmpty(0).Max());
-    var topListeningPoi = Model.TopListeningPois.FirstOrDefault()?.PoiName ?? "Chưa có dữ liệu";
-    var averageListenLabel = Model.AverageListenSeconds <= 0
-        ? "0 giây"
-        : $"{Model.AverageListenSeconds:0.#} giây";
     var analyticsByPoi = Model.TopListeningPois.ToDictionary(item => item.PoiId);
-    var topListeningPoiId = Model.TopListeningPois.FirstOrDefault()?.PoiId ?? Guid.Empty;
-    var firstMapPoi = Model.Pois.FirstOrDefault(poi =>
-        Math.Abs(poi.Latitude) > 0.000001 || Math.Abs(poi.Longitude) > 0.000001);
-    var initialLatitude = firstMapPoi?.Latitude
-        ?? locatedActiveDevices.FirstOrDefault()?.Latitude
-        ?? routePoints.FirstOrDefault()?.Latitude
-        ?? 10.761450;
-    var initialLongitude = firstMapPoi?.Longitude
-        ?? locatedActiveDevices.FirstOrDefault()?.Longitude
-        ?? routePoints.FirstOrDefault()?.Longitude
-        ?? 106.702820;
-    var mapPois = Model.Pois.Select(poi =>
-    {
-        analyticsByPoi.TryGetValue(poi.Id, out var poiAnalytics);
+    var topPoi = Model.TopListeningPois.FirstOrDefault();
+    var topPoiId = topPoi?.PoiId ?? Guid.Empty;
+    var activePois = Model.Pois
+        .Where(poi => poi.IsActive)
+        .Where(poi =>
+            poi.Latitude is >= -90 and <= 90 &&
+            poi.Longitude is >= -180 and <= 180 &&
+            (Math.Abs(poi.Latitude) > 0.000001 || Math.Abs(poi.Longitude) > 0.000001))
+        .OrderByDescending(poi => poi.Id == topPoiId)
+        .ThenByDescending(poi => analyticsByPoi.TryGetValue(poi.Id, out var analytics) ? analytics.ListenCount : 0)
+        .ThenBy(poi => poi.Name)
+        .ToList();
 
-        return new
+    var averageListenLabel = Model.AverageListenSeconds > 0
+        ? $"{Math.Round(Model.AverageListenSeconds)}s"
+        : "--";
+
+    var latestMovementLabel = Model.LatestMovementAtUtc.HasValue
+        ? Model.LatestMovementAtUtc.Value.ToLocalTime().ToString("dd/MM HH:mm", CultureInfo.InvariantCulture)
+        : "--";
+
+    var poisJson = JsonSerializer.Serialize(
+        activePois.Select((poi, index) =>
         {
-            id = poi.Id.ToString(),
-            code = poi.Code,
-            name = poi.Name,
-            address = poi.Address,
-            latitude = poi.Latitude,
-            longitude = poi.Longitude,
-            radius = poi.RadiusInMeters,
-            priority = poi.Priority,
-            isActive = poi.IsActive,
-            isTopListening = poi.Id == topListeningPoiId,
-            listenCount = poiAnalytics?.ListenCount ?? 0,
-            averageListenSeconds = poiAnalytics?.AverageListenSeconds ?? 0,
-            detailsUrl = Url.Action("Details", "Pois", new { id = poi.Id }) ?? $"/Pois/Details/{poi.Id}",
-            qrUrl = Url.Action("Index", "QrCodes", new { selectedTargetType = "poi", selectedTargetId = poi.Id }) ?? $"/QrCodes?selectedTargetType=poi&selectedTargetId={poi.Id}",
-            appLaunchUrl = $"vinhkhanhguide://poi/{poi.Id}?autoplay=1&source=webadmin-map"
-        };
-    }).ToList();
-    var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+            analyticsByPoi.TryGetValue(poi.Id, out var poiAnalytics);
+
+            return new
+            {
+                id = poi.Id,
+                name = poi.Name,
+                address = poi.Address,
+                latitude = poi.Latitude,
+                longitude = poi.Longitude,
+                radiusMeters = poi.RadiusInMeters,
+                priority = poi.Priority,
+                listenCount = poiAnalytics?.ListenCount ?? 0,
+                isTopListened = poi.Id == topPoiId,
+                number = index + 1
+            };
+        }));
+
+    var routesJson = JsonSerializer.Serialize(
+        Model.Routes.Select(route => new
+        {
+            routeId = route.RouteId,
+            routeLabel = route.RouteLabel,
+            pointCount = route.PointCount,
+            durationMinutes = route.DurationMinutes,
+            approxDistanceMeters = route.ApproxDistanceMeters,
+            points = route.Points.Select(point => new
+            {
+                latitude = point.Latitude,
+                longitude = point.Longitude,
+                recordedAtUtc = point.RecordedAtUtc,
+                accuracyMeters = point.AccuracyMeters
+            })
+        }));
+
+    var heatmapJson = JsonSerializer.Serialize(
+        Model.HeatmapPoints.Select(point => new
+        {
+            latitude = point.Latitude,
+            longitude = point.Longitude,
+            count = point.Count,
+            weight = point.Weight
+        }));
 }
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="~/css/map-analytics.css" asp-append-version="true" />
 
-<style>
-    .map-analytics-page {
-        --analytics-ink: #17202a;
-        --analytics-muted: #64748b;
-        --analytics-border: rgba(100, 116, 139, 0.18);
-        --analytics-panel: #ffffff;
-        --analytics-soft: #f7faf9;
-        --analytics-accent: #2563eb;
-        color: var(--analytics-ink);
-        font-family: inherit;
-    }
-
-    .analytics-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .analytics-header h1 {
-        margin: 0;
-        font-size: clamp(1.7rem, 1.1rem + 1.8vw, 2.45rem);
-        font-weight: 800;
-        letter-spacing: 0;
-    }
-
-    .analytics-header p {
-        max-width: 760px;
-        margin: 0.45rem 0 0;
-        color: var(--analytics-muted);
-        line-height: 1.6;
-    }
-
-    .analytics-updated {
-        flex: 0 0 auto;
-        padding: 0.7rem 0.9rem;
-        border: 1px solid var(--analytics-border);
-        border-radius: 8px;
-        background: var(--analytics-panel);
-        color: var(--analytics-muted);
-        font-size: 0.9rem;
-    }
-
-    .analytics-shell {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 360px;
-        gap: 1rem;
-        align-items: stretch;
-    }
-
-    .analytics-map-surface,
-    .analytics-side {
-        border: 1px solid var(--analytics-border);
-        border-radius: 8px;
-        background: var(--analytics-panel);
-        box-shadow: 0 12px 32px rgba(23, 32, 42, 0.08);
-        overflow: hidden;
-    }
-
-    .analytics-map-toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 0.8rem;
-        padding: 0.9rem;
-        border-bottom: 1px solid var(--analytics-border);
-        background: #fff;
-    }
-
-    .analytics-kicker {
-        color: var(--analytics-muted);
-        font-size: 0.75rem;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-    }
-
-    .analytics-map-title {
-        margin-top: 0.15rem;
-        font-weight: 800;
-    }
-
-    .analytics-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .analytics-map-frame {
-        position: relative;
-        height: min(72vh, 720px);
-        min-height: 520px;
-        background: #e2e8f0;
-    }
-
-    #analyticsMapCanvas {
-        width: 100%;
-        height: 100%;
-    }
-
-    .analytics-map-empty,
-    .analytics-map-legend {
-        position: absolute;
-        z-index: 500;
-        border: 1px solid var(--analytics-border);
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.94);
-        box-shadow: 0 14px 32px rgba(23, 32, 42, 0.12);
-        backdrop-filter: blur(10px);
-    }
-
-    .analytics-map-empty {
-        top: 1rem;
-        left: 1rem;
-        max-width: 360px;
-        padding: 0.95rem 1rem;
-        color: #334155;
-        line-height: 1.55;
-    }
-
-    .analytics-map-empty.is-hidden {
-        display: none;
-    }
-
-    .analytics-map-legend {
-        right: 1rem;
-        bottom: 1rem;
-        padding: 0.8rem 0.9rem;
-    }
-
-    .analytics-gradient {
-        width: 150px;
-        height: 10px;
-        margin-top: 0.55rem;
-        border-radius: 999px;
-        background: linear-gradient(90deg, #38bdf8 0%, #2563eb 38%, #7c3aed 72%, #ef4444 100%);
-    }
-
-    .analytics-legend-scale {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-top: 0.45rem;
-        color: var(--analytics-muted);
-        font-size: 0.78rem;
-        font-weight: 700;
-    }
-
-    .analytics-side {
-        padding: 1rem;
-        display: grid;
-        align-content: start;
-        gap: 1rem;
-    }
-
-    .analytics-stat-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem;
-    }
-
-    .analytics-stat,
-    .analytics-section {
-        border: 1px solid var(--analytics-border);
-        border-radius: 8px;
-        background: var(--analytics-soft);
-    }
-
-    .analytics-stat {
-        padding: 0.85rem;
-    }
-
-    .analytics-stat strong {
-        display: block;
-        margin-top: 0.25rem;
-        font-size: 1.2rem;
-        line-height: 1.25;
-    }
-
-    .analytics-section {
-        padding: 0.9rem;
-    }
-
-    .analytics-section h2 {
-        margin: 0;
-        font-size: 1rem;
-        font-weight: 800;
-    }
-
-    .analytics-checklist {
-        display: grid;
-        gap: 0.6rem;
-        margin-top: 0.75rem;
-    }
-
-    .analytics-check {
-        display: grid;
-        grid-template-columns: 0.75rem minmax(0, 1fr);
-        gap: 0.55rem;
-        color: #334155;
-        font-size: 0.92rem;
-        line-height: 1.45;
-    }
-
-    .analytics-check::before {
-        content: "";
-        width: 0.55rem;
-        height: 0.55rem;
-        margin-top: 0.38rem;
-        border-radius: 999px;
-        background: var(--analytics-accent);
-    }
-
-    .analytics-list {
-        display: grid;
-        gap: 0.7rem;
-        margin-top: 0.8rem;
-    }
-
-    .analytics-item-title {
-        font-weight: 800;
-    }
-
-    .analytics-item-meta {
-        margin-top: 0.2rem;
-        color: var(--analytics-muted);
-        font-size: 0.86rem;
-    }
-
-    .analytics-track {
-        height: 8px;
-        margin-top: 0.5rem;
-        border-radius: 999px;
-        background: rgba(100, 116, 139, 0.16);
-        overflow: hidden;
-    }
-
-    .analytics-fill {
-        height: 100%;
-        border-radius: inherit;
-        background: linear-gradient(90deg, #1d4ed8 0%, #60a5fa 100%);
-    }
-
-    .analytics-poi-marker {
-        display: block;
-        width: 32px;
-        height: 32px;
-        color: #2563eb;
-        filter: drop-shadow(0 10px 14px rgba(15, 23, 42, 0.24));
-    }
-
-    .analytics-poi-marker.is-inactive {
-        color: #94a3b8;
-    }
-
-    .analytics-poi-marker.has-listens {
-        color: #1d4ed8;
-    }
-
-    .analytics-poi-marker.is-top-listening {
-        color: #f59e0b;
-        filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.52)) drop-shadow(0 12px 18px rgba(15, 23, 42, 0.32));
-    }
-
-    .analytics-poi-marker svg {
-        width: 100%;
-        height: 100%;
-        display: block;
-    }
-
-    .analytics-user-marker {
-        width: 16px;
-        height: 16px;
-        border-radius: 999px;
-        border: 3px solid #fff;
-        background: #0ea5e9;
-        box-shadow: 0 0 0 8px rgba(14, 165, 233, 0.16), 0 10px 24px rgba(15, 23, 42, 0.22);
-    }
-
-    .analytics-user-marker.device-color-1 {
-        background: #22c55e;
-        box-shadow: 0 0 0 8px rgba(34, 197, 94, 0.16), 0 10px 24px rgba(15, 23, 42, 0.22);
-    }
-
-    .analytics-user-marker.device-color-2 {
-        background: #f97316;
-        box-shadow: 0 0 0 8px rgba(249, 115, 22, 0.16), 0 10px 24px rgba(15, 23, 42, 0.22);
-    }
-
-    .analytics-popup {
-        min-width: 220px;
-        color: #17202a;
-    }
-
-    .analytics-popup-title {
-        font-weight: 800;
-    }
-
-    .analytics-popup-meta {
-        margin-top: 0.35rem;
-        color: #64748b;
-        font-size: 0.84rem;
-        line-height: 1.45;
-    }
-
-    .analytics-popup-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.4rem;
-        margin-top: 0.75rem;
-    }
-
-    .analytics-popup-actions a,
-    .analytics-popup-actions span {
-        display: inline-flex;
-        align-items: center;
-        min-height: 30px;
-        padding: 0.25rem 0.6rem;
-        border-radius: 999px;
-        background: #f1f5f9;
-        color: #17202a;
-        font-size: 0.78rem;
-        font-weight: 700;
-        text-decoration: none;
-    }
-
-    @@media (max-width: 1199.98px) {
-        .analytics-shell {
-            grid-template-columns: 1fr;
-        }
-
-        .analytics-map-frame {
-            height: 620px;
-        }
-    }
-
-    @@media (max-width: 767.98px) {
-        .analytics-header,
-        .analytics-map-toolbar {
-            align-items: flex-start;
-            flex-direction: column;
-        }
-
-        .analytics-updated {
-            width: 100%;
-        }
-
-        .analytics-stat-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .analytics-map-frame {
-            min-height: 430px;
-            height: 62vh;
-        }
-    }
-</style>
-
-<div class="map-analytics-page">
-    <div class="analytics-header">
-        <div>
-            <h1>Map Analytics</h1>
-            <p>Một bản đồ duy nhất hiển thị heatmap vị trí người dùng, tuyến di chuyển ẩn danh, top địa điểm được nghe nhiều nhất và thời gian trung bình nghe một POI.</p>
-        </div>
-        <div class="analytics-updated">
-            Cập nhật gần nhất:
-            <strong id="analyticsLatestAt">
-                @(latestLocationAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture) ?? "Chưa có dữ liệu")
-            </strong>
-        </div>
+<section class="map-ops-header">
+    <div>
+        <p class="section-kicker mb-1">Map Analytics</p>
+        <h2>Bản đồ vận hành POI</h2>
     </div>
+    <div class="page-actions">
+        <a asp-controller="UsageLogs" asp-action="Index" class="btn btn-outline-secondary">Lịch sử nghe</a>
+        <a asp-controller="QrCodes" asp-action="Index" class="btn btn-outline-secondary">QR</a>
+        <a asp-controller="Pois" asp-action="Index" class="btn btn-primary">Danh sách POI</a>
+    </div>
+</section>
 
-    @if (!string.IsNullOrWhiteSpace(Model.LoadErrorMessage))
-    {
-        <div class="alert alert-warning border-0 shadow-sm">@Model.LoadErrorMessage</div>
-    }
+@if (!string.IsNullOrWhiteSpace(Model.LoadErrorMessage))
+{
+    <div class="alert alert-warning border-0 shadow-sm">@Model.LoadErrorMessage</div>
+}
 
-    @if (!string.IsNullOrWhiteSpace(Model.AnalyticsLoadErrorMessage))
-    {
-        <div class="alert alert-info border-0 shadow-sm">@Model.AnalyticsLoadErrorMessage</div>
-    }
+@if (!string.IsNullOrWhiteSpace(Model.AnalyticsLoadErrorMessage))
+{
+    <div class="alert alert-info border-0 shadow-sm">@Model.AnalyticsLoadErrorMessage</div>
+}
 
-    <div class="analytics-shell">
-        <section class="analytics-map-surface">
-            <div class="analytics-map-toolbar">
-                <div>
-                    <div class="analytics-kicker">Bản đồ analytics</div>
-                    <div class="analytics-map-title">Heatmap, tuyến ẩn danh và POI nghe nhiều</div>
-                </div>
-                <div class="analytics-actions">
-                    <button type="button" class="btn btn-outline-primary btn-sm" id="fitAnalyticsButton">Căn giữa dữ liệu</button>
-                    <button type="button" class="btn btn-outline-dark btn-sm" id="fitPoisButton">Xem tất cả POI</button>
-                </div>
+<section class="map-kpi-strip" aria-label="Chỉ số bản đồ">
+    <article>
+        <span>POI hoạt động</span>
+        <strong>@activePois.Count</strong>
+    </article>
+    <article>
+        <span>Thiết bị có tuyến</span>
+        <strong>@Model.AnonymousRouteCount</strong>
+    </article>
+    <article>
+        <span>Điểm heatmap</span>
+        <strong>@Model.HeatmapPoints.Count</strong>
+    </article>
+    <article>
+        <span>TB nghe / POI</span>
+        <strong>@averageListenLabel</strong>
+    </article>
+</section>
+
+<section class="map-workspace">
+    <article class="map-panel">
+        <div class="map-panel__header">
+            <div>
+                <h2>Bản đồ TP.HCM</h2>
             </div>
-
-            <div class="analytics-map-frame">
-                <div id="analyticsMapCanvas"></div>
-                <div class="analytics-map-empty @(heatmapPointCount > 0 ? "is-hidden" : null)" id="analyticsMapEmptyState">
-                    Chưa có GPS hoặc điểm tuyến để vẽ heatmap. Khi app hoặc trang QR gửi heartbeat kèm tọa độ, lớp heatmap sẽ tự cập nhật tại đây.
-                </div>
-                <div class="analytics-map-legend">
-                    <div class="analytics-kicker">Heatmap vị trí</div>
-                    <div class="analytics-gradient"></div>
-                    <div class="analytics-legend-scale">
-                        <span>Thấp</span>
-                        <span>Cao</span>
-                    </div>
-                </div>
+            <div class="map-panel__badges">
+                <span class="map-badge map-badge--poi">POI @activePois.Count</span>
+                <span class="map-badge map-badge--route">Tuyến @Model.Routes.Count</span>
+                <span class="map-badge map-badge--heat">Heatmap @Model.HeatmapPoints.Count</span>
             </div>
-        </section>
+        </div>
 
-        <aside class="analytics-side">
-            <section class="analytics-stat-grid" aria-label="Chỉ số Map Analytics">
-                <div class="analytics-stat">
-                    <span class="analytics-kicker">Heatmap vị trí</span>
-                    <strong id="analyticsHeatmapPointCount">@heatmapPointCount</strong>
-                </div>
-                <div class="analytics-stat">
-                    <span class="analytics-kicker">Tuyến ẩn danh</span>
-                    <strong id="analyticsRoutePointCount">@routePoints.Count</strong>
-                </div>
-                <div class="analytics-stat">
-                    <span class="analytics-kicker">Người dùng online</span>
-                    <strong id="analyticsActiveDeviceCount">@activeDevices.Count</strong>
-                </div>
-                <div class="analytics-stat">
-                    <span class="analytics-kicker">TB nghe / POI</span>
-                    <strong>@averageListenLabel</strong>
-                </div>
-            </section>
+        @if (!Model.HasMapData)
+        {
+            <div class="empty-state">
+                <p>Chưa có POI hoặc log di chuyển để hiển thị.</p>
+            </div>
+        }
+        else
+        {
+            <div id="analytics-map" class="analytics-map" aria-label="Bản đồ Analytics"></div>
+            <div id="analytics-map-fallback" class="empty-state mt-3 d-none">
+                <p>Không tải được nền bản đồ. Dữ liệu vẫn hiển thị ở bảng bên cạnh.</p>
+            </div>
+            <div id="analytics-map-heat-warning" class="map-runtime-note d-none">
+                Không tải được lớp heatmap. POI và tuyến thiết bị vẫn hoạt động.
+            </div>
+        }
+    </article>
 
-            <section class="analytics-section">
-                <h2>@topListeningPoi</h2>
-                <div class="analytics-item-meta">Địa điểm được nghe nhiều nhất</div>
+    <aside class="map-inspector">
+        <article class="inspector-panel inspector-panel--primary">
+            <span class="panel-label">Theo dõi nhanh</span>
+            <div class="inspector-row">
+                <span>Cập nhật gần nhất</span>
+                <strong>@latestMovementLabel</strong>
+            </div>
+            <div class="inspector-row">
+                <span>Điểm tuyến đang dùng</span>
+                <strong>@Model.AnalyzedMovementPointCount</strong>
+            </div>
+            <div class="inspector-row">
+                <span>Thiết bị ghi nhận</span>
+                <strong>@Model.AnonymousVisitorCount</strong>
+            </div>
+            <p class="mb-0">@Model.AnalyticsWindowLabel</p>
+        </article>
 
-                <div class="analytics-checklist">
-                    <div class="analytics-check">Heatmap vị trí người dùng cập nhật realtime từ heartbeat GPS.</div>
-                    <div class="analytics-check">Lưu tuyến di chuyển ẩn danh, không hiển thị danh tính cá nhân.</div>
-                    <div class="analytics-check">Top địa điểm được nghe nhiều nhất lấy từ lịch sử nghe.</div>
-                    <div class="analytics-check">Thời gian trung bình nghe 1 POI: @averageListenLabel.</div>
-                </div>
-            </section>
+        <article class="inspector-panel">
+            <span class="panel-label">POI nghe nhiều nhất</span>
+            @if (topPoi is null)
+            {
+                <p class="panel-empty mb-0">Chưa có lượt nghe.</p>
+            }
+            else
+            {
+                <strong class="featured-poi">@topPoi.PoiName</strong>
+                <p class="mb-0">@topPoi.ListenCount lượt nghe</p>
+            }
+        </article>
 
-            <section class="analytics-section">
-                <h2>Top địa điểm được nghe nhiều nhất</h2>
-                <div class="analytics-list">
-                    @if (Model.TopListeningPois.Any())
+        <article class="inspector-panel">
+            <span class="panel-label">Top POI</span>
+            @if (!Model.TopListeningPois.Any())
+            {
+                <p class="panel-empty mb-0">Chưa có dữ liệu.</p>
+            }
+            else
+            {
+                <div class="compact-list">
+                    @foreach (var poi in Model.TopListeningPois.Take(5))
                     {
-                        @foreach (var item in Model.TopListeningPois)
-                        {
-                            var listenPercent = Math.Max(5, (int)Math.Round(item.ListenCount * 100.0 / maxTopListenCount));
-                            <div>
-                                <div class="analytics-item-title">@item.PoiName</div>
-                                <div class="analytics-item-meta">@item.ListenCount lượt nghe, trung bình @($"{item.AverageListenSeconds:0.#} giây")</div>
-                                <div class="analytics-track">
-                                    <div class="analytics-fill" style="width:@listenPercent%;"></div>
-                                </div>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div>
-                            <div class="analytics-item-title">Chưa có dữ liệu nghe</div>
-                            <div class="analytics-item-meta">Bảng xếp hạng sẽ tự cập nhật khi app ghi lịch sử nghe.</div>
+                        <div class="compact-row">
+                            <span>@poi.PoiName</span>
+                            <strong>@poi.ListenCount</strong>
                         </div>
                     }
                 </div>
-            </section>
-        </aside>
-    </div>
-</div>
+            }
+        </article>
+
+        <article class="inspector-panel">
+            <span class="panel-label">Tuyến thiết bị gần đây</span>
+            @if (!Model.Routes.Any())
+            {
+                <p class="panel-empty mb-0">Chưa có tuyến di chuyển.</p>
+            }
+            else
+            {
+                <div class="compact-list">
+                    @foreach (var route in Model.Routes.Take(6).Select((item, index) => new { Item = item, Number = index + 1 }))
+                    {
+                        <div class="route-row">
+                            <i style="--route-color: var(--route-@((route.Number - 1) % 8));"></i>
+                            <div>
+                                <strong>@route.Item.RouteLabel</strong>
+                                <span>@route.Item.PointCount điểm · @Math.Round(route.Item.DurationMinutes) phút</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </article>
+    </aside>
+</section>
+
+@if (activePois.Any())
+{
+    <section class="poi-table-panel">
+        <div class="map-panel__header">
+            <div>
+                <h2>Danh sách POI trên bản đồ</h2>
+            </div>
+        </div>
+        <div class="poi-table">
+            @foreach (var poi in activePois.Select((item, index) => new { Item = item, Number = index + 1 }))
+            {
+                analyticsByPoi.TryGetValue(poi.Item.Id, out var poiAnalytics);
+                <div class="poi-table__row">
+                    <span class="poi-number @(poi.Item.Id == topPoiId ? "is-hot" : null)">@poi.Number</span>
+                    <div>
+                        <strong>@poi.Item.Name</strong>
+                        <span>@poi.Item.Address</span>
+                    </div>
+                    <strong>@(poiAnalytics?.ListenCount ?? 0) lượt</strong>
+                </div>
+            }
+        </div>
+    </section>
+}
 
 @section Scripts {
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script>
         (() => {
-            const mapPois = @Html.Raw(JsonSerializer.Serialize(mapPois, jsonOptions));
-            const initialStats = @Html.Raw(JsonSerializer.Serialize(Model.ActiveDeviceStats, jsonOptions));
-            const statsUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("ActiveDevices", "Home"), jsonOptions));
-            const eventsUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("ActiveDeviceEvents", "Home"), jsonOptions));
-            const fallbackLat = @initialLatitude.ToString(CultureInfo.InvariantCulture);
-            const fallbackLng = @initialLongitude.ToString(CultureInfo.InvariantCulture);
-            const heatmapCountEl = document.getElementById("analyticsHeatmapPointCount");
-            const routeCountEl = document.getElementById("analyticsRoutePointCount");
-            const activeDeviceCountEl = document.getElementById("analyticsActiveDeviceCount");
-            const emptyStateEl = document.getElementById("analyticsMapEmptyState");
-            const latestAtEl = document.getElementById("analyticsLatestAt");
-            const fitAnalyticsButton = document.getElementById("fitAnalyticsButton");
-            const fitPoisButton = document.getElementById("fitPoisButton");
+            const pois = @Html.Raw(poisJson);
+            const routes = @Html.Raw(routesJson);
+            const heatPoints = @Html.Raw(heatmapJson);
+            const mapElement = document.getElementById("analytics-map");
+            const fallback = document.getElementById("analytics-map-fallback");
+            const heatWarning = document.getElementById("analytics-map-heat-warning");
 
-            let map = null;
-            let poiLayer = null;
-            let routeLayer = null;
-            let activeDeviceLayer = null;
-            let heatLayer = null;
-            let lastStats = initialStats;
-            let isLoadingStats = false;
+            if (!mapElement) return;
 
-            const escapeHtml = (value) => String(value ?? "")
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;")
-                .replaceAll('"', "&quot;")
-                .replaceAll("'", "&#039;");
-
-            const isUsableCoordinate = (lat, lng) =>
-                Number.isFinite(lat) &&
-                Number.isFinite(lng) &&
-                Math.abs(lat) <= 90 &&
-                Math.abs(lng) <= 180 &&
-                (Math.abs(lat) > 0.000001 || Math.abs(lng) > 0.000001);
-
-            const formatCoordinate = (value) => Number(value).toFixed(6);
-
-            const formatTime = (value) => {
-                if (!value) {
-                    return "Chưa có";
-                }
-
-                const date = new Date(value);
-                if (Number.isNaN(date.getTime())) {
-                    return "Chưa có";
-                }
-
-                return date.toLocaleString("vi-VN", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit"
-                });
-            };
-
-            const houseMarkerSvg = `
-                <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-                    <path d="M6.5 23.5 24 8l17.5 15.5" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
-                    <path d="M11 22.5 24 11l13 11.5V40H11V22.5Z" fill="currentColor" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"></path>
-                    <path d="M20 40V29h8v11" fill="#ffffff"></path>
-                </svg>`;
-
-            const buildPoiIcon = (poi) => L.divIcon({
-                className: "",
-                html: `<span class="analytics-poi-marker ${poi.isActive ? "" : "is-inactive"} ${Number(poi.listenCount || 0) > 0 ? "has-listens" : ""} ${poi.isTopListening ? "is-top-listening" : ""}">${houseMarkerSvg}</span>`,
-                iconSize: [32, 32],
-                iconAnchor: [16, 29],
-                popupAnchor: [0, -28]
-            });
-
-            const buildUserIcon = (index) => L.divIcon({
-                className: "",
-                html: `<span class="analytics-user-marker device-color-${index % 3}"></span>`,
-                iconSize: [16, 16],
-                iconAnchor: [8, 8],
-                popupAnchor: [0, -10]
-            });
-
-            const buildPoiPopup = (poi) => {
-                const status = poi.isActive ? "Đang hoạt động" : "Tạm khóa";
-                const listenCount = Number(poi.listenCount || 0);
-                const averageListenSeconds = Number(poi.averageListenSeconds || 0);
-
-                return `
-                    <div class="analytics-popup">
-                        <div class="analytics-popup-title">${escapeHtml(poi.name || "POI chưa đặt tên")}</div>
-                        <div class="analytics-popup-meta">
-                            ${escapeHtml(poi.address || "Chưa có địa chỉ")}<br />
-                            ${escapeHtml(poi.code || "Chưa có mã")} - ${status}<br />
-                            ${listenCount} lượt nghe - TB ${Number.isFinite(averageListenSeconds) ? averageListenSeconds.toFixed(1) : "0.0"} giây
-                        </div>
-                        <div class="analytics-popup-actions">
-                            ${poi.isTopListening ? "<span>Nghe nhiều nhất</span>" : ""}
-                            <a href="${escapeHtml(poi.detailsUrl)}">Chi tiết</a>
-                            <a href="${escapeHtml(poi.qrUrl)}">QR</a>
-                            <a href="${escapeHtml(poi.appLaunchUrl)}">Mở app</a>
-                        </div>
-                    </div>`;
-            };
-
-            const hasDeviceLocation = (device) =>
-                isUsableCoordinate(Number(device?.latitude), Number(device?.longitude));
-
-            const hasRouteLocation = (point) =>
-                isUsableCoordinate(Number(point?.latitude), Number(point?.longitude));
-
-            const getRoutePoints = (stats) =>
-                Array.isArray(stats?.routePoints)
-                    ? stats.routePoints.filter(hasRouteLocation)
-                    : [];
-
-            const getLocatedDevices = (stats) =>
-                Array.isArray(stats?.devices)
-                    ? stats.devices.filter(hasDeviceLocation)
-                    : [];
-
-            const getHeatPoints = (stats) => {
-                const routeItems = getRoutePoints(stats);
-                if (routeItems.length > 0) {
-                    return routeItems.map((point) => ({
-                        latitude: Number(point.latitude),
-                        longitude: Number(point.longitude),
-                        accuracyMeters: Number(point.accuracyMeters),
-                        recordedAtUtc: point.recordedAtUtc
-                    }));
-                }
-
-                return getLocatedDevices(stats).map((device) => ({
-                    latitude: Number(device.latitude),
-                    longitude: Number(device.longitude),
-                    accuracyMeters: Number(device.accuracyMeters),
-                    recordedAtUtc: device.locationTimestampUtc || device.lastSeenAtUtc
-                }));
-            };
-
-            const updateCounters = (stats) => {
-                const routePoints = getRoutePoints(stats);
-                const heatPoints = getHeatPoints(stats);
-                const locatedDevices = getLocatedDevices(stats);
-                const latestPoint = heatPoints
-                    .map((point) => point.recordedAtUtc)
-                    .filter(Boolean)
-                    .sort()
-                    .at(-1);
-
-                if (heatmapCountEl) {
-                    heatmapCountEl.textContent = heatPoints.length.toString();
-                }
-
-                if (routeCountEl) {
-                    routeCountEl.textContent = routePoints.length.toString();
-                }
-
-                if (activeDeviceCountEl) {
-                    activeDeviceCountEl.textContent = Array.isArray(stats?.devices)
-                        ? stats.devices.length.toString()
-                        : locatedDevices.length.toString();
-                }
-
-                if (emptyStateEl) {
-                    emptyStateEl.classList.toggle("is-hidden", heatPoints.length > 0);
-                }
-
-                if (latestAtEl) {
-                    latestAtEl.textContent = latestPoint ? formatTime(latestPoint) : "Chưa có dữ liệu";
-                }
-            };
-
-            const renderPois = () => {
-                poiLayer.clearLayers();
-
-                for (const poi of mapPois) {
-                    const lat = Number(poi.latitude);
-                    const lng = Number(poi.longitude);
-                    if (!isUsableCoordinate(lat, lng)) {
-                        continue;
-                    }
-
-                    L.marker([lat, lng], {
-                        icon: buildPoiIcon(poi),
-                        title: poi.name || poi.code || "POI"
-                    })
-                        .bindPopup(buildPoiPopup(poi), { maxWidth: 320 })
-                        .addTo(poiLayer);
-                }
-            };
-
-            const renderHeat = (stats) => {
-                if (!heatLayer) {
-                    return;
-                }
-
-                heatLayer.setLatLngs(getHeatPoints(stats).map((point) => {
-                    const accuracy = Number(point.accuracyMeters);
-                    const weight = Number.isFinite(accuracy) && accuracy > 0
-                        ? Math.max(0.35, 1 - Math.min(accuracy, 120) / 180)
-                        : 0.75;
-
-                    return [Number(point.latitude), Number(point.longitude), weight];
-                }));
-            };
-
-            const renderRoutes = (stats) => {
-                routeLayer.clearLayers();
-                const routeGroups = new Map();
-
-                for (const point of getRoutePoints(stats)) {
-                    const routeId = point.anonymousRouteId || "ANON";
-                    if (!routeGroups.has(routeId)) {
-                        routeGroups.set(routeId, []);
-                    }
-
-                    routeGroups.get(routeId).push(point);
-                }
-
-                let routeIndex = 0;
-                for (const [routeId, points] of routeGroups) {
-                    const sortedPoints = points
-                        .slice()
-                        .sort((left, right) => new Date(left.recordedAtUtc) - new Date(right.recordedAtUtc));
-                    const coordinates = sortedPoints.map((point) => [Number(point.latitude), Number(point.longitude)]);
-
-                    if (coordinates.length >= 2) {
-                        L.polyline(coordinates, {
-                            color: routeIndex % 2 === 0 ? "#1d4ed8" : "#60a5fa",
-                            weight: 4,
-                            opacity: 0.72,
-                            dashArray: "8 8"
-                        }).addTo(routeLayer);
-                    }
-
-                    sortedPoints.forEach((point, index) => {
-                        L.circleMarker([Number(point.latitude), Number(point.longitude)], {
-                            radius: index === sortedPoints.length - 1 ? 6 : 4,
-                            color: "#ffffff",
-                            weight: 2,
-                            fillColor: index === sortedPoints.length - 1 ? "#ef4444" : "#2563eb",
-                            fillOpacity: 0.9
-                        })
-                            .bindPopup(`
-                                <div class="analytics-popup">
-                                    <div class="analytics-popup-title">Tuyến ${escapeHtml(routeId)}</div>
-                                    <div class="analytics-popup-meta">
-                                        ${escapeHtml(formatCoordinate(point.latitude))}, ${escapeHtml(formatCoordinate(point.longitude))}<br />
-                                        ${escapeHtml(formatTime(point.recordedAtUtc))}
-                                    </div>
-                                </div>`)
-                            .addTo(routeLayer);
-                    });
-
-                    routeIndex += 1;
-                }
-            };
-
-            const renderActiveDevices = (stats) => {
-                activeDeviceLayer.clearLayers();
-
-                getLocatedDevices(stats).forEach((device, index) => {
-                    L.marker([Number(device.latitude), Number(device.longitude)], {
-                        icon: buildUserIcon(index),
-                        title: `Người dùng online #${index + 1}`
-                    })
-                        .bindPopup(`
-                            <div class="analytics-popup">
-                                <div class="analytics-popup-title">Người dùng online #${index + 1}</div>
-                                <div class="analytics-popup-meta">
-                                    ${escapeHtml(formatCoordinate(device.latitude))}, ${escapeHtml(formatCoordinate(device.longitude))}<br />
-                                    ${escapeHtml(formatTime(device.locationTimestampUtc || device.lastSeenAtUtc))}
-                                </div>
-                            </div>`)
-                        .addTo(activeDeviceLayer);
-                });
-            };
-
-            const renderAnalytics = (stats) => {
-                lastStats = stats || {};
-                updateCounters(lastStats);
-                renderHeat(lastStats);
-                renderRoutes(lastStats);
-                renderActiveDevices(lastStats);
-            };
-
-            const buildBounds = (points) => {
-                if (!points.length) {
-                    return null;
-                }
-
-                return L.latLngBounds(points.map((point) => [Number(point.latitude), Number(point.longitude)]));
-            };
-
-            const fitBoundsOrCenter = (points, zoom = 17) => {
-                const bounds = buildBounds(points);
-                if (!bounds || !bounds.isValid()) {
-                    map.setView([fallbackLat, fallbackLng], zoom);
-                    return;
-                }
-
-                if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
-                    map.setView(bounds.getCenter(), zoom);
-                    return;
-                }
-
-                map.fitBounds(bounds.pad(0.2), { maxZoom: 18 });
-            };
-
-            const fitAnalytics = () => {
-                fitBoundsOrCenter([
-                    ...getHeatPoints(lastStats),
-                    ...getLocatedDevices(lastStats)
-                ]);
-            };
-
-            const fitPois = () => {
-                fitBoundsOrCenter(mapPois
-                    .map((poi) => ({ latitude: Number(poi.latitude), longitude: Number(poi.longitude) }))
-                    .filter((point) => isUsableCoordinate(point.latitude, point.longitude)));
-            };
-
-            const loadStats = async () => {
-                if (!statsUrl || isLoadingStats) {
-                    return;
-                }
-
-                isLoadingStats = true;
-                try {
-                    const response = await fetch(statsUrl, { cache: "no-store" });
-                    if (response.ok) {
-                        renderAnalytics(await response.json());
-                    }
-                } catch {
-                } finally {
-                    isLoadingStats = false;
-                }
-            };
-
-            const initializeMap = () => {
-                if (!window.L) {
-                    return;
-                }
-
-                map = L.map("analyticsMapCanvas", { zoomControl: true }).setView([fallbackLat, fallbackLng], 16);
-                L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                    maxZoom: 19,
-                    attribution: "&copy; OpenStreetMap"
-                }).addTo(map);
-
-                if (typeof L.heatLayer === "function") {
-                    heatLayer = L.heatLayer([], {
-                        radius: 32,
-                        blur: 28,
-                        maxZoom: 19,
-                        minOpacity: 0.35,
-                        gradient: {
-                            0.2: "#38bdf8",
-                            0.45: "#2563eb",
-                            0.7: "#7c3aed",
-                            1.0: "#ef4444"
-                        }
-                    }).addTo(map);
-                }
-
-                routeLayer = L.layerGroup().addTo(map);
-                activeDeviceLayer = L.layerGroup().addTo(map);
-                poiLayer = L.layerGroup().addTo(map);
-
-                renderPois();
-                renderAnalytics(lastStats);
-
-                window.setTimeout(() => {
-                    map.invalidateSize();
-                    const analyticsPoints = getHeatPoints(lastStats);
-                    if (analyticsPoints.length > 0) {
-                        fitAnalytics();
-                    } else {
-                        fitPois();
-                    }
-                }, 80);
-            };
-
-            fitAnalyticsButton?.addEventListener("click", fitAnalytics);
-            fitPoisButton?.addEventListener("click", fitPois);
-            initializeMap();
-            void loadStats();
-            window.setInterval(() => {
-                void loadStats();
-            }, 5000);
-
-            if ("EventSource" in window && eventsUrl) {
-                const source = new EventSource(eventsUrl);
-                source.addEventListener("active-devices", (event) => {
-                    try {
-                        renderAnalytics(JSON.parse(event.data));
-                    } catch {
-                        void loadStats();
-                    }
-                });
-                source.onerror = () => {
-                    source.close();
-                };
+            if (!window.L) {
+                fallback?.classList.remove("d-none");
+                return;
             }
 
-            window.addEventListener("focus", () => {
-                map?.invalidateSize();
-                void loadStats();
+            const hcmcCenter = [10.7769, 106.7009];
+            const hcmcBounds = [
+                [10.33, 106.35],
+                [11.17, 107.05]
+            ];
+            const routePalette = ["#2563eb", "#dc2626", "#16a34a", "#d97706", "#7c3aed", "#0891b2", "#be185d", "#65a30d"];
+            const map = L.map(mapElement, {
+                zoomControl: true,
+                preferCanvas: true,
+                maxBounds: hcmcBounds,
+                maxBoundsViscosity: 0.55
+            }).setView(hcmcCenter, 12);
+
+            const bounds = [];
+            const poiLayer = L.layerGroup();
+            const routeLayer = L.layerGroup();
+            let heatLayer = null;
+
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                maxZoom: 19,
+                attribution: "&copy; OpenStreetMap"
+            }).addTo(map);
+
+            pois.forEach((poi) => {
+                const latLng = [Number(poi.latitude), Number(poi.longitude)];
+                bounds.push(latLng);
+
+                const marker = L.marker(latLng, {
+                    icon: L.divIcon({
+                        className: `analytics-map__poi-marker ${poi.isTopListened ? "is-hot" : ""}`,
+                        html: `<span>${escapeHtml(poi.number)}</span>`,
+                        iconSize: poi.isTopListened ? [44, 44] : [34, 34],
+                        iconAnchor: poi.isTopListened ? [22, 22] : [17, 17]
+                    })
+                });
+
+                marker.bindPopup(`
+                    <strong>${escapeHtml(poi.name)}</strong><br>
+                    ${escapeHtml(poi.address)}<br>
+                    Bán kính: ${formatNumber(poi.radiusMeters)}m<br>
+                    Lượt nghe: ${formatNumber(poi.listenCount)}
+                `);
+
+                poiLayer.addLayer(marker);
+
+                if (Number(poi.radiusMeters) > 0) {
+                    poiLayer.addLayer(L.circle(latLng, {
+                        radius: Number(poi.radiusMeters),
+                        color: poi.isTopListened ? "#dc2626" : "#0f766e",
+                        fillColor: poi.isTopListened ? "#dc2626" : "#0f766e",
+                        fillOpacity: poi.isTopListened ? 0.14 : 0.08,
+                        weight: 1
+                    }));
+                }
             });
 
-            window.addEventListener("resize", () => {
-                map?.invalidateSize();
+            routes.forEach((route, index) => {
+                if (!Array.isArray(route.points) || route.points.length < 2) return;
+
+                const color = routePalette[index % routePalette.length];
+                const latLngs = route.points.map((point) => [Number(point.latitude), Number(point.longitude)]);
+                latLngs.forEach((point) => bounds.push(point));
+
+                const polyline = L.polyline(latLngs, {
+                    color,
+                    weight: 4,
+                    opacity: 0.84
+                });
+
+                polyline.bindPopup(`
+                    <strong>${escapeHtml(route.routeLabel || `Thiết bị ${index + 1}`)}</strong><br>
+                    ${formatNumber(route.pointCount)} điểm · ${formatNumber(route.approxDistanceMeters)}m<br>
+                    ${formatNumber(route.durationMinutes)} phút
+                `);
+
+                routeLayer.addLayer(polyline);
+                routeLayer.addLayer(L.circleMarker(latLngs[0], {
+                    radius: 6,
+                    color,
+                    fillColor: "#ffffff",
+                    fillOpacity: 1,
+                    weight: 2
+                }));
+                routeLayer.addLayer(L.circleMarker(latLngs[latLngs.length - 1], {
+                    radius: 5,
+                    color,
+                    fillColor: color,
+                    fillOpacity: 0.95,
+                    weight: 1
+                }));
             });
+
+            if (typeof L.heatLayer === "function" && Array.isArray(heatPoints) && heatPoints.length > 0) {
+                const maxHeatCount = heatPoints.reduce((max, point) => Math.max(max, Number(point.count) || 0), 1);
+                const heatSamples = heatPoints.map((point) => ([
+                    Number(point.latitude),
+                    Number(point.longitude),
+                    normalizeHeatWeight(point, maxHeatCount)
+                ]));
+
+                heatLayer = L.heatLayer(heatSamples, {
+                    radius: 32,
+                    blur: 24,
+                    maxZoom: 18,
+                    minOpacity: 0.14,
+                    gradient: {
+                        0.15: "#60a5fa",
+                        0.38: "#22c55e",
+                        0.62: "#facc15",
+                        0.82: "#fb923c",
+                        1.00: "#dc2626"
+                    }
+                });
+
+                heatPoints.forEach((point) => bounds.push([Number(point.latitude), Number(point.longitude)]));
+            } else if (Array.isArray(heatPoints) && heatPoints.length > 0) {
+                heatWarning?.classList.remove("d-none");
+            }
+
+            if (heatLayer) heatLayer.addTo(map);
+            if (routeLayer.getLayers().length > 0) routeLayer.addTo(map);
+            if (poiLayer.getLayers().length > 0) poiLayer.addTo(map);
+
+            const overlayLayers = {};
+            if (poiLayer.getLayers().length > 0) overlayLayers["POI"] = poiLayer;
+            if (routeLayer.getLayers().length > 0) overlayLayers["Tuyến thiết bị"] = routeLayer;
+            if (heatLayer) overlayLayers["Heatmap"] = heatLayer;
+
+            if (Object.keys(overlayLayers).length > 0) {
+                L.control.layers(null, overlayLayers, {
+                    collapsed: false,
+                    position: "topright"
+                }).addTo(map);
+            }
+
+            if (bounds.length > 0) {
+                const latLngBounds = L.latLngBounds(bounds);
+                if (latLngBounds.isValid()) {
+                    map.fitBounds(latLngBounds.pad(0.16), { maxZoom: 17 });
+                }
+            }
+
+            window.setTimeout(() => map.invalidateSize(), 0);
+
+            function normalizeHeatWeight(point, maxHeatCount) {
+                const explicitWeight = Number(point?.weight);
+                if (Number.isFinite(explicitWeight) && explicitWeight > 0) {
+                    return Math.min(1, Math.max(0.06, explicitWeight));
+                }
+
+                const count = Number(point?.count) || 0;
+                if (maxHeatCount <= 1) return 0.18;
+                return Math.min(1, Math.max(0.06, count / maxHeatCount));
+            }
+
+            function escapeHtml(value) {
+                return String(value ?? "")
+                    .replaceAll("&", "&amp;")
+                    .replaceAll("<", "&lt;")
+                    .replaceAll(">", "&gt;")
+                    .replaceAll('"', "&quot;")
+                    .replaceAll("'", "&#039;");
+            }
+
+            function formatNumber(value) {
+                const numericValue = Number(value ?? 0);
+                return new Intl.NumberFormat("vi-VN", {
+                    maximumFractionDigits: numericValue >= 100 ? 0 : 1
+                }).format(numericValue);
+            }
         })();
     </script>
 }

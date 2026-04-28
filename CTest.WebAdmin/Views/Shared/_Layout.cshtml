@@ -64,8 +64,11 @@
                         </a>
 
                         <div class="sidebar-section">Hệ thống</div>
-                        <a class="@SidebarLinkClass("SystemAdmin")" asp-controller="SystemAdmin" asp-action="Index">
+                        <a class="@SidebarLinkClass("AdminUsers")" asp-controller="AdminUsers" asp-action="Index">
                             <span class="nav-dot"></span><span>Tài khoản</span>
+                        </a>
+                        <a class="@SidebarLinkClass("SystemAdmin")" asp-controller="SystemAdmin" asp-action="Index">
+                            <span class="nav-dot"></span><span>Người dùng app</span>
                         </a>
                     }
                     else if (isOwner)

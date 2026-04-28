@@ -1,0 +1,119 @@
+@using System.Globalization
+@using CTest.WebAdmin.Security
+@model AdminUserFormViewModel
+
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<input asp-for="OriginalUsername" type="hidden" />
+<input asp-for="CreatedAtUtc" type="hidden" />
+<input asp-for="LastLoginAtUtc" type="hidden" />
+
+<div class="account-form-layout">
+    <section class="account-card mb-0">
+        <div class="account-card__header">
+            <div>
+                <p class="account-kicker mb-1">Thông tin đăng nhập</p>
+                <h2>@(Model.IsEditMode ? "Cập nhật tài khoản" : "Tạo tài khoản mới")</h2>
+            </div>
+        </div>
+        <div class="account-card__body">
+            <div class="account-form-grid">
+                <div>
+                    <label asp-for="Username" class="form-label"></label>
+                    <input asp-for="Username" class="form-control" autocomplete="username" />
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+
+                <div>
+                    <label asp-for="DisplayName" class="form-label"></label>
+                    <input asp-for="DisplayName" class="form-control" autocomplete="name" />
+                    <span asp-validation-for="DisplayName" class="text-danger"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Role" class="form-label"></label>
+                    <select asp-for="Role" class="form-select" id="accountRoleSelect">
+                        <option value="@WebAdminRoles.Admin">Admin</option>
+                        <option value="@WebAdminRoles.PoiOwner">Chủ cửa hàng</option>
+                    </select>
+                    <span asp-validation-for="Role" class="text-danger"></span>
+                </div>
+
+                <div class="owner-field">
+                    <label asp-for="OwnerCode" class="form-label"></label>
+                    <input asp-for="OwnerCode" class="form-control" placeholder="Mặc định là tên đăng nhập nếu bỏ trống" />
+                    <span asp-validation-for="OwnerCode" class="text-danger"></span>
+                </div>
+
+                <div class="owner-field span-2">
+                    <label asp-for="OwnerEmail" class="form-label"></label>
+                    <input asp-for="OwnerEmail" class="form-control" type="email" />
+                    <span asp-validation-for="OwnerEmail" class="text-danger"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control" autocomplete="new-password"
+                           placeholder="@(Model.IsEditMode ? "Để trống nếu không đổi" : "Tối thiểu 6 ký tự")" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <div>
+                    <label asp-for="ConfirmPassword" class="form-label"></label>
+                    <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <div class="span-2">
+                    <div class="form-check form-switch">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <aside class="account-card mb-0">
+        <div class="account-card__header">
+            <div>
+                <p class="account-kicker mb-1">Tóm tắt</p>
+                <h2>Tài khoản</h2>
+            </div>
+        </div>
+        <div class="account-card__body">
+            <div class="account-summary">
+                <div class="account-summary-row">
+                    <span>Trạng thái</span>
+                    <strong>@(Model.IsActive ? "Được đăng nhập" : "Đang khóa")</strong>
+                </div>
+                <div class="account-summary-row">
+                    <span>Ngày tạo</span>
+                    <strong>
+                        @(Model.CreatedAtUtc.HasValue
+                            ? Model.CreatedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture)
+                            : "-")
+                    </strong>
+                </div>
+                <div class="account-summary-row">
+                    <span>Đăng nhập gần nhất</span>
+                    <strong>
+                        @(Model.LastLoginAtUtc.HasValue
+                            ? Model.LastLoginAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture)
+                            : "Chưa đăng nhập")
+                    </strong>
+                </div>
+                <div class="account-summary-row">
+                    <span>POI sở hữu</span>
+                    <strong>@Model.OwnedPoiCount</strong>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<div class="account-actions mt-3">
+    <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+    <button type="submit" class="btn btn-primary">
+        @(Model.IsEditMode ? "Lưu thay đổi" : "Tạo tài khoản")
+    </button>
+</div>

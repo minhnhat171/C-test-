@@ -12,6 +12,8 @@ public interface IWebAdminAccountStore
         WebAdminAuthUserOptions request,
         string? originalUsername,
         string? plainPassword);
+    bool ResetPassword(string? username, string plainPassword);
+    bool RecordLogin(string? username);
     bool Delete(string? username);
 }
 
@@ -87,6 +89,9 @@ public sealed class WebAdminAccountStore : IWebAdminAccountStore
 
             ValidateForSave(normalized, existing, plainPassword);
 
+            normalized.CreatedAtUtc = existing?.CreatedAtUtc ?? DateTimeOffset.UtcNow;
+            normalized.LastLoginAtUtc = existing?.LastLoginAtUtc;
+
             if (!string.IsNullOrWhiteSpace(plainPassword))
             {
                 normalized.PasswordHash = WebAdminPasswordHasher.HashPassword(plainPassword.Trim());
@@ -112,6 +117,61 @@ public sealed class WebAdminAccountStore : IWebAdminAccountStore
         }
     }
 
+    public bool ResetPassword(string? username, string plainPassword)
+    {
+        var normalizedUsername = NormalizeLookup(username);
+        if (string.IsNullOrWhiteSpace(normalizedUsername) ||
+            string.IsNullOrWhiteSpace(plainPassword))
+        {
+            return false;
+        }
+
+        lock (_syncRoot)
+        {
+            var user = _users.FirstOrDefault(item =>
+                string.Equals(NormalizeLookup(item.Username), normalizedUsername, StringComparison.OrdinalIgnoreCase));
+
+            if (user is null)
+            {
+                return false;
+            }
+
+            if (plainPassword.Trim().Length < 6)
+            {
+                throw new ArgumentException("Mật khẩu phải có ít nhất 6 ký tự.", nameof(plainPassword));
+            }
+
+            user.PasswordHash = WebAdminPasswordHasher.HashPassword(plainPassword.Trim());
+            user.Password = string.Empty;
+            SaveUnsafe();
+            return true;
+        }
+    }
+
+    public bool RecordLogin(string? username)
+    {
+        var normalizedUsername = NormalizeLookup(username);
+        if (string.IsNullOrWhiteSpace(normalizedUsername))
+        {
+            return false;
+        }
+
+        lock (_syncRoot)
+        {
+            var user = _users.FirstOrDefault(item =>
+                string.Equals(NormalizeLookup(item.Username), normalizedUsername, StringComparison.OrdinalIgnoreCase));
+
+            if (user is null)
+            {
+                return false;
+            }
+
+            user.LastLoginAtUtc = DateTimeOffset.UtcNow;
+            SaveUnsafe();
+            return true;
+        }
+    }
+
     public bool Delete(string? username)
     {
         var normalizedUsername = NormalizeLookup(username);
@@ -130,8 +190,13 @@ public sealed class WebAdminAccountStore : IWebAdminAccountStore
             }
 
             var user = _users[index];
-            if (string.Equals(user.Role, WebAdminRoles.Admin, StringComparison.OrdinalIgnoreCase) &&
-                _users.Count(item => string.Equals(item.Role, WebAdminRoles.Admin, StringComparison.OrdinalIgnoreCase)) <= 1)
+            var wouldHaveActiveAdmin = _users
+                .Where((_, itemIndex) => itemIndex != index)
+                .Any(item =>
+                    item.IsActive &&
+                    string.Equals(item.Role, WebAdminRoles.Admin, StringComparison.OrdinalIgnoreCase));
+
+            if (!wouldHaveActiveAdmin)
             {
                 return false;
             }
@@ -224,9 +289,9 @@ public sealed class WebAdminAccountStore : IWebAdminAccountStore
             throw new ArgumentException("Mật khẩu là bắt buộc khi tạo tài khoản.", nameof(user));
         }
 
-        if (!string.IsNullOrWhiteSpace(plainPassword) && plainPassword.Trim().Length < 8)
+        if (!string.IsNullOrWhiteSpace(plainPassword) && plainPassword.Trim().Length < 6)
         {
-            throw new ArgumentException("Mật khẩu phải có ít nhất 8 ký tự.", nameof(user));
+            throw new ArgumentException("Mật khẩu phải có ít nhất 6 ký tự.", nameof(user));
         }
 
         if (!string.IsNullOrWhiteSpace(user.OwnerEmail) &&
@@ -241,6 +306,18 @@ public sealed class WebAdminAccountStore : IWebAdminAccountStore
         if (duplicate)
         {
             throw new InvalidOperationException($"Tài khoản '{user.Username}' đã tồn tại.");
+        }
+
+        var wouldHaveActiveAdmin = _users
+            .Where(item => !ReferenceEquals(item, existing))
+            .Append(user)
+            .Any(item =>
+                item.IsActive &&
+                string.Equals(item.Role, WebAdminRoles.Admin, StringComparison.OrdinalIgnoreCase));
+
+        if (!wouldHaveActiveAdmin)
+        {
+            throw new InvalidOperationException("Cần giữ ít nhất một tài khoản Admin đang hoạt động.");
         }
     }
 
@@ -264,6 +341,10 @@ public sealed class WebAdminAccountStore : IWebAdminAccountStore
         normalized.OwnerEmail = string.Equals(normalized.Role, WebAdminRoles.PoiOwner, StringComparison.OrdinalIgnoreCase)
             ? normalized.OwnerEmail?.Trim().ToLowerInvariant() ?? string.Empty
             : string.Empty;
+        normalized.CreatedAtUtc = normalized.CreatedAtUtc == default
+            ? DateTimeOffset.UtcNow
+            : normalized.CreatedAtUtc.ToUniversalTime();
+        normalized.LastLoginAtUtc = normalized.LastLoginAtUtc?.ToUniversalTime();
 
         if (string.IsNullOrWhiteSpace(normalized.PasswordHash) &&
             !string.IsNullOrWhiteSpace(normalized.Password))
@@ -302,7 +383,10 @@ public sealed class WebAdminAccountStore : IWebAdminAccountStore
             DisplayName = user.DisplayName,
             Role = user.Role,
             OwnerCode = user.OwnerCode,
-            OwnerEmail = user.OwnerEmail
+            OwnerEmail = user.OwnerEmail,
+            IsActive = user.IsActive,
+            CreatedAtUtc = user.CreatedAtUtc,
+            LastLoginAtUtc = user.LastLoginAtUtc
         };
     }
 }

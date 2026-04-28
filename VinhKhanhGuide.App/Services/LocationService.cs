@@ -99,7 +99,7 @@ public class LocationService : ILocationService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"GPS Snapshot Error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"GPS Snapshot Error: {ex.Message}");
             return null;
         }
     }
@@ -200,7 +200,7 @@ public class LocationService : ILocationService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"GPS Error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"GPS Error: {ex.Message}");
             }
 
             try

@@ -1,0 +1,36 @@
+@model AdminUserFormViewModel
+@{
+    ViewData["Title"] = "Thêm tài khoản";
+}
+
+<link rel="stylesheet" href="~/css/admin-users.css" asp-append-version="true" />
+
+<div class="admin-users-page">
+    <section class="account-page-header">
+        <div>
+            <p class="account-kicker mb-1">Quản lý tài khoản</p>
+            <h2>Thêm tài khoản</h2>
+        </div>
+    </section>
+
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+        <partial name="_Form" model="Model" />
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const roleSelect = document.getElementById("accountRoleSelect");
+            const ownerFields = Array.from(document.querySelectorAll(".owner-field"));
+            const sync = () => {
+                const isOwner = roleSelect?.value === "PoiOwner";
+                ownerFields.forEach((field) => field.classList.toggle("d-none", !isOwner));
+            };
+            roleSelect?.addEventListener("change", sync);
+            sync();
+        })();
+    </script>
+}

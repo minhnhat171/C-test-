@@ -1,22 +1,17 @@
 @model SystemAdminViewModel
 @{
-    ViewData["Title"] = "Tài khoản";
+    ViewData["Title"] = "Người dùng app";
 }
 
 <style>
-    .system-page {
+    .app-users-page {
         --line: rgba(148, 163, 184, 0.22);
         --muted: #64748b;
         color: #0f172a;
     }
 
-    .system-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 380px;
-        gap: 1rem;
-    }
-
-    .system-panel {
+    .app-users-header,
+    .app-users-panel {
         border: 1px solid var(--line);
         border-radius: 8px;
         background: #fff;
@@ -24,11 +19,39 @@
         overflow: hidden;
     }
 
-    .system-panel-body {
+    .app-users-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
         padding: 1rem;
     }
 
-    .system-title {
+    .app-users-header h2,
+    .app-users-title h2 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 800;
+    }
+
+    .app-users-kicker {
+        margin-bottom: 0.25rem;
+        color: var(--muted);
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .app-users-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 380px;
+        gap: 1rem;
+        align-items: start;
+    }
+
+    .app-users-title {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -37,18 +60,22 @@
         border-bottom: 1px solid var(--line);
     }
 
-    .system-title h2 {
-        margin: 0;
-        font-size: 1rem;
-        font-weight: 800;
+    .app-users-body {
+        padding: 1rem;
     }
 
-    .system-table {
+    .app-users-toolbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.7rem;
+    }
+
+    .app-users-table {
         margin: 0;
         --bs-table-bg: transparent;
     }
 
-    .system-table thead th {
+    .app-users-table thead th {
         padding: 0.85rem 1rem;
         color: var(--muted);
         font-size: 0.75rem;
@@ -60,13 +87,12 @@
         white-space: nowrap;
     }
 
-    .system-table tbody td {
+    .app-users-table tbody td {
         padding: 0.9rem 1rem;
         border-color: rgba(148, 163, 184, 0.14);
         vertical-align: middle;
     }
 
-    .role-chip,
     .status-chip {
         display: inline-flex;
         align-items: center;
@@ -74,16 +100,6 @@
         padding: 0.32rem 0.72rem;
         font-size: 0.8rem;
         font-weight: 700;
-    }
-
-    .role-chip.admin {
-        background: #e0f2fe;
-        color: #075985;
-    }
-
-    .role-chip.owner {
-        background: #fef3c7;
-        color: #92400e;
     }
 
     .status-chip.online {
@@ -96,54 +112,42 @@
         color: #475569;
     }
 
-    .system-actions {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        gap: 0.45rem;
-    }
-
-    .system-form-grid {
+    .app-users-form {
         display: grid;
         gap: 0.8rem;
     }
 
     .form-control,
     .form-select {
+        min-height: 44px;
         border-color: rgba(148, 163, 184, 0.28);
         border-radius: 8px;
-        min-height: 44px;
     }
 
     .form-label {
-        font-weight: 700;
         font-size: 0.86rem;
-    }
-
-    .app-user-toolbar {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 0.7rem;
+        font-weight: 700;
     }
 
     @@media (max-width: 1199.98px) {
-        .system-grid {
+        .app-users-grid {
             grid-template-columns: 1fr;
         }
     }
 
     @@media (max-width: 767.98px) {
-        .app-user-toolbar {
-            grid-template-columns: 1fr;
+        .app-users-header,
+        .app-users-title {
+            display: grid;
         }
 
-        .system-actions {
-            justify-content: flex-start;
+        .app-users-toolbar {
+            grid-template-columns: 1fr;
         }
     }
 </style>
 
-<div class="system-page">
+<div class="app-users-page">
     @if (TempData["SystemAdminMessage"] is string message)
     {
         <div class="alert alert-success border-0 shadow-sm">@message</div>
@@ -159,125 +163,22 @@
         <div class="alert alert-danger border-0 shadow-sm" asp-validation-summary="All"></div>
     }
 
-    <div class="system-grid mb-4">
-        <div class="system-panel">
-            <div class="system-title">
-                <h2>Admin và chủ cửa hàng</h2>
-                <span class="text-muted small">@Model.WebAdminAccounts.Count tài khoản</span>
-            </div>
-            <div class="table-responsive">
-                <table class="table system-table align-middle">
-                    <thead>
-                        <tr>
-                            <th>Tài khoản</th>
-                            <th>Vai trò</th>
-                            <th>Owner code</th>
-                            <th>Email</th>
-                            <th class="text-end">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach (var item in Model.WebAdminAccounts)
-                    {
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">@item.DisplayName</div>
-                                <div class="text-muted small">@item.Username</div>
-                            </td>
-                            <td>
-                                <span class="role-chip @(item.IsAdmin ? "admin" : "owner")">@item.RoleLabel</span>
-                            </td>
-                            <td>@(string.IsNullOrWhiteSpace(item.OwnerCode) ? "-" : item.OwnerCode)</td>
-                            <td>@(string.IsNullOrWhiteSpace(item.OwnerEmail) ? "-" : item.OwnerEmail)</td>
-                            <td>
-                                <div class="system-actions">
-                                    <a asp-action="Index"
-                                       asp-route-editAdmin="@item.Username"
-                                       class="btn btn-outline-primary btn-sm">Sửa</a>
-                                    <form asp-action="DeleteAccount"
-                                          method="post"
-                                          onsubmit="return confirm('Xóa tài khoản này?');">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="username" value="@item.Username" />
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">Xóa</button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-            </div>
+    <section class="app-users-header">
+        <div>
+            <div class="app-users-kicker">Người dùng app</div>
+            <h2>Hồ sơ người dùng ứng dụng</h2>
+            <p class="text-muted mb-0 mt-2">Chỉ quản lý các người dùng phát sinh khi dùng app: mã người dùng, email, thiết bị, trạng thái online và lượt nghe.</p>
         </div>
+        <span class="text-muted small">@Model.AppUsers.Count hồ sơ</span>
+    </section>
 
-        <div class="system-panel">
-            <div class="system-title">
-                <h2>@(Model.AccountForm.IsEditMode ? "Sửa tài khoản" : "Thêm tài khoản")</h2>
-                @if (Model.AccountForm.IsEditMode)
-                {
-                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Hủy</a>
-                }
+    <div class="app-users-grid">
+        <div class="app-users-panel">
+            <div class="app-users-title">
+                <h2>Danh sách người dùng app</h2>
             </div>
-            <div class="system-panel-body">
-                <form asp-action="SaveAccount" method="post" class="system-form-grid">
-                    @Html.AntiForgeryToken()
-                    <input asp-for="AccountForm.OriginalUsername" type="hidden" />
-                    <input asp-for="AppUserKeyword" type="hidden" />
-
-                    <div>
-                        <label asp-for="AccountForm.Username" class="form-label">Tên đăng nhập</label>
-                        <input asp-for="AccountForm.Username" class="form-control" autocomplete="off" />
-                    </div>
-
-                    <div>
-                        <label asp-for="AccountForm.DisplayName" class="form-label">Tên hiển thị</label>
-                        <input asp-for="AccountForm.DisplayName" class="form-control" />
-                    </div>
-
-                    <div>
-                        <label asp-for="AccountForm.Role" class="form-label">Vai trò</label>
-                        <select asp-for="AccountForm.Role" class="form-select" id="adminRoleSelect">
-                            <option value="Admin">Admin</option>
-                            <option value="PoiOwner">Chủ cửa hàng</option>
-                        </select>
-                    </div>
-
-                    <div class="owner-field">
-                        <label asp-for="AccountForm.OwnerCode" class="form-label">Owner code</label>
-                        <input asp-for="AccountForm.OwnerCode" class="form-control" />
-                    </div>
-
-                    <div class="owner-field">
-                        <label asp-for="AccountForm.OwnerEmail" class="form-label">Email chủ cửa hàng</label>
-                        <input asp-for="AccountForm.OwnerEmail" class="form-control" type="email" />
-                    </div>
-
-                    <div>
-                        <label asp-for="AccountForm.Password" class="form-label">Mật khẩu</label>
-                        <input asp-for="AccountForm.Password" class="form-control" type="password" autocomplete="new-password" />
-                    </div>
-
-                    <div>
-                        <label asp-for="AccountForm.ConfirmPassword" class="form-label">Xác nhận mật khẩu</label>
-                        <input asp-for="AccountForm.ConfirmPassword" class="form-control" type="password" autocomplete="new-password" />
-                    </div>
-
-                    <button type="submit" class="btn btn-dark w-100">
-                        @(Model.AccountForm.IsEditMode ? "Lưu thay đổi" : "Tạo tài khoản")
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="system-grid">
-        <div class="system-panel">
-            <div class="system-title">
-                <h2>Người dùng app</h2>
-                <span class="text-muted small">@Model.AppUsers.Count hồ sơ</span>
-            </div>
-            <div class="system-panel-body border-bottom">
-                <form method="get" asp-action="Index" class="app-user-toolbar">
+            <div class="app-users-body border-bottom">
+                <form method="get" asp-action="Index" class="app-users-toolbar">
                     <input class="form-control" type="search" name="keyword" value="@Model.AppUserKeyword" placeholder="Tìm theo tên, email, mã người dùng..." />
                     <div class="d-flex gap-2">
                         <button class="btn btn-dark" type="submit">Tìm</button>
@@ -292,7 +193,7 @@
             }
 
             <div class="table-responsive">
-                <table class="table system-table align-middle">
+                <table class="table app-users-table align-middle">
                     <thead>
                         <tr>
                             <th>Người dùng</th>
@@ -343,16 +244,16 @@
             </div>
         </div>
 
-        <div class="system-panel">
-            <div class="system-title">
+        <div class="app-users-panel">
+            <div class="app-users-title">
                 <h2>@(Model.AppUserForm.IsEditMode ? "Sửa app user" : "Thêm app user")</h2>
                 @if (Model.AppUserForm.IsEditMode)
                 {
                     <a asp-action="Index" asp-route-keyword="@Model.AppUserKeyword" class="btn btn-outline-secondary btn-sm">Hủy</a>
                 }
             </div>
-            <div class="system-panel-body">
-                <form asp-action="SaveAppUser" method="post" class="system-form-grid">
+            <div class="app-users-body">
+                <form asp-action="SaveAppUser" method="post" class="app-users-form">
                     @Html.AntiForgeryToken()
                     <input asp-for="AppUserForm.Id" type="hidden" />
                     <input asp-for="AppUserKeyword" type="hidden" />
@@ -400,22 +301,3 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        (() => {
-            const roleSelect = document.getElementById("adminRoleSelect");
-            const ownerFields = Array.from(document.querySelectorAll(".owner-field"));
-
-            const updateOwnerFields = () => {
-                const isOwner = roleSelect?.value === "PoiOwner";
-                ownerFields.forEach((field) => {
-                    field.classList.toggle("d-none", !isOwner);
-                });
-            };
-
-            roleSelect?.addEventListener("change", updateOwnerFields);
-            updateOwnerFields();
-        })();
-    </script>
-}
