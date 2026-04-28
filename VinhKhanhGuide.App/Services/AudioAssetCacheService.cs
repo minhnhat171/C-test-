@@ -13,9 +13,12 @@ public sealed class AudioAssetCacheService : IAudioAssetCacheService
 
     private readonly SemaphoreSlim _ioGate = new(1, 1);
     private readonly HttpClient _httpClient;
+    private readonly IApiEndpointService _apiEndpointService;
 
-    public AudioAssetCacheService()
+    public AudioAssetCacheService(IApiEndpointService apiEndpointService)
     {
+        _apiEndpointService = apiEndpointService;
+
         var handler = new SocketsHttpHandler
         {
             AutomaticDecompression = DecompressionMethods.All,
@@ -40,10 +43,6 @@ public sealed class AudioAssetCacheService : IAudioAssetCacheService
 
         var normalizedPath = audioAssetPath.Trim();
         var cachedFilePath = GetCachedFilePath(normalizedPath);
-        if (File.Exists(cachedFilePath))
-        {
-            return cachedFilePath;
-        }
 
         if (Uri.TryCreate(normalizedPath, UriKind.Absolute, out var sourceUri))
         {
@@ -60,14 +59,30 @@ public sealed class AudioAssetCacheService : IAudioAssetCacheService
 
             if (sourceUri.Scheme == Uri.UriSchemeHttp || sourceUri.Scheme == Uri.UriSchemeHttps)
             {
-                await DownloadRemoteAudioAsync(sourceUri, cachedFilePath, cancellationToken);
-                return cachedFilePath;
+                return await ResolveRemoteAudioAsync(sourceUri, cachedFilePath, cancellationToken);
             }
         }
 
         if (Path.IsPathRooted(normalizedPath) && File.Exists(normalizedPath))
         {
             return normalizedPath;
+        }
+
+        if (TryResolveRemoteRelativeUri(normalizedPath, out var remoteRelativeUri))
+        {
+            try
+            {
+                return await ResolveRemoteAudioAsync(remoteRelativeUri, cachedFilePath, cancellationToken);
+            }
+            catch
+            {
+                // Keep compatibility with any audio bundled directly in the APK.
+            }
+        }
+
+        if (File.Exists(cachedFilePath))
+        {
+            return cachedFilePath;
         }
 
         await CopyPackagedAudioAsync(normalizedPath, cachedFilePath, cancellationToken);
@@ -182,7 +197,22 @@ public sealed class AudioAssetCacheService : IAudioAssetCacheService
     private static IReadOnlyList<string> GetDistinctAssetPaths(IEnumerable<POI> pois)
     {
         return pois
-            .Select(item => item.AudioAssetPath?.Trim())
+            .SelectMany(item =>
+            {
+                var paths = new List<string>();
+                if (!string.IsNullOrWhiteSpace(item.AudioAssetPath))
+                {
+                    paths.Add(item.AudioAssetPath);
+                }
+
+                if (item.AudioAssetPaths is not null)
+                {
+                    paths.AddRange(item.AudioAssetPaths.Values);
+                }
+
+                return paths;
+            })
+            .Select(item => item?.Trim())
             .Where(item => !string.IsNullOrWhiteSpace(item))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Cast<string>()
@@ -192,13 +222,14 @@ public sealed class AudioAssetCacheService : IAudioAssetCacheService
     private async Task DownloadRemoteAudioAsync(
         Uri sourceUri,
         string cachedFilePath,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool overwriteExisting = false)
     {
         await _ioGate.WaitAsync(cancellationToken);
 
         try
         {
-            if (File.Exists(cachedFilePath))
+            if (File.Exists(cachedFilePath) && !overwriteExisting)
             {
                 return;
             }
@@ -246,6 +277,44 @@ public sealed class AudioAssetCacheService : IAudioAssetCacheService
         {
             _ioGate.Release();
         }
+    }
+
+    private async Task<string> ResolveRemoteAudioAsync(
+        Uri sourceUri,
+        string cachedFilePath,
+        CancellationToken cancellationToken)
+    {
+        var hadCachedCopy = File.Exists(cachedFilePath);
+
+        try
+        {
+            await DownloadRemoteAudioAsync(
+                sourceUri,
+                cachedFilePath,
+                cancellationToken,
+                overwriteExisting: true);
+        }
+        catch when (hadCachedCopy)
+        {
+            return cachedFilePath;
+        }
+
+        return cachedFilePath;
+    }
+
+    private bool TryResolveRemoteRelativeUri(string audioAssetPath, out Uri remoteUri)
+    {
+        remoteUri = null!;
+
+        if (string.IsNullOrWhiteSpace(audioAssetPath) ||
+            Uri.TryCreate(audioAssetPath, UriKind.Absolute, out _) ||
+            Path.IsPathRooted(audioAssetPath) && !audioAssetPath.StartsWith("/", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        remoteUri = new Uri(_apiEndpointService.CurrentBaseUri, audioAssetPath.TrimStart('/'));
+        return remoteUri.Scheme == Uri.UriSchemeHttp || remoteUri.Scheme == Uri.UriSchemeHttps;
     }
 
     private static async Task WriteFileAsync(

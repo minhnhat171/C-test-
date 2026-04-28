@@ -50,7 +50,7 @@ public class ListeningHistorySyncService : IListeningHistorySyncService
                 Language = string.IsNullOrWhiteSpace(language) ? "vi" : language!.Trim(),
                 PlaybackMode = string.Equals(playbackMode, "audio", StringComparison.OrdinalIgnoreCase) ? "audio" : "tts",
                 NarrationSnapshot = poi.GetNarrationText(language),
-                AudioAssetPath = poi.AudioAssetPath,
+                AudioAssetPath = poi.GetAudioAssetPath(language),
                 Source = "app",
                 DevicePlatform = DeviceInfo.Current.Platform.ToString(),
                 AutoTriggered = autoTriggered,

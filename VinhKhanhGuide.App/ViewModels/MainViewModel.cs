@@ -3299,7 +3299,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         string errorMessage = string.Empty;
         var playbackRequest = ResolvePlaybackRequest(
             SelectedPlaybackMode,
-            poi.AudioAssetPath,
+            poi.GetAudioAssetPath(SelectedLanguage),
             allowAudioFallback: true);
         _lastNarratedAt[poi.Id] = DateTimeOffset.UtcNow;
         if (autoTriggered)
@@ -4329,7 +4329,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             var previewPoi = GetAudioPreviewPoi();
             var playbackRequest = ResolvePlaybackRequest(
                 DraftSelectedPlaybackMode,
-                previewPoi?.AudioAssetPath,
+                previewPoi?.GetAudioAssetPath(DraftSelectedLanguage),
                 allowAudioFallback: false);
 
             if (!string.IsNullOrWhiteSpace(playbackRequest.FallbackMessage))
@@ -4600,6 +4600,17 @@ public partial class MainViewModel : INotifyPropertyChanged
         var narrationText = string.IsNullOrWhiteSpace(item.NarrationSnapshot)
             ? basePoi?.GetNarrationText(item.Language) ?? string.Empty
             : item.NarrationSnapshot;
+        var audioAssetPath = string.IsNullOrWhiteSpace(item.AudioAssetPath)
+            ? basePoi?.GetAudioAssetPath(item.Language) ?? string.Empty
+            : item.AudioAssetPath;
+        var audioAssetPaths = new Dictionary<string, string>(
+            basePoi?.AudioAssetPaths ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+            StringComparer.OrdinalIgnoreCase);
+
+        if (!string.IsNullOrWhiteSpace(item.Language) && !string.IsNullOrWhiteSpace(audioAssetPath))
+        {
+            audioAssetPaths[NormalizeAudioLanguageCode(item.Language)] = audioAssetPath;
+        }
 
         return new POI
         {
@@ -4619,9 +4630,10 @@ public partial class MainViewModel : INotifyPropertyChanged
                 ? basePoi?.MapLink ?? string.Empty
                 : item.MapLink,
             NarrationText = narrationText,
-            AudioAssetPath = string.IsNullOrWhiteSpace(item.AudioAssetPath)
-                ? basePoi?.AudioAssetPath ?? string.Empty
-                : item.AudioAssetPath,
+            AudioAssetPath = string.Equals(NormalizeAudioLanguageCode(item.Language), "vi", StringComparison.OrdinalIgnoreCase)
+                ? audioAssetPath
+                : basePoi?.AudioAssetPath ?? string.Empty,
+            AudioAssetPaths = audioAssetPaths,
             Priority = basePoi?.Priority ?? 1,
             Latitude = basePoi?.Latitude ?? 0,
             Longitude = basePoi?.Longitude ?? 0,
@@ -4638,6 +4650,38 @@ public partial class MainViewModel : INotifyPropertyChanged
                     basePoi?.NarrationTranslations ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
                     StringComparer.OrdinalIgnoreCase)
         };
+    }
+
+    private static string NormalizeAudioLanguageCode(string? languageCode)
+    {
+        var normalized = (languageCode ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (normalized.StartsWith("vi", StringComparison.Ordinal))
+        {
+            return "vi";
+        }
+
+        if (normalized.StartsWith("en", StringComparison.Ordinal))
+        {
+            return "en";
+        }
+
+        if (normalized.StartsWith("zh", StringComparison.Ordinal))
+        {
+            return "zh";
+        }
+
+        if (normalized.StartsWith("ko", StringComparison.Ordinal))
+        {
+            return "ko";
+        }
+
+        if (normalized.StartsWith("fr", StringComparison.Ordinal))
+        {
+            return "fr";
+        }
+
+        return string.IsNullOrWhiteSpace(normalized) ? "vi" : normalized;
     }
 
     private void ClearEventLogs()
@@ -4753,7 +4797,7 @@ public partial class MainViewModel : INotifyPropertyChanged
             PlaybackMode = playbackMode,
             PlaybackModeLabel = playbackModeLabel,
             NarrationSnapshot = narrationSnapshot,
-            AudioAssetPath = poi.AudioAssetPath,
+            AudioAssetPath = poi.GetAudioAssetPath(language),
             NarrationPreview = BuildNarrationPreview(narrationSnapshot),
             StartedAtLabel = startedAt.ToString("dd/MM/yyyy HH:mm:ss"),
             StartedAtShortLabel = startedAt.ToString("HH:mm"),
@@ -5244,6 +5288,17 @@ public partial class MainViewModel : INotifyPropertyChanged
                     .Append(translation.Key)
                     .Append('=')
                     .Append(translation.Value);
+            }
+
+            foreach (var audioAssetPath in (poi.AudioAssetPaths ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase))
+                         .OrderBy(item => item.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                builder
+                    .Append('|')
+                    .Append("audio:")
+                    .Append(audioAssetPath.Key)
+                    .Append('=')
+                    .Append(audioAssetPath.Value);
             }
 
             builder.AppendLine();

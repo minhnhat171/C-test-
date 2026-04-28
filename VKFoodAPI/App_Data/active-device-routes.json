@@ -446,5 +446,19 @@
     "Longitude": 106.70220833333333,
     "AccuracyMeters": 5,
     "RecordedAtUtc": "2026-04-27T20:07:30.574+00:00"
+  },
+  {
+    "AnonymousRouteId": "ANON-77AAF9",
+    "Latitude": 10.761818333333334,
+    "Longitude": 106.70220833333333,
+    "AccuracyMeters": 5,
+    "RecordedAtUtc": "2026-04-27T20:09:33.008+00:00"
+  },
+  {
+    "AnonymousRouteId": "ANON-77AAF9",
+    "Latitude": 10.761818333333334,
+    "Longitude": 106.70220833333333,
+    "AccuracyMeters": 5,
+    "RecordedAtUtc": "2026-04-27T20:11:35.394+00:00"
   }
 ]

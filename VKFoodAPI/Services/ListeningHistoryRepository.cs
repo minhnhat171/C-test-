@@ -241,7 +241,7 @@ public class ListeningHistoryRepository
             Language = language,
             PlaybackMode = NormalizePlaybackMode(request.PlaybackMode),
             NarrationSnapshot = ResolveNarrationSnapshot(request.NarrationSnapshot, poi, language),
-            AudioAssetPath = ResolvePoiUrl(request.AudioAssetPath, poi?.AudioAssetPath),
+            AudioAssetPath = ResolveAudioAssetPath(request.AudioAssetPath, poi, language),
             Source = RepairText(request.Source, "app"),
             DevicePlatform = RepairText(request.DevicePlatform),
             AutoTriggered = request.AutoTriggered,
@@ -277,7 +277,7 @@ public class ListeningHistoryRepository
         normalized.Language = NormalizeLanguage(normalized.Language);
         normalized.PlaybackMode = NormalizePlaybackMode(normalized.PlaybackMode);
         normalized.NarrationSnapshot = ResolveNarrationSnapshot(normalized.NarrationSnapshot, poi, normalized.Language);
-        normalized.AudioAssetPath = ResolvePoiUrl(normalized.AudioAssetPath, poi?.AudioAssetPath);
+        normalized.AudioAssetPath = ResolveAudioAssetPath(normalized.AudioAssetPath, poi, normalized.Language);
         normalized.Source = RepairText(normalized.Source, "app");
         normalized.DevicePlatform = RepairText(normalized.DevicePlatform);
         normalized.ErrorMessage = RepairText(normalized.ErrorMessage);
@@ -343,6 +343,33 @@ public class ListeningHistoryRepository
         }
 
         return LegacyTextRepair.Clean(poiValue);
+    }
+
+    private static string ResolveAudioAssetPath(string? currentValue, PoiDto? poi, string language)
+    {
+        var repaired = LegacyTextRepair.Clean(currentValue);
+        if (!string.IsNullOrWhiteSpace(repaired))
+        {
+            return repaired;
+        }
+
+        if (poi is null)
+        {
+            return string.Empty;
+        }
+
+        var normalizedLanguage = NormalizeLanguageCode(language);
+        if (!string.IsNullOrWhiteSpace(normalizedLanguage) &&
+            poi.AudioAssetPaths is not null &&
+            poi.AudioAssetPaths.TryGetValue(normalizedLanguage, out var localizedPath) &&
+            !string.IsNullOrWhiteSpace(localizedPath))
+        {
+            return LegacyTextRepair.Clean(localizedPath);
+        }
+
+        return string.Equals(normalizedLanguage, "vi", StringComparison.OrdinalIgnoreCase)
+            ? LegacyTextRepair.Clean(poi.AudioAssetPath)
+            : string.Empty;
     }
 
     private static string ResolveNarrationSnapshot(string? snapshot, PoiDto? poi, string language)
@@ -454,6 +481,38 @@ public class ListeningHistoryRepository
     {
         var normalized = LegacyTextRepair.Clean(language);
         return string.IsNullOrWhiteSpace(normalized) ? "vi" : normalized.Trim();
+    }
+
+    private static string NormalizeLanguageCode(string? languageCode)
+    {
+        var normalized = NormalizeLanguage(languageCode).Trim().ToLowerInvariant();
+
+        if (normalized.StartsWith("vi", StringComparison.Ordinal))
+        {
+            return "vi";
+        }
+
+        if (normalized.StartsWith("en", StringComparison.Ordinal))
+        {
+            return "en";
+        }
+
+        if (normalized.StartsWith("zh", StringComparison.Ordinal))
+        {
+            return "zh";
+        }
+
+        if (normalized.StartsWith("ko", StringComparison.Ordinal))
+        {
+            return "ko";
+        }
+
+        if (normalized.StartsWith("fr", StringComparison.Ordinal))
+        {
+            return "fr";
+        }
+
+        return normalized;
     }
 
     private static string NormalizeEmail(string? email)

@@ -26,6 +26,8 @@ public class POI
     public string MapLink { get; set; } = string.Empty;
     public string NarrationText { get; set; } = string.Empty;
     public string AudioAssetPath { get; set; } = string.Empty;
+    public Dictionary<string, string> AudioAssetPaths { get; set; }
+        = new(StringComparer.OrdinalIgnoreCase);
 
     // GPS / trigger
     public double Latitude { get; set; }
@@ -40,6 +42,27 @@ public class POI
     // Đa ngôn ngữ
     public Dictionary<string, string> NarrationTranslations { get; set; }
         = new(StringComparer.OrdinalIgnoreCase);
+
+    public string GetAudioAssetPath(string? languageCode = null)
+    {
+        var normalizedLanguage = NormalizeLanguageCode(languageCode);
+        if (!string.IsNullOrWhiteSpace(normalizedLanguage) &&
+            AudioAssetPaths != null &&
+            AudioAssetPaths.TryGetValue(normalizedLanguage, out var localizedPath) &&
+            !string.IsNullOrWhiteSpace(localizedPath))
+        {
+            return localizedPath.Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(normalizedLanguage) ||
+            string.Equals(normalizedLanguage, "vi", StringComparison.OrdinalIgnoreCase))
+        {
+            return AudioAssetPath ?? string.Empty;
+        }
+
+        return string.Empty;
+    }
+
     public string GetNarrationText(string? languageCode = null)
     {
         if (!string.IsNullOrWhiteSpace(languageCode)
@@ -62,6 +85,38 @@ public class POI
         }
 
         return NarrationText ?? string.Empty;
+    }
+
+    private static string NormalizeLanguageCode(string? languageCode)
+    {
+        var normalized = (languageCode ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (normalized.StartsWith("vi", StringComparison.Ordinal))
+        {
+            return "vi";
+        }
+
+        if (normalized.StartsWith("en", StringComparison.Ordinal))
+        {
+            return "en";
+        }
+
+        if (normalized.StartsWith("zh", StringComparison.Ordinal))
+        {
+            return "zh";
+        }
+
+        if (normalized.StartsWith("ko", StringComparison.Ordinal))
+        {
+            return "ko";
+        }
+
+        if (normalized.StartsWith("fr", StringComparison.Ordinal))
+        {
+            return "fr";
+        }
+
+        return normalized;
     }
 
     private string BuildEnglishNarration()

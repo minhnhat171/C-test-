@@ -30,6 +30,9 @@ public static class PoiMappings
             NarrationText = dto.NarrationText,
             MapLink = dto.MapLink,
             AudioAssetPath = dto.AudioAssetPath,
+            AudioAssetPaths = new Dictionary<string, string>(
+                dto.AudioAssetPaths ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+                StringComparer.OrdinalIgnoreCase),
             Priority = dto.Priority,
             Latitude = dto.Latitude,
             Longitude = dto.Longitude,
@@ -67,6 +70,9 @@ public static class PoiMappings
             NarrationText = poi.NarrationText,
             MapLink = poi.MapLink,
             AudioAssetPath = poi.AudioAssetPath,
+            AudioAssetPaths = new Dictionary<string, string>(
+                poi.AudioAssetPaths ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+                StringComparer.OrdinalIgnoreCase),
             Priority = poi.Priority,
             Latitude = poi.Latitude,
             Longitude = poi.Longitude,

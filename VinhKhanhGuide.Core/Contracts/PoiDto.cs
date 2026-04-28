@@ -20,6 +20,8 @@ public class PoiDto
     public string NarrationText { get; set; } = string.Empty;
     public string MapLink { get; set; } = string.Empty;
     public string AudioAssetPath { get; set; } = string.Empty;
+    public Dictionary<string, string> AudioAssetPaths { get; set; } =
+        new(StringComparer.OrdinalIgnoreCase);
     public string OwnerUserCode { get; set; } = string.Empty;
     public string OwnerDisplayName { get; set; } = string.Empty;
     public string OwnerEmail { get; set; } = string.Empty;
@@ -63,6 +65,9 @@ public class PoiDto
             NarrationText = NarrationText,
             MapLink = MapLink,
             AudioAssetPath = AudioAssetPath,
+            AudioAssetPaths = new Dictionary<string, string>(
+                AudioAssetPaths ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+                StringComparer.OrdinalIgnoreCase),
             OwnerUserCode = OwnerUserCode,
             OwnerDisplayName = OwnerDisplayName,
             OwnerEmail = OwnerEmail,

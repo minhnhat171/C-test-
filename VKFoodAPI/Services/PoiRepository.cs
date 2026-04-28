@@ -143,6 +143,7 @@ public class PoiRepository
 
                 var updatedPoi = poi.Clone();
                 updatedPoi.AudioAssetPath = string.Empty;
+                updatedPoi.AudioAssetPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
                 if (!groupedGuides.TryGetValue(poi.Id, out var poiGuides) || poiGuides.Count == 0)
                 {
@@ -178,16 +179,35 @@ public class PoiRepository
                     }
                 }
 
-                var preferredFileGuide = poiGuides
+                var fileGuides = poiGuides
                     .Where(item => string.Equals(item.SourceType, "file", StringComparison.OrdinalIgnoreCase) &&
                                    !string.IsNullOrWhiteSpace(item.FilePath))
+                    .GroupBy(item => NormalizeLanguageCode(item.LanguageCode), StringComparer.OrdinalIgnoreCase)
+                    .Select(group => group
+                        .OrderByDescending(item => item.UpdatedAtUtc)
+                        .First())
+                    .ToList();
+
+                foreach (var guide in fileGuides)
+                {
+                    var languageCode = NormalizeLanguageCode(guide.LanguageCode);
+                    var filePath = RepairUrl(guide.FilePath);
+
+                    if (!string.IsNullOrWhiteSpace(languageCode) && !string.IsNullOrWhiteSpace(filePath))
+                    {
+                        updatedPoi.AudioAssetPaths[languageCode] = filePath;
+                    }
+                }
+
+                var preferredFilePath = fileGuides
                     .OrderBy(item => string.Equals(NormalizeLanguageCode(item.LanguageCode), "vi", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
                     .ThenByDescending(item => item.UpdatedAtUtc)
-                    .FirstOrDefault();
+                    .Select(item => RepairUrl(item.FilePath))
+                    .FirstOrDefault(item => !string.IsNullOrWhiteSpace(item));
 
-                if (preferredFileGuide is not null)
+                if (!string.IsNullOrWhiteSpace(preferredFilePath))
                 {
-                    updatedPoi.AudioAssetPath = preferredFileGuide.FilePath.Trim();
+                    updatedPoi.AudioAssetPath = preferredFilePath;
                 }
 
                 var normalizedUpdatedPoi = Normalize(updatedPoi);
@@ -250,6 +270,7 @@ public class PoiRepository
         var seedPoi = GetSeedPoi(dto.Id);
         var normalized = dto.Clone();
         normalized.NarrationTranslations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        normalized.AudioAssetPaths ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         normalized.Code = RepairText(normalized.Code, seedPoi?.Code);
         normalized.Name = RepairText(normalized.Name, seedPoi?.Name);
         normalized.Category = RepairText(normalized.Category, seedPoi?.Category, "Ẩm thực");
@@ -275,6 +296,7 @@ public class PoiRepository
 
         normalized.MapLink = RepairUrl(normalized.MapLink, seedPoi?.MapLink);
         normalized.AudioAssetPath = RepairUrl(normalized.AudioAssetPath, seedPoi?.AudioAssetPath);
+        normalized.AudioAssetPaths = NormalizeAudioAssetPaths(normalized.AudioAssetPaths, seedPoi?.AudioAssetPaths);
         normalized.OwnerUserCode = RepairText(normalized.OwnerUserCode, seedPoi?.OwnerUserCode);
         normalized.OwnerDisplayName = RepairText(normalized.OwnerDisplayName, seedPoi?.OwnerDisplayName);
         normalized.OwnerEmail = NormalizeEmail(RepairText(normalized.OwnerEmail, seedPoi?.OwnerEmail));
@@ -357,6 +379,7 @@ public class PoiRepository
     {
         var normalized = dto.Clone();
         normalized.NarrationTranslations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        normalized.AudioAssetPaths ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         normalized.Code = LegacyTextRepair.Clean(normalized.Code);
         normalized.Name = LegacyTextRepair.Clean(normalized.Name);
         normalized.Category = LegacyTextRepair.Clean(normalized.Category);
@@ -374,6 +397,7 @@ public class PoiRepository
             .ToList();
         normalized.MapLink = LegacyTextRepair.Clean(normalized.MapLink);
         normalized.AudioAssetPath = LegacyTextRepair.Clean(normalized.AudioAssetPath);
+        normalized.AudioAssetPaths = NormalizeAudioAssetPaths(normalized.AudioAssetPaths);
         normalized.OwnerUserCode = LegacyTextRepair.Clean(normalized.OwnerUserCode);
         normalized.OwnerDisplayName = LegacyTextRepair.Clean(normalized.OwnerDisplayName);
         normalized.OwnerEmail = NormalizeEmail(LegacyTextRepair.Clean(normalized.OwnerEmail));
@@ -458,6 +482,38 @@ public class PoiRepository
         }
 
         return result;
+    }
+
+    private static Dictionary<string, string> NormalizeAudioAssetPaths(
+        IDictionary<string, string>? paths,
+        IDictionary<string, string>? seedPaths = null)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        AddAudioAssetPaths(result, seedPaths);
+        AddAudioAssetPaths(result, paths);
+
+        return result;
+    }
+
+    private static void AddAudioAssetPaths(
+        IDictionary<string, string> target,
+        IDictionary<string, string>? paths)
+    {
+        if (paths is null)
+        {
+            return;
+        }
+
+        foreach (var entry in paths)
+        {
+            var languageCode = NormalizeLanguageCode(entry.Key);
+            var filePath = RepairUrl(entry.Value);
+            if (!string.IsNullOrWhiteSpace(languageCode) && !string.IsNullOrWhiteSpace(filePath))
+            {
+                target[languageCode] = filePath;
+            }
+        }
     }
 
     private static string ResolveSeedNarrationText(
@@ -620,14 +676,29 @@ public class PoiRepository
             return false;
         }
 
-        if (left.NarrationTranslations.Count != right.NarrationTranslations.Count)
+        if (!AreDictionariesEquivalent(left.AudioAssetPaths, right.AudioAssetPaths))
         {
             return false;
         }
 
-        foreach (var entry in left.NarrationTranslations)
+        return AreDictionariesEquivalent(left.NarrationTranslations, right.NarrationTranslations);
+    }
+
+    private static bool AreDictionariesEquivalent(
+        IReadOnlyDictionary<string, string>? left,
+        IReadOnlyDictionary<string, string>? right)
+    {
+        left ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        right ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        if (left.Count != right.Count)
         {
-            if (!right.NarrationTranslations.TryGetValue(entry.Key, out var otherValue) ||
+            return false;
+        }
+
+        foreach (var entry in left)
+        {
+            if (!right.TryGetValue(entry.Key, out var otherValue) ||
                 !string.Equals(entry.Value, otherValue, StringComparison.Ordinal))
             {
                 return false;
