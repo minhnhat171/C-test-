@@ -135,6 +135,7 @@ public partial class MainViewModel : INotifyPropertyChanged
     private AudioCacheStatus _audioCacheStatus = new();
 
     private bool _isListeningHistoryLoading;
+    private bool _isClearingListeningHistory;
     private string _listeningHistoryLoadError = string.Empty;
     private DateTimeOffset? _lastListeningHistorySyncAt;
     private string _selectedListeningHistoryPeriod = "Tất cả";
@@ -188,7 +189,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         StopNarrationCommand = new Command(async () => await StopNarrationAsync(), () => IsNarrating);
         SignOutCommand = new Command(async () => await SignOutAsync());
         ClearEventLogsCommand = new Command(ClearEventLogs, () => HasEventLogs);
-        ClearListeningHistoryCommand = new Command(ClearListeningHistory, () => HasListeningHistory);
+        ClearListeningHistoryCommand = new Command(async () => await ClearListeningHistoryAsync(), () => CanClearListeningHistory);
         ClearViewHistoryCommand = new Command(ClearViewHistory, () => HasViewHistory);
         RefreshListeningHistoryCommand = new Command(async () => await RefreshListeningHistoryAsync());
         SaveAccountProfileCommand = new Command(async () => await SaveAccountProfileAsync(), () => CanSaveAccountProfile);
@@ -1200,6 +1201,11 @@ public partial class MainViewModel : INotifyPropertyChanged
 
     public bool IsViewHistoryEmpty => ViewHistory.Count == 0;
 
+    public bool CanClearListeningHistory =>
+        !IsListeningHistoryLoading &&
+        !IsClearingListeningHistory &&
+        (HasListeningHistory || HasListeningHistoryLocalEntries || HasListeningHistoryRanking);
+
     public string EventLogSummary => HasEventLogs
         ? $"{EventLogs.Count} hoạt động gần nhất của tài khoản hiện tại"
         : "Chưa có hoạt động nào được ghi lại";
@@ -1229,7 +1235,31 @@ public partial class MainViewModel : INotifyPropertyChanged
     public bool IsListeningHistoryLoading
     {
         get => _isListeningHistoryLoading;
-        private set => SetProperty(ref _isListeningHistoryLoading, value);
+        private set
+        {
+            if (!SetProperty(ref _isListeningHistoryLoading, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(CanClearListeningHistory));
+            (ClearListeningHistoryCommand as Command)?.ChangeCanExecute();
+        }
+    }
+
+    public bool IsClearingListeningHistory
+    {
+        get => _isClearingListeningHistory;
+        private set
+        {
+            if (!SetProperty(ref _isClearingListeningHistory, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(CanClearListeningHistory));
+            (ClearListeningHistoryCommand as Command)?.ChangeCanExecute();
+        }
     }
 
     public string ListeningHistoryLoadError
@@ -2232,6 +2262,7 @@ public partial class MainViewModel : INotifyPropertyChanged
 
     public async Task<bool> DeleteListeningHistoryEntryAsync(Guid historyId)
     {
+        var deletedItem = FindListeningHistoryItem(historyId);
         var deleted = await _listeningHistorySyncService.DeleteAsync(historyId);
         if (!deleted)
         {
@@ -2244,10 +2275,28 @@ public partial class MainViewModel : INotifyPropertyChanged
             return false;
         }
 
+        RemoveOptimisticListeningHistoryItem(historyId);
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            var item = ListeningHistory.FirstOrDefault(entry => entry.Id == historyId);
+            if (item is not null)
+            {
+                ListeningHistory.Remove(item);
+            }
+
+            ListeningHistoryLoadError = string.Empty;
+            RaiseListeningHistoryStateChanged();
+        });
+
         await RefreshListeningHistoryAsync();
         StatusText = LocalizeUi(
-            "Đã cập nhật danh sách lịch sử nghe",
-            "Listening history updated",
+            deletedItem is null
+                ? "Đã xóa bản ghi khỏi lịch sử nghe."
+                : $"Đã xóa {deletedItem.PoiName} khỏi lịch sử nghe.",
+            deletedItem is null
+                ? "Listening history entry deleted."
+                : $"{deletedItem.PoiName} removed from listening history.",
             "收听记录已更新",
             "청취 기록이 업데이트되었습니다",
             "L'historique d'écoute a été mis à jour");
@@ -4691,22 +4740,60 @@ public partial class MainViewModel : INotifyPropertyChanged
         RaiseEventLogStateChanged();
     }
 
-    private void ClearListeningHistory()
+    public async Task<bool> ClearListeningHistoryAsync()
     {
-        ListeningHistory.Clear();
-        ListeningHistoryLocalEntries.Clear();
-        ListeningHistoryRanking.Clear();
-        lock (_optimisticListeningHistoryGate)
+        if (IsClearingListeningHistory)
         {
-            _optimisticListeningHistoryItems.Clear();
+            return false;
         }
 
-        _usageHistoryService.ClearEntries(UsageHistoryCategory.Listening);
-        ListeningHistoryLoadError = string.Empty;
-        _lastListeningHistorySyncAt = null;
-        RaiseListeningHistoryStateChanged();
-        OnPropertyChanged(nameof(HasListeningHistoryRanking));
-        OnPropertyChanged(nameof(ListeningHistorySyncStatus));
+        IsClearingListeningHistory = true;
+
+        try
+        {
+            var needsRemoteDelete = HasListeningHistory || HasListeningHistoryRanking;
+            var cleared = !needsRemoteDelete || await _listeningHistorySyncService.DeleteCurrentUserHistoryAsync();
+            if (!cleared)
+            {
+                ListeningHistoryLoadError = LocalizeUi(
+                    "Không xóa được toàn bộ lịch sử nghe lúc này.",
+                    "Could not clear all listening history right now.",
+                    "暂时无法清除全部收听记录。",
+                    "지금은 청취 기록을 모두 삭제할 수 없습니다.",
+                    "Impossible d'effacer tout l'historique pour le moment.");
+                return false;
+            }
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                ListeningHistory.Clear();
+                ListeningHistoryLocalEntries.Clear();
+                ListeningHistoryRanking.Clear();
+                lock (_optimisticListeningHistoryGate)
+                {
+                    _optimisticListeningHistoryItems.Clear();
+                }
+
+                _usageHistoryService.ClearEntries(UsageHistoryCategory.Listening);
+                ListeningHistoryLoadError = string.Empty;
+                _lastListeningHistorySyncAt = null;
+                RaiseListeningHistoryStateChanged();
+                OnPropertyChanged(nameof(HasListeningHistoryRanking));
+                OnPropertyChanged(nameof(ListeningHistorySyncStatus));
+            });
+
+            StatusText = LocalizeUi(
+                "Đã xóa toàn bộ lịch sử nghe.",
+                "All listening history has been cleared.",
+                "已清除全部收听记录。",
+                "청취 기록을 모두 삭제했습니다.",
+                "Tout l'historique d'écoute a été effacé.");
+            return true;
+        }
+        finally
+        {
+            IsClearingListeningHistory = false;
+        }
     }
 
     private void ClearViewHistory()
@@ -4736,6 +4823,7 @@ public partial class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ListeningHistorySummary));
         OnPropertyChanged(nameof(ListeningHistoryPreviewItems));
         OnPropertyChanged(nameof(HasListeningHistoryPreview));
+        OnPropertyChanged(nameof(CanClearListeningHistory));
         (ClearListeningHistoryCommand as Command)?.ChangeCanExecute();
         (RefreshListeningHistoryCommand as Command)?.ChangeCanExecute();
     }

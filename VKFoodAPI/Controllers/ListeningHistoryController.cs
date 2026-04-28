@@ -58,4 +58,13 @@ public class ListeningHistoryController : ControllerBase
             ? NoContent()
             : NotFound();
     }
+
+    [HttpDelete]
+    public IActionResult DeleteForUserScope(
+        [FromQuery] string? userCode = null,
+        [FromQuery] string? userEmail = null)
+    {
+        _repository.DeleteForUserScope(userCode, userEmail);
+        return NoContent();
+    }
 }

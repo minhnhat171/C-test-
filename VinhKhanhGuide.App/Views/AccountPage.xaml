@@ -8,19 +8,20 @@
     Shell.NavBarIsVisible="True">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20,20,20,32" Spacing="18">
-            <Border BackgroundColor="#2F80FF"
-                    Padding="22"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 30">
+        <VerticalStackLayout Padding="20,18,20,32" Spacing="14">
+            <Border BackgroundColor="#FFFFFF"
+                    Padding="16"
+                    Stroke="#D9E6F7"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16">
                 <VerticalStackLayout Spacing="14">
                     <Grid ColumnDefinitions="Auto,*"
                           ColumnSpacing="16">
-                        <Border BackgroundColor="#FFFFFF"
+                        <Border BackgroundColor="#E8F1FF"
                                 WidthRequest="58"
                                 HeightRequest="58"
                                 StrokeThickness="0"
-                                StrokeShape="RoundRectangle 29">
+                                StrokeShape="RoundRectangle 16">
                             <Label Text="{Binding CurrentUserInitials}"
                                    HorizontalTextAlignment="Center"
                                    VerticalTextAlignment="Center"
@@ -35,17 +36,18 @@
                             <Label Text="{Binding CurrentUserDisplayName}"
                                    FontSize="24"
                                    FontAttributes="Bold"
-                                   TextColor="White" />
+                                   TextColor="#102A43" />
                             <Label Text="{Binding CurrentUserStatusLine}"
                                    FontSize="15"
-                                   TextColor="#DCEBFF" />
+                                   TextColor="#486581" />
                         </VerticalStackLayout>
                     </Grid>
 
-                    <Border BackgroundColor="#FFFFFF"
+                    <Border BackgroundColor="#F6FAFF"
                             Padding="14,12"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 20">
+                            Stroke="#E3EEFB"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 12">
                         <Grid ColumnDefinitions="*,Auto"
                               ColumnSpacing="12">
                             <VerticalStackLayout Spacing="4">
@@ -76,8 +78,9 @@
 
             <Border BackgroundColor="White"
                     Padding="18"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 26">
+                    Stroke="#D9E6F7"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16">
                 <VerticalStackLayout Spacing="14">
                     <VerticalStackLayout Spacing="4">
                         <Label Text="{Binding PersonalInfoSectionTitle}"
@@ -117,7 +120,7 @@
                         <Border BackgroundColor="#F4F8FF"
                                 Padding="14,6"
                                 StrokeThickness="0"
-                                StrokeShape="RoundRectangle 18">
+                                StrokeShape="RoundRectangle 12">
                             <Entry Text="{Binding AccountProfileFullName}"
                                    Placeholder="{Binding FullNamePlaceholder}"
                                    BackgroundColor="Transparent"
@@ -135,7 +138,7 @@
                         <Border BackgroundColor="#F4F8FF"
                                 Padding="14,6"
                                 StrokeThickness="0"
-                                StrokeShape="RoundRectangle 18">
+                                StrokeShape="RoundRectangle 12">
                             <Entry Text="{Binding AccountProfileEmail}"
                                    Placeholder="{Binding EmailPlaceholder}"
                                    Keyboard="Email"
@@ -154,7 +157,7 @@
                         <Border BackgroundColor="#F4F8FF"
                                 Padding="14,6"
                                 StrokeThickness="0"
-                                StrokeShape="RoundRectangle 18">
+                                StrokeShape="RoundRectangle 12">
                             <Entry Text="{Binding AccountProfilePhoneNumber}"
                                    Placeholder="{Binding PhonePlaceholder}"
                                    Keyboard="Telephone"
@@ -192,8 +195,9 @@
 
             <Border BackgroundColor="White"
                     Padding="18"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 26">
+                    Stroke="#D9E6F7"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16">
                 <VerticalStackLayout Spacing="14">
                     <VerticalStackLayout Spacing="4">
                         <Label Text="{Binding LanguageSectionTitle}"
@@ -208,7 +212,7 @@
                     <Border BackgroundColor="#F4F8FF"
                             Padding="14,6"
                             StrokeThickness="0"
-                            StrokeShape="RoundRectangle 18">
+                            StrokeShape="RoundRectangle 12">
                         <Picker Title="{Binding LanguagePickerTitle}"
                                 ItemsSource="{Binding SupportedLanguages}"
                                 ItemDisplayBinding="{Binding DisplayLabel}"
@@ -228,7 +232,7 @@
                         <Border BackgroundColor="#F4F8FF"
                                 Padding="14,6"
                                 StrokeThickness="0"
-                                StrokeShape="RoundRectangle 18">
+                                StrokeShape="RoundRectangle 12">
                             <Picker Title="{Binding PlaybackModePickerTitle}"
                                     ItemsSource="{Binding SupportedPlaybackModes}"
                                     ItemDisplayBinding="{Binding Label}"
@@ -243,7 +247,7 @@
                     <Border BackgroundColor="#F4F8FF"
                             Padding="14"
                             StrokeThickness="0"
-                            StrokeShape="RoundRectangle 18">
+                            StrokeShape="RoundRectangle 12">
                         <Grid ColumnDefinitions="*,Auto"
                               ColumnSpacing="12">
                             <VerticalStackLayout Spacing="4">
@@ -314,8 +318,9 @@
 
             <Border BackgroundColor="White"
                     Padding="18"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 26">
+                    Stroke="#D9E6F7"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16">
                 <VerticalStackLayout Spacing="14">
                     <Grid ColumnDefinitions="*,Auto"
                           ColumnSpacing="12">
@@ -359,8 +364,9 @@
 
                     <Border BackgroundColor="#F4F8FF"
                             Padding="16"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 20"
+                            Stroke="#D9E6F7"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 14"
                             IsVisible="{Binding IsListeningHistoryDisplayEmpty}">
                         <Label Text="{Binding ListeningHistoryEmptyStateText}"
                                FontSize="15"
@@ -370,8 +376,9 @@
 
                     <Border BackgroundColor="#F8FBFF"
                             Padding="16"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 20"
+                            Stroke="#D9E6F7"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 14"
                             IsVisible="{Binding IsListeningHistoryFallbackVisible}">
                         <VerticalStackLayout Spacing="10">
                             <Label Text="{Binding ListeningHistoryFallbackSummary}"
@@ -398,8 +405,9 @@
                             <DataTemplate>
                                 <Border BackgroundColor="#F8FBFF"
                                         Padding="14"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 22">
+                                        Stroke="#D9E6F7"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 14">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnListeningHistoryItemTapped" />
                                     </Border.GestureRecognizers>
@@ -411,12 +419,12 @@
                                                 HeightRequest="42"
                                                 StrokeThickness="0"
                                                 StrokeShape="RoundRectangle 21">
-                                            <Label Text="▶"
-                                                   HorizontalTextAlignment="Center"
-                                                   VerticalTextAlignment="Center"
-                                                   FontSize="16"
-                                                   FontAttributes="Bold"
-                                                   TextColor="#2F80FF" />
+                                            <Image Source="play_icon.svg"
+                                                   HeightRequest="18"
+                                                   WidthRequest="18"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"
+                                                   Aspect="AspectFit" />
                                         </Border>
 
                                         <VerticalStackLayout Grid.Column="1"

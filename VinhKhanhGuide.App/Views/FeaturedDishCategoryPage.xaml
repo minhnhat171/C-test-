@@ -5,50 +5,52 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Name="FeaturedDishPageRoot"
     Title="{Binding FeaturedDishPageTitle}"
-    BackgroundColor="#FBF8F4"
+    BackgroundColor="#F4F8FF"
     Shell.NavBarIsVisible="True">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20,24,20,28" Spacing="18">
-            <Border BackgroundColor="#173A43"
-                    StrokeThickness="0"
+        <VerticalStackLayout Padding="20,20,20,28" Spacing="14">
+            <Border BackgroundColor="#FFFFFF"
+                    Stroke="#D9E6F7"
+                    StrokeThickness="1"
                     Padding="18"
-                    StrokeShape="RoundRectangle 26">
+                    StrokeShape="RoundRectangle 16">
                 <VerticalStackLayout Spacing="8">
                     <Label Text="{Binding SelectedFeaturedDishCategoryHeaderText}"
-                           FontSize="26"
+                           FontSize="24"
                            FontAttributes="Bold"
-                           TextColor="#FFF9F2" />
+                           TextColor="#102A43" />
 
                     <Label Text="{Binding SelectedFeaturedDishCategorySummary}"
                            FontSize="13"
-                           TextColor="#D9EEE7"
+                           TextColor="#486581"
                            LineBreakMode="WordWrap" />
 
-                    <Border BackgroundColor="#FDE7D7"
+                    <Border BackgroundColor="#E8F1FF"
                             StrokeThickness="0"
                             Padding="12,8"
                             HorizontalOptions="Start"
-                            StrokeShape="RoundRectangle 16">
+                            StrokeShape="RoundRectangle 12">
                         <Label Text="{Binding SelectedFeaturedDishResultsText}"
                                FontSize="11"
                                FontAttributes="Bold"
-                            TextColor="#7C2D12" />
+                               TextColor="#2F80FF" />
                     </Border>
                 </VerticalStackLayout>
             </Border>
 
             <Border BackgroundColor="#FFFFFF"
-                    StrokeThickness="0"
+                    Stroke="#D9E6F7"
+                    StrokeThickness="1"
                     Padding="16"
-                    StrokeShape="RoundRectangle 24">
+                    StrokeShape="RoundRectangle 16">
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="*,*"
                           ColumnSpacing="10">
                         <Border BackgroundColor="#F6FBFA"
                                 Padding="14"
                                 StrokeThickness="0"
-                                StrokeShape="RoundRectangle 18">
+                                StrokeShape="RoundRectangle 12">
                             <Label Text="{Binding SelectedFeaturedDishNearestPoiText}"
                                    FontSize="14"
                                    FontAttributes="Bold"
@@ -60,7 +62,7 @@
                                 BackgroundColor="#FFF7ED"
                                 Padding="14"
                                 StrokeThickness="0"
-                                StrokeShape="RoundRectangle 18">
+                                StrokeShape="RoundRectangle 12">
                             <Label Text="{Binding SelectedFeaturedDishRecommendedPoiText}"
                                    FontSize="14"
                                    FontAttributes="Bold"
@@ -73,36 +75,22 @@
                           ColumnSpacing="10">
                         <Button Text="{Binding SelectedFeaturedDishMapFilterText}"
                                 Clicked="OnOpenFilteredMapClicked"
-                                BackgroundColor="#173A43"
-                                TextColor="White"
+                                BackgroundColor="#E8F1FF"
+                                TextColor="#2F80FF"
                                 FontSize="14"
-                                CornerRadius="18" />
+                                FontAttributes="Bold"
+                                CornerRadius="16"
+                                HeightRequest="46" />
 
                         <Button Grid.Column="1"
                                 Text="{Binding SelectedFeaturedDishMiniTourText}"
                                 Clicked="OnStartMiniTourClicked"
-                                BackgroundColor="#FDE7D7"
-                                TextColor="#7C2D12"
+                                BackgroundColor="#102A43"
+                                TextColor="White"
                                 FontSize="14"
-                                CornerRadius="18" />
-                    </Grid>
-
-                    <Grid ColumnDefinitions="*,*"
-                          ColumnSpacing="10">
-                        <Button Text="{Binding SelectedFeaturedDishNearestPoiText}"
-                                Clicked="OnOpenNearestPoiClicked"
-                                BackgroundColor="#E8F1FF"
-                                TextColor="#2F80FF"
-                                FontSize="14"
-                                CornerRadius="18" />
-
-                        <Button Grid.Column="1"
-                                Text="{Binding SelectedFeaturedDishRecommendedPoiText}"
-                                Clicked="OnOpenRecommendedPoiClicked"
-                                BackgroundColor="#EEFDF5"
-                                TextColor="#15803D"
-                                FontSize="14"
-                                CornerRadius="18" />
+                                FontAttributes="Bold"
+                                CornerRadius="16"
+                                HeightRequest="46" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>
@@ -112,14 +100,15 @@
                 <BindableLayout.ItemTemplate>
                     <DataTemplate>
                         <Border BackgroundColor="#FFFFFF"
-                                StrokeThickness="0"
+                                Stroke="#D9E6F7"
+                                StrokeThickness="1"
                                 Padding="14"
-                                StrokeShape="RoundRectangle 24">
+                                StrokeShape="RoundRectangle 16">
                             <VerticalStackLayout Spacing="12">
                                 <Border BackgroundColor="#F5F1EA"
                                         StrokeThickness="0"
-                                        HeightRequest="220"
-                                        StrokeShape="RoundRectangle 20">
+                                        HeightRequest="180"
+                                        StrokeShape="RoundRectangle 14">
                                     <Image Source="{Binding ImageSource}"
                                            Aspect="AspectFill" />
                                 </Border>
@@ -143,7 +132,7 @@
                                             StrokeThickness="0"
                                             Padding="10,6"
                                             VerticalOptions="Start"
-                                            StrokeShape="RoundRectangle 14">
+                                            StrokeShape="RoundRectangle 12">
                                         <Label Text="{Binding CategoryName}"
                                                FontSize="11"
                                                FontAttributes="Bold"
@@ -154,7 +143,7 @@
                                 <Border BackgroundColor="#F6FBFA"
                                         StrokeThickness="0"
                                         Padding="12"
-                                        StrokeShape="RoundRectangle 18">
+                                        StrokeShape="RoundRectangle 12">
                                     <VerticalStackLayout Spacing="4">
                                         <Label Text="{Binding Source={x:Reference FeaturedDishPageRoot}, Path=BindingContext.FeaturedDishPriceTitle}"
                                                FontSize="11"
@@ -167,11 +156,6 @@
                                                TextColor="#173A43" />
                                     </VerticalStackLayout>
                                 </Border>
-
-                                <Label Text="{Binding Source={x:Reference FeaturedDishPageRoot}, Path=BindingContext.SelectedFeaturedDishRecommendedPoiText}"
-                                       FontSize="12"
-                                       TextColor="#5B6B7D"
-                                       LineBreakMode="WordWrap" />
                             </VerticalStackLayout>
                         </Border>
                     </DataTemplate>

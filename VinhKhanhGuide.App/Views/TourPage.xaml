@@ -11,26 +11,20 @@
     <ScrollView>
         <VerticalStackLayout Padding="20,20,20,28"
                              Spacing="18">
-            <Border StrokeThickness="0"
-                    StrokeShape="RoundRectangle 30">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0"
-                                         EndPoint="1,1">
-                        <GradientStop Color="#102A43" Offset="0" />
-                        <GradientStop Color="#2F80FF" Offset="1" />
-                    </LinearGradientBrush>
-                </Border.Background>
-
+            <Border BackgroundColor="#FFFFFF"
+                    Stroke="#D9E6F7"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16">
                 <VerticalStackLayout Padding="20"
                                      Spacing="10">
                     <Label Text="{Binding TourSectionTitle}"
                            FontSize="26"
                            FontAttributes="Bold"
-                           TextColor="White" />
+                           TextColor="#102A43" />
 
                     <Label Text="{Binding TourSectionSummary}"
                            FontSize="14"
-                           TextColor="#DCEBFF"
+                           TextColor="#486581"
                            LineBreakMode="WordWrap" />
 
                     <Border BackgroundColor="#FFFFFF"
@@ -50,7 +44,7 @@
             <Border BackgroundColor="#FFFFFF"
                     Padding="18"
                     StrokeThickness="0"
-                    StrokeShape="RoundRectangle 26"
+                    StrokeShape="RoundRectangle 16"
                     IsVisible="{Binding HasActiveTour}">
                 <VerticalStackLayout Spacing="14">
                     <Label Text="{Binding ActiveTourName}"
@@ -186,7 +180,7 @@
                         <Border BackgroundColor="#FFFFFF"
                                 Padding="18"
                                 StrokeThickness="0"
-                                StrokeShape="RoundRectangle 28">
+                                StrokeShape="RoundRectangle 16">
                             <VerticalStackLayout Spacing="14">
                                 <Grid ColumnDefinitions="Auto,*"
                                       ColumnSpacing="12">

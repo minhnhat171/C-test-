@@ -22,11 +22,11 @@ public partial class MainViewModel
         $"Bonjour, {CurrentUserDisplayName}");
 
     public string HomeIntroText => LocalizeUi(
-        "Bắt đầu nhanh từ tour, tìm quán ngay từ ô search hoặc mở bản đồ nếu bạn đang đứng ngoài đường.",
-        "Start with a tour, search for a place, or open the map if you are already on the street.",
-        "从路线开始、搜索店铺，或在街上时打开地图。",
-        "투어로 시작하거나 검색으로 찾고, 길 위에 있다면 지도를 여세요.",
-        "Commencez par un parcours, recherchez un lieu, ou ouvrez la carte si vous êtes déjà sur place.");
+        "Tour, bản đồ và QR luôn ở ngay đầu trang để khách bắt đầu nhanh.",
+        "Tours, map, and QR are up front so guests can start quickly.",
+        "路线、地图和二维码都在首页顶部，方便快速开始。",
+        "투어, 지도, QR을 첫 화면에 두어 바로 시작할 수 있습니다.",
+        "Parcours, carte et QR sont en haut pour commencer vite.");
     public string FirstTimeGuideTitle => LocalizeUi(
         "Chưa biết dùng app thế nào?",
         "Not sure where to start?",
@@ -73,11 +73,74 @@ public partial class MainViewModel
         ? LocalizeUi("Xem tour đang chạy", "View Active Tour", "查看当前路线", "진행 중인 투어 보기", "Voir le parcours en cours")
         : LocalizeUi("Bắt đầu tour", "Start a Tour", "开始路线", "투어 시작", "Commencer un parcours");
     public string HomePrimaryCtaHintText => LocalizeUi(
-        "Home chỉ giữ những điểm quan trọng nhất. Các danh sách chi tiết đã được đưa sang màn riêng để đỡ rối hơn.",
-        "Home now keeps only the key actions, while longer lists live on their own pages.",
-        "首页只保留最重要的操作，详细列表已移到单独页面。",
-        "홈에는 핵심 동선만 남기고 긴 목록은 별도 화면으로 옮겼습니다.",
-        "L'accueil conserve les actions principales et les listes détaillées sont déplacées vers des pages dédiées.");
+        "Chọn tour, mở bản đồ hoặc quét QR tại quán.",
+        "Choose a tour, open the map, or scan a QR at the venue.",
+        "选择路线、打开地图，或在店内扫码。",
+        "투어를 선택하거나 지도를 열고, 매장에서 QR을 스캔하세요.",
+        "Choisissez un parcours, ouvrez la carte ou scannez le QR sur place.");
+    public string HomeQuickActionsTitle => LocalizeUi(
+        "Bắt đầu",
+        "Start",
+        "开始",
+        "시작",
+        "Commencer");
+    public string HomeTourActionTitle => HasActiveTour
+        ? LocalizeUi("Tour đang chạy", "Active tour", "当前路线", "진행 중인 투어", "Parcours actif")
+        : LocalizeUi("Tour gợi ý", "Suggested tour", "推荐路线", "추천 투어", "Parcours suggéré");
+    public string HomeTourActionText => LocalizeUi(
+        "Đi theo lộ trình món nổi bật.",
+        "Follow a curated food route.",
+        "按推荐美食路线探索。",
+        "추천 맛집 동선으로 둘러보세요.",
+        "Suivez un parcours culinaire.");
+    public string HomeMapActionTitle => LocalizeUi(
+        "Bản đồ",
+        "Map",
+        "地图",
+        "지도",
+        "Carte");
+    public string HomeMapActionText => LocalizeUi(
+        "Xem quán quanh bạn.",
+        "See nearby places.",
+        "查看附近店铺。",
+        "주변 매장을 봅니다.",
+        "Voir les lieux proches.");
+    public string HomeQrActionTitle => LocalizeUi(
+        "Quét QR tại quán",
+        "Scan venue QR",
+        "扫描店内二维码",
+        "매장 QR 스캔",
+        "Scanner le QR du lieu");
+    public string HomeQrActionText => LocalizeUi(
+        "Mở ngay điểm nghe hoặc tour từ mã trên bàn.",
+        "Open a listening point or tour from the table code.",
+        "用桌上二维码直接打开讲解点或路线。",
+        "테이블 QR로 안내 지점이나 투어를 바로 엽니다.",
+        "Ouvrez un point audio ou un parcours depuis le code de table.");
+    public string HomeQrCtaText => LocalizeUi(
+        "Quét QR",
+        "Scan QR",
+        "扫码",
+        "QR 스캔",
+        "Scanner");
+    public string HomeDishShortcutTitle => LocalizeUi(
+        "Khám phá theo món",
+        "Browse by Dish",
+        "按菜品探索",
+        "메뉴별 둘러보기",
+        "Explorer par plat");
+    public string HomeDishShortcutText => LocalizeUi(
+        "Mở nhóm món để lọc bản đồ hoặc bắt đầu mini tour nhanh hơn.",
+        "Open a dish group to filter the map or start a faster mini tour.",
+        "打开菜品分组来筛选地图，或更快开始迷你路线。",
+        "메뉴 그룹을 열어 지도를 필터링하거나 미니 투어를 빠르게 시작하세요.",
+        "Ouvrez une catégorie pour filtrer la carte ou lancer un mini parcours.");
+    public string HomeDishShortcutButtonText => LocalizeUi(
+        "Xem nhóm món",
+        "Open Categories",
+        "查看分类",
+        "카테고리 보기",
+        "Voir les catégories");
     public string SearchSectionTitle => LocalizeUi("Tìm quán", "Find a Place", "查找店铺", "매장 찾기", "Trouver un lieu");
     public string SearchPlaceholderText => LocalizeUi(
         "Nhập tên quán hoặc món muốn thử",
@@ -88,6 +151,8 @@ public partial class MainViewModel
     public string SearchPreviewOpenAllText => LocalizeUi("Xem tất cả kết quả", "View all results", "查看全部结果", "전체 결과 보기", "Voir tous les résultats");
     public string MapSectionTitle => LocalizeUi("Bản đồ khám phá", "Explore Map", "探索地图", "탐색 지도", "Carte d'exploration");
     public string MapOpenLargeText => LocalizeUi("Mở bản đồ", "Open Map", "打开地图", "지도 열기", "Ouvrir la carte");
+    public string FullScreenMapNearbyText => LocalizeUi("Gần đây", "Nearby", "附近", "주변", "À proximité");
+    public string FullScreenMapFilterText => LocalizeUi("Lọc món", "Dish Filter", "菜品筛选", "메뉴 필터", "Filtrer");
     public string StartGpsButtonText => LocalizeUi("Vị trí của tôi", "My Location", "我的位置", "내 위치", "Ma position");
     public string StopGpsButtonText => LocalizeUi("Dừng vị trí", "Stop Location", "停止定位", "위치 중지", "Arrêter la position");
     public string GoToEntranceButtonText => LocalizeUi("Đầu phố", "Entrance", "入口", "입구", "Entrée");
@@ -115,11 +180,11 @@ public partial class MainViewModel
     public string PoiListTitle => LocalizeUi("Quán trên phố Vĩnh Khánh", "Places on Vinh Khanh", "永庆街店铺", "빈칸 거리 매장", "Lieux de Vinh Khanh");
     public string FeaturedSectionTitle => LocalizeUi("Quán nổi bật theo món", "Explore by Dish", "按菜品探索店铺", "메뉴별 추천 매장", "Explorer par plat");
     public string FeaturedSectionSummary => LocalizeUi(
-        "Không chỉ xem món đẹp mắt, bạn còn có thể chọn quán gần nhất, quán nên đi trước, mở map đúng nhóm món hoặc bắt đầu mini tour.",
-        "Use dish groups to pick the nearest place, the recommended first stop, the right map filter, or a mini tour.",
-        "不只是看菜品，还可以选择最近店铺、推荐先去的店、按菜品筛地图或开始迷你路线。",
-        "메뉴 그룹에서 가까운 매장, 추천 첫 매장, 지도 필터, 미니 투어까지 바로 시작할 수 있습니다.",
-        "Les groupes de plats servent aussi à choisir le lieu proche, la première adresse recommandée, la carte filtrée ou un mini parcours.");
+        "Chọn nhóm món để xem các món nổi bật và bắt đầu mini tour phù hợp.",
+        "Pick a dish group to browse highlights and start a matching mini tour.",
+        "选择菜品分组，查看招牌菜并开始对应的迷你路线。",
+        "메뉴 그룹을 골라 대표 메뉴를 보고 맞는 미니 투어를 시작하세요.",
+        "Choisissez un groupe de plats pour voir les spécialités et lancer un mini parcours.");
     public string ListeningHistorySectionTitle => LocalizeUi("Lịch sử nghe", "Listening History", "收听记录", "청취 기록", "Historique d'écoute");
     public string ListeningHistorySectionSummary => LocalizeUi(
         "Những quán bạn đã nghe sẽ nằm ở đây để mở lại nhanh.",
@@ -129,6 +194,22 @@ public partial class MainViewModel
         "Les lieux écoutés apparaissent ici pour les retrouver vite.");
     public string ListeningHistorySeeAllText => LocalizeUi("Xem tất cả", "View All", "查看全部", "전체 보기", "Tout afficher");
     public string HistoryPageTitle => LocalizeUi("Lịch sử nghe", "Listening History", "收听记录", "청취 기록", "Historique d'écoute");
+    public string DeleteListeningHistoryButtonText => LocalizeUi("Xóa", "Delete", "删除", "삭제", "Supprimer");
+    public string ClearListeningHistoryButtonText => LocalizeUi("Xóa tất cả", "Clear All", "全部清除", "전체 삭제", "Tout effacer");
+    public string ClearListeningHistoryConfirmTitle => LocalizeUi(
+        "Xóa toàn bộ lịch sử nghe?",
+        "Clear all listening history?",
+        "清除全部收听记录？",
+        "청취 기록을 모두 삭제할까요?",
+        "Effacer tout l'historique ?");
+    public string ClearListeningHistoryConfirmMessage => LocalizeUi(
+        "Thao tác này sẽ xóa các lượt nghe đã đồng bộ của tài khoản hiện tại và lịch sử lưu trên máy.",
+        "This removes synced listens for the current account and history saved on this device.",
+        "这会删除当前账号已同步的收听记录以及本机保存的历史。",
+        "현재 계정의 동기화된 청취 기록과 이 기기에 저장된 기록을 삭제합니다.",
+        "Cette action supprime les écoutes synchronisées du compte actuel et l'historique enregistré sur cet appareil.");
+    public string ClearListeningHistoryConfirmButtonText => LocalizeUi("Xóa", "Clear", "清除", "삭제", "Effacer");
+    public string CancelButtonText => LocalizeUi("Hủy", "Cancel", "取消", "취소", "Annuler");
     public string ListeningHistoryEmptyStateText => LocalizeUi(
         "Bạn chưa nghe thuyết minh quán nào. Bấm “Nghe thuyết minh” ở một quán để bắt đầu hành trình.",
         "No listening history yet. Tap “Listen” on a place to start your journey.",
@@ -242,7 +323,7 @@ public partial class MainViewModel
             var poi = GetNearestPoiForFeaturedCategory(_selectedFeaturedDishCategoryKey);
             return poi is null
                 ? LocalizeUi("Chưa có quán gần nhất", "No nearby place yet", "暂无最近店铺", "가까운 매장이 아직 없습니다", "Aucun lieu proche")
-                : LocalizeUi($"G?n nh?t: {poi.Name}", $"Nearest: {poi.Name}", $"??:{poi.Name}", $"?? ???: {poi.Name}", $"Plus proche : {poi.Name}");
+                : LocalizeUi($"Gần nhất: {poi.Name}", $"Nearest: {poi.Name}", $"最近：{poi.Name}", $"가장 가까움: {poi.Name}", $"Plus proche : {poi.Name}");
         }
     }
     public string SelectedFeaturedDishRecommendedPoiText
@@ -670,11 +751,24 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(FirstTimeGuideStepThreeText));
         OnPropertyChanged(nameof(HomePrimaryCtaText));
         OnPropertyChanged(nameof(HomePrimaryCtaHintText));
+        OnPropertyChanged(nameof(HomeQuickActionsTitle));
+        OnPropertyChanged(nameof(HomeTourActionTitle));
+        OnPropertyChanged(nameof(HomeTourActionText));
+        OnPropertyChanged(nameof(HomeMapActionTitle));
+        OnPropertyChanged(nameof(HomeMapActionText));
+        OnPropertyChanged(nameof(HomeQrActionTitle));
+        OnPropertyChanged(nameof(HomeQrActionText));
+        OnPropertyChanged(nameof(HomeQrCtaText));
+        OnPropertyChanged(nameof(HomeDishShortcutTitle));
+        OnPropertyChanged(nameof(HomeDishShortcutText));
+        OnPropertyChanged(nameof(HomeDishShortcutButtonText));
         OnPropertyChanged(nameof(SearchSectionTitle));
         OnPropertyChanged(nameof(SearchPlaceholderText));
         OnPropertyChanged(nameof(SearchPreviewOpenAllText));
         OnPropertyChanged(nameof(MapSectionTitle));
         OnPropertyChanged(nameof(MapOpenLargeText));
+        OnPropertyChanged(nameof(FullScreenMapNearbyText));
+        OnPropertyChanged(nameof(FullScreenMapFilterText));
         OnPropertyChanged(nameof(StartGpsButtonText));
         OnPropertyChanged(nameof(StopGpsButtonText));
         OnPropertyChanged(nameof(GoToEntranceButtonText));
@@ -699,6 +793,12 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(ListeningHistorySectionSummary));
         OnPropertyChanged(nameof(ListeningHistorySeeAllText));
         OnPropertyChanged(nameof(HistoryPageTitle));
+        OnPropertyChanged(nameof(DeleteListeningHistoryButtonText));
+        OnPropertyChanged(nameof(ClearListeningHistoryButtonText));
+        OnPropertyChanged(nameof(ClearListeningHistoryConfirmTitle));
+        OnPropertyChanged(nameof(ClearListeningHistoryConfirmMessage));
+        OnPropertyChanged(nameof(ClearListeningHistoryConfirmButtonText));
+        OnPropertyChanged(nameof(CancelButtonText));
         OnPropertyChanged(nameof(ListeningHistoryEmptyStateText));
         OnPropertyChanged(nameof(HasOfflineSnapshotNotice));
         OnPropertyChanged(nameof(OfflineSnapshotNoticeText));
@@ -765,12 +865,34 @@ public partial class MainViewModel
     private void RebuildFeaturedDishCategories()
     {
         ReplaceCollection(FeaturedDishes, BuildFeaturedDishCategories());
+        OnPropertyChanged(nameof(FeaturedDishes));
     }
 
     private List<FoodCategoryItem> BuildFeaturedDishCategories()
     {
         return
         [
+            new()
+            {
+                Key = "oc",
+                Icon = "🐚",
+                Name = LocalizeUi("Ốc", "Shellfish", "贝类", "조개류", "Coquillages"),
+                Description = LocalizeUi(
+                    "Món ốc nổi bật với vị sốt và nướng quen thuộc.",
+                    "Popular shellfish dishes with signature sauces and grills.",
+                    "以招牌酱汁和烤制风味为特色的人气贝类菜。",
+                    "소스와 구이 풍미가 돋보이는 대표 조개 메뉴.",
+                    "Des coquillages remarquables, entre sauces maison et grillades."),
+                DishCount = CountFeaturedDishes("oc"),
+                CountLabel = LocalizeUi(
+                    $"{CountFeaturedDishes("oc")} món",
+                    $"{CountFeaturedDishes("oc")} dishes",
+                    $"{CountFeaturedDishes("oc")} 道菜",
+                    $"{CountFeaturedDishes("oc")}개 메뉴",
+                    $"{CountFeaturedDishes("oc")} plats"),
+                BackgroundColor = "#EEFDF5",
+                AccentColor = "#15803D"
+            },
             new()
             {
                 Key = "bo",
@@ -812,27 +934,6 @@ public partial class MainViewModel
                     $"{CountFeaturedDishes("lau")} plats"),
                 BackgroundColor = "#EEF7FF",
                 AccentColor = "#2563EB"
-            },
-            new()
-            {
-                Key = "oc",
-                Icon = "🐚",
-                Name = LocalizeUi("Ốc", "Shellfish", "贝类", "조개류", "Coquillages"),
-                Description = LocalizeUi(
-                    "Món ốc nổi bật với vị sốt và nướng quen thuộc.",
-                    "Popular shellfish dishes with signature sauces and grills.",
-                    "以招牌酱汁和烤制风味为特色的人气贝类菜。",
-                    "소스와 구이 풍미가 돋보이는 대표 조개 메뉴.",
-                    "Des coquillages remarquables, entre sauces maison et grillades."),
-                DishCount = CountFeaturedDishes("oc"),
-                CountLabel = LocalizeUi(
-                    $"{CountFeaturedDishes("oc")} món",
-                    $"{CountFeaturedDishes("oc")} dishes",
-                    $"{CountFeaturedDishes("oc")} 道菜",
-                    $"{CountFeaturedDishes("oc")}개 메뉴",
-                    $"{CountFeaturedDishes("oc")} plats"),
-                BackgroundColor = "#EEFDF5",
-                AccentColor = "#15803D"
             },
             new()
             {
