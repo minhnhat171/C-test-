@@ -1382,24 +1382,31 @@ sequenceDiagram
   end
   Ctrl-->>Browser: Render Scan View + QR payload
   Browser->>ScanView: Load public QR page
-  ScanView->>DeviceProfile: resolveQrDeviceProfile()
+  ScanView->>DeviceProfile: Gọi phương thức initialize(context)
+  DeviceProfile->>DeviceProfile: Gọi phương thức normalizeContext(context)
+  DeviceProfile->>DeviceProfile: Gọi phương thức resolveQrDeviceProfile()
   DeviceProfile->>DeviceProfile: const profile = Math.random() &lt; 0.5 ? 0 : 1
   alt profile = 0: thiết bị mạnh
-    DeviceProfile-->>ScanView: Hiển thị mạnh - offline đầy đủ
-    DeviceProfile->>DeviceProfile: cacheQrPayloadForOffline(context)
-    DeviceProfile->>DeviceProfile: writeQrPayloadToCache(POI/Tour + related POIs + narration/audio)
+    DeviceProfile->>DeviceProfile: Gọi phương thức applyStrongDeviceMode(context)
+    DeviceProfile-->>ScanView: Gọi phương thức setProfileState(profile, message) để hiển thị mạnh - offline đầy đủ
+    DeviceProfile->>DeviceProfile: Gọi phương thức cacheQrPayloadForOffline(context)
+    DeviceProfile->>DeviceProfile: Gọi phương thức writeQrPayloadToCache(key, data)
     opt có audio URL hợp lệ
-      DeviceProfile->>DeviceProfile: Cache API lưu audio asset
+      DeviceProfile->>DeviceProfile: Gọi phương thức cacheOfflineAssets(urls)
     end
+    DeviceProfile->>DeviceProfile: Gọi phương thức applyNetworkNotice(context)
   else profile = 1: thiết bị yếu
-    DeviceProfile-->>ScanView: Hiển thị yếu - tải tối thiểu
-    DeviceProfile->>DeviceProfile: Không prefetch toàn bộ POI/audio
-    DeviceProfile->>DeviceProfile: Chỉ dùng dữ liệu hiện tại, fallback text/Web Speech
+    DeviceProfile->>DeviceProfile: Gọi phương thức applyWeakDeviceMode(context)
+    DeviceProfile->>DeviceProfile: Gọi phương thức readQrPayloadFromCache(key) nếu offline/cache tồn tại
+    DeviceProfile-->>ScanView: Gọi phương thức setProfileState(profile, message) để hiển thị yếu - tải tối thiểu
+    DeviceProfile->>DeviceProfile: applyWeakDeviceMode không prefetch toàn bộ POI/audio
+    DeviceProfile->>DeviceProfile: Gọi phương thức applyNetworkNotice(context)
   end
   ScanView-->>Browser: Cập nhật panel DeviceCapabilitySimulation
   Browser->>ScanView: Tự mở app bằng deeplink nếu có
+  ScanView->>ScanView: Gọi phương thức buildHeartbeatPayload()
   Browser->>Ctrl: POST /qr/analytics/active-devices/heartbeat
-  Ctrl->>DevClient: HeartbeatAsync(request)
+  Ctrl->>DevClient: Gọi phương thức HeartbeatAsync(request)
   DevClient->>API: POST /api/analytics/active-devices/heartbeat
   API-->>DevClient: ActiveDeviceStatsDto
   Dashboard->>API: GET/SSE active devices
@@ -1420,7 +1427,7 @@ sequenceDiagram
         </div>
         <div class="detail-grid">
           <div class="detail-item"><b>Thành phần chính</b><span><code>QrCodesController.Scan</code>, <code>BuildScanViewModel</code>, <code>Scan.cshtml</code>, <code>qr-device-profile.js</code>, public analytics proxy endpoints.</span></div>
-          <div class="detail-item"><b>Khớp code</b><span>Public scan không cần login. Web random đúng kiểu <code>const profile = Math.random() &lt; 0.5 ? 0 : 1;</code> và kiểm tra <code>if (profile === 0)</code>. Có thể ép demo bằng <code>?deviceProfile=strong</code>, <code>?deviceProfile=weak</code> hoặc <code>?deviceProfile=random</code>. Heartbeat QR Web cập nhật dashboard như thiết bị truy cập/đang hoạt động; dashboard không cần hiển thị mạnh/yếu.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Public scan không cần login. Sequence ghi rõ các phương thức của <code>qr-device-profile.js</code>: <code>initialize</code>, <code>normalizeContext</code>, <code>resolveQrDeviceProfile</code>, <code>applyStrongDeviceMode</code>, <code>applyWeakDeviceMode</code>, <code>cacheQrPayloadForOffline</code>, <code>writeQrPayloadToCache</code>, <code>readQrPayloadFromCache</code>, <code>cacheOfflineAssets</code>, <code>setProfileState</code> và <code>applyNetworkNotice</code>. Web random đúng kiểu <code>const profile = Math.random() &lt; 0.5 ? 0 : 1;</code> và kiểm tra <code>if (profile === 0)</code>. Có thể ép demo bằng <code>?deviceProfile=strong</code>, <code>?deviceProfile=weak</code> hoặc <code>?deviceProfile=random</code>. Heartbeat QR Web cập nhật dashboard như thiết bị truy cập/đang hoạt động; dashboard không cần hiển thị mạnh/yếu.</span></div>
           <div class="detail-item"><b>Nhánh bắt buộc</b><span><code>0 = thiết bị mạnh</code>: cache payload QR, POI/Tour, POI liên quan và audio nếu có để ưu tiên offline. <code>1 = thiết bị yếu</code>: không prefetch toàn bộ, chỉ dùng dữ liệu hiện tại và fallback text/Web Speech; offline/mất mạng hiển thị thông báo, không crash trang. Đây là mô phỏng theo yêu cầu giảng viên, chưa phải đo cấu hình thật.</span></div>
         </div>
       </div>
