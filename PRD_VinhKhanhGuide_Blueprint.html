@@ -1386,7 +1386,8 @@ sequenceDiagram
   DeviceProfile->>DeviceProfile: Gọi phương thức normalizeContext(context)
   DeviceProfile->>DeviceProfile: Gọi phương thức resolveQrDeviceProfile()
   DeviceProfile->>DeviceProfile: const profile = Math.random() &lt; 0.5 ? 0 : 1
-  alt profile = 0: thiết bị mạnh
+  Note over DeviceProfile,ScanView: Random chỉ sinh một lần khi load trang. Hai nhánh alt/else là loại trừ, không chạy tuần tự và không chuyển từ mạnh sang yếu.
+  alt profile === 0: random ra 0, chỉ chạy nhánh thiết bị mạnh
     DeviceProfile->>DeviceProfile: Gọi phương thức applyStrongDeviceMode(context)
     DeviceProfile-->>ScanView: Gọi phương thức setProfileState(profile, message) để hiển thị mạnh - offline đầy đủ
     DeviceProfile->>DeviceProfile: Gọi phương thức cacheQrPayloadForOffline(context)
@@ -1395,7 +1396,7 @@ sequenceDiagram
       DeviceProfile->>DeviceProfile: Gọi phương thức cacheOfflineAssets(urls)
     end
     DeviceProfile->>DeviceProfile: Gọi phương thức applyNetworkNotice(context)
-  else profile = 1: thiết bị yếu
+  else profile === 1: random ra 1, chỉ chạy nhánh thiết bị yếu
     DeviceProfile->>DeviceProfile: Gọi phương thức applyWeakDeviceMode(context)
     DeviceProfile->>DeviceProfile: Gọi phương thức readQrPayloadFromCache(key) nếu offline/cache tồn tại
     DeviceProfile-->>ScanView: Gọi phương thức setProfileState(profile, message) để hiển thị yếu - tải tối thiểu
@@ -1427,7 +1428,7 @@ sequenceDiagram
         </div>
         <div class="detail-grid">
           <div class="detail-item"><b>Thành phần chính</b><span><code>QrCodesController.Scan</code>, <code>BuildScanViewModel</code>, <code>Scan.cshtml</code>, <code>qr-device-profile.js</code>, public analytics proxy endpoints.</span></div>
-          <div class="detail-item"><b>Khớp code</b><span>Public scan không cần login. Sequence ghi rõ các phương thức của <code>qr-device-profile.js</code>: <code>initialize</code>, <code>normalizeContext</code>, <code>resolveQrDeviceProfile</code>, <code>applyStrongDeviceMode</code>, <code>applyWeakDeviceMode</code>, <code>cacheQrPayloadForOffline</code>, <code>writeQrPayloadToCache</code>, <code>readQrPayloadFromCache</code>, <code>cacheOfflineAssets</code>, <code>setProfileState</code> và <code>applyNetworkNotice</code>. Web random đúng kiểu <code>const profile = Math.random() &lt; 0.5 ? 0 : 1;</code> và kiểm tra <code>if (profile === 0)</code>. Có thể ép demo bằng <code>?deviceProfile=strong</code>, <code>?deviceProfile=weak</code> hoặc <code>?deviceProfile=random</code>. Heartbeat QR Web cập nhật dashboard như thiết bị truy cập/đang hoạt động; dashboard không cần hiển thị mạnh/yếu.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Public scan không cần login. Sequence ghi rõ các phương thức của <code>qr-device-profile.js</code>: <code>initialize</code>, <code>normalizeContext</code>, <code>resolveQrDeviceProfile</code>, <code>applyStrongDeviceMode</code>, <code>applyWeakDeviceMode</code>, <code>cacheQrPayloadForOffline</code>, <code>writeQrPayloadToCache</code>, <code>readQrPayloadFromCache</code>, <code>cacheOfflineAssets</code>, <code>setProfileState</code> và <code>applyNetworkNotice</code>. Web random đúng kiểu <code>const profile = Math.random() &lt; 0.5 ? 0 : 1;</code> và kiểm tra <code>if (profile === 0)</code>. Random chỉ sinh một lần khi load trang; <code>alt profile === 0</code> và <code>else profile === 1</code> là hai nhánh loại trừ, không phải chạy từ mạnh rồi chuyển sang yếu. Có thể ép demo bằng <code>?deviceProfile=strong</code>, <code>?deviceProfile=weak</code> hoặc <code>?deviceProfile=random</code>. Heartbeat QR Web cập nhật dashboard như thiết bị truy cập/đang hoạt động; dashboard không cần hiển thị mạnh/yếu.</span></div>
           <div class="detail-item"><b>Nhánh bắt buộc</b><span><code>0 = thiết bị mạnh</code>: cache payload QR, POI/Tour, POI liên quan và audio nếu có để ưu tiên offline. <code>1 = thiết bị yếu</code>: không prefetch toàn bộ, chỉ dùng dữ liệu hiện tại và fallback text/Web Speech; offline/mất mạng hiển thị thông báo, không crash trang. Đây là mô phỏng theo yêu cầu giảng viên, chưa phải đo cấu hình thật.</span></div>
         </div>
       </div>
