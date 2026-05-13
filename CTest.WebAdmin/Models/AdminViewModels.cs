@@ -286,6 +286,24 @@ public class QrScanViewModel
     public bool AutoOpenApp { get; set; }
     public string EstimatedDurationLabel { get; set; } = string.Empty;
     public IReadOnlyList<string> TourStops { get; set; } = Array.Empty<string>();
+    public IReadOnlyList<QrScanPoiCacheItemViewModel> RelatedPois { get; set; } =
+        Array.Empty<QrScanPoiCacheItemViewModel>();
+}
+
+public class QrScanPoiCacheItemViewModel
+{
+    public string Id { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string SpecialDish { get; set; } = string.Empty;
+    public string ImageSource { get; set; } = string.Empty;
+    public string NarrationText { get; set; } = string.Empty;
+    public string AudioAssetPath { get; set; } = string.Empty;
+    public Dictionary<string, string> NarrationByLanguage { get; set; } =
+        new(StringComparer.OrdinalIgnoreCase);
+    public string MapLink { get; set; } = string.Empty;
 }
 
 internal static class QrTargetTypes

@@ -3,8 +3,8 @@
         vi: ["vi-VN"],
         en: ["en-US", "en-GB", "en-AU", "en-CA"],
         zh: ["zh-CN", "zh-TW", "zh-HK"],
-        ko: ["ko-KR"],
-        fr: ["fr-FR", "fr-CA"]
+        ja: ["ja-JP"],
+        de: ["de-DE"]
     };
 
     const femaleHints = ["female", "woman", "zira", "aria", "samantha", "hazel", "susan", "linda", "anna", "nu"];
@@ -21,12 +21,12 @@
             return "zh";
         }
 
-        if (normalized.startsWith("ko")) {
-            return "ko";
+        if (normalized.startsWith("ja")) {
+            return "ja";
         }
 
-        if (normalized.startsWith("fr")) {
-            return "fr";
+        if (normalized.startsWith("de")) {
+            return "de";
         }
 
         return "vi";

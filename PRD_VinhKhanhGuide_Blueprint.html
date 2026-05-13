@@ -1,0 +1,2459 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRD VinhKhanhGuide - Tài liệu yêu cầu sản phẩm</title>
+  <style>
+    :root {
+      --blue-950: #072146;
+      --blue-900: #0a2e63;
+      --blue-800: #0b4ea2;
+      --blue-700: #0b63ce;
+      --blue-600: #1478e6;
+      --blue-500: #2f80ff;
+      --blue-100: #dbeeff;
+      --blue-50: #edf7ff;
+      --ink: #102033;
+      --muted: #5d6f85;
+      --line: #c8dbee;
+      --paper: #fbfdff;
+      --white: #ffffff;
+      --green: #15803d;
+      --amber: #b45309;
+      --red: #b91c1c;
+      --shadow: 0 20px 45px rgba(7, 33, 70, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      background: #eaf4ff;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      line-height: 1.6;
+      background:
+        linear-gradient(180deg, rgba(219, 238, 255, 0.94), rgba(251, 253, 255, 0.98) 360px),
+        var(--paper);
+    }
+
+    a { color: var(--blue-700); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .page {
+      width: min(1320px, calc(100% - 40px));
+      margin: 0 auto 72px;
+    }
+
+    .hero {
+      min-height: 86vh;
+      display: grid;
+      align-content: center;
+      gap: 34px;
+      padding: 56px 0 28px;
+      position: relative;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 22px 0 auto auto;
+      width: min(46vw, 520px);
+      height: 220px;
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(47, 128, 255, 0.20), rgba(10, 46, 99, 0.05)),
+        repeating-linear-gradient(135deg, rgba(11, 78, 162, 0.10) 0 2px, transparent 2px 18px);
+      border: 1px solid rgba(11, 78, 162, 0.10);
+      z-index: 0;
+    }
+
+    .hero > * { position: relative; z-index: 1; }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      width: fit-content;
+      padding: 8px 12px;
+      color: var(--blue-800);
+      background: rgba(255, 255, 255, 0.76);
+      border: 1px solid rgba(11, 78, 162, 0.18);
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 920px;
+      margin: 0;
+      color: var(--blue-950);
+      font-size: clamp(42px, 7vw, 86px);
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    .hero-lead {
+      max-width: 900px;
+      margin: 0;
+      color: #1f3652;
+      font-size: 21px;
+      line-height: 1.45;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .stat {
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(11, 78, 162, 0.18);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: 0 10px 24px rgba(7, 33, 70, 0.07);
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--blue-800);
+      font-size: 28px;
+      line-height: 1.1;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .toc {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .toc a {
+      display: block;
+      padding: 14px 16px;
+      color: var(--blue-950);
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-weight: 800;
+      box-shadow: 0 10px 22px rgba(7, 33, 70, 0.06);
+    }
+
+    section {
+      margin: 44px 0;
+      padding: 34px;
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    section.band {
+      background: linear-gradient(180deg, #ffffff, #f7fbff);
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      color: var(--blue-950);
+      font-size: 32px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 30px 0 10px;
+      color: var(--blue-900);
+      font-size: 22px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h4 {
+      margin: 22px 0 8px;
+      color: var(--blue-800);
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    .section-lead {
+      max-width: 980px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .notice {
+      margin: 18px 0;
+      padding: 14px 16px;
+      color: #1f3652;
+      background: var(--blue-50);
+      border: 1px solid var(--blue-100);
+      border-left: 5px solid var(--blue-600);
+      border-radius: 8px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      background: #fcfeff;
+    }
+
+    .panel h4 { margin-top: 0; }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 9px;
+      color: var(--blue-900);
+      background: var(--blue-50);
+      border: 1px solid var(--blue-100);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .diagram-shell {
+      margin: 18px 0 16px;
+      padding: 18px;
+      overflow-x: auto;
+      background: #f8fbff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .mermaid {
+      min-width: 900px;
+      text-align: center;
+      font-size: 15px;
+    }
+
+    .mermaid svg {
+      max-width: 100%;
+      height: auto !important;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr 1fr;
+      gap: 10px;
+      margin: 12px 0 26px;
+    }
+
+    .detail-item {
+      min-height: 100%;
+      padding: 14px;
+      background: #fbfdff;
+      border: 1px solid #d8e7f6;
+      border-radius: 8px;
+    }
+
+    .detail-item b {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--blue-900);
+    }
+
+    .detail-item span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    table {
+      width: 100%;
+      margin: 18px 0;
+      border-collapse: collapse;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      color: var(--blue-950);
+      background: var(--blue-50);
+      font-weight: 900;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    code {
+      padding: 2px 5px;
+      color: var(--blue-900);
+      background: var(--blue-50);
+      border: 1px solid var(--blue-100);
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+
+    .sequence-block {
+      padding-top: 6px;
+      border-top: 1px solid #e4effa;
+      margin-top: 30px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status-ok { color: var(--green); font-weight: 900; }
+    .status-warn { color: var(--amber); font-weight: 900; }
+    .status-risk { color: var(--red); font-weight: 900; }
+
+    @media print {
+      body { background: white; }
+      .page { width: auto; margin: 0; }
+      .hero { min-height: auto; padding: 24px 0; }
+      .hero::before { display: none; }
+      section { break-inside: avoid; box-shadow: none; }
+      .sequence-block { break-inside: avoid; }
+      .toc { display: none; }
+    }
+
+    @media (max-width: 920px) {
+      .page { width: min(100% - 24px, 1320px); }
+      .hero-grid, .toc, .grid-2, .grid-3, .detail-grid {
+        grid-template-columns: 1fr;
+      }
+      section { padding: 22px; }
+      h1 { font-size: 42px; }
+      .hero-lead { font-size: 18px; }
+      .mermaid { min-width: 720px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="kicker">Product Requirement Document • VinhKhanhGuide</div>
+      <h1>PRD hệ thống thuyết minh ẩm thực Vĩnh Khánh</h1>
+      <p class="hero-lead">
+        Tài liệu này mô tả yêu cầu sản phẩm, mô hình dữ liệu và các luồng xử lý chính của hệ thống, bám theo source hiện tại của
+        <code>VKFoodAPI</code>, <code>CTest.WebAdmin</code>, <code>VinhKhanhGuide.App</code> và <code>VinhKhanhGuide.Core</code>.
+        Trọng tâm là các sequence nghiệp vụ có nhánh thay thế rõ ràng, kèm ghi chú đối chiếu controller, service và repository liên quan.
+      </p>
+      <div class="hero-grid">
+        <div class="stat"><strong>3</strong><span>khối triển khai: API, WebAdmin, MAUI App</span></div>
+        <div class="stat"><strong>11</strong><span>POI active trong <code>pois.json</code></span></div>
+        <div class="stat"><strong>2</strong><span>tour active, có QR enabled</span></div>
+        <div class="stat"><strong>25</strong><span>sequence nghiệp vụ Web/App</span></div>
+      </div>
+      <nav class="toc" aria-label="Mục lục nhanh">
+        <a href="#overview">1. Tổng Quan</a>
+        <a href="#actors">2. Actor &amp; Quyền</a>
+        <a href="#erd">3. ERD</a>
+        <a href="#usecases">4. Use Case</a>
+        <a href="#web-sequences">5. Sequence Web</a>
+        <a href="#app-sequences">6. Sequence App</a>
+        <a href="#api-matrix">7. API Matrix</a>
+        <a href="#grading">8. Tiêu Chí Nghiệm Thu</a>
+      </nav>
+    </header>
+
+    <section id="overview" class="band">
+      <h2>1. Tổng Quan Sản Phẩm</h2>
+      <p class="section-lead">
+        VinhKhanhGuide là hệ thống hướng dẫn ẩm thực đa ngôn ngữ cho phố Vĩnh Khánh. App MAUI phục vụ khách tham quan
+        bằng bản đồ, GPS/geofence, tour, QR, TTS/audio và lịch sử nghe. WebAdmin phục vụ Admin và chủ cửa hàng quản trị
+        dữ liệu, duyệt POI, tạo tour, quản lý audio, QR, analytics và tài khoản. Backend API là nguồn dữ liệu dùng chung.
+      </p>
+      <div class="notice">
+        Nguyên tắc đối chiếu: WebAdmin đọc/ghi qua <code>PoiApiClient</code>, <code>TourApiClient</code>,
+        <code>AudioGuideApiClient</code>, <code>ListeningHistoryApiClient</code>, <code>ActiveDeviceApiClient</code>,
+        còn API lưu dữ liệu bằng repository JSON trong <code>VKFoodAPI/App_Data</code>. App MAUI đọc API trước, sau đó
+        fallback sang SQLite/offline snapshot, cached snapshot hoặc seed data.
+      </div>
+
+      <div class="diagram-shell">
+        <div class="mermaid">
+flowchart LR
+  subgraph APP["VinhKhanhGuide.App (.NET MAUI Android)"]
+    AuthPage["AuthPage / AuthPageViewModel"]
+    MainVM["MainViewModel"]
+    Loc["LocationService + Android ForegroundService"]
+    Geo["GeofenceEngine + PoiAutoNarrationDecisionService"]
+    Narration["NarrationService<br/>TextToSpeech / Android MediaPlayer"]
+    QrScan["QrScannerPage + QrResolveService + QrDeepLinkBroker"]
+    Offline["PoiOfflineStore SQLite<br/>MapOfflineTileService<br/>AudioAssetCacheService"]
+    PresenceApp["ActiveDeviceTracker"]
+  end
+
+  subgraph WEB["CTest.WebAdmin (ASP.NET Core MVC)"]
+    Cookie["Cookie Auth<br/>WebAdminAuthService"]
+    Controllers["Account / Home / Pois / Tours / AudioGuides / QrCodes / Owner / SystemAdmin"]
+    AdminServices["DashboardService<br/>PoiAdminService<br/>TourAdminService<br/>AudioGuideAdminService"]
+    WebClients["Typed API Clients<br/>X-Admin-Api-Key"]
+    QrPublic["Public QR Scan endpoints"]
+  end
+
+  subgraph API["VKFoodAPI (ASP.NET Core API)"]
+    ApiControllers["Pois / Tours / AudioGuides / ResolveQr / ListeningHistory / ActiveDevices / UserManagement"]
+    Repos["Repositories<br/>JSON App_Data"]
+    Hosted["ActiveDevicePruningService<br/>DataRepairWarmupService"]
+  end
+
+  subgraph DATA["Data Store"]
+    Json["pois.json, tours.json, audio-guides.json, qr-codes.json"]
+    Analytics["listening-history.json, active-devices.json, movement-logs.json, user-profiles.json"]
+    Audit["audit-logs.json, web-admin-users.json"]
+  end
+
+  AuthPage --> MainVM
+  MainVM --> Loc
+  MainVM --> Geo
+  MainVM --> Narration
+  MainVM --> Offline
+  MainVM --> PresenceApp
+  QrScan --> MainVM
+  QrScan --> ApiControllers
+  PresenceApp --> ApiControllers
+  Controllers --> AdminServices
+  AdminServices --> WebClients
+  QrPublic --> WebClients
+  WebClients --> ApiControllers
+  ApiControllers --> Repos
+  Hosted --> Repos
+  Repos --> Json
+  Repos --> Analytics
+  Repos --> Audit
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="panel">
+          <h4>App MAUI</h4>
+          <p>Trung tâm là <code>MainViewModel</code>: nạp POI/tour định kỳ 8 giây, nhận GPS, đánh giá geofence, phát thuyết minh và đồng bộ lịch sử nghe.</p>
+        </div>
+        <div class="panel">
+          <h4>WebAdmin</h4>
+          <p>Phân quyền bằng cookie role <code>Admin</code>/<code>PoiOwner</code>. Admin quản trị toàn hệ thống; Owner chỉ thao tác POI khớp owner code/email.</p>
+        </div>
+        <div class="panel">
+          <h4>Backend API</h4>
+          <p>Các API quản trị dùng policy <code>AdminApiKey</code>. Public endpoint gồm POI/tour read, QR resolve, listening history, device heartbeat.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="actors">
+      <h2>2. Actor Và Quyền Hạn</h2>
+      <p class="section-lead">
+        Actor được xác định từ controller policy, app session và các endpoint public. Bảng này dùng để đối chiếu trực tiếp với code phân quyền.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Actor</th>
+            <th>Phạm vi trong code</th>
+            <th>Quyền / nghiệp vụ</th>
+            <th>Điểm kiểm chứng</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Admin Web</b></td>
+            <td><code>WebAdminPolicies.AdminOnly</code></td>
+            <td>Dashboard, POI, Tour, Audio, Translation, Map Analytics, QR, System Admin, Usage Logs.</td>
+            <td><span class="status-ok">Khớp</span> các controller có <code>[Authorize(AdminOnly)]</code>.</td>
+          </tr>
+          <tr>
+            <td><b>Owner / Chủ cửa hàng</b></td>
+            <td><code>WebAdminPolicies.OwnerArea</code>, <code>OwnerController</code></td>
+            <td>Xem portal, xem POI/lịch sử nghe liên quan, đăng ký POI mới ở trạng thái chờ duyệt.</td>
+            <td><code>CanManage(PoiDto)</code> so khớp <code>OwnerUserCode</code>/<code>OwnerEmail</code>.</td>
+          </tr>
+          <tr>
+            <td><b>Guest / Tourist</b></td>
+            <td><code>AuthService.ContinueAsGuestAsync()</code></td>
+            <td>Chọn ngôn ngữ, vào app không đăng nhập, dùng map, QR, tour, audio/TTS, lịch sử nghe.</td>
+            <td>Session guest dùng <code>guest-&lt;guid&gt;</code>, lưu hồ sơ trong Preferences.</td>
+          </tr>
+          <tr>
+            <td><b>App User</b></td>
+            <td><code>AuthService.SignInAsync</code>/<code>RegisterAsync</code></td>
+            <td>Đăng nhập nội bộ app, cập nhật profile, đồng bộ user profile lên API.</td>
+            <td>Local Preferences + <code>/api/users/profile-sync</code>.</td>
+          </tr>
+          <tr>
+            <td><b>Public QR Visitor</b></td>
+            <td><code>/qr/{targetType}/{targetId}</code></td>
+            <td>Mở trang public scan, nghe nội dung trên web, ghi listening history và heartbeat web.</td>
+            <td><code>QrCodesController.Scan</code> có <code>[AllowAnonymous]</code>.</td>
+          </tr>
+          <tr>
+            <td><b>Backend API</b></td>
+            <td><code>VKFoodAPI.Controllers</code></td>
+            <td>Cung cấp dữ liệu và nhận telemetry/listening history từ app/web.</td>
+            <td>Repository JSON + hosted service prune/repair.</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </section>
+
+    <section id="erd" class="band">
+      <h2>3. ERD Khớp Code</h2>
+      <p class="section-lead">
+        Hệ thống không dùng EF database server mà dùng JSON repository ở API và SQLite offline cache ở app. ERD dưới đây biểu diễn mô hình dữ liệu triển khai thật,
+        gồm cả quan hệ logic <code>TOUR_POI_LINK</code> tương ứng với danh sách <code>TourDto.PoiIds</code>.
+      </p>
+      <div class="diagram-shell">
+        <div class="mermaid">
+erDiagram
+  WEB_ADMIN_ACCOUNT {
+    string Username PK
+    string PasswordHash
+    string DisplayName
+    string Role
+    string OwnerCode
+    string OwnerEmail
+  }
+
+  ADMIN_USER_PROFILE {
+    string Id PK
+    string UserCode UK
+    string DisplayName
+    string Email
+    string Role
+    string PreferredLanguage
+    string DevicePlatform
+  }
+
+  POI {
+    string Id PK
+    string Code UK
+    string Name
+    string Category
+    string ImageSource
+    string Address
+    string Description
+    string SpecialDish
+    string PriceRange
+    string OpeningHours
+    string FirstDishSuggestion
+    string FeaturedCategoriesJson
+    string NarrationText
+    string MapLink
+    string AudioAssetPath
+    string OwnerUserCode FK
+    string OwnerDisplayName
+    string OwnerEmail
+    int Priority
+    float Latitude
+    float Longitude
+    float TriggerRadiusMeters
+    int CooldownMinutes
+    bool IsActive
+    bool IsDeleted
+    datetime CreatedAtUtc
+    datetime UpdatedAtUtc
+    datetime DeletedAtUtc
+    string NarrationTranslationsJson
+  }
+
+  TOUR {
+    int Id PK
+    string Code UK
+    string Name
+    string Description
+    int EstimatedMinutes
+    bool IsActive
+    bool IsQrEnabled
+    string PoiIdsJson
+    bool IsDeleted
+    datetime CreatedAtUtc
+    datetime UpdatedAtUtc
+    datetime DeletedAtUtc
+  }
+
+  TOUR_POI_LINK {
+    int TourId FK
+    string PoiId FK
+    int OrderIndex
+  }
+
+  AUDIO_GUIDE {
+    string Id PK
+    string PoiId FK
+    string LanguageCode
+    string VoiceType
+    string SourceType
+    string Script
+    string FilePath
+    int EstimatedSeconds
+    bool IsPublished
+    bool IsDeleted
+    datetime CreatedAtUtc
+    datetime UpdatedAtUtc
+    datetime DeletedAtUtc
+  }
+
+  QR_CODE_ITEM {
+    string Id PK
+    string Code UK
+    string TargetType
+    string TargetId
+    string DisplayName
+    string Description
+    bool IsActive
+    bool IsDeleted
+    datetime CreatedAtUtc
+    datetime UpdatedAtUtc
+    datetime DeletedAtUtc
+  }
+
+  LISTENING_HISTORY {
+    string Id PK
+    string PoiId FK
+    string PoiCode
+    string PoiName
+    string UserCode FK
+    string UserDisplayName
+    string UserEmail
+    string TriggerType
+    string Language
+    string PlaybackMode
+    string NarrationSnapshot
+    string AudioAssetPath
+    string Source
+    string DevicePlatform
+    bool AutoTriggered
+    datetime StartedAtUtc
+    datetime ReceivedAtUtc
+    int TtsQueuePosition
+    datetime CompletedAtUtc
+    int ListenSeconds
+    bool Completed
+    string ErrorMessage
+  }
+
+  ACTIVE_DEVICE_SESSION {
+    string DeviceId PK
+    string ClientInstanceId PK
+    string UserCode FK
+    string UserDisplayName
+    string UserEmail
+    string DevicePlatform
+    string DeviceModel
+    string AppVersion
+    datetime ConnectedAtUtc
+    datetime LastSeenAtUtc
+    float Latitude
+    float Longitude
+    float AccuracyMeters
+    datetime LocationTimestampUtc
+    bool IsActive
+  }
+
+  MOVEMENT_LOG {
+    string Id PK
+    string DeviceId FK
+    string UserCode FK
+    string UserDisplayName
+    string UserEmail
+    string DevicePlatform
+    string DeviceModel
+    string AppVersion
+    float Latitude
+    float Longitude
+    float AccuracyMeters
+    float SpeedMetersPerSecond
+    datetime RecordedAtUtc
+    datetime ReceivedAtUtc
+  }
+
+  AUDIT_LOG {
+    string Id PK
+    string Username
+    string Action
+    string EntityName
+    string EntityId
+    string Description
+    datetime CreatedAtUtc
+  }
+
+  OFFLINE_POI_CACHE {
+    string Id PK
+    string Code
+    string Name
+    string NarrationText
+    string AudioAssetPath
+    float Latitude
+    float Longitude
+    string NarrationTranslationsJson
+  }
+
+  TOUR ||--o{ TOUR_POI_LINK : "PoiIds ordered"
+  POI ||--o{ TOUR_POI_LINK : "included in"
+  POI ||--o{ AUDIO_GUIDE : "has scripts/files"
+  POI ||--o{ LISTENING_HISTORY : "listened"
+  ADMIN_USER_PROFILE ||--o{ LISTENING_HISTORY : "user scope"
+  ADMIN_USER_PROFILE ||--o{ ACTIVE_DEVICE_SESSION : "presence"
+  ACTIVE_DEVICE_SESSION ||--o{ MOVEMENT_LOG : "writes route"
+  POI ||--o{ QR_CODE_ITEM : "targetType poi"
+  TOUR ||--o{ QR_CODE_ITEM : "targetType tour"
+  WEB_ADMIN_ACCOUNT ||--o{ POI : "owner metadata"
+  POI ||--o{ OFFLINE_POI_CACHE : "app snapshot"
+  WEB_ADMIN_ACCOUNT ||--o{ AUDIT_LOG : "admin actions"
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <b>Vật lý API</b>
+          <span><code>pois.json</code>, <code>tours.json</code>, <code>audio-guides.json</code>, <code>qr-codes.json</code>,
+            <code>listening-history.json</code>, <code>active-devices.json</code>, <code>movement-logs.json</code>.</span>
+        </div>
+        <div class="detail-item">
+          <b>Quan hệ logic</b>
+          <span><code>TourDto.PoiIds</code> là danh sách có thứ tự, nên PRD biểu diễn thành <code>TOUR_POI_LINK</code> để ERD rõ ràng như hệ CSDL chuẩn.</span>
+        </div>
+        <div class="detail-item">
+          <b>Offline app</b>
+          <span><code>PoiOfflineStore</code> tạo SQLite bảng <code>poi_cache</code> và <code>sync_metadata</code>; map/audio cache nằm trong file system.</span>
+        </div>
+      </div>
+      <div class="notice">
+        ERD là mô hình logic để đọc hệ thống JSON repository như một mô hình dữ liệu chuẩn. Các field dạng
+        <code>*Json</code> biểu diễn collection trong DTO thật: <code>TourDto.PoiIds</code>,
+        <code>PoiDto.FeaturedCategories</code> và <code>PoiDto.NarrationTranslations</code>. Một số key ngôn ngữ cũ
+        như <code>ko/fr</code> có thể còn trong dữ liệu lịch sử, nhưng UI hiện tại dùng bộ thống nhất
+        <code>vi/en/zh/ja/de</code>.
+      </div>
+    </section>
+
+    <section id="usecases">
+      <h2>4. Use Case Tổng Thể</h2>
+      <p class="section-lead">
+        Use case được chia theo 5 actor chính và đúng boundary triển khai: App, WebAdmin, Public QR và Backend API.
+      </p>
+      <div class="diagram-shell">
+        <div class="mermaid">
+flowchart LR
+  Guest(["Guest / Tourist"])
+  AppUser(["App User"])
+  Admin(["Admin"])
+  Owner(["Owner"])
+  PublicQr(["Public QR Visitor"])
+  API(["Backend API"])
+
+  subgraph AppUC["Ứng dụng MAUI"]
+    UC01["UC01 Chọn ngôn ngữ<br/>Continue as Guest"]
+    UC02["UC02 Xem map, danh sách POI"]
+    UC03["UC03 Bật GPS, geofence"]
+    UC04["UC04 Auto narration"]
+    UC05["UC05 Nghe POI thủ công"]
+    UC06["UC06 Chọn và đi theo tour"]
+    UC07["UC07 Quét QR mở POI/Tour"]
+    UC08["UC08 Lịch sử nghe, replay, xóa"]
+    UC09["UC09 Audio settings và cấu hình phát"]
+    UC10["UC10 Profile sync và heartbeat"]
+  end
+
+  subgraph WebUC["WebAdmin MVC"]
+    UC11["UC11 Login/Logout theo role"]
+    UC12["UC12 Dashboard realtime"]
+    UC13["UC13 Quản lý POI và duyệt Owner submission"]
+    UC14["UC14 Quản lý Audio/TTS"]
+    UC15["UC15 Quản lý Tour"]
+    UC16["UC16 Quản lý QR"]
+    UC17["UC17 Map Analytics và Usage Logs"]
+    UC18["UC18 Quản lý tài khoản WebAdmin"]
+    UC19["UC19 Quản lý App user/profile"]
+    UC20["UC20 Owner Portal đăng ký POI"]
+    UC23["UC23 Translation scripts"]
+  end
+
+  subgraph PublicUC["Public QR"]
+    UC21["UC21 Web QR scan POI/Tour"]
+    UC22["UC22 Web listening history + heartbeat"]
+  end
+
+  Guest --> UC01 --> UC02
+  Guest --> UC03 --> UC04
+  Guest --> UC05
+  Guest --> UC06
+  Guest --> UC07
+  Guest --> UC08
+  Guest --> UC09
+  AppUser --> UC10
+  Admin --> UC11
+  Admin --> UC12
+  Admin --> UC13
+  Admin --> UC14
+  Admin --> UC15
+  Admin --> UC16
+  Admin --> UC17
+  Admin --> UC18
+  Admin --> UC19
+  Admin --> UC23
+  Owner --> UC11
+  Owner --> UC20
+  PublicQr --> UC21
+  PublicQr --> UC22
+  UC02 --> API
+  UC03 --> API
+  UC04 --> API
+  UC07 --> API
+  UC08 --> API
+  UC10 --> API
+  UC12 --> API
+  UC13 --> API
+  UC14 --> API
+  UC15 --> API
+  UC16 --> API
+  UC17 --> API
+  UC19 --> API
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Nhóm use case</th>
+            <th>Controller/ViewModel thực thi</th>
+            <th>Luồng chính cần kiểm chứng</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>App onboarding và sử dụng thường ngày</td>
+            <td><code>AuthPageViewModel</code>, <code>MainViewModel</code></td>
+            <td>Guest mode, GPS, POI list, selected POI, narration, tour, QR, history.</td>
+          </tr>
+          <tr>
+            <td>Admin quản trị nội dung</td>
+            <td><code>PoisController</code>, <code>AudioGuidesController</code>, <code>ToursController</code></td>
+            <td>Validate form, gọi API client, API repository normalize/validate/save JSON, audit log.</td>
+          </tr>
+          <tr>
+            <td>Owner Portal</td>
+            <td><code>OwnerController</code>, <code>PoiAdminService</code></td>
+            <td>Owner chỉ thấy POI của mình, đăng ký POI inactive, Admin duyệt mới active trên app.</td>
+          </tr>
+          <tr>
+            <td>Analytics và telemetry</td>
+            <td><code>ListeningHistoryController</code>, <code>ActiveDevicesController</code></td>
+            <td>History begin/complete, ranking, active device heartbeat, movement log, SSE dashboard.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>Đặc Tả Use Case Chi Tiết</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Mã</th>
+            <th>Tên / Actor</th>
+            <th>Mục tiêu và tiền điều kiện</th>
+            <th>Luồng chính</th>
+            <th>Luồng thay thế / ngoại lệ</th>
+            <th>Hậu điều kiện và code liên quan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>UC-01</td>
+            <td><b>Đăng nhập WebAdmin</b><br>Actor: Admin, Owner</td>
+            <td>Mục tiêu: vào đúng khu vực quản trị theo role.<br>Tiền điều kiện: tài khoản tồn tại trong <code>web-admin-users.json</code>.</td>
+            <td>Người dùng mở <code>/Account/Login</code>, nhập username/password; controller gọi <code>IWebAdminAuthService.ValidateCredentials</code>; tạo cookie claims role/owner; redirect theo role.</td>
+            <td>Sai mật khẩu trả lại view login; thiếu quyền vào route AdminOnly chuyển <code>AccessDenied</code>; logout xóa cookie.</td>
+            <td>Session WebAdmin hợp lệ.<br><code>AccountController</code>, <code>WebAdminSecurity.cs</code>, <code>WebAdminAccountStore</code>.</td>
+          </tr>
+          <tr>
+            <td>UC-02</td>
+            <td><b>Admin tạo/sửa/xóa POI</b><br>Actor: Admin</td>
+            <td>Mục tiêu: quản trị dữ liệu điểm ăn uống.<br>Tiền điều kiện: Admin đã đăng nhập; API key admin cấu hình trong WebAdmin.</td>
+            <td>Admin mở <code>/Pois</code>; tạo/sửa form; <code>PoiAdminService</code> validate; <code>PoiApiClient</code> gọi <code>/api/pois</code>; API normalize, validate code/toạ độ, lưu JSON.</td>
+            <td>Trùng code hoặc toạ độ sai trả validation; API lỗi hiển thị lỗi kết nối; delete là soft delete, không xóa cứng khỏi file.</td>
+            <td>POI được lưu vào <code>pois.json</code>, app/API đọc được bản mới.<br><code>PoisController</code>, <code>PoiRepository</code>, <code>PoiAdminService</code>.</td>
+          </tr>
+          <tr>
+            <td>UC-03</td>
+            <td><b>Owner đăng ký POI mới</b><br>Actor: Owner</td>
+            <td>Mục tiêu: chủ cửa hàng gửi điểm kinh doanh của mình.<br>Tiền điều kiện: Owner đăng nhập, có owner claims.</td>
+            <td>Owner mở <code>/Owner</code>, điền thông tin POI; controller ép owner metadata và <code>IsActive=false</code>; gọi cùng service/API quản lý POI.</td>
+            <td>Owner chỉ xem/sửa POI có <code>OwnerUserCode/OwnerEmail</code> khớp; dữ liệu chưa hợp lệ trả form lỗi.</td>
+            <td>POI mới ở trạng thái chờ duyệt.<br><code>OwnerController</code>, <code>IWebAdminCurrentUser</code>, <code>PoiAdminService</code>.</td>
+          </tr>
+          <tr>
+            <td>UC-04</td>
+            <td><b>Admin duyệt POI Owner gửi</b><br>Actor: Admin, Owner phụ</td>
+            <td>Mục tiêu: đưa POI owner lên app sau khi kiểm tra.<br>Tiền điều kiện: POI tồn tại và đang inactive.</td>
+            <td>Admin mở danh sách POI, chỉnh thông tin nếu cần, bật <code>IsActive</code> và lưu; API update <code>UpdatedAtUtc</code>.</td>
+            <td>Admin có thể từ chối bằng cách giữ inactive hoặc soft delete; owner không tự active được qua Owner portal.</td>
+            <td>POI active được app nhận qua API/snapshot.<br><code>PoisController</code>, <code>PoiRepository.Update</code>.</td>
+          </tr>
+          <tr>
+            <td>UC-05</td>
+            <td><b>Admin tạo/sửa Tour</b><br>Actor: Admin</td>
+            <td>Mục tiêu: cấu hình hành trình theo danh sách POI có thứ tự.<br>Tiền điều kiện: có ít nhất một POI trong hệ thống.</td>
+            <td>Admin mở <code>/Tours</code>; chọn POI, nhập mã/tên/thời lượng; <code>TourAdminService</code> gọi <code>TourApiClient</code>; API <code>ToursController</code> lưu <code>TourDto.PoiIds</code>.</td>
+            <td>Tour không có POI bị reject; POI trùng được normalize; delete là soft delete và tắt QR nếu có.</td>
+            <td>Tour lưu ở <code>tours.json</code>; app đọc API trước, fallback cache/seed nếu API lỗi.<br><code>ToursController</code>, <code>TourRepository</code>.</td>
+          </tr>
+          <tr>
+            <td>UC-06</td>
+            <td><b>App chọn tour và đi theo tour</b><br>Actor: Guest/App user</td>
+            <td>Mục tiêu: khách đi theo tuyến gợi ý.<br>Tiền điều kiện: app đã tải tour và POI; tour active.</td>
+            <td>Người dùng chọn tour; <code>MainViewModel.ActivateTourAsync</code> đặt active tour, đọc POI theo <code>PoiIds</code>, phát lời giới thiệu; bản đồ chỉ hiện POI thuộc tour.</td>
+            <td>Nếu POI trong tour thiếu, app bỏ qua POI không có; nếu không có tour từ API, app dùng cached/seed tour.</td>
+            <td>Tour state, progress và narration được cập nhật.<br><code>MainViewModel</code>, <code>TourProvider</code>, <code>TourRepository</code>.</td>
+          </tr>
+          <tr>
+            <td>UC-07</td>
+            <td><b>App tự động thuyết minh GPS/geofence</b><br>Actor: Guest/App user</td>
+            <td>Mục tiêu: tự phát thuyết minh khi vào vùng POI.<br>Tiền điều kiện: location permission được cấp và auto narration bật.</td>
+            <td>App lấy vị trí, <code>GeofenceEngine</code> tính khoảng cách; <code>PoiAutoNarrationDecisionService</code> xét radius, priority, debounce/cooldown; <code>NarrationService</code> phát TTS/audio.</td>
+            <td>Thiếu quyền vị trí thì chuyển trạng thái hướng dẫn bật quyền; đang tour thì chỉ xét POI hiện tại của tour; cooldown tránh phát trùng.</td>
+            <td>Không phát chồng; history begin/complete được đồng bộ.<br><code>LocationService</code>, <code>MainViewModel</code>, <code>NarrationService</code>.</td>
+          </tr>
+          <tr>
+            <td>UC-08</td>
+            <td><b>App/Web quét QR</b><br>Actor: Guest, Public QR Visitor</td>
+            <td>Mục tiêu: mở nhanh POI/Tour từ mã QR.<br>Tiền điều kiện: target POI/Tour tồn tại, tour QR enabled nếu là tour.</td>
+            <td>WebAdmin tạo public URL động <code>/qr/{targetType}/{targetId}</code>; public web render payload QR rồi chạy mô phỏng <code>DeviceCapabilitySimulation</code>; app scan camera/manual gọi <code>/api/qr/resolve/{code}</code> hoặc xử lý deep link; điều hướng tới POI/Tour tương ứng.</td>
+            <td>Target không tồn tại trả 404/not resolved; camera thiếu quyền hiển thị nhánh nhập mã thủ công; public web offline thì thiết bị mạnh đọc cache nếu có, thiết bị yếu chỉ dùng dữ liệu hiện tại và thông báo phù hợp; API QR item repository tồn tại nhưng WebAdmin chưa có CRUD độc lập.</td>
+            <td>Người dùng mở đúng POI/Tour, thấy trạng thái <code>0 = thiết bị mạnh</code> hoặc <code>1 = thiết bị yếu</code> và có thể autoplay.<br><code>QrCodesController</code>, <code>Scan.cshtml</code>, <code>qr-device-profile.js</code>, <code>ResolveQrController</code>, <code>QrScannerPage</code>, <code>QrDeepLinkBroker</code>.</td>
+          </tr>
+          <tr>
+            <td>UC-09</td>
+            <td><b>Ghi listening history</b><br>Actor: App user/Public web</td>
+            <td>Mục tiêu: lưu phiên nghe để phân tích usage.<br>Tiền điều kiện: người dùng bắt đầu nghe POI trên app hoặc public QR web.</td>
+            <td>App tạo optimistic item; <code>ListeningHistorySyncService.BeginAsync</code> gửi create; khi phát xong gọi complete; web QR dùng endpoint proxy <code>/qr/analytics/listening-history</code>.</td>
+            <td>Nếu API lỗi, app giữ local/optimistic state; nếu playback lỗi, update <code>ErrorMessage</code>; delete history gọi API và cập nhật UI.</td>
+            <td><code>listening-history.json</code> có started/completed/listen seconds.<br><code>ListeningHistoryController</code>, <code>ListeningHistoryRepository</code>.</td>
+          </tr>
+          <tr>
+            <td>UC-10</td>
+            <td><b>Dashboard analytics</b><br>Actor: Admin</td>
+            <td>Mục tiêu: xem tình trạng hệ thống, lượt nghe và thiết bị active.<br>Tiền điều kiện: Admin đăng nhập; API telemetry đang nhận heartbeat/history.</td>
+            <td>Dashboard gọi song song POI/tour/audio/history/active device; SSE stream cập nhật active devices; movement log phục vụ bản đồ tuyến di chuyển.</td>
+            <td>API lỗi hiển thị trạng thái không tải được; heartbeat có toạ độ 0,0 hoặc ngoài range không ghi movement log.</td>
+            <td>Admin xem realtime count, ranking, route points.<br><code>HomeController</code>, <code>DashboardService</code>, <code>ActiveDevicesController</code>, <code>MovementLogsController</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="web-sequences" class="band">
+      <h2>5. Sequence WebAdmin Và Public Web</h2>
+      <p class="section-lead">
+        Các sequence dưới đây dùng đúng controller/service/API client/repository có trong source. Mỗi sơ đồ có nhánh <code>alt</code>, <code>par</code> hoặc <code>loop</code> khi code thật có xử lý rẽ nhánh.
+      </p>
+
+      <div class="sequence-block" id="web-01">
+        <h3>WEB-01. Đăng nhập, phân quyền và đăng xuất</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor User as Admin / Owner
+  participant Browser as Web Browser
+  participant Account as AccountController
+  participant Auth as WebAdminAuthService
+  participant Store as WebAdminAccountStore
+  participant Cookie as CookieAuth Middleware
+
+  User->>Browser: Mở /Account/Login
+  Browser->>Account: GET Login(returnUrl)
+  alt đã có cookie hợp lệ
+    Account->>Account: RedirectToHomeByRole()
+    Account-->>Browser: Admin -> /Home/Index, Owner -> /Owner/Index
+  else chưa đăng nhập
+    Account-->>Browser: Render LoginViewModel
+  end
+  User->>Browser: Nhập username/password
+  Browser->>Account: POST Login + AntiForgeryToken
+  Account->>Auth: ValidateCredentials(username,password)
+  Auth->>Store: GetAll()
+  Store-->>Auth: WebAdminAuthUserOptions[]
+  Auth->>Auth: Normalize username + VerifyPassword(PBKDF2/plain fallback)
+  alt sai tài khoản hoặc mật khẩu
+    Auth-->>Account: null
+    Account-->>Browser: View Login + "Sai tài khoản hoặc mật khẩu"
+  else hợp lệ
+    Auth-->>Account: WebAdminAuthenticatedUser(role, owner claims)
+    Account->>Cookie: SignInAsync(ClaimsPrincipal, expires 8h)
+    Account-->>Browser: LocalRedirect(returnUrl) hoặc redirect theo role
+  end
+  User->>Browser: Bấm Đăng xuất
+  Browser->>Account: POST /Account/Logout
+  Account->>Cookie: SignOutAsync()
+  Account-->>Browser: Redirect /Account/Login
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>AccountController</code>, <code>WebAdminAuthService</code>, <code>WebAdminAccountStore</code>, cookie <code>CTest.WebAdmin.Auth</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Claims gồm <code>Name</code>, <code>Role</code>, <code>DisplayName</code>, <code>OwnerCode</code>, <code>OwnerEmail</code>; role Admin vào Dashboard, Owner vào Owner Portal.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Đã authenticated thì redirect ngay; sai credentials render lỗi; returnUrl chỉ nhận URL local qua <code>Url.IsLocalUrl</code>.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="web-02">
+        <h3>WEB-02. Dashboard tổng quan và realtime active devices</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Admin
+  participant Browser
+  participant Home as HomeController
+  participant Dash as DashboardService
+  participant PoiClient as PoiApiClient
+  participant TourClient as TourApiClient
+  participant AudioClient as AudioGuideApiClient
+  participant HistoryClient as ListeningHistoryApiClient
+  participant DeviceClient as ActiveDeviceApiClient
+  participant API as VKFoodAPI
+
+  Admin->>Browser: Mở Dashboard
+  Browser->>Home: GET /Home/Index
+  Home->>Dash: LoadAsync()
+  par POI
+    Dash->>PoiClient: GetPoisAsync()
+    PoiClient->>API: GET /api/pois
+    API-->>PoiClient: PoiDto[]
+  and Tour
+    Dash->>TourClient: GetToursAsync()
+    TourClient->>API: GET /api/tours
+    API-->>TourClient: TourDto[]
+  and Audio
+    Dash->>AudioClient: GetAudioGuidesAsync()
+    AudioClient->>API: GET /api/audio-guides
+    API-->>AudioClient: AudioGuideDto[]
+  and History
+    Dash->>HistoryClient: GetListeningHistoryAsync(time_desc, all)
+    HistoryClient->>API: GET /api/analytics/listening-history
+    API-->>HistoryClient: ListeningHistoryEntryDto[]
+  and Active devices
+    Dash->>DeviceClient: GetStatsAsync()
+    DeviceClient->>API: GET /api/analytics/active-devices
+    API-->>DeviceClient: ActiveDeviceStatsDto
+  end
+  Dash->>Dash: BuildFromSharedData()
+  Dash-->>Home: DashboardViewModel
+  Home-->>Browser: Render Dashboard.cshtml
+
+  Browser->>Home: GET /Home/ActiveDeviceEvents
+  loop mỗi 1 giây khi payload thay đổi
+    Home->>Dash: GetActiveDeviceStatsAsync()
+    Dash->>DeviceClient: GET stats
+    DeviceClient->>API: GET /api/analytics/active-devices
+    API-->>DeviceClient: ActiveDeviceStatsDto
+    Home-->>Browser: SSE event active-devices
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>HomeController</code>, <code>DashboardService</code>, 5 API clients, endpoint SSE <code>ActiveDeviceEvents</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Dashboard tính <code>TotalPois</code>, <code>TotalTours</code>, <code>PublishedAudioCount</code>, <code>QrListenRate</code>, <code>CompletionRate</code>, top 5 POI.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Khi API lỗi, <code>BuildUnavailableDashboard</code> trả số liệu rỗng và <code>IsSyncOnline=false</code>, không dùng dữ liệu giả.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="web-03">
+        <h3>WEB-03. Admin quản lý POI: danh sách, tạo, sửa, duyệt, xóa</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Admin
+  participant Browser
+  participant Pois as Web PoisController
+  participant Service as PoiAdminService
+  participant Validation as PoiValidationService
+  participant Image as PoiImageStorageService
+  participant PoiClient as PoiApiClient
+  participant AudioClient as AudioGuideApiClient
+  participant ApiPois as API PoisController
+  participant Repo as PoiRepository
+  participant Audit as AuditLogRepository
+
+  Admin->>Browser: Mở /Pois?searchTerm&amp;statusFilter
+  Browser->>Pois: GET Index()
+  Pois->>Service: LoadManagementPageAsync()
+  par nạp POI
+    Service->>PoiClient: GetPoisAsync()
+    PoiClient->>ApiPois: GET /api/pois
+    ApiPois->>Repo: GetAll()
+    Repo-->>ApiPois: PoiDto[]
+  and đếm audio theo POI
+    Service->>AudioClient: GetAudioGuidesAsync()
+  end
+  Service->>Service: Filter search/status, count related audio
+  Service-->>Pois: PoiManagementViewModel
+  Pois-->>Browser: View Manage
+
+  Admin->>Browser: Submit form tạo/sửa POI
+  Browser->>Pois: POST Create/Edit + AntiForgeryToken
+  Pois->>Service: LoadValidationSnapshotAsync()
+  Service->>PoiClient: GET /api/pois
+  Pois->>Validation: ValidateCreate/ValidateUpdate(model, existingPois)
+  alt invalid form
+    Pois-->>Browser: Render Editor + ModelState errors
+  else valid
+    Pois->>Service: CreateAsync/UpdateAsync(model)
+    Service->>Image: SaveAsync(uploadedImage)
+    Service->>PoiClient: POST/PUT /api/pois
+    PoiClient->>ApiPois: Authorized X-Admin-Api-Key
+    ApiPois->>Repo: Create/Update(dto)
+    Repo->>Repo: Normalize + ValidateForSave + SaveUnsafe(pois.json)
+    ApiPois->>Audit: WriteAudit(create/update POI)
+    ApiPois-->>PoiClient: Created/NoContent
+    Service-->>Pois: PoiOperationResult
+    Pois-->>Browser: Redirect Index + TempData message
+  end
+
+  Admin->>Browser: Duyệt POI Owner gửi
+  Browser->>Pois: POST Approve(id)
+  Pois->>Service: ApproveAsync(id)
+  Service->>PoiClient: GET /api/pois/{id}
+  Service->>PoiClient: PUT /api/pois/{id} với IsActive=true
+  PoiClient->>ApiPois: PUT authorized
+  ApiPois->>Repo: Update()
+  ApiPois->>Audit: WriteAudit(update)
+  ApiPois-->>PoiClient: 204
+
+  Admin->>Browser: Xóa POI
+  Browser->>Pois: POST Delete(id)
+  Pois->>Service: DeleteAsync(id)
+  Service->>PoiClient: DELETE /api/pois/{id}
+  ApiPois->>Repo: soft delete IsDeleted=true, IsActive=false
+  ApiPois->>Audit: WriteAudit(delete)
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>PoisController</code> Web, <code>PoiAdminService</code>, <code>PoiValidationService</code>, API <code>PoisController</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>API validate <code>Code</code>, <code>Name</code>, tọa độ hợp lệ, chống trùng code; delete là soft delete trong <code>pois.json</code>.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Owner submission được tạo <code>IsActive=false</code>; chỉ Admin mới có <code>ApproveAsync</code> để bật POI lên app.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="web-04">
+        <h3>WEB-04. Quản lý Audio Guide / TTS cho POI</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Admin
+  participant Browser
+  participant Ctrl as AudioGuidesController
+  participant Service as AudioGuideAdminService
+  participant Validator as AudioGuideValidationService
+  participant AudioClient as AudioGuideApiClient
+  participant PoiClient as PoiApiClient
+  participant ApiAudio as API AudioGuidesController
+  participant AudioRepo as AudioGuideRepository
+  participant PoiRepo as PoiRepository
+
+  Admin->>Browser: Mở quản lý audio từ màn POI
+  Browser->>Ctrl: GET Index(audioId, poiId, languageCode)
+  Ctrl-->>Browser: Redirect Edit POI hoặc Pois Index
+
+  Browser->>Ctrl: POST Save(AudioGuideManagementPageViewModel)
+  Ctrl->>Service: LoadManagementPageAsync(audioId, scopePoiId, language)
+  par nạp POI
+    Service->>PoiClient: GET /api/pois
+  and nạp audio
+    Service->>AudioClient: GET /api/audio-guides
+  end
+  Service->>Service: Build coverage, language slots, default script
+  Ctrl->>Validator: Validate(editor, pois)
+  alt invalid
+    Ctrl-->>Browser: View Manage + errors
+  else create/update
+    Ctrl->>Service: SaveAsync(editor, pois)
+    Service->>AudioClient: POST hoặc PUT /api/audio-guides
+    AudioClient->>ApiAudio: Authorized request
+    ApiAudio->>ApiAudio: ValidateRequest(PoiId, SourceType)
+    alt SourceType=file nhưng thiếu FilePath
+      ApiAudio-->>AudioClient: 400 BadRequest
+    else SourceType=tts nhưng thiếu Script
+      ApiAudio-->>AudioClient: 400 BadRequest
+    else hợp lệ
+      ApiAudio->>AudioRepo: Create/Update(dto)
+      AudioRepo->>AudioRepo: Normalize, chống trùng PoiId+Language+Source
+      AudioRepo->>PoiRepo: ApplyPublishedAudioGuides()
+      PoiRepo->>PoiRepo: cập nhật NarrationTranslations / AudioAssetPath vào pois.json
+      AudioRepo-->>ApiAudio: AudioGuideDto
+      ApiAudio-->>AudioClient: Created/NoContent
+      Service-->>Ctrl: AudioGuideOperationResult
+      Ctrl-->>Browser: Redirect + TempData
+    end
+  end
+
+  Admin->>Browser: Xóa audio
+  Browser->>Ctrl: POST Delete(id)
+  Ctrl->>Service: DeleteAsync(id)
+  Service->>AudioClient: DELETE /api/audio-guides/{id}
+  ApiAudio->>AudioRepo: soft delete + SyncPoisUnsafe()
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>AudioGuideAdminService</code>, <code>AudioGuideRepository</code>, <code>PoiRepository.ApplyPublishedAudioGuides</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Audio TTS published đẩy script vào <code>PoiDto.NarrationTranslations</code>; file audio published đẩy <code>AudioAssetPath</code> cho app ưu tiên playback audio.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Validate phân biệt <code>SourceType=tts</code> cần <code>Script</code>, <code>SourceType=file</code> cần <code>FilePath</code>.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="web-05">
+        <h3>WEB-05. Quản lý Tour và danh sách POI trong tour</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Admin
+  participant Browser
+  participant Ctrl as ToursController
+  participant Service as TourAdminService
+  participant TourClient as TourApiClient
+  participant PoiClient as PoiApiClient
+  participant ApiTour as API ToursController
+  participant TourRepo as TourRepository
+  participant PoiRepo as PoiRepository
+  participant Audit as AuditLogRepository
+
+  Admin->>Browser: Mở /Tours
+  Browser->>Ctrl: GET Index(searchTerm,statusFilter)
+  Ctrl->>Service: LoadManagementPageAsync()
+  par nạp tour
+    Service->>TourClient: GET /api/tours
+  and nạp POI lookup
+    Service->>PoiClient: GET /api/pois
+  end
+  Service->>Service: ToListItem(poiLookup), search/status filter
+  Service-->>Ctrl: TourManagementViewModel
+  Ctrl-->>Browser: View Index
+
+  Admin->>Browser: Create/Edit tour
+  Browser->>Ctrl: GET Create/Edit
+  Ctrl->>Service: BuildCreateEditorAsync/LoadEditorAsync
+  Service->>PoiClient: GET /api/pois
+  Service->>TourClient: GET /api/tours/{id}
+  Ctrl-->>Browser: View Editor
+
+  Browser->>Ctrl: POST Create/Edit(TourEditorViewModel)
+  Ctrl->>Service: PopulateEditorReferencesAsync()
+  Ctrl->>Ctrl: ValidateEditor(Name, EstimatedMinutes, SelectedPoiIds)
+  alt thiếu POI hoặc trùng POI
+    Ctrl-->>Browser: View Editor + ModelState errors
+  else hợp lệ
+    Ctrl->>Service: CreateAsync/UpdateAsync()
+    Service->>TourClient: POST/PUT /api/tours
+    TourClient->>ApiTour: Authorized X-Admin-Api-Key
+    ApiTour->>ApiTour: validate PoiIds.Count > 0
+    ApiTour->>TourRepo: Create/Update(dto)
+    TourRepo->>PoiRepo: GetById từng PoiId để loại POI không tồn tại
+    TourRepo->>TourRepo: Normalize + ValidateForSave + SaveUnsafe(tours.json)
+    ApiTour->>Audit: WriteAudit(create/update Tour)
+    ApiTour-->>TourClient: Created/NoContent
+    Ctrl-->>Browser: Redirect Index + TempData
+  end
+
+  Browser->>Ctrl: POST Delete(id)
+  Ctrl->>Service: DeleteAsync(id)
+  Service->>TourClient: DELETE /api/tours/{id}
+  ApiTour->>TourRepo: soft delete IsActive=false, IsQrEnabled=false
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>TourAdminService</code>, <code>TourApiClient</code>, API <code>ToursController</code>, <code>TourRepository</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Tour phải có ít nhất một POI; <code>TourRepository.Normalize</code> chỉ giữ POI tồn tại trong <code>PoiRepository</code>.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Delete tour là soft delete và tắt QR bằng <code>IsQrEnabled=false</code>, đúng với app chỉ lấy tour active.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="web-06">
+        <h3>WEB-06. Quản lý QR và tạo QR public cho POI/Tour</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Admin
+  participant Browser
+  participant Ctrl as Web QrCodesController
+  participant PoiClient as PoiApiClient
+  participant TourClient as TourApiClient
+  participant QRCoder as QRCoder SvgQRCode
+
+  Admin->>Browser: Mở /QrCodes
+  Browser->>Ctrl: GET Index(selectedTargetType,targetId)
+  par POI target
+    Ctrl->>PoiClient: GET /api/pois
+  and Tour target
+    Ctrl->>TourClient: GET /api/tours
+  end
+  Ctrl->>Ctrl: BuildPoiTarget + BuildTourTarget(tour.PoiIds)
+  Ctrl->>Ctrl: BuildPublicQrUrl(/qr/{targetType}/{targetId})
+  Ctrl->>Ctrl: BuildQrSvgUrl(/qr/image/{targetType}/{targetId})
+  Ctrl-->>Browser: View Manage + target list
+
+  Browser->>Ctrl: GET /qr/image/{targetType}/{targetId}
+  Ctrl->>Ctrl: ResolveTargetAsync()
+  alt target không tồn tại hoặc tour tắt QR
+    Ctrl-->>Browser: 404/503
+  else target hợp lệ
+    Ctrl->>QRCoder: CreateQrCode(publicUrl, ECC Q)
+    QRCoder-->>Ctrl: SVG
+    Ctrl-->>Browser: image/svg+xml
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span>Web QR manage dùng target động từ POI/tour, không có form CRUD QR item độc lập trong WebAdmin hiện tại.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Public URL là <code>/qr/{targetType}/{targetId}</code>; mobile deep link là <code>vinhkhanhguide://{targetType}/{targetId}?autoplay=1&amp;source=bus-stop-qr&amp;api=...</code>.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Tour target chỉ hợp lệ khi <code>IsActive=true</code> và <code>IsQrEnabled=true</code>. API vẫn có <code>/api/qr-codes</code> và <code>QrCodeRepository</code> cho QR item repository, nhưng UI CRUD độc lập là phạm vi mở rộng.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="web-07">
+        <h3>WEB-07. QR public scan, mô phỏng cấu hình thiết bị và ghi analytics</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Visitor as Public QR Visitor
+  participant Browser
+  participant Ctrl as Web QrCodesController
+  participant PoiClient as PoiApiClient
+  participant TourClient as TourApiClient
+  participant ScanView as Scan.cshtml
+  participant DeviceProfile as qr-device-profile.js
+  participant HistClient as ListeningHistoryApiClient
+  participant DevClient as ActiveDeviceApiClient
+  participant API as VKFoodAPI
+
+  Visitor->>Browser: Quét QR ngoài thực tế
+  Browser->>Ctrl: GET /qr/{targetType}/{targetId}
+  Ctrl->>Ctrl: ResolveTargetAsync()
+  alt targetType=tour
+    Ctrl->>TourClient: GET /api/tours/{id}
+    Ctrl->>PoiClient: GET /api/pois
+    Ctrl->>Ctrl: BuildTourTarget + route summary
+  else targetType=poi
+    Ctrl->>PoiClient: GET /api/pois/{guid}
+    Ctrl->>Ctrl: BuildPoiTarget + narration languages
+  end
+  Ctrl-->>Browser: Render Scan View + QR payload
+  Browser->>ScanView: Load public QR page
+  ScanView->>DeviceProfile: resolveQrDeviceProfile()
+  DeviceProfile->>DeviceProfile: const profile = Math.random() &lt; 0.5 ? 0 : 1
+  alt profile = 0: thiết bị mạnh
+    DeviceProfile-->>ScanView: Hiển thị mạnh - offline đầy đủ
+    DeviceProfile->>DeviceProfile: cacheQrPayloadForOffline(context)
+    DeviceProfile->>DeviceProfile: writeQrPayloadToCache(POI/Tour + related POIs + narration/audio)
+    opt có audio URL hợp lệ
+      DeviceProfile->>DeviceProfile: Cache API lưu audio asset
+    end
+  else profile = 1: thiết bị yếu
+    DeviceProfile-->>ScanView: Hiển thị yếu - tải tối thiểu
+    DeviceProfile->>DeviceProfile: Không prefetch toàn bộ POI/audio
+    DeviceProfile->>DeviceProfile: Chỉ dùng dữ liệu hiện tại, fallback text/Web Speech
+  end
+  ScanView-->>Browser: Cập nhật panel DeviceCapabilitySimulation
+  Browser->>ScanView: Tự mở app bằng deeplink nếu có
+  Browser->>Ctrl: POST /qr/analytics/active-devices/heartbeat
+  Ctrl->>DevClient: HeartbeatAsync(request)
+  DevClient->>API: POST /api/analytics/active-devices/heartbeat
+  API-->>DevClient: ActiveDeviceStatsDto
+
+  Visitor->>Browser: Bấm nghe trên web
+  Browser->>Ctrl: POST /qr/analytics/listening-history
+  Ctrl->>HistClient: CreateAsync(request)
+  HistClient->>API: POST /api/analytics/listening-history
+  API-->>HistClient: ListeningHistoryEntryDto(id)
+  Ctrl-->>Browser: { id }
+  ScanView->>ScanView: Web Speech / audio playback nếu có
+  Browser->>Ctrl: PUT /qr/analytics/listening-history/{id}
+  Ctrl->>HistClient: UpdateAsync(completed, seconds)
+  HistClient->>API: PUT /api/analytics/listening-history/{id}
+  Browser->>Ctrl: POST /qr/analytics/active-devices/disconnect
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>QrCodesController.Scan</code>, <code>BuildScanViewModel</code>, <code>Scan.cshtml</code>, <code>qr-device-profile.js</code>, public analytics proxy endpoints.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Public scan không cần login. Web random đúng kiểu <code>const profile = Math.random() &lt; 0.5 ? 0 : 1;</code> và kiểm tra <code>if (profile === 0)</code>. Có thể ép demo bằng <code>?deviceProfile=strong</code>, <code>?deviceProfile=weak</code> hoặc <code>?deviceProfile=random</code>.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span><code>0 = thiết bị mạnh</code>: cache payload QR, POI/Tour, POI liên quan và audio nếu có để ưu tiên offline. <code>1 = thiết bị yếu</code>: không prefetch toàn bộ, chỉ dùng dữ liệu hiện tại và fallback text/Web Speech; offline/mất mạng hiển thị thông báo, không crash trang. Đây là mô phỏng theo yêu cầu giảng viên, chưa phải đo cấu hình thật.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="web-08">
+        <h3>WEB-08. Map Analytics và chỉnh POI từ bản đồ</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Admin
+  participant Browser
+  participant MapCtrl as MapPoisController
+  participant PoiService as PoiAdminService
+  participant Validator as PoiValidationService
+  participant PoiClient as PoiApiClient
+  participant AudioClient as AudioGuideApiClient
+  participant HistoryClient as ListeningHistoryApiClient
+  participant DeviceClient as ActiveDeviceApiClient
+  participant API as VKFoodAPI
+
+  Admin->>Browser: Mở /MapPois?poiId
+  Browser->>MapCtrl: GET Index(poiId)
+  MapCtrl->>PoiService: LoadMapManagementPageAsync(poiId)
+  par POI + Audio
+    PoiService->>PoiClient: GET /api/pois
+    PoiService->>AudioClient: GET /api/audio-guides
+  and Analytics
+    PoiService->>HistoryClient: GET /api/analytics/listening-history?sortBy=time_desc&amp;period=all
+    PoiService->>DeviceClient: GET /api/analytics/active-devices
+  end
+  PoiService->>PoiService: ApplyMapAnalytics(top POI, avg seconds, active routes)
+  PoiService-->>MapCtrl: MapPoiManagementViewModel
+  MapCtrl-->>Browser: View Index
+
+  Admin->>Browser: Sửa tọa độ/radius/priority
+  Browser->>MapCtrl: POST Save(MapPoiManagementViewModel)
+  MapCtrl->>PoiService: LoadValidationSnapshotAsync()
+  MapCtrl->>Validator: ValidateUpdate(Editor, existingPois)
+  alt invalid
+    MapCtrl->>PoiService: BuildPageAsync(editorOverride)
+    MapCtrl-->>Browser: View Index + ModelState errors
+  else valid
+    MapCtrl->>PoiService: UpdateAsync(Editor)
+    PoiService->>PoiClient: PUT /api/pois/{id}
+    PoiClient->>API: API update + audit
+    MapCtrl-->>Browser: Redirect /MapPois?poiId
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>MapPoisController</code>, <code>PoiAdminService.LoadMapManagementPageAsync</code>, listening history + active device stats.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Heatmap/tuyến di chuyển dùng <code>ActiveDeviceStatsDto.RoutePoints</code> và top listening POI từ <code>ListeningHistoryEntryDto</code>.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Nếu analytics API lỗi, trang vẫn hiển thị POI editor và set <code>AnalyticsLoadErrorMessage</code>.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="web-09">
+        <h3>WEB-09. Owner Portal: xem POI, lịch sử nghe, đăng ký POI mới</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Owner
+  participant Browser
+  participant OwnerCtrl as OwnerController
+  participant CurrentUser as WebAdminCurrentUser
+  participant PoiService as PoiAdminService
+  participant HistoryService as ListeningHistoryService
+  participant Validator as PoiValidationService
+  participant PoiClient as PoiApiClient
+  participant API as VKFoodAPI
+
+  Owner->>Browser: Mở /Owner
+  Browser->>OwnerCtrl: GET Index(sortBy,period,keyword,partial)
+  OwnerCtrl->>PoiService: LoadManagementPageAsync(null,"all")
+  PoiService->>PoiClient: GET /api/pois
+  PoiService->>CurrentUser: FilterPoisForCurrentUser()
+  CurrentUser->>CurrentUser: CanManage by OwnerUserCode / OwnerEmail
+  OwnerCtrl->>HistoryService: LoadPageForPoisAsync(ownerPoiIds)
+  HistoryService->>API: GET /api/analytics/listening-history
+  OwnerCtrl-->>Browser: View OwnerPortal hoặc partial history
+
+  Owner->>Browser: Đăng ký POI mới
+  Browser->>OwnerCtrl: POST Register(OwnerPortalViewModel)
+  OwnerCtrl->>OwnerCtrl: editor.IsEditMode=false, editor.IsActive=false
+  OwnerCtrl->>PoiService: LoadValidationSnapshotAsync()
+  OwnerCtrl->>Validator: ValidateCreate(editor, existingPois)
+  alt invalid
+    OwnerCtrl->>OwnerCtrl: BuildPortalAsync()
+    OwnerCtrl-->>Browser: View Index + errors
+  else valid
+    OwnerCtrl->>PoiService: CreateAsync(editor)
+    PoiService->>CurrentUser: ApplyOwner(dto)
+    PoiService->>PoiClient: POST /api/pois (IsActive=false)
+    PoiClient->>API: Create POI inactive + audit
+    OwnerCtrl-->>Browser: Redirect Owner + message chờ Admin duyệt
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>OwnerController</code>, <code>IWebAdminCurrentUser</code>, <code>PoiAdminService</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Owner Portal dùng cùng service với Admin nhưng luôn lọc theo <code>CanManage</code>; POI đăng ký mới bị ép <code>IsActive=false</code>.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Owner không đi qua <code>PoisController</code> AdminOnly, nên sequence tách riêng để đúng phân quyền.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="web-10a">
+        <h3>WEB-10A. AdminUsersController: quản lý tài khoản WebAdmin</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Admin
+  participant Browser
+  participant AdminUsers as AdminUsersController
+  participant Store as WebAdminAccountStore
+
+  Admin->>Browser: Mở /AdminUsers
+  Browser->>AdminUsers: GET Index(editAdmin)
+  AdminUsers->>Store: GetAll()
+  alt sửa tài khoản
+    AdminUsers->>Store: GetByUsername(editAdmin)
+  end
+  AdminUsers-->>Browser: View AdminUsersViewModel
+
+  Admin->>Browser: Tạo/sửa/reset WebAdmin account
+  Browser->>AdminUsers: POST SaveAccount(model)
+  alt password confirm mismatch hoặc invalid
+    AdminUsers-->>Browser: View Index + errors
+  else valid
+    AdminUsers->>Store: Upsert(options, originalUsername, password)
+    Store->>Store: Hash password PBKDF2 nếu có password
+    AdminUsers-->>Browser: Redirect Index
+  end
+
+  Admin->>Browser: Xóa tài khoản
+  Browser->>AdminUsers: POST DeleteAccount(username)
+  alt username là tài khoản đang đăng nhập
+    AdminUsers-->>Browser: Redirect + error
+  else xóa admin cuối cùng
+    Store-->>AdminUsers: false
+    AdminUsers-->>Browser: Redirect + error
+  else hợp lệ
+    AdminUsers->>Store: Delete(username)
+    Store->>Store: Save web-admin-users.json
+    AdminUsers-->>Browser: Redirect Index
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>AdminUsersController</code>, <code>WebAdminAccountStore</code>, view <code>Views/AdminUsers/Index.cshtml</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>WebAdmin users lưu ở <code>CTest.WebAdmin/App_Data/web-admin-users.json</code>; mật khẩu được hash trong <code>WebAdminPasswordHasher</code>.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Không cho xóa account đang đăng nhập; <code>WebAdminAccountStore.Delete</code> chặn xóa admin cuối cùng.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="web-10b">
+        <h3>WEB-10B. SystemAdminController: quản lý App User/Profile</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Admin
+  participant Browser
+  participant Sys as SystemAdminController
+  participant UserClient as UserManagementApiClient
+  participant ApiUsers as API UserManagementController
+  participant UserRepo as UserManagementRepository
+
+  Admin->>Browser: Mở /SystemAdmin
+  Browser->>Sys: GET Index(keyword, editAppUser)
+  Sys->>UserClient: SearchUsersAsync(keyword)
+  UserClient->>ApiUsers: GET /api/admin/users/search?keyword=...
+  ApiUsers->>UserRepo: SearchUsers(keyword)
+  UserRepo-->>ApiUsers: AdminUserSummaryDto[]
+  alt edit app user
+    Sys->>UserClient: GetUserDetailsAsync(id)
+    UserClient->>ApiUsers: GET /api/admin/users/{id}
+    ApiUsers->>UserRepo: GetUserDetails(id)
+  end
+  Sys-->>Browser: View SystemAdminViewModel
+
+  Admin->>Browser: Tạo/sửa App user/profile
+  Browser->>Sys: POST SaveAppUser(model)
+  alt thiếu UserCode và Email
+    Sys-->>Browser: View Index + error
+  else hợp lệ
+    Sys->>UserClient: UpsertProfileAsync(request)
+    UserClient->>ApiUsers: POST /api/admin/users/profile-sync
+    ApiUsers->>UserRepo: UpsertProfile(request)
+    UserRepo-->>ApiUsers: AdminUserDetailDto
+    Sys-->>Browser: Redirect Index(keyword)
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>SystemAdminController</code>, <code>UserManagementApiClient</code>, API <code>UserManagementController</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>App user/profile lưu ở <code>VKFoodAPI/App_Data/user-profiles.json</code>; preferred language dùng locale <code>vi-VN/en-US/zh-CN/ja-JP/de-DE</code>.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Thiếu cả <code>UserCode</code> và <code>Email</code> thì trả validation; lỗi API hiển thị thông báo kiểm tra VKFoodAPI/API key.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="web-11">
+        <h3>WEB-11. Translation scripts cho TTS đa ngôn ngữ</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Admin
+  participant Browser
+  participant Ctrl as TranslationsController
+  participant PoiClient as PoiApiClient
+  participant Tts as TtsTranslationService
+  participant API as API PoisController
+  participant Repo as PoiRepository
+
+  Admin->>Browser: Mở /Translations?poiId
+  Browser->>Ctrl: GET Index(poiId)
+  Ctrl->>PoiClient: GET /api/pois
+  Ctrl->>PoiClient: GET /api/pois/{selectedPoiId}
+  Ctrl->>Ctrl: BuildLanguageEditor(vi,en,zh,ja,de)
+  Ctrl-->>Browser: View Manage
+
+  Admin->>Browser: Sinh kịch bản thuyết minh đa ngôn ngữ
+  Browser->>Ctrl: POST Generate(poiId)
+  Ctrl->>PoiClient: GET /api/pois/{poiId}
+  Ctrl->>Tts: GenerateSuggestedScripts(poi, en/zh/ja/de)
+  Tts-->>Ctrl: dictionary scripts
+  Ctrl->>PoiClient: PUT /api/pois/{id}
+  PoiClient->>API: Authorized update
+  API->>Repo: Update NarrationTranslations
+  Repo->>Repo: NormalizeNarrationTranslations + SaveUnsafe
+  Ctrl-->>Browser: Redirect Manage
+
+  Admin->>Browser: Save language script
+  Browser->>Ctrl: POST Save(TranslationLanguageEditorViewModel)
+  Ctrl->>PoiClient: GET /api/pois/{poiId}
+  alt script trống
+    Ctrl->>Ctrl: remove NarrationTranslations[language]
+  else có script
+    Ctrl->>Ctrl: set NarrationTranslations[language]
+  end
+  alt language=vi
+    Ctrl->>Ctrl: set NarrationText = script
+  end
+  Ctrl->>PoiClient: PUT /api/pois/{id}
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>TranslationsController</code>, <code>TtsTranslationService</code>, <code>PoiRepository.NormalizeNarrationTranslations</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Web Translation, Audio/TTS, QR public narration và app hiện dùng bộ ngôn ngữ thống nhất <code>vi/en/zh/ja/de</code>; key cũ <code>ko/fr</code> chỉ còn được repository giữ an toàn nếu dữ liệu lịch sử còn tồn tại.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Script rỗng thì remove translation; riêng <code>vi</code> còn đồng bộ về <code>NarrationText</code>.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="app-sequences">
+      <h2>6. Sequence Ứng Dụng MAUI</h2>
+      <p class="section-lead">
+        App có nhiều luồng nền: refresh POI/tour mỗi 8 giây, heartbeat mỗi 8 giây, GPS foreground service Android, listening history optimistic sync. Các sequence dưới đây mô tả đúng trạng thái và nhánh trong <code>MainViewModel</code>.
+      </p>
+      <div class="notice">
+        Chính sách phát âm thanh hiện tại là <code>cancel/replace playback</code> trong <code>NarrationService</code> kết hợp debounce/cooldown ở <code>PoiAutoNarrationDecisionService</code>.
+        Hệ thống chưa có <code>NarrationQueueService</code> đúng nghĩa; <code>TtsQueuePosition</code> hiện là metadata analytics trong listening history.
+      </div>
+
+      <div class="sequence-block" id="app-01">
+        <h3>APP-01. Mở app, chọn ngôn ngữ và vào Guest Mode</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Guest
+  participant App as App.xaml.cs
+  participant AuthPage as AuthPage
+  participant AuthVM as AuthPageViewModel
+  participant AudioSettings as AudioSettingsService
+  participant Auth as AuthService
+  participant Active as ActiveDeviceTracker
+  participant Shell as AppShell / MainPage
+
+  App->>Auth: constructor EnsureDefaultAdminAccount + RestoreSession
+  App->>App: UpdateRootPage()
+  alt chưa authenticated
+    App-->>AuthPage: CreateAuthRootPage()
+  else có session
+    App-->>Shell: Create AppShell
+  end
+  App->>Active: StartAsync()
+
+  Guest->>AuthPage: Chọn ngôn ngữ
+  AuthPage->>AuthVM: SelectedLanguage set
+  Guest->>AuthPage: Bấm "Khám phá phố ẩm thực"
+  AuthPage->>AuthVM: EnterAppCommand
+  AuthVM->>AudioSettings: Load guest prefix
+  AuthVM->>AudioSettings: Save(LanguageCode, PlaybackMode cũ, AutoNarration cũ)
+  AuthVM->>Auth: ContinueAsGuestAsync()
+  Auth->>Auth: Remove login session, create guest session + guest user code
+  Auth-->>App: SessionChanged event
+  App->>App: UpdateRootPage()
+  App-->>Shell: MainPage = AppShell
+  App->>Active: SendHeartbeatAsync()
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>App</code>, <code>AuthPageViewModel</code>, <code>AuthService</code>, <code>AudioSettingsService</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Guest session dùng <code>UserCode=guest-&lt;guid&gt;</code>, role <code>guest</code>; ngôn ngữ lưu theo prefix guest trước khi vào app.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Nếu đã có session từ Preferences thì app bỏ qua AuthPage và vào thẳng AppShell.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="app-02">
+        <h3>APP-02. Khởi tạo MainViewModel, tải POI/Tour và fallback offline</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  participant MainPage
+  participant VM as MainViewModel
+  participant PoiRepo as PoiRepository
+  participant TourRepo as TourRepository
+  participant PoiProvider as PoiProvider
+  participant TourProvider as TourProvider
+  participant Offline as PoiOfflineStore SQLite
+  participant API as VKFoodAPI
+  participant Seed as SeedData
+
+  MainPage->>VM: InitializeAsync(enableLocationFlow=true)
+  VM->>VM: EnsurePoiRefreshLoopStarted()
+  VM->>VM: RefreshPoisIfChangedAsync(forceRefresh=true)
+  par POI
+    VM->>PoiRepo: GetPoisAsync()
+    PoiRepo->>PoiProvider: GetPoisAsync()
+    PoiProvider->>API: GET /api/pois
+    alt API OK
+      API-->>PoiProvider: active PoiDto[]
+      PoiProvider->>Offline: ReplacePoisAsync(snapshot)
+      PoiProvider-->>PoiRepo: POI[]
+    else API lỗi nhưng SQLite có dữ liệu
+      PoiProvider->>Offline: GetPoisAsync()
+      Offline-->>PoiProvider: POI[]
+    else SQLite lỗi nhưng có cache trong RAM
+      PoiProvider-->>PoiRepo: lastSuccessfulRemotePois
+    else không có cache
+      PoiProvider->>Seed: PoiSeedData.CreateDefaultDtos()
+      PoiProvider->>Offline: ReplacePoisAsync(seed)
+    end
+  and Tour
+    VM->>TourRepo: GetToursAsync()
+    TourRepo->>TourProvider: GetToursAsync()
+    TourProvider->>API: GET /api/tours
+    alt API OK
+      API-->>TourProvider: active TourDto[]
+    else API lỗi
+      TourProvider-->>TourRepo: lastSuccessfulRemoteTours hoặc TourSeedData
+    end
+  end
+  VM->>VM: Create snapshot, CleanupPoiState, NormalizeActiveTourState
+  VM->>VM: RefreshTourState + RefreshPoiList + SetSelectedPoi
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>MainViewModel.InitializeAsync</code>, <code>PoiProvider</code>, <code>TourProvider</code>, SQLite offline store.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>POI refresh loop chạy mỗi 8 giây; POI chỉ lấy active; tour provider cũng lọc active.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Fallback theo thứ tự: API -> SQLite offline -> cached snapshot -> seed data.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="app-03">
+        <h3>APP-03. Bật GPS và xử lý quyền vị trí</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Guest
+  participant Page as MainPage
+  participant VM as MainViewModel
+  participant Loc as LocationService
+  participant Android as Android ForegroundService
+  participant Maui as MAUI Geolocation/Permissions
+
+  Guest->>Page: Bấm bật vị trí
+  Page->>VM: StartAsync(autoStart=false)
+  VM->>VM: InitializeAsync nếu chưa init
+  VM->>VM: StartTrackingCoreAsync(requestPermissionIfNeeded=true)
+  VM->>Maui: DisplayAlert hỏi cấp quyền
+  alt Guest chọn "Để sau"
+    VM->>VM: ApplyFallbackMapStateAsync(đầu phố)
+    VM-->>Page: vẫn xem map và chọn POI thủ công
+  else Guest chọn "Cho phép"
+    VM->>Loc: EnsurePermissionAsync(true)
+    Loc->>Maui: Check/Request LocationWhenInUse
+    Loc->>Maui: Android request LocationAlways/PostNotifications nếu có thể
+    alt permission denied
+      VM->>VM: ApplyFallbackMapStateAsync(đầu phố)
+    else permission granted
+      VM->>Loc: GetCurrentLocationAsync()
+      Loc->>Maui: Geolocation.GetLocationAsync(Best, 10s)
+      alt current location null
+        Loc->>Maui: GetLastKnownLocationAsync()
+      end
+      Loc-->>VM: LocationDto?
+      VM->>VM: ApplyLocationSnapshotAsync(..., allowAutoNarrate=false)
+      VM->>Loc: StartListeningAsync()
+      Loc->>Android: StartForegroundService(LocationForegroundService)
+      Loc-->>VM: LocationUpdated events
+      VM-->>Page: IsTracking=true, status "Đang dùng vị trí"
+    end
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>StartTrackingCoreAsync</code>, <code>LocationService</code>, Android foreground service.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Accuracy tối đa được nhận là 5000m; poll interval non-Android là 3 giây; Android dùng foreground service hub.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Không cấp quyền không làm app chết: map quay về entrance và vẫn cho nghe thủ công/QR.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="app-04">
+        <h3>APP-04. GPS update, geofence và quyết định tự động phát</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  participant Loc as LocationService
+  participant VM as MainViewModel
+  participant Geo as GeofenceEngine
+  participant Decision as PoiAutoNarrationDecisionService
+  participant UI as MainThread UI
+  participant Narrate as NarratePoiAsync
+
+  Loc-->>VM: LocationUpdated(LocationDto)
+  VM->>VM: _locationUpdateGate.WaitAsync(0)
+  alt đang xử lý GPS trước đó
+    VM-->>Loc: bỏ event để tránh chồng lệnh
+  else nhận xử lý
+    VM->>VM: ApplyLocationSnapshotAsync(location, allowAutoNarrate=true)
+    VM->>Geo: Evaluate(location, _pois)
+    Geo-->>VM: ordered (POI, distance, isInside)
+    VM->>VM: CreateAutoNarrationCandidates(results)
+    alt đang active tour
+      VM->>VM: chỉ giữ current tour POI
+    else free explore
+      VM->>VM: xét tất cả POI inside radius
+    end
+    VM->>UI: RefreshPoiList, UpdateLocationSummary, SetSelectedPoi nếu chưa user-selected
+    alt AutoNarrationEnabled=false
+      VM->>VM: chỉ cập nhật inside state
+    else true
+      VM->>Decision: Decide(candidates, lastAuto, activeNarration, cooldown, debounce)
+      alt Debounced hoặc no candidate hoặc đang phát
+        Decision-->>VM: ShouldNarrate=false
+      else cooldown active
+        Decision-->>VM: ShouldNarrate=false
+      else selected
+        Decision-->>VM: ShouldNarrate=true, Poi, Distance
+        VM->>Narrate: NarratePoiAsync(poi, autoTriggered=true, distance)
+      end
+    end
+    VM->>VM: update _insidePoiIds, reset lastAuto nếu ra khỏi vùng
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>OnLocationUpdated</code>, <code>ApplyLocationSnapshotAsync</code>, <code>GeofenceEngine</code>, <code>PoiAutoNarrationDecisionService</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Decision sort theo priority desc, distance asc; debounce 2s; cùng priority chỉ đổi POI nếu cải thiện &gt; 8m; cooldown theo từng POI.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Khi đang theo tour, geofence chỉ xét điểm dừng hiện tại, không tự phát POI ngoài tour.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="app-05">
+        <h3>APP-05. Nghe POI thủ công và đồng bộ listening history</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Guest
+  participant Page as PoiDetail/MainPage
+  participant VM as MainViewModel
+  participant HistoryLocal as Optimistic UI History
+  participant Sync as ListeningHistorySyncService
+  participant Narration as NarrationService
+  participant API as ListeningHistoryController
+
+  Guest->>Page: Bấm "Nghe thuyết minh"
+  Page->>VM: ToggleSelectedPoiNarrationAsync()
+  alt POI đang phát
+    VM->>Narration: StopAsync()
+    VM->>VM: IsNarrating=false
+  else chưa phát
+    VM->>VM: NarratePoiAsync(poi, autoTriggered=false, distance)
+    VM->>VM: ResolvePlaybackRequest(SelectedPlaybackMode, poi.AudioAssetPath)
+    alt chọn audio nhưng POI chưa có file
+      VM->>VM: fallback sang tts + log message
+    end
+    VM->>HistoryLocal: AddOptimisticListeningHistory()
+    VM->>Sync: BeginAsync(poi, language, playbackMode, autoTriggered=false)
+    Sync->>API: POST /api/analytics/listening-history
+    API-->>Sync: ListeningHistoryEntryDto(id)
+    par phát narration
+      VM->>Narration: NarrateAsync(poi, language, playbackMode)
+      alt playbackMode=audio
+        Narration->>Narration: AudioAssetCacheService.Resolve + Android MediaPlayer
+      else tts
+        Narration->>Narration: TextToSpeech.SpeakAsync(locale)
+      end
+    and refresh sau khi tạo history
+      VM->>VM: RefreshListeningHistoryAfterCreateAsync()
+    end
+    VM->>Sync: CompleteAsync(historyId, listenSeconds, completed, error)
+    Sync->>API: PUT /api/analytics/listening-history/{id}
+    VM->>VM: RefreshListeningHistoryAsync()
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>NarratePoiAsync</code>, <code>NarrationService</code>, <code>ListeningHistorySyncService</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>History được thêm optimistic trước để UI phản hồi nhanh, sau đó API trả ID thì refresh và xóa optimistic item.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Audio mode nếu thiếu file thì fallback TTS khi <code>allowAudioFallback=true</code>; lỗi phát vẫn cập nhật history với error message.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="app-06">
+        <h3>APP-06. Chọn tour và phát lời giới thiệu tour</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Guest
+  participant TourPage
+  participant VM as MainViewModel
+  participant Narration as NarrationService
+  participant UI as TourPackages / ActiveTourStops
+
+  Guest->>TourPage: Chọn tour
+  TourPage->>VM: ActivateTourAsync(tourId)
+  VM->>VM: tìm tour active trong _tours
+  alt không có tour active
+    VM-->>TourPage: Status "Không tìm thấy tour đang hoạt động"
+  else có tour
+    VM->>Narration: StopAsync() nếu đang phát
+    VM->>VM: clear map category, set _activeTourId, _activeTourStopIndex=0
+    VM->>VM: NormalizeActiveTourState()
+    VM->>UI: RefreshTourState()
+    VM->>VM: SetSelectedPoi(current first stop)
+    VM->>VM: BuildTourActivationNarrationText(tour, SelectedLanguage)
+    VM->>Narration: SpeakAsync(tour intro, SelectedLanguage, playbackMode="tts")
+    alt TTS intro lỗi
+      VM-->>TourPage: Status vẫn cho xem lộ trình
+    else thành công
+      VM->>UI: Status = BuildIdleStatusText()
+    end
+    alt đã có _lastLocation
+      VM->>VM: ApplyLocationSnapshotAsync(_lastLocation, allowAutoNarrate=false)
+    end
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>ActivateTourAsync</code>, <code>BuildTourActivationNarrationText</code>, <code>RefreshTourState</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Lời giới thiệu tour hiện phát bằng TTS riêng, dựng từ tên tour, mô tả, số điểm dừng, thời lượng và first/next/final stop.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Map khi có tour chỉ hiển thị POI thuộc tour qua <code>VisibleMapPoiStatuses</code> và <code>GetActiveTourStopIds</code>.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="app-07">
+        <h3>APP-07. Đi theo tour, tự phát từng điểm và chuyển chặng</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  participant GPS as LocationService
+  participant VM as MainViewModel
+  participant Decision as Auto Decision Service
+  participant Narration as NarrationService
+  participant History as ListeningHistorySyncService
+  participant UI as ActiveTourPage
+
+  GPS-->>VM: LocationUpdated
+  VM->>VM: ApplyLocationSnapshotAsync()
+  VM->>VM: currentTourPoi = GetCurrentActiveTourPoi()
+  VM->>VM: CreateAutoNarrationCandidates(results)
+  VM->>VM: nếu HasActiveTour, chỉ xét currentTourPoi
+  VM->>Decision: Decide(candidates,...)
+  alt chưa vào radius current stop
+    VM-->>UI: cập nhật khoảng cách, chờ điểm hiện tại
+  else vào radius và pass cooldown
+    VM->>Narration: NarratePoiAsync(currentPoi, autoTriggered=true)
+    Narration-->>VM: phát xong / lỗi
+    VM->>History: CompleteAsync(historyId, seconds, completed)
+    alt phát hoàn tất và đúng current tour stop
+      VM->>VM: TryAdvanceActiveTourAfterNarration(poiId)
+      alt còn điểm tiếp theo
+        VM->>UI: RefreshTourState, current stop = next POI
+      else hết tour
+        VM->>UI: Status "Đã hoàn tất tour"
+      end
+    else lỗi phát hoặc không phải current stop
+      VM-->>UI: không advance tour
+    end
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>CreateAutoNarrationCandidates</code>, <code>TryAdvanceActiveTourAfterNarration</code>, <code>ShouldAdvanceActiveTourAfterNarration</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Tour advance khi autoTriggered hoặc distance nằm trong <code>TriggerRadiusMeters</code>; completed stop được highlight trong <code>ActiveTourStops</code>.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Nếu đang phát lỗi hoặc bị stop, <code>narrationCompleted=false</code> nên không tự chuyển chặng.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="app-08">
+        <h3>APP-08. Quét QR bằng camera hoặc nhập mã thủ công</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Guest
+  participant Page as QrScannerPage
+  participant Camera as ZXing CameraBarcodeReaderView
+  participant Resolve as QrResolveService
+  participant API as ResolveQrController
+  participant VM as MainViewModel
+  participant Nav as Navigation
+
+  Guest->>Page: Mở QR scanner
+  Page->>Page: EnsureCameraReadyAsync()
+  alt chưa cấp camera và Guest từ chối
+    Page-->>Guest: Hiện input nhập mã thủ công
+  else camera granted
+    Page->>Camera: IsDetecting=true, TwoDimensional, TryHarder
+  end
+  Camera-->>Page: OnBarcodesDetected(code)
+  Page->>Page: Interlocked _isHandlingResult để chống double scan
+  Page->>Resolve: ResolveAsync(code)
+  Resolve->>API: GET /api/resolve-qr?code=...
+  API->>API: TryParseDeepLink / TryParseQrPath / ResolveCode
+  alt not found
+    API-->>Resolve: 404 ResolveQrResponseDto(false)
+    Page-->>Guest: DisplayAlert chưa mở được QR
+  else target=tour
+    API-->>Resolve: ResolveQrResponseDto(TargetType=tour)
+    Page->>VM: OpenTourFromQrAsync(tourId)
+    VM-->>Page: true/false
+    Page->>Nav: Pop scanner, Push ActiveTourPage
+  else target=poi
+    API-->>Resolve: ResolveQrResponseDto(TargetType=poi)
+    Page->>VM: OpenPoiFromQrAsync(poiId, autoPlay=true)
+    VM-->>Page: true/false
+    Page->>Nav: Pop scanner, Push PoiDetailPage
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>QrScannerPage</code>, <code>QrResolveService</code>, API <code>ResolveQrController</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Resolve API hỗ trợ deep link <code>vinhkhanhguide://</code>, path <code>/qr/{type}/{id}</code>, QR item code, POI code, tour code.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Camera denied vẫn nhập mã thủ công; dùng <code>Interlocked</code> để tránh xử lý trùng mã.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="app-09">
+        <h3>APP-09. Deep link QR mở app từ trang public</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Visitor
+  participant OS as Android Intent / App Link
+  participant Broker as QrDeepLinkBroker
+  participant App as App.xaml.cs
+  participant ApiEndpoint as ApiEndpointService
+  participant Auth as AuthService
+  participant Active as ActiveDeviceTracker
+  participant VM as MainViewModel
+  participant Shell as AppShell Navigation
+
+  Visitor->>OS: Mở vinhkhanhguide://poi/{id}?autoplay=1&amp;source=bus-stop-qr&amp;api=...
+  OS->>Broker: Publish(uriText)
+  Broker->>Broker: TryParse(targetType,targetId,autoPlay,source,api)
+  Broker-->>App: PendingRequestAvailable
+  App->>Broker: TryConsumePendingRequest()
+  App->>ApiEndpoint: TrySetBaseUrl(api)
+  alt API base đổi
+    App->>Active: SendHeartbeatAsync()
+  end
+  alt chưa authenticated
+    App->>Auth: ContinueAsGuestAsync()
+    Auth-->>App: SessionChanged
+  end
+  App->>App: UpdateRootPage()
+  App->>App: WaitForShellAsync()
+  alt target=tour
+    App->>VM: OpenTourFromQrAsync(tourId)
+    VM-->>App: openedTour
+    App->>Shell: Push ActiveTourPage
+  else target=poi
+    App->>VM: OpenPoiFromQrAsync(poiId, autoPlay)
+    VM-->>App: openedPoi
+    App->>Shell: Push PoiDetailPage
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>QrDeepLinkBroker</code>, <code>App.HandleQrRequestAsync</code>, <code>ApiEndpointService</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Nếu deep link kèm <code>api</code>, app đổi base URL rồi gửi heartbeat ngay để WebAdmin thấy thiết bị mới.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>App tự vào guest khi được mở bằng QR mà chưa login, tránh bắt người dùng đăng nhập ngoài thực địa.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="app-10">
+        <h3>APP-10. Xem chi tiết POI từ map/list/tour/history</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Guest
+  participant Source as Map/List/Tour/History
+  participant VM as MainViewModel
+  participant Repo as PoiRepository
+  participant UI as PoiDetailPage
+  participant ViewHistory as UsageHistoryService
+
+  alt chọn từ map/list/tour
+    Guest->>Source: Chạm POI
+    Source->>VM: SelectPoi(poiId, userInitiated=true)
+    VM->>VM: SetSelectedPoi(poi, true, evaluated?)
+  else mở từ listening history
+    Guest->>Source: Chọn bản ghi history
+    Source->>VM: OpenListeningHistoryDetailAsync(historyId)
+    VM->>VM: FindListeningHistoryItem(historyId)
+    alt POI còn trong _pois
+      VM->>VM: Resolve from in-memory list
+    else thiếu POI
+      VM->>Repo: GetPoiByIdAsync(poiId)
+    end
+    VM->>VM: BuildPoiFromListeningHistoryItem(history snapshot + base POI)
+    VM->>VM: SetSelectedPoi(poi, true, null)
+  end
+  VM->>VM: UpdateSelectedPoiDetails()
+  VM->>VM: tính distance từ _lastLocation hoặc EntranceLocation
+  VM->>UI: bind Name, Address, Description, Dish, OpeningHours, NarrationPreview, Image
+  VM->>ViewHistory: AppendEntry("Xem thông tin quán ...")
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>SelectPoi</code>, <code>SetSelectedPoi</code>, <code>UpdateSelectedPoiDetails</code>, <code>OpenListeningHistoryDetailAsync</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>History detail có thể dựng POI từ snapshot nếu POI gốc đã đổi/xóa, giúp replay vẫn còn nội dung.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>User-initiated selection set <code>_hasUserSelectedPoi=true</code>, nên GPS không tự đổi selected POI sau đó.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="app-11">
+        <h3>APP-11. Lịch sử nghe: timeline, ranking, replay, xóa</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Guest
+  participant HistoryPage
+  participant VM as MainViewModel
+  participant Sync as ListeningHistorySyncService
+  participant API as ListeningHistoryController
+  participant Repo as ListeningHistoryRepository
+  participant Narration as NarrationService
+
+  Guest->>HistoryPage: Mở lịch sử nghe
+  HistoryPage->>VM: RefreshListeningHistoryCommand
+  VM->>VM: RefreshListeningHistoryAsync()
+  par timeline
+    VM->>Sync: GetCurrentUserHistoryAsync(sortBy, period, limit=15)
+    Sync->>API: GET /api/analytics/listening-history?userCode&amp;userEmail&amp;limit
+    API->>Repo: GetListeningHistory(period, sortBy, user scope)
+  and ranking
+    VM->>Sync: GetCurrentUserRankingAsync(period)
+    Sync->>API: GET /api/analytics/listening-history/ranking?userCode&amp;userEmail
+    API->>Repo: CountListeningByPoi()
+  end
+  VM->>VM: BuildListeningHistoryDisplayItemsAsync + MergeOptimistic
+  VM-->>HistoryPage: timeline + ranking
+
+  Guest->>HistoryPage: Replay item
+  HistoryPage->>VM: ReplayListeningHistoryAsync(historyId)
+  VM->>VM: ResolvePlaybackRequest(item.PlaybackMode, item.AudioAssetPath)
+  VM->>Narration: SpeakAsync(item.NarrationSnapshot, item.Language, mode, audioPath)
+
+  Guest->>HistoryPage: Xóa một item
+  HistoryPage->>VM: DeleteListeningHistoryEntryAsync(historyId)
+  VM->>Sync: DeleteAsync(historyId)
+  Sync->>API: DELETE /api/analytics/listening-history/{id}
+  API->>Repo: Delete(id)
+  VM->>VM: Remove item, RefreshListeningHistoryAsync()
+
+  Guest->>HistoryPage: Xóa toàn bộ
+  HistoryPage->>VM: ClearListeningHistoryAsync()
+  VM->>Sync: DeleteCurrentUserHistoryAsync()
+  Sync->>API: DELETE /api/analytics/listening-history?userCode&amp;userEmail
+  alt bulk delete lỗi
+    Sync->>API: GET entries rồi DELETE từng id
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>RefreshListeningHistoryAsync</code>, <code>ListeningHistorySyncService</code>, API history/ranking/delete.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Filter period map: 24h=<code>day</code>, 7 ngày=<code>week</code>, 30 ngày=<code>month</code>, còn lại <code>all</code>.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Bulk delete có fallback xóa từng entry nếu endpoint trả lỗi hoặc không thành công.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="app-12">
+        <h3>APP-12. Cài đặt giọng đọc, preview và đồng bộ profile</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Guest
+  participant AccountPage
+  participant VM as MainViewModel
+  participant AudioSettings as AudioSettingsService
+  participant Narration as NarrationService
+  participant ProfileSync as UserProfileSyncService
+  participant API as UserManagementController
+
+  Guest->>AccountPage: Đổi language/playback/auto narration
+  AccountPage->>VM: DraftSelectedLanguage / DraftSelectedPlaybackMode / DraftIsAutoNarrationEnabled
+  Guest->>AccountPage: Nghe thử
+  AccountPage->>VM: PreviewAudioSettingsCommand
+  VM->>Narration: StopAsync()
+  VM->>VM: GetAudioPreviewPoi()
+  VM->>VM: ResolvePlaybackRequest(DraftPlaybackMode, previewPoi.AudioAssetPath, allowAudioFallback=false)
+  alt chọn audio nhưng không có file
+    VM-->>AccountPage: AudioSettingsErrorMessage
+  else có thể preview
+    VM->>Narration: SpeakAsync(previewText, DraftLanguage, playbackMode, audioPath)
+    VM-->>AccountPage: success message
+  end
+
+  Guest->>AccountPage: Lưu cài đặt
+  AccountPage->>VM: SaveAudioSettingsCommand
+  VM->>VM: ApplyAudioSettings(settings, shouldLog=true)
+  VM->>AudioSettings: Save(prefix, settings)
+  VM->>ProfileSync: SyncCurrentUserAsync(preferredLanguageLocale)
+  ProfileSync->>API: POST /api/users/profile-sync
+  alt sync OK
+    VM-->>AccountPage: Đã lưu và đồng bộ
+  else mất mạng
+    VM-->>AccountPage: Đã lưu trên thiết bị, sẽ cập nhật lại
+  end
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>SaveAudioSettingsAsync</code>, <code>PreviewAudioSettingsAsync</code>, <code>UserProfileSyncService</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Playback modes đúng code: <code>tts</code> và <code>audio</code>; languages app: <code>vi/en/zh/ja/de</code>.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Preview audio không fallback TTS nếu thiếu file, khác với phát POI thật có fallback.</span></div>
+        </div>
+      </div>
+
+      <div class="sequence-block" id="app-13">
+        <h3>APP-13. Active device heartbeat và movement log</h3>
+        <div class="diagram-shell">
+          <div class="mermaid">
+sequenceDiagram
+  autonumber
+  participant App as App.xaml.cs
+  participant Tracker as ActiveDeviceTracker
+  participant Auth as AuthService
+  participant Loc as LocationService
+  participant API as ActiveDevicesController
+  participant ActiveRepo as ActiveDeviceRepository
+  participant MoveRepo as MovementLogRepository
+
+  App->>Tracker: StartAsync() khi ctor/OnStart/OnResume
+  Tracker->>Tracker: create clientInstanceId
+  Tracker->>Tracker: RunHeartbeatLoopAsync()
+  loop mỗi 8 giây
+    Tracker->>Auth: CurrentSession
+    Tracker->>Tracker: BuildHeartbeatRequest(deviceId, user, device info)
+    alt có cached location dưới 2 phút
+      Tracker->>Tracker: dùng _lastKnownLocation
+    else cần refresh location và cách lần trước >=20 giây
+      Tracker->>Loc: EnsurePermissionAsync(false)
+      alt permission OK
+        Tracker->>Loc: GetCurrentLocationAsync()
+      end
+    end
+    Tracker->>API: POST /api/analytics/active-devices/heartbeat
+    API->>ActiveRepo: RegisterHeartbeat(request)
+    alt tọa độ hợp lệ và khác 0,0
+      API->>MoveRepo: Create(MovementLogCreateRequest)
+    end
+    API-->>Tracker: ActiveDeviceStatsDto
+  end
+
+  App->>Tracker: StopAsync() khi OnSleep
+  Tracker->>API: POST /api/analytics/active-devices/disconnect
+  API->>ActiveRepo: Disconnect(request)
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-item"><b>Thành phần chính</b><span><code>ActiveDeviceTracker</code>, API <code>ActiveDevicesController</code>, <code>MovementLogRepository</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>DeviceId dạng <code>install-&lt;guid&gt;</code>; heartbeat interval 8s; location cache max 2 phút; refresh location min 20s.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Movement log chỉ ghi khi latitude/longitude hợp lệ, trong range và không phải gần 0,0.</span></div>
+        </div>
+      </div>
+
+    </section>
+
+    <section id="api-matrix" class="band">
+      <h2>7. API Và File Mapping</h2>
+      <p class="section-lead">
+        Bảng này giúp đối chiếu nhanh sequence với endpoint và file lưu trữ thật.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Controller</th>
+            <th>Repository / Service</th>
+            <th>File dữ liệu</th>
+            <th>Auth</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>GET /api/pois</code>, <code>GET /api/pois/{id}</code></td><td><code>PoisController</code></td><td><code>PoiRepository</code></td><td><code>VKFoodAPI/App_Data/pois.json</code></td><td>Public read</td></tr>
+          <tr><td><code>POST/PUT/DELETE /api/pois</code></td><td><code>PoisController</code></td><td><code>PoiRepository</code> + <code>AuditLogRepository</code></td><td><code>pois.json</code>, <code>audit-logs.json</code></td><td><code>X-Admin-Api-Key</code></td></tr>
+          <tr><td><code>GET /api/tours</code>, <code>GET /api/tours/{id}</code></td><td><code>ToursController</code></td><td><code>TourRepository</code></td><td><code>tours.json</code></td><td>Public read</td></tr>
+          <tr><td><code>POST/PUT/DELETE /api/tours</code></td><td><code>ToursController</code></td><td><code>TourRepository</code> + <code>AuditLogRepository</code></td><td><code>tours.json</code>, <code>audit-logs.json</code></td><td><code>X-Admin-Api-Key</code></td></tr>
+          <tr><td><code>/api/audio-guides</code></td><td><code>AudioGuidesController</code></td><td><code>AudioGuideRepository</code> + <code>PoiRepository.ApplyPublishedAudioGuides</code></td><td><code>audio-guides.json</code>, <code>pois.json</code></td><td><code>X-Admin-Api-Key</code></td></tr>
+          <tr><td><code>/api/qr-codes</code></td><td><code>QrCodesController</code></td><td><code>QrCodeRepository</code></td><td><code>qr-codes.json</code></td><td><code>X-Admin-Api-Key</code></td></tr>
+          <tr><td><code>GET /api/resolve-qr?code=...</code></td><td><code>ResolveQrController</code></td><td><code>QrCodeRepository</code>, <code>PoiRepository</code>, <code>TourRepository</code></td><td><code>qr-codes.json</code>, <code>pois.json</code>, <code>tours.json</code></td><td>Public</td></tr>
+          <tr><td><code>/api/analytics/listening-history</code></td><td><code>ListeningHistoryController</code></td><td><code>ListeningHistoryRepository</code></td><td><code>listening-history.json</code></td><td>Public write/read scoped by query</td></tr>
+          <tr><td><code>/api/analytics/active-devices</code></td><td><code>ActiveDevicesController</code></td><td><code>ActiveDeviceRepository</code>, <code>MovementLogRepository</code></td><td><code>active-devices.json</code>, <code>movement-logs.json</code>, <code>active-device-routes.json</code></td><td>Stats public, raw admin</td></tr>
+          <tr><td><code>/api/users/profile-sync</code>, <code>/api/app-users/sync</code></td><td><code>UserManagementController</code></td><td><code>UserManagementRepository</code></td><td><code>user-profiles.json</code></td><td>Public app sync</td></tr>
+          <tr><td><code>/api/admin/users</code></td><td><code>UserManagementController</code></td><td><code>UserManagementRepository</code></td><td><code>user-profiles.json</code></td><td><code>X-Admin-Api-Key</code></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="grading">
+      <h2>8. Tiêu Chí Nghiệm Thu Và Đối Chiếu Source</h2>
+      <div class="grid-2">
+        <div class="panel">
+          <h4>Tiêu chí đã đáp ứng</h4>
+          <p><span class="status-ok">Đạt:</span> WebAdmin và app dùng chung API, dữ liệu quản trị và dữ liệu hiển thị nhất quán.</p>
+          <p><span class="status-ok">Đạt:</span> Sequence có đủ nhánh thay thế: mất API, thiếu quyền vị trí/camera, target QR lỗi, validation lỗi, audio fallback.</p>
+          <p><span class="status-ok">Đạt:</span> Tour có lời giới thiệu riêng khi kích hoạt và bản đồ chỉ hiển thị POI thuộc tour đang chọn.</p>
+          <p><span class="status-ok">Đạt:</span> Active devices có heartbeat, disconnect và movement log để phục vụ dashboard/map analytics.</p>
+        </div>
+        <div class="panel">
+          <h4>Giới hạn và giả định kỹ thuật</h4>
+          <p><span class="status-warn">Lưu ý:</span> ERD có <code>TOUR_POI_LINK</code> là bảng logic, vì code lưu thứ tự POI bằng <code>TourDto.PoiIds</code> trong JSON.</p>
+          <p><span class="status-warn">Lưu ý:</span> Dữ liệu lịch sử có thể còn key <code>ko/fr</code>; repository giữ an toàn khi đọc, nhưng UI hiện tại chỉ công bố <code>vi/en/zh/ja/de</code>.</p>
+          <p><span class="status-warn">Lưu ý:</span> API hiện không dùng relational DB, nhưng repository có normalize, validate, soft delete và audit nên vẫn có mô hình dữ liệu rõ.</p>
+          <p><span class="status-warn">Lưu ý:</span> Listening history public endpoint chưa bắt auth, scope bằng userCode/email do app gửi.</p>
+        </div>
+      </div>
+
+      <h3>Traceability Theo Source</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Luồng</th>
+            <th>File chính</th>
+            <th>Điểm khớp quan trọng</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Auth Web</td><td><code>CTest.WebAdmin/Controllers/AccountController.cs</code>, <code>Security/WebAdminSecurity.cs</code></td><td>Cookie auth, role redirect, owner claims.</td></tr>
+          <tr><td>Dashboard</td><td><code>HomeController.cs</code>, <code>DashboardService.cs</code></td><td>Parallel load API data, SSE active-devices.</td></tr>
+          <tr><td>POI Admin/Owner</td><td><code>PoisController.cs</code>, <code>OwnerController.cs</code>, <code>PoiAdminService.cs</code></td><td>AdminOnly vs OwnerArea, CanManage, pending approval.</td></tr>
+          <tr><td>Tour</td><td><code>ToursController.cs</code>, <code>TourAdminService.cs</code>, <code>TourRepository.cs</code></td><td>SelectedPoiIds, duplicate validation, soft delete.</td></tr>
+          <tr><td>Audio/TTS</td><td><code>AudioGuidesController.cs</code>, <code>AudioGuideRepository.cs</code>, <code>NarrationService.cs</code></td><td>tts/file validation, sync script/audio path into POI.</td></tr>
+          <tr><td>QR</td><td><code>QrCodesController.cs</code>, <code>Scan.cshtml</code>, <code>qr-device-profile.js</code>, <code>ResolveQrController.cs</code>, <code>QrScannerPage.xaml.cs</code>, <code>QrDeepLinkBroker.cs</code></td><td>Public scan, mô phỏng mạnh/yếu, deep link, camera/manual, POI/tour branch.</td></tr>
+          <tr><td>GPS/Geofence</td><td><code>LocationService.cs</code>, <code>GeofenceEngine.cs</code>, <code>PoiAutoNarrationDecisionService.cs</code></td><td>Permission fallback, distance/radius, priority/cooldown/debounce.</td></tr>
+          <tr><td>History/Analytics</td><td><code>ListeningHistorySyncService.cs</code>, <code>ListeningHistoryController.cs</code>, <code>ActiveDevicesController.cs</code></td><td>Begin/complete, ranking, heartbeat, movement log.</td></tr>
+          <tr><td>WebAdmin accounts</td><td><code>AdminUsersController.cs</code>, <code>WebAdminAccountStore.cs</code>, <code>Views/AdminUsers/Index.cshtml</code></td><td>Admin/owner list, create/edit/reset password, delete guard for current user and last admin.</td></tr>
+          <tr><td>App users</td><td><code>SystemAdminController.cs</code>, <code>UserManagementApiClient.cs</code>, <code>UserManagementController.cs</code></td><td>Search app user, edit/upsert profile, preferred language locale.</td></tr>
+          <tr><td>Offline</td><td><code>PoiOfflineStore.cs</code>, <code>MapOfflineTileService.cs</code>, <code>AudioAssetCacheService.cs</code></td><td>SQLite POI cache, OSM tile cache, audio asset cache.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Kết Luận</h2>
+      <p>
+        Tài liệu này mô tả hệ thống theo hướng có thể triển khai, kiểm thử và bảo trì: không chỉ liệt kê chức năng, mà chỉ ra từng actor,
+        từng dữ liệu, từng controller/service và các nhánh sequence then chốt. Phần ghi chú dưới mỗi sơ đồ cho biết trực tiếp lớp xử lý,
+        endpoint và file dữ liệu tương ứng trong source hiện tại.
+      </p>
+      <p class="small">
+        Phiên bản tài liệu: PRD HTML • cập nhật theo source trong workspace <code>/Users/nhatminh/Documents/C-test-</code>.
+      </p>
+    </section>
+  </main>
+
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: true,
+      securityLevel: "loose",
+      theme: "base",
+      themeVariables: {
+        primaryColor: "#edf7ff",
+        primaryTextColor: "#102033",
+        primaryBorderColor: "#0b63ce",
+        lineColor: "#0b63ce",
+        secondaryColor: "#ffffff",
+        tertiaryColor: "#f8fbff",
+        fontFamily: "Inter, Segoe UI, Arial, sans-serif",
+        actorBorder: "#0b63ce",
+        actorBkg: "#edf7ff",
+        actorTextColor: "#072146",
+        noteBkgColor: "#fff7ed",
+        noteTextColor: "#102033",
+        noteBorderColor: "#f59e0b",
+        sequenceNumberColor: "#ffffff",
+        activationBkgColor: "#dbeeff",
+        activationBorderColor: "#0b63ce",
+        signalColor: "#0b4ea2",
+        signalTextColor: "#102033"
+      },
+      flowchart: {
+        curve: "basis",
+        htmlLabels: true
+      },
+      sequence: {
+        showSequenceNumbers: true,
+        actorMargin: 70,
+        messageMargin: 42,
+        boxMargin: 10,
+        mirrorActors: false,
+        rightAngles: false
+      },
+      er: {
+        useMaxWidth: true
+      }
+    });
+  </script>
+</body>
+</html>

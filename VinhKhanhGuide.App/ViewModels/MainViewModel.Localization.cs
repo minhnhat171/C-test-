@@ -377,8 +377,8 @@ public partial class MainViewModel
         {
             "en" => en,
             "zh" => zh,
-            "ko" => ko,
-            "fr" => fr,
+            "ja" => en,
+            "de" => en,
             _ => vi
         };
     }
@@ -389,8 +389,8 @@ public partial class MainViewModel
         {
             "en" => "en",
             "zh" => "zh",
-            "ko" => "ko",
-            "fr" => "fr",
+            "ja" => "ja",
+            "de" => "de",
             _ => "vi"
         };
     }
@@ -732,8 +732,8 @@ public partial class MainViewModel
         {
             "en" => "en-US",
             "zh" => "zh-CN",
-            "ko" => "ko-KR",
-            "fr" => "fr-FR",
+            "ja" => "ja-JP",
+            "de" => "de-DE",
             _ => "vi-VN"
         };
     }

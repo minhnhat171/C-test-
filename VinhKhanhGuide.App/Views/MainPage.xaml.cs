@@ -968,8 +968,8 @@ public partial class MainPage : ContentPage
         {
             "en" => en,
             "zh" => zh,
-            "ko" => ko,
-            "fr" => fr,
+            "ja" => en,
+            "de" => en,
             _ => vi
         };
     }

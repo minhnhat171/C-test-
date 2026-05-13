@@ -224,8 +224,8 @@ public partial class MainViewModel : INotifyPropertyChanged
         new() { Code = "vi", Label = "Tiếng Việt", FlagEmoji = "🇻🇳", Description = "Giọng tiếng Việt chuẩn cho khách nội địa." },
         new() { Code = "en", Label = "English", FlagEmoji = "🇺🇸", Description = "English interface and narration for international visitors." },
         new() { Code = "zh", Label = "中文", FlagEmoji = "🇨🇳", Description = "中文界面和中文讲解。" },
-        new() { Code = "ko", Label = "한국어", FlagEmoji = "🇰🇷", Description = "한국어 화면과 음성 안내." },
-        new() { Code = "fr", Label = "Français", FlagEmoji = "🇫🇷", Description = "Interface et narration en français." }
+        new() { Code = "ja", Label = "日本語", FlagEmoji = "🇯🇵", Description = "日本語の音声ガイド。" },
+        new() { Code = "de", Label = "Deutsch", FlagEmoji = "🇩🇪", Description = "Deutsche Hinweise und Erzählung." }
     ];
     public IReadOnlyList<AudioSettingsOption> SupportedPlaybackModes { get; } =
     [
@@ -3149,10 +3149,10 @@ public partial class MainViewModel : INotifyPropertyChanged
             "en" =>
                 $"You selected {tour.Name}. {tour.Description} " +
                 $"This tour includes {stopPois.Count} featured stops and should take about {tour.EstimatedMinutes} minutes. " +
-                $"출발 지점은 {firstStop?.Name ?? "설정되지 않았습니다"} 입니다. " +
+                $"The first stop is {firstStop?.Name ?? "not set"}. " +
                 $"{(nextStop is null ? "There is no next stop yet." : $"After that, the route continues to {nextStop.Name}.")} " +
-                $"{(finalStop is null || ReferenceEquals(finalStop, nextStop) ? string.Empty : $"마지막 지점은 {finalStop.Name} 입니다. ")}" +
-                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"이번 경로의 주요 지점은 {stopSummary} 입니다.")}",
+                $"{(finalStop is null || ReferenceEquals(finalStop, nextStop) ? string.Empty : $"The final stop is {finalStop.Name}. ")}" +
+                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"Main stops on this route include {stopSummary}.")}",
             "zh" =>
                 $"您已选择 {tour.Name}。{tour.Description}" +
                 $" 此路线共有 {stopPois.Count} 个重点停靠点，预计约 {tour.EstimatedMinutes} 分钟。" +
@@ -3160,20 +3160,20 @@ public partial class MainViewModel : INotifyPropertyChanged
                 $"{(nextStop is null ? "目前还没有下一站。" : $" 接下来会前往 {nextStop.Name}。")}" +
                 $"{(finalStop is null || ReferenceEquals(finalStop, nextStop) ? string.Empty : $" 最后一站是 {finalStop.Name}。")}" +
                 $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $" 本次路线包括：{stopSummary}。")}",
-            "ko" =>
-                $"{tour.Name} 투어를 선택했습니다. {tour.Description} " +
-                $"이 투어는 주요 정차 지점 {stopPois.Count}곳으로 구성되어 있으며 예상 소요 시간은 약 {tour.EstimatedMinutes}분입니다. " +
-                $"출발 지점은 {firstStop?.Name ?? "설정되지 않았습니다"} 입니다. " +
-                $"{(nextStop is null ? "다음 지점은 아직 없습니다." : $"그다음에는 {nextStop.Name}(으)로 이동합니다.")} " +
-                $"{(finalStop is null || ReferenceEquals(finalStop, nextStop) ? string.Empty : $"마지막 지점은 {finalStop.Name} 입니다. ")}" +
-                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"이번 경로의 주요 지점은 {stopSummary} 입니다.")}",
-            "fr" =>
-                $"Vous avez choisi {tour.Name}. {tour.Description} " +
-                $"Ce parcours comprend {stopPois.Count} étapes principales pour environ {tour.EstimatedMinutes} minutes. " +
-                $"La première étape est {firstStop?.Name ?? "non définie"}. " +
-                $"{(nextStop is null ? "Il n'y a pas encore d'étape suivante." : $"Ensuite, l'application vous guidera vers {nextStop.Name}.")} " +
-                $"{(finalStop is null || ReferenceEquals(finalStop, nextStop) ? string.Empty : $"La dernière étape est {finalStop.Name}. ")}" +
-                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"이번 경로의 주요 지점은 {stopSummary} 입니다.")}",
+            "ja" =>
+                $"{tour.Name} を選択しました。{tour.Description} " +
+                $"このツアーには注目スポットが {stopPois.Count} か所あり、所要時間は約 {tour.EstimatedMinutes} 分です。 " +
+                $"最初のスポットは {firstStop?.Name ?? "未設定"} です。 " +
+                $"{(nextStop is null ? "次のスポットはまだありません。" : $"次に {nextStop.Name} へ進みます。")} " +
+                $"{(finalStop is null || ReferenceEquals(finalStop, nextStop) ? string.Empty : $"最後のスポットは {finalStop.Name} です。 ")}" +
+                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"主なスポットは {stopSummary} です。")}",
+            "de" =>
+                $"Sie haben {tour.Name} ausgewählt. {tour.Description} " +
+                $"Diese Tour umfasst {stopPois.Count} wichtige Stopps und dauert etwa {tour.EstimatedMinutes} Minuten. " +
+                $"Der erste Stopp ist {firstStop?.Name ?? "nicht festgelegt"}. " +
+                $"{(nextStop is null ? "Es gibt noch keinen nächsten Stopp." : $"Danach führt die Route zu {nextStop.Name}.")} " +
+                $"{(finalStop is null || ReferenceEquals(finalStop, nextStop) ? string.Empty : $"Der letzte Stopp ist {finalStop.Name}. ")}" +
+                $"{(string.IsNullOrWhiteSpace(stopSummary) ? string.Empty : $"Wichtige Stopps dieser Route sind {stopSummary}.")}",
             _ =>
                 $"Bạn đã chọn {tour.Name}. {tour.Description} " +
                 $"Tour gồm {stopPois.Count} điểm dừng nổi bật, thời lượng khoảng {tour.EstimatedMinutes} phút. " +
@@ -5098,8 +5098,8 @@ public partial class MainViewModel : INotifyPropertyChanged
         {
             "en" => "Hello. This is an English voice preview for Vinh Khanh Food Street.",
             "zh" => "您好，這是永慶美食街的中文語音試聽。",
-            "ko" => "안녕하세요. 빈칸 음식 거리의 한국어 음성 미리 듣기입니다.",
-            "fr" => "Bonjour. Ceci est un aperçu audio en français pour la rue gastronomique Vinh Khanh.",
+            "ja" => "こんにちは。これはヴィンカイン・フードストリートの日本語音声プレビューです。",
+            "de" => "Hallo. Dies ist eine deutsche Audiovorschau für die Vinh-Khanh-Food-Street.",
             _ => "Xin chào. Đây là bản nghe thử âm thanh cho phố ẩm thực Vĩnh Khánh."
         };
     }
@@ -5269,8 +5269,8 @@ public partial class MainViewModel : INotifyPropertyChanged
         "vi" => "Tiếng Việt",
         "en" => "English",
         "zh" => "中文",
-        "ko" => "한국어",
-        "fr" => "Français",
+        "ja" => "日本語",
+        "de" => "Deutsch",
         _ => "Tiếng Việt"
     };
 

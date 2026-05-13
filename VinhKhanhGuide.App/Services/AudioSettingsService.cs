@@ -49,8 +49,8 @@ public sealed class AudioSettingsService : IAudioSettingsService
         {
             "en" => "en",
             "zh" => "zh",
-            "ko" => "ko",
-            "fr" => "fr",
+            "ja" => "ja",
+            "de" => "de",
             _ => "vi"
         };
     }

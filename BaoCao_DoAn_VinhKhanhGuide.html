@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Báo cáo đồ án VinhKhanhGuide</title>
+  <style>
+    @page { size: A4; margin: 2cm 2cm 2cm 3cm; }
+    body { font-family: "Times New Roman", serif; font-size: 13pt; line-height: 1.5; color: #111827; max-width: 980px; margin: 0 auto; padding: 24px; text-align: justify; }
+    h1, h2, h3 { text-align: left; line-height: 1.25; color: #0f172a; page-break-after: avoid; }
+    h1 { font-size: 20pt; margin-top: 28px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; }
+    h2 { font-size: 16pt; margin-top: 22px; }
+    h3 { font-size: 14pt; margin-top: 16px; }
+    .cover { min-height: 90vh; text-align: center; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+    .cover h1 { border: 0; text-align: center; font-size: 24pt; margin: 42px 0 8px; }
+    .cover h2 { text-align: center; font-size: 20pt; }
+    .school, .faculty { text-transform: uppercase; font-weight: bold; }
+    .meta { margin-top: 48px; display: inline-block; text-align: left; }
+    .toc ul { list-style: none; padding-left: 0; }
+    .toc-l2 { margin-left: 1.2rem; }
+    .toc-l3 { margin-left: 2.4rem; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 18px; font-size: 11pt; text-align: left; }
+    th, td { border: 1px solid #94a3b8; padding: 6px 8px; vertical-align: top; }
+    th { background: #e2e8f0; font-weight: bold; }
+    .caption { font-weight: bold; margin: 12px 0 4px; text-align: left; }
+    code { font-family: "Courier New", monospace; font-size: 0.9em; }
+    pre, .mermaid { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; padding: 12px; overflow-x: auto; text-align: left; margin-bottom: 18px; }
+    .page-break { page-break-before: always; break-before: page; height: 0; }
+    ul, ol { text-align: left; }
+    li { margin: 3px 0; }
+    @media print { body { max-width: none; padding: 0; } .page-break { page-break-before: always; } }
+  </style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="school">[TÊN TRƯỜNG]</div>
+  <div class="faculty">[TÊN KHOA/BỘ MÔN]</div>
+  <h1>BÁO CÁO ĐỒ ÁN</h1>
+  <h2>HỆ THỐNG THUYẾT MINH TỰ ĐỘNG ĐA NGÔN NGỮ<br>CHO ẨM THỰC VĨNH KHÁNH</h2>
+  <div class="meta">
+    <p><strong>Môn học:</strong> [Tên môn học]</p>
+    <p><strong>Giảng viên hướng dẫn:</strong> [Họ tên GVHD]</p>
+    <p><strong>Sinh viên thực hiện:</strong> [Họ tên sinh viên]</p>
+    <p><strong>Mã số sinh viên:</strong> [MSSV]</p>
+    <p><strong>Lớp:</strong> [Lớp]</p>
+    <p><strong>Năm học:</strong> 2025-2026</p>
+  </div>
+</section>
+                <div class="page-break"></div><h1 id="lời-cảm-ơn">LỜI CẢM ƠN</h1><p>Em xin chân thành cảm ơn Quý Thầy/Cô đã hướng dẫn và góp ý trong quá trình thực hiện đồ án. Em cũng cảm ơn bạn bè và người dùng thử đã hỗ trợ kiểm tra các luồng app, web và API. Những góp ý này giúp em hoàn thiện hệ thống theo hướng thực tế hơn, đồng thời hiểu rõ hơn cách thiết kế một sản phẩm phần mềm có nhiều thành phần liên kết.</p><p>Do thời gian và phạm vi đồ án có giới hạn, báo cáo tập trung mô tả đúng những chức năng đã thể hiện trong source code hiện tại, đồng thời ghi nhận trung thực các hạn chế và hướng phát triển tiếp theo.</p><div class="page-break"></div><h1 id="nhận-xét-của-giảng-viên">NHẬN XÉT CỦA GIẢNG VIÊN</h1><p><br><br><br><br><br><br><br><br><br><br></p><p>................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................</p><div class="page-break"></div><h1 id="mục-lục">MỤC LỤC</h1><nav class="toc"><ul><li class="toc-l1"><a href="#lời-cảm-ơn">LỜI CẢM ƠN</a></li><li class="toc-l1"><a href="#nhận-xét-của-giảng-viên">NHẬN XÉT CỦA GIẢNG VIÊN</a></li><li class="toc-l1"><a href="#danh-mục-hình-ảnh">DANH MỤC HÌNH ẢNH</a></li><li class="toc-l1"><a href="#danh-mục-bảng-biểu">DANH MỤC BẢNG BIỂU</a></li><li class="toc-l1"><a href="#danh-mục-từ-viết-tắt">DANH MỤC TỪ VIẾT TẮT</a></li><li class="toc-l1"><a href="#chương-1.-tổng-quan-đề-tài">CHƯƠNG 1. TỔNG QUAN ĐỀ TÀI</a></li><li class="toc-l2"><a href="#1.1.-lý-do-chọn-đề-tài">1.1. Lý do chọn đề tài</a></li><li class="toc-l2"><a href="#1.2.-mục-tiêu-đề-tài">1.2. Mục tiêu đề tài</a></li><li class="toc-l2"><a href="#1.3.-đối-tượng-sử-dụng">1.3. Đối tượng sử dụng</a></li><li class="toc-l2"><a href="#1.4.-phạm-vi-đề-tài">1.4. Phạm vi đề tài</a></li><li class="toc-l2"><a href="#1.5.-phương-pháp-thực-hiện">1.5. Phương pháp thực hiện</a></li><li class="toc-l1"><a href="#chương-2.-cơ-sở-lý-thuyết-và-công-nghệ-sử-dụng">CHƯƠNG 2. CƠ SỞ LÝ THUYẾT VÀ CÔNG NGHỆ SỬ DỤNG</a></li><li class="toc-l2"><a href="#2.1.-asp.net-core-web-api">2.1. ASP.NET Core Web API</a></li><li class="toc-l2"><a href="#2.2.-asp.net-core-mvc">2.2. ASP.NET Core MVC</a></li><li class="toc-l2"><a href="#2.3.-.net-maui">2.3. .NET MAUI</a></li><li class="toc-l2"><a href="#2.4.-json-repository">2.4. JSON Repository</a></li><li class="toc-l2"><a href="#2.5.-sqliteoffline-cache-trong-app">2.5. SQLite/offline cache trong app</a></li><li class="toc-l2"><a href="#2.6.-gps-và-geofence">2.6. GPS và Geofence</a></li><li class="toc-l2"><a href="#2.7.-text-to-speech-và-audio-guide">2.7. Text-to-Speech và Audio Guide</a></li><li class="toc-l2"><a href="#2.8.-qr-code-và-deep-link">2.8. QR Code và Deep Link</a></li><li class="toc-l2"><a href="#2.9.-authentication-authorization-role-based-access-control">2.9. Authentication, Authorization, Role-based Access Control</a></li><li class="toc-l2"><a href="#2.10.-analytics">2.10. Analytics</a></li><li class="toc-l1"><a href="#chương-3.-phân-tích-yêu-cầu-hệ-thống">CHƯƠNG 3. PHÂN TÍCH YÊU CẦU HỆ THỐNG</a></li><li class="toc-l2"><a href="#3.1.-yêu-cầu-chức-năng">3.1. Yêu cầu chức năng</a></li><li class="toc-l3"><a href="#a.-app-maui">A. App MAUI</a></li><li class="toc-l3"><a href="#b.-webadmin">B. WebAdmin</a></li><li class="toc-l3"><a href="#c.-backend-api">C. Backend API</a></li><li class="toc-l2"><a href="#3.2.-yêu-cầu-phi-chức-năng">3.2. Yêu cầu phi chức năng</a></li><li class="toc-l2"><a href="#3.3.-actor-hệ-thống">3.3. Actor hệ thống</a></li><li class="toc-l2"><a href="#3.4.-use-case-tổng-thể">3.4. Use Case tổng thể</a></li><li class="toc-l2"><a href="#3.5.-đặc-tả-use-case-chi-tiết">3.5. Đặc tả Use Case chi tiết</a></li><li class="toc-l1"><a href="#chương-4.-thiết-kế-hệ-thống">CHƯƠNG 4. THIẾT KẾ HỆ THỐNG</a></li><li class="toc-l2"><a href="#4.1.-kiến-trúc-tổng-thể">4.1. Kiến trúc tổng thể</a></li><li class="toc-l2"><a href="#4.2.-thiết-kế-phân-quyền">4.2. Thiết kế phân quyền</a></li><li class="toc-l2"><a href="#4.3.-thiết-kế-dữ-liệu">4.3. Thiết kế dữ liệu</a></li><li class="toc-l2"><a href="#4.4.-thiết-kế-api">4.4. Thiết kế API</a></li><li class="toc-l2"><a href="#4.5.-thiết-kế-app-maui">4.5. Thiết kế App MAUI</a></li><li class="toc-l2"><a href="#4.6.-thiết-kế-webadmin">4.6. Thiết kế WebAdmin</a></li><li class="toc-l2"><a href="#4.7.-thiết-kế-sequence-diagram">4.7. Thiết kế Sequence Diagram</a></li><li class="toc-l1"><a href="#chương-5.-triển-khai-hệ-thống">CHƯƠNG 5. TRIỂN KHAI HỆ THỐNG</a></li><li class="toc-l2"><a href="#5.1.-cấu-trúc-source-code">5.1. Cấu trúc source code</a></li><li class="toc-l2"><a href="#5.2.-triển-khai-backend-api">5.2. Triển khai Backend API</a></li><li class="toc-l2"><a href="#5.3.-triển-khai-webadmin">5.3. Triển khai WebAdmin</a></li><li class="toc-l2"><a href="#5.4.-triển-khai-app-maui">5.4. Triển khai App MAUI</a></li><li class="toc-l2"><a href="#5.5.-một-số-đoạn-xử-lý-tiêu-biểu">5.5. Một số đoạn xử lý tiêu biểu</a></li><li class="toc-l1"><a href="#chương-6.-kiểm-thử-và-đánh-giá">CHƯƠNG 6. KIỂM THỬ VÀ ĐÁNH GIÁ</a></li><li class="toc-l2"><a href="#6.1.-môi-trường-kiểm-thử">6.1. Môi trường kiểm thử</a></li><li class="toc-l2"><a href="#6.2.-test-case-chức-năng">6.2. Test case chức năng</a></li><li class="toc-l2"><a href="#6.3.-đánh-giá-kết-quả">6.3. Đánh giá kết quả</a></li><li class="toc-l2"><a href="#6.4.-hạn-chế-hiện-tại">6.4. Hạn chế hiện tại</a></li><li class="toc-l1"><a href="#chương-7.-kết-luận-và-hướng-phát-triển">CHƯƠNG 7. KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN</a></li><li class="toc-l2"><a href="#7.1.-kết-luận">7.1. Kết luận</a></li><li class="toc-l2"><a href="#7.2.-hướng-phát-triển">7.2. Hướng phát triển</a></li><li class="toc-l1"><a href="#phụ-lục">PHỤ LỤC</a></li><li class="toc-l2"><a href="#phụ-lục-a.-api-matrix-đầy-đủ">Phụ lục A. API Matrix đầy đủ</a></li><li class="toc-l2"><a href="#phụ-lục-b.-danh-sách-fileclass-quan-trọng">Phụ lục B. Danh sách file/class quan trọng</a></li><li class="toc-l2"><a href="#phụ-lục-c.-dữ-liệu-mẫu-poitour">Phụ lục C. Dữ liệu mẫu POI/Tour</a></li><li class="toc-l2"><a href="#phụ-lục-d.-hướng-dẫn-chạy-demo">Phụ lục D. Hướng dẫn chạy demo</a></li><li class="toc-l2"><a href="#phụ-lục-e.-checklist-đối-chiếu-prd---code">Phụ lục E. Checklist đối chiếu PRD - Code</a></li></ul></nav><div class="page-break"></div><h1 id="danh-mục-hình-ảnh">DANH MỤC HÌNH ẢNH</h1><ul><li>Hình 1. Use case tổng thể</li><li>Hình 2. Kiến trúc tổng thể App/WebAdmin/API/JSON Repository</li><li>Hình 3. ERD logic của hệ thống</li><li>Hình 4. WEB-01. Đăng nhập, phân quyền và đăng xuất</li><li>Hình 5. WEB-02. Dashboard tổng quan và realtime active devices</li><li>Hình 6. WEB-03. Admin quản lý POI</li><li>Hình 7. WEB-04. Quản lý Audio Guide/TTS</li><li>Hình 8. WEB-05. Quản lý Tour</li><li>Hình 9. WEB-06. Quản lý QR public cho POI/Tour</li><li>Hình 10. WEB-07. Public QR scan, mô phỏng device profile và ghi analytics</li><li>Hình 11. WEB-08. Map Analytics</li><li>Hình 12. WEB-09. Owner Portal đăng ký POI</li><li>Hình 13. WEB-10A. AdminUsersController quản lý tài khoản WebAdmin</li><li>Hình 14. WEB-10B. SystemAdminController quản lý App User/Profile</li><li>Hình 15. WEB-11. Translation scripts</li><li>Hình 16. APP-01. Mở app, chọn ngôn ngữ và Guest Mode</li><li>Hình 17. APP-02. Load POI/Tour từ API, fallback offline/cache/seed</li><li>Hình 18. APP-03. GPS/geofence auto narration</li><li>Hình 19. APP-04. Nghe POI thủ công</li><li>Hình 20. APP-05. Chọn tour và bản đồ chỉ hiện POI thuộc tour</li><li>Hình 21. APP-06. Quét QR mở POI/Tour</li><li>Hình 22. APP-07. Listening history begin/complete/delete</li><li>Hình 23. APP-08. Active device heartbeat và movement log</li><li>Hình 24. APP-09. Offline cache/audio cache</li><li>Hình 25. APP-10. Auth/Profile sync</li></ul><h1 id="danh-mục-bảng-biểu">DANH MỤC BẢNG BIỂU</h1><ul><li>Bảng 1. Đối tượng sử dụng hệ thống</li><li>Bảng 2. Actor, quyền và code liên quan</li><li>Bảng 3. UC-01 - Đăng nhập WebAdmin</li><li>Bảng 4. UC-02 - Admin tạo/sửa/xóa POI</li><li>Bảng 5. UC-03 - Owner đăng ký POI mới</li><li>Bảng 6. UC-04 - Admin duyệt POI Owner gửi</li><li>Bảng 7. UC-05 - Admin tạo/sửa Tour</li><li>Bảng 8. UC-06 - App chọn tour và đi theo tour</li><li>Bảng 9. UC-07 - App tự động thuyết minh GPS/geofence</li><li>Bảng 10. UC-08 - App/Web quét QR</li><li>Bảng 11. UC-09 - Ghi listening history</li><li>Bảng 12. UC-10 - Dashboard analytics</li><li>Bảng 13. Thiết kế phân quyền</li><li>Bảng 14. API Matrix rút gọn theo route thật</li><li>Bảng 15. Thành phần thiết kế App MAUI</li><li>Bảng 16. Thành phần thiết kế WebAdmin</li><li>Bảng 17. Cấu trúc source code</li><li>Bảng 18. Các luồng xử lý tiêu biểu</li><li>Bảng 19. Test case chức năng</li><li>Bảng 20. File/class quan trọng</li><li>Bảng 21. POI active trong `pois.json`</li><li>Bảng 22. Tour active trong `tours.json`</li><li>Bảng 23. Checklist đối chiếu PRD - Code</li></ul><h1 id="danh-mục-từ-viết-tắt">DANH MỤC TỪ VIẾT TẮT</h1><div class="table-wrap"><table><thead><tr><th>Từ viết tắt</th><th>Diễn giải</th></tr></thead><tbody><tr><td>API</td><td>Application Programming Interface</td></tr><tr><td>POI</td><td>Point of Interest</td></tr><tr><td>TTS</td><td>Text-to-Speech</td></tr><tr><td>QR</td><td>Quick Response Code</td></tr><tr><td>CMS</td><td>Content Management System</td></tr><tr><td>MVC</td><td>Model View Controller</td></tr><tr><td>MAUI</td><td>Multi-platform App UI</td></tr><tr><td>JSON</td><td>JavaScript Object Notation</td></tr><tr><td>DTO</td><td>Data Transfer Object</td></tr><tr><td>GPS</td><td>Global Positioning System</td></tr><tr><td>RBAC</td><td>Role-based Access Control</td></tr></tbody></table></div><div class="page-break"></div><h1 id="chương-1.-tổng-quan-đề-tài">CHƯƠNG 1. TỔNG QUAN ĐỀ TÀI</h1><h2 id="1.1.-lý-do-chọn-đề-tài">1.1. Lý do chọn đề tài</h2><p>Phố ẩm thực Vĩnh Khánh là một không gian ăn uống đông khách, có nhiều quán hải sản, lẩu, nướng và món đường phố nằm gần nhau. Với khách du lịch hoặc người lần đầu đến khu vực này, việc chọn quán, hiểu món nổi bật, tìm đường và nghe giới thiệu theo ngôn ngữ phù hợp là nhu cầu thực tế.</p><p>Đề tài lựa chọn hướng thuyết minh tự động vì kết hợp được bản đồ, GPS/geofence, QR code, nội dung đa ngôn ngữ và quản trị nội dung tập trung. Hệ thống gồm App MAUI cho khách tham quan, WebAdmin MVC cho quản trị/chủ quán và Backend API dùng chung dữ liệu JSON để phục vụ demo học thuật.</p><h2 id="1.2.-mục-tiêu-đề-tài">1.2. Mục tiêu đề tài</h2><ul><li>Xây dựng app Android cho phép khách chọn ngôn ngữ, xem bản đồ, xem danh sách POI, nghe thuyết minh thủ công hoặc tự động khi vào vùng geofence.</li><li>Xây dựng WebAdmin để quản lý POI, tour, audio guide/TTS, bản dịch, QR public, dashboard, usage logs, tài khoản WebAdmin và hồ sơ app user.</li><li>Xây dựng Backend API ASP.NET Core cung cấp dữ liệu POI/tour/audio/QR/analytics và lưu bằng JSON repository trong `VKFoodAPI/App_Data`.</li><li>Hỗ trợ owner portal để chủ cửa hàng xem POI liên quan, xem lịch sử nghe và gửi đăng ký POI mới chờ duyệt.</li><li>Thiết kế app có khả năng fallback khi API lỗi thông qua SQLite offline snapshot, cached snapshot và seed data.</li></ul><h2 id="1.3.-đối-tượng-sử-dụng">1.3. Đối tượng sử dụng</h2><div class="caption table">Bảng 1. Đối tượng sử dụng hệ thống</div><div class="table-wrap"><table><thead><tr><th>Đối tượng</th><th>Mục đích sử dụng</th><th>Module chính</th></tr></thead><tbody><tr><td>Guest/Tourist</td><td>Vào app không cần đăng nhập, chọn ngôn ngữ, xem bản đồ, nghe thuyết minh, quét QR.</td><td>VinhKhanhGuide.App</td></tr><tr><td>App user</td><td>Đăng ký/đăng nhập local trong app, lưu hồ sơ, đồng bộ profile và lịch sử nghe.</td><td>AuthService, UserProfileSyncService</td></tr><tr><td>Admin</td><td>Quản trị nội dung, dashboard, POI, tour, audio/TTS, QR, translation, tài khoản và app users.</td><td>CTest.WebAdmin</td></tr><tr><td>Owner/chủ cửa hàng</td><td>Xem POI của mình, theo dõi lịch sử nghe, đăng ký POI mới chờ duyệt.</td><td>OwnerController</td></tr><tr><td>Public QR visitor</td><td>Mở trang QR public từ trình duyệt, nghe nội dung hoặc mở app bằng deep link.</td><td>QrCodesController.Scan</td></tr></tbody></table></div><h2 id="1.4.-phạm-vi-đề-tài">1.4. Phạm vi đề tài</h2><p>Đến thời điểm đọc source, dữ liệu demo có 11 POI active, 2 tour active, 4 audio guide, 12 QR item API, 24 bản ghi listening history, 0 active device session, 967 movement log và 9 user profile.</p><ul><li>Phần đã triển khai: public API đọc POI/tour, admin API có `X-Admin-Api-Key`, WebAdmin có cookie auth và role Admin/PoiOwner, app có map, POI, tour, QR, GPS/geofence, TTS/audio, history, offline cache và heartbeat.</li><li>Phần cần ghi trung thực: hệ thống dùng JSON repository phù hợp demo/học thuật, chưa phải cơ sở dữ liệu production; WebAdmin QR hiện tạo/in QR public động từ POI/Tour, chưa có màn CRUD độc lập cho `qr-codes.json`; audio playback hiện là cancel/replace kết hợp debounce/cooldown, chưa có hàng đợi âm thanh phức tạp.</li><li>Bộ chọn ngôn ngữ hiện dùng `vi/en/zh/ja/de` trong WebAdmin Translation và app. Tuy vậy dữ liệu JSON hiện còn key lịch sử `ko/fr`, repository vẫn giữ để đọc an toàn; cần rà soát lại nội dung bản dịch trước triển khai thật.</li><li>Public QR web có `DeviceCapabilitySimulation` theo yêu cầu giảng viên: `0 = thiết bị mạnh`, `1 = thiết bị yếu`; đây là mô phỏng random 0/1 hoặc ép bằng query string, chưa phải đo cấu hình thiết bị thật.</li></ul><h2 id="1.5.-phương-pháp-thực-hiện">1.5. Phương pháp thực hiện</h2><ol><li>Phân tích yêu cầu từ PRD và luồng người dùng: khách tham quan, admin, owner, public QR visitor.</li><li>Thiết kế kiến trúc 3 khối App MAUI, WebAdmin MVC và Backend API dùng DTO chung trong `VinhKhanhGuide.Core`.</li><li>Thiết kế dữ liệu theo mô hình logic, sau đó lưu vật lý bằng JSON repository và SQLite cache trong app.</li><li>Triển khai API controller/repository, WebAdmin controller/service/API client và app ViewModel/service.</li><li>Kiểm thử theo use case: login, CRUD POI, tour, QR, GPS auto narration, listening history, dashboard và offline fallback.</li></ol><h1 id="chương-2.-cơ-sở-lý-thuyết-và-công-nghệ-sử-dụng">CHƯƠNG 2. CƠ SỞ LÝ THUYẾT VÀ CÔNG NGHỆ SỬ DỤNG</h1><h2 id="2.1.-asp.net-core-web-api">2.1. ASP.NET Core Web API</h2><p>ASP.NET Core Web API được dùng cho <code>VKFoodAPI</code>. Controller trả JSON DTO, public endpoint phục vụ app/QR, còn endpoint quản trị dùng policy <code>AdminApiKey</code>. Swagger được cấu hình trong môi trường Development.</p><h2 id="2.2.-asp.net-core-mvc">2.2. ASP.NET Core MVC</h2><p>ASP.NET Core MVC được dùng cho <code>CTest.WebAdmin</code>. Mô hình controller-service-view giúp tách nghiệp vụ quản trị khỏi giao diện Razor. WebAdmin còn host các API controller của <code>VKFoodAPI</code> qua <code>AddApplicationPart</code>, thuận tiện cho demo một tiến trình.</p><h2 id="2.3.-.net-maui">2.3. .NET MAUI</h2><p>App dùng .NET MAUI target <code>net8.0-android</code>, kết hợp XAML page, <code>MainViewModel</code>, Mapsui, ZXing.Net.Maui, TextToSpeech và Android MediaPlayer. Đây là hướng phù hợp để xây dựng app bản đồ và thuyết minh trên Android.</p><h2 id="2.4.-json-repository">2.4. JSON Repository</h2><p>JSON repository là cách lưu dữ liệu đơn giản bằng file như <code>pois.json</code>, <code>tours.json</code>, <code>audio-guides.json</code>. Cách này dễ demo, dễ kiểm tra diff, nhưng không thay thế được database quan hệ khi có đồng thời nhiều người dùng hoặc yêu cầu transaction phức tạp.</p><h2 id="2.5.-sqliteoffline-cache-trong-app">2.5. SQLite/offline cache trong app</h2><p><code>PoiOfflineStore</code> tạo SQLite <code>vinhkhanh_guide.db</code> với bảng <code>poi_cache</code> và <code>sync_metadata</code>. Khi API lỗi, app ưu tiên đọc SQLite snapshot, sau đó cached snapshot trong bộ nhớ, cuối cùng mới dùng seed data.</p><h2 id="2.6.-gps-và-geofence">2.6. GPS và Geofence</h2><p><code>LocationService</code> lấy vị trí thiết bị. <code>GeofenceEngine</code> tính khoảng cách từ vị trí hiện tại đến từng POI bằng <code>GeoMath.DistanceMeters</code>, sau đó so với <code>TriggerRadiusMeters</code> để xác định người dùng đã vào vùng kích hoạt hay chưa.</p><h2 id="2.7.-text-to-speech-và-audio-guide">2.7. Text-to-Speech và Audio Guide</h2><p><code>NarrationService</code> dùng MAUI TextToSpeech cho TTS và Android <code>MediaPlayer</code> cho file audio. <code>AudioGuideRepository</code> đồng bộ audio/TTS đã publish vào POI để app có thể phát theo <code>NarrationTranslations</code> hoặc <code>AudioAssetPath</code>.</p><h2 id="2.8.-qr-code-và-deep-link">2.8. QR Code và Deep Link</h2><p>WebAdmin dùng QRCoder tạo QR public <code>/qr/{targetType}/{targetId}</code>. App dùng camera ZXing hoặc nhập mã thủ công, gọi <code>GET /api/resolve-qr?code=...</code> và xử lý deep link <code>vinhkhanhguide://poi/...</code> hoặc <code>vinhkhanhguide://tour/...</code>.</p><h2 id="2.9.-authentication-authorization-role-based-access-control">2.9. Authentication, Authorization, Role-based Access Control</h2><p>WebAdmin dùng Cookie Authentication, role <code>Admin</code> và <code>PoiOwner</code>. API quản trị dùng <code>X-Admin-Api-Key</code>. App hiện có guest mode và local auth bằng Preferences, đồng bộ profile lên API nhưng chưa phải hệ thống JWT/OAuth production.</p><h2 id="2.10.-analytics">2.10. Analytics</h2><p>Analytics gồm listening history, active devices và movement logs. Listening history ghi begin/complete lượt nghe; active device heartbeat cập nhật phiên thiết bị; movement log ghi điểm di chuyển hợp lệ khi heartbeat có tọa độ.</p><h1 id="chương-3.-phân-tích-yêu-cầu-hệ-thống">CHƯƠNG 3. PHÂN TÍCH YÊU CẦU HỆ THỐNG</h1><h2 id="3.1.-yêu-cầu-chức-năng">3.1. Yêu cầu chức năng</h2><h3 id="a.-app-maui">A. App MAUI</h3><ul><li>Chọn ngôn ngữ `vi/en/zh/ja/de` trước khi vào app; lưu cài đặt giọng đọc và mode `tts/audio`.</li><li>Guest mode, đăng ký/đăng nhập local app user, cập nhật hồ sơ và đồng bộ profile lên API.</li><li>Xem bản đồ, danh sách POI, chi tiết POI, nhóm món nổi bật và tìm kiếm.</li><li>GPS/geofence, tự động phát thuyết minh khi vào bán kính POI; hỗ trợ nghe thủ công.</li><li>Chọn tour, theo dõi các stop trong tour, bản đồ lọc theo POI thuộc tour.</li><li>Quét QR bằng camera hoặc nhập mã thủ công; xử lý deep link mở POI/Tour.</li><li>Xem, replay, lọc, xóa listening history; có optimistic item khi vừa bắt đầu nghe.</li><li>Offline POI cache bằng SQLite, map tile cache và audio asset cache.</li><li>Active device heartbeat định kỳ 8 giây, gửi vị trí nếu có quyền và có tọa độ hợp lệ.</li></ul><h3 id="b.-webadmin">B. WebAdmin</h3><ul><li>Đăng nhập/đăng xuất bằng cookie, role Admin và PoiOwner.</li><li>Dashboard tổng quan POI, tour, audio guide, QR, lượt nghe, completion rate, active devices và top POI.</li><li>Quản lý POI, ảnh POI, trạng thái active, owner metadata và duyệt POI owner gửi.</li><li>Quản lý tour bằng `ToursController`/`TourAdminService`, chọn danh sách POI có thứ tự.</li><li>Quản lý Audio/TTS thông qua `AudioGuidesController` và service tương ứng.</li><li>Quản lý Translation cho script narration theo `vi/en/zh/ja/de`.</li><li>Tạo/in/tải QR public động cho POI/Tour; public scan web ghi analytics.</li><li>Public QR web mô phỏng cấu hình thiết bị bằng `qr-device-profile.js`: random `Math.random() &lt; 0.5 ? 0 : 1`, `0 = mạnh` thì cache payload/asset để ưu tiên offline, `1 = yếu` thì chỉ tải tối thiểu.</li><li>Map Analytics, Usage Logs, tài khoản WebAdmin và App user/profile.</li><li>Owner Portal cho chủ quán xem POI liên quan, lịch sử nghe và gửi đăng ký POI mới.</li></ul><h3 id="c.-backend-api">C. Backend API</h3><ul><li>Public read API: POI, Tour, resolve QR, listening history, active device stats/heartbeat.</li><li>Admin API có API key: CRUD POI, Tour, AudioGuide, QR item, AuditLog, App user/profile management.</li><li>Telemetry API: listening history, active devices, movement logs.</li><li>Repository JSON và audit log cho thao tác quản trị POI/Tour/QR/Audio.</li></ul><h2 id="3.2.-yêu-cầu-phi-chức-năng">3.2. Yêu cầu phi chức năng</h2><ul><li>Dễ mở rộng nhờ tách `Core` DTO/model khỏi App/Web/API.</li><li>Dễ bảo trì nhờ service/repository rõ trách nhiệm và typed API clients trong WebAdmin.</li><li>Có fallback khi API lỗi trong app: SQLite offline snapshot, cached snapshot, seed data.</li><li>Có phân quyền ở WebAdmin và API admin key cho endpoint quản trị.</li><li>Có logging/audit ở API và history/active device telemetry phục vụ dashboard.</li><li>Public QR web không crash khi mạng yếu/mất mạng: thiết bị mạnh đọc lại payload đã cache nếu có, thiết bị yếu hiển thị thông báo và dùng dữ liệu hiện có.</li><li>Dữ liệu demo có thể kiểm tra trực tiếp trong JSON, phù hợp đồ án môn học.</li><li>Giao diện cần đủ dễ dùng cho admin, owner và khách tham quan.</li></ul><h2 id="3.3.-actor-hệ-thống">3.3. Actor hệ thống</h2><div class="caption table">Bảng 2. Actor, quyền và code liên quan</div><div class="table-wrap"><table><thead><tr><th>Actor</th><th>Vai trò</th><th>Quyền</th><th>Module sử dụng</th><th>Code liên quan</th></tr></thead><tbody><tr><td>Guest/Tourist</td><td>Khách tham quan chưa đăng nhập</td><td>Chọn ngôn ngữ, xem POI/tour/map, nghe, quét QR, ghi history theo guest code.</td><td>App</td><td>AuthPageViewModel, AuthService, MainViewModel</td></tr><tr><td>App User</td><td>Người dùng app local</td><td>Đăng ký/đăng nhập local, lưu hồ sơ, đồng bộ profile/history.</td><td>App + API</td><td>AuthService, UserProfileSyncService, UserManagementController</td></tr><tr><td>Admin</td><td>Quản trị hệ thống</td><td>Dashboard, POI, Tour, Audio, Translation, QR, user/profile, audit.</td><td>WebAdmin + API</td><td>AccountController, PoisController, ToursController, SystemAdminController</td></tr><tr><td>Owner</td><td>Chủ cửa hàng</td><td>Xem POI của mình, xem lượt nghe liên quan, gửi POI mới chờ duyệt.</td><td>Owner Portal</td><td>OwnerController, IWebAdminCurrentUser.CanManage</td></tr><tr><td>Public QR Visitor</td><td>Người mở QR bằng trình duyệt</td><td>Xem trang public, mô phỏng mạnh/yếu, nghe web hoặc mở app qua deep link.</td><td>Public Web QR</td><td>QrCodesController.Scan, qr-device-profile.js</td></tr><tr><td>Backend API</td><td>Dịch vụ dữ liệu</td><td>Cung cấp DTO, lưu JSON, telemetry, audit.</td><td>VKFoodAPI</td><td>Controllers, Repositories</td></tr></tbody></table></div><h2 id="3.4.-use-case-tổng-thể">3.4. Use Case tổng thể</h2><div class="caption figure">Hình 1. Use case tổng thể</div><div class="mermaid">flowchart LR
+    Guest[&quot;Guest/Tourist&quot;] --&gt; App[&quot;App MAUI&quot;]
+    AppUser[&quot;App User&quot;] --&gt; App
+    Admin[&quot;Admin&quot;] --&gt; Web[&quot;WebAdmin MVC&quot;]
+    Owner[&quot;Owner&quot;] --&gt; OwnerPortal[&quot;Owner Portal&quot;]
+    Public[&quot;Public QR Visitor&quot;] --&gt; QRWeb[&quot;Public QR Web&quot;]
+    App --&gt; API[&quot;Backend API&quot;]
+    Web --&gt; API
+    OwnerPortal --&gt; API
+    QRWeb --&gt; API
+    API --&gt; JSON[&quot;JSON Repository&quot;]
+    App --&gt; Offline[&quot;SQLite/Cache/Seed fallback&quot;]</div><h2 id="3.5.-đặc-tả-use-case-chi-tiết">3.5. Đặc tả Use Case chi tiết</h2><div class="caption table">Bảng 3. UC-01 - Đăng nhập WebAdmin</div><div class="table-wrap"><table><thead><tr><th>Trường</th><th>Nội dung</th></tr></thead><tbody><tr><td>Mã use case</td><td>UC-01</td></tr><tr><td>Tên use case</td><td>Đăng nhập WebAdmin</td></tr><tr><td>Actor chính</td><td>Admin/Owner</td></tr><tr><td>Actor phụ</td><td>WebAdminAuthService</td></tr><tr><td>Tiền điều kiện</td><td>Tài khoản tồn tại trong `web-admin-users.json`.</td></tr><tr><td>Luồng chính</td><td>Mở `/Account/Login`, nhập username/password, AccountController gọi ValidateCredentials, tạo cookie claims, redirect Admin về Dashboard hoặc Owner về Owner Portal.</td></tr><tr><td>Luồng thay thế/ngoại lệ</td><td>Sai mật khẩu trả lại login; thiếu quyền vào AdminOnly hiển thị AccessDenied; logout xóa cookie.</td></tr><tr><td>Hậu điều kiện</td><td>Có session WebAdmin hợp lệ.</td></tr><tr><td>Controller/ViewModel/Service/API/File liên quan</td><td>AccountController, WebAdminSecurity.cs, WebAdminAccountStore.cs</td></tr></tbody></table></div><div class="caption table">Bảng 4. UC-02 - Admin tạo/sửa/xóa POI</div><div class="table-wrap"><table><thead><tr><th>Trường</th><th>Nội dung</th></tr></thead><tbody><tr><td>Mã use case</td><td>UC-02</td></tr><tr><td>Tên use case</td><td>Admin tạo/sửa/xóa POI</td></tr><tr><td>Actor chính</td><td>Admin</td></tr><tr><td>Actor phụ</td><td>Backend API</td></tr><tr><td>Tiền điều kiện</td><td>Đã đăng nhập role Admin.</td></tr><tr><td>Luồng chính</td><td>Admin mở `/Pois`, nhập form, PoiAdminService validate và gọi PoiApiClient; API `PoisController` lưu vào `pois.json` và ghi audit.</td></tr><tr><td>Luồng thay thế/ngoại lệ</td><td>Trùng code, thiếu tên hoặc tọa độ sai trả validation/conflict; delete là soft delete.</td></tr><tr><td>Hậu điều kiện</td><td>POI được cập nhật để app/Web đọc lại.</td></tr><tr><td>Controller/ViewModel/Service/API/File liên quan</td><td>CTest.WebAdmin/Controllers/PoisController.cs, VKFoodAPI/Controllers/PoisController.cs, PoiRepository.cs</td></tr></tbody></table></div><div class="caption table">Bảng 5. UC-03 - Owner đăng ký POI mới</div><div class="table-wrap"><table><thead><tr><th>Trường</th><th>Nội dung</th></tr></thead><tbody><tr><td>Mã use case</td><td>UC-03</td></tr><tr><td>Tên use case</td><td>Owner đăng ký POI mới</td></tr><tr><td>Actor chính</td><td>Owner</td></tr><tr><td>Actor phụ</td><td>PoiAdminService</td></tr><tr><td>Tiền điều kiện</td><td>Owner đã đăng nhập role PoiOwner.</td></tr><tr><td>Luồng chính</td><td>Owner mở `/Owner`, điền form; OwnerController ép owner metadata và `IsActive=false`; service tạo POI qua API.</td></tr><tr><td>Luồng thay thế/ngoại lệ</td><td>Dữ liệu không hợp lệ trả form lỗi; API offline hiển thị thông báo.</td></tr><tr><td>Hậu điều kiện</td><td>POI mới ở trạng thái chờ duyệt.</td></tr><tr><td>Controller/ViewModel/Service/API/File liên quan</td><td>OwnerController.cs, PoiValidationService.cs, PoiAdminService.cs</td></tr></tbody></table></div><div class="caption table">Bảng 6. UC-04 - Admin duyệt POI Owner gửi</div><div class="table-wrap"><table><thead><tr><th>Trường</th><th>Nội dung</th></tr></thead><tbody><tr><td>Mã use case</td><td>UC-04</td></tr><tr><td>Tên use case</td><td>Admin duyệt POI Owner gửi</td></tr><tr><td>Actor chính</td><td>Admin</td></tr><tr><td>Actor phụ</td><td>Owner</td></tr><tr><td>Tiền điều kiện</td><td>Có POI pending `IsActive=false`.</td></tr><tr><td>Luồng chính</td><td>Admin mở danh sách POI pending, kiểm tra thông tin và bấm duyệt; PoiAdminService bật active và gọi API update.</td></tr><tr><td>Luồng thay thế/ngoại lệ</td><td>Không tìm thấy POI hoặc API lỗi thì hiển thị TempData message.</td></tr><tr><td>Hậu điều kiện</td><td>POI active xuất hiện cho app/public API.</td></tr><tr><td>Controller/ViewModel/Service/API/File liên quan</td><td>PoisController.Approve, PoiAdminService.ApproveAsync</td></tr></tbody></table></div><div class="caption table">Bảng 7. UC-05 - Admin tạo/sửa Tour</div><div class="table-wrap"><table><thead><tr><th>Trường</th><th>Nội dung</th></tr></thead><tbody><tr><td>Mã use case</td><td>UC-05</td></tr><tr><td>Tên use case</td><td>Admin tạo/sửa Tour</td></tr><tr><td>Actor chính</td><td>Admin</td></tr><tr><td>Actor phụ</td><td>POI Repository</td></tr><tr><td>Tiền điều kiện</td><td>Có ít nhất một POI active.</td></tr><tr><td>Luồng chính</td><td>Admin mở `/Tours`, chọn POI theo thứ tự, nhập mã/tên/thời lượng; TourAdminService gọi `api/tours`.</td></tr><tr><td>Luồng thay thế/ngoại lệ</td><td>Không có POI, POI trùng hoặc POI không còn tồn tại thì validation lỗi.</td></tr><tr><td>Hậu điều kiện</td><td>Tour lưu trong `tours.json` với `PoiIds` có thứ tự.</td></tr><tr><td>Controller/ViewModel/Service/API/File liên quan</td><td>ToursController.cs, TourAdminService.cs, VKFoodAPI/Services/TourRepository.cs</td></tr></tbody></table></div><div class="caption table">Bảng 8. UC-06 - App chọn tour và đi theo tour</div><div class="table-wrap"><table><thead><tr><th>Trường</th><th>Nội dung</th></tr></thead><tbody><tr><td>Mã use case</td><td>UC-06</td></tr><tr><td>Tên use case</td><td>App chọn tour và đi theo tour</td></tr><tr><td>Actor chính</td><td>Guest/App User</td></tr><tr><td>Actor phụ</td><td>TourProvider</td></tr><tr><td>Tiền điều kiện</td><td>App đã tải tour active.</td></tr><tr><td>Luồng chính</td><td>Người dùng chọn tour; `MainViewModel.ActivateTourAsync` đặt `_activeTourId`, phát giới thiệu tour, map chỉ hiển thị POI trong tour.</td></tr><tr><td>Luồng thay thế/ngoại lệ</td><td>Tour không còn active hoặc không có stop hợp lệ thì báo trạng thái.</td></tr><tr><td>Hậu điều kiện</td><td>App theo dõi current/next stop và tiến độ tour.</td></tr><tr><td>Controller/ViewModel/Service/API/File liên quan</td><td>MainViewModel.cs, TourProvider.cs, TourRepository.cs</td></tr></tbody></table></div><div class="caption table">Bảng 9. UC-07 - App tự động thuyết minh GPS/geofence</div><div class="table-wrap"><table><thead><tr><th>Trường</th><th>Nội dung</th></tr></thead><tbody><tr><td>Mã use case</td><td>UC-07</td></tr><tr><td>Tên use case</td><td>App tự động thuyết minh GPS/geofence</td></tr><tr><td>Actor chính</td><td>Guest/App User</td></tr><tr><td>Actor phụ</td><td>LocationService</td></tr><tr><td>Tiền điều kiện</td><td>Có quyền vị trí hoặc app nhận được location hợp lệ.</td></tr><tr><td>Luồng chính</td><td>`OnLocationUpdated` gọi `ApplyLocationSnapshotAsync`; GeofenceEngine đánh giá bán kính; decision service xét priority, debounce, cooldown; NarrationService phát.</td></tr><tr><td>Luồng thay thế/ngoại lệ</td><td>Không có quyền vị trí thì fallback map đầu phố; đang phát thì không phát chồng; cooldown thì bỏ qua.</td></tr><tr><td>Hậu điều kiện</td><td>Người dùng nghe đúng POI và history được ghi.</td></tr><tr><td>Controller/ViewModel/Service/API/File liên quan</td><td>LocationService.cs, GeofenceEngine.cs, PoiAutoNarrationDecisionService.cs, NarrationService.cs</td></tr></tbody></table></div><div class="caption table">Bảng 10. UC-08 - App/Web quét QR</div><div class="table-wrap"><table><thead><tr><th>Trường</th><th>Nội dung</th></tr></thead><tbody><tr><td>Mã use case</td><td>UC-08</td></tr><tr><td>Tên use case</td><td>App/Web quét QR</td></tr><tr><td>Actor chính</td><td>Guest/Public QR Visitor</td></tr><tr><td>Actor phụ</td><td>ResolveQrController</td></tr><tr><td>Tiền điều kiện</td><td>QR chứa POI/Tour code, path hoặc deep link hợp lệ.</td></tr><tr><td>Luồng chính</td><td>Web mở `/qr/{targetType}/{targetId}`, render POI/Tour rồi chạy `DeviceCapabilitySimulation`; app scan camera/manual gọi `GET /api/resolve-qr?code=...` để resolve POI/Tour.</td></tr><tr><td>Luồng thay thế/ngoại lệ</td><td>QR không hợp lệ trả 404/thông báo; camera denied cho phép nhập mã thủ công; public web offline thì hiển thị thông báo và dùng cache/text hiện có.</td></tr><tr><td>Hậu điều kiện</td><td>Mở đúng POI/Tour, hiển thị profile mạnh/yếu và có thể autoplay.</td></tr><tr><td>Controller/ViewModel/Service/API/File liên quan</td><td>QrCodesController.cs, Scan.cshtml, qr-device-profile.js, ResolveQrController.cs, QrScannerPage.xaml.cs, QrDeepLinkBroker.cs</td></tr></tbody></table></div><div class="caption table">Bảng 11. UC-09 - Ghi listening history</div><div class="table-wrap"><table><thead><tr><th>Trường</th><th>Nội dung</th></tr></thead><tbody><tr><td>Mã use case</td><td>UC-09</td></tr><tr><td>Tên use case</td><td>Ghi listening history</td></tr><tr><td>Actor chính</td><td>App/Web QR</td></tr><tr><td>Actor phụ</td><td>ListeningHistoryRepository</td></tr><tr><td>Tiền điều kiện</td><td>Người dùng bắt đầu nghe POI.</td></tr><tr><td>Luồng chính</td><td>App tạo optimistic item, `BeginAsync` POST history; phát xong gọi `CompleteAsync`; web QR dùng proxy `/qr/analytics/listening-history`.</td></tr><tr><td>Luồng thay thế/ngoại lệ</td><td>API lỗi thì app giữ local/optimistic; playback lỗi cập nhật ErrorMessage nếu có history id.</td></tr><tr><td>Hậu điều kiện</td><td>History có thời điểm bắt đầu, số giây nghe, completed/error.</td></tr><tr><td>Controller/ViewModel/Service/API/File liên quan</td><td>ListeningHistorySyncService.cs, ListeningHistoryController.cs, ListeningHistoryRepository.cs</td></tr></tbody></table></div><div class="caption table">Bảng 12. UC-10 - Dashboard analytics</div><div class="table-wrap"><table><thead><tr><th>Trường</th><th>Nội dung</th></tr></thead><tbody><tr><td>Mã use case</td><td>UC-10</td></tr><tr><td>Tên use case</td><td>Dashboard analytics</td></tr><tr><td>Actor chính</td><td>Admin</td></tr><tr><td>Actor phụ</td><td>API telemetry</td></tr><tr><td>Tiền điều kiện</td><td>Admin đăng nhập và API truy cập được.</td></tr><tr><td>Luồng chính</td><td>DashboardService gọi POI, Tour, Audio, ListeningHistory, ActiveDevices; tính tổng, top POI, completion, QR listen rate, SSE active devices.</td></tr><tr><td>Luồng thay thế/ngoại lệ</td><td>API lỗi trả dashboard rỗng `IsSyncOnline=false` để tránh số liệu giả.</td></tr><tr><td>Hậu điều kiện</td><td>Admin xem được tình trạng sử dụng hệ thống.</td></tr><tr><td>Controller/ViewModel/Service/API/File liên quan</td><td>HomeController.cs, DashboardService.cs, ActiveDevicesController.cs</td></tr></tbody></table></div><h1 id="chương-4.-thiết-kế-hệ-thống">CHƯƠNG 4. THIẾT KẾ HỆ THỐNG</h1><h2 id="4.1.-kiến-trúc-tổng-thể">4.1. Kiến trúc tổng thể</h2><p>Hệ thống được thiết kế thành ba khối chính: App MAUI Android, WebAdmin MVC và Backend API. <code>VinhKhanhGuide.Core</code> đóng vai trò lớp hợp đồng dùng chung, chứa DTO/model/service contract để giảm lệch dữ liệu giữa các project.</p><div class="caption figure">Hình 2. Kiến trúc tổng thể App/WebAdmin/API/JSON Repository</div><div class="mermaid">flowchart LR
+    subgraph APP[&quot;VinhKhanhGuide.App (.NET MAUI Android)&quot;]
+        Auth[&quot;AuthPageViewModel/AuthService&quot;]
+        MainVM[&quot;MainViewModel&quot;]
+        GPS[&quot;LocationService + GeofenceEngine&quot;]
+        QR[&quot;QrScannerPage + QrResolveService&quot;]
+        Offline[&quot;PoiOfflineStore + Audio/Map Cache&quot;]
+    end
+    subgraph WEB[&quot;CTest.WebAdmin (ASP.NET Core MVC)&quot;]
+        Account[&quot;AccountController&quot;]
+        Admin[&quot;Admin Controllers/Services&quot;]
+        Owner[&quot;OwnerController&quot;]
+        PublicQR[&quot;QrCodesController public scan&quot;]
+    end
+    subgraph API[&quot;VKFoodAPI Controllers&quot;]
+        PoiApi[&quot;PoisController&quot;]
+        TourApi[&quot;ToursController&quot;]
+        AudioApi[&quot;AudioGuidesController&quot;]
+        AnalyticsApi[&quot;ListeningHistory/ActiveDevices/MovementLogs&quot;]
+        UserApi[&quot;UserManagementController&quot;]
+    end
+    subgraph DATA[&quot;VKFoodAPI/App_Data&quot;]
+        JSON[&quot;pois, tours, audio-guides, qr-codes, history, devices, movement, users, audit&quot;]
+    end
+    APP --&gt; API
+    WEB --&gt; API
+    PublicQR --&gt; API
+    API --&gt; JSON
+    APP --&gt; Offline</div><h2 id="4.2.-thiết-kế-phân-quyền">4.2. Thiết kế phân quyền</h2><div class="caption table">Bảng 13. Thiết kế phân quyền</div><div class="table-wrap"><table><thead><tr><th>Vai trò/cơ chế</th><th>Cách triển khai</th><th>Quyền chính</th></tr></thead><tbody><tr><td>Admin</td><td>Cookie auth + role `Admin`; policy `WebAdminPolicies.AdminOnly`.</td><td>Quản trị toàn bộ WebAdmin, POI, Tour, Audio, Translation, QR, users, dashboard.</td></tr><tr><td>Owner/PoiOwner</td><td>Cookie auth + role `PoiOwner`; policy `OwnerArea`; claims owner code/email.</td><td>Vào Owner Portal, xem POI khớp owner, đăng ký POI mới.</td></tr><tr><td>Guest</td><td>App tạo guest session local với user code `guest-...`.</td><td>Xem/nghe/quét QR, ghi history theo guest scope.</td></tr><tr><td>App User</td><td>AuthService local Preferences, sync profile public API.</td><td>Lưu hồ sơ, lịch sử nghe theo user code/email.</td></tr><tr><td>Public QR Visitor</td><td>`[AllowAnonymous]` ở public QR scan và proxy analytics.</td><td>Mở QR web, nghe nội dung, ghi analytics web.</td></tr><tr><td>API Admin Key</td><td>`AdminApiKeyAuthenticationHandler`, header `X-Admin-Api-Key`.</td><td>CRUD API quản trị, raw active devices, audit, app user management.</td></tr></tbody></table></div><h2 id="4.3.-thiết-kế-dữ-liệu">4.3. Thiết kế dữ liệu</h2><p>Vì source code lưu dữ liệu bằng JSON repository, ERD dưới đây là mô hình logic để diễn giải quan hệ nghiệp vụ, không phải mô tả database quan hệ đang chạy. <code>TOUR_POI_LINK</code> là bảng logic biểu diễn danh sách có thứ tự <code>TourDto.PoiIds</code>. Các field dạng list/dictionary như <code>NarrationTranslations</code>, <code>FeaturedCategories</code> và <code>PoiIds</code> được lưu trực tiếp trong JSON DTO.</p><div class="caption figure">Hình 3. ERD logic của hệ thống</div><div class="mermaid">erDiagram
+    WEB_ADMIN_ACCOUNT {
+        string Username PK
+        string PasswordHash
+        string Role
+        string OwnerCode
+        string OwnerEmail
+    }
+    ADMIN_USER_PROFILE {
+        guid Id PK
+        string UserCode
+        string Email
+        string PreferredLanguage
+        string DevicePlatform
+    }
+    POI {
+        guid Id PK
+        string Code
+        string Name
+        string OwnerUserCode
+        string OwnerEmail
+        double Latitude
+        double Longitude
+        double TriggerRadiusMeters
+        json NarrationTranslations
+    }
+    TOUR {
+        int Id PK
+        string Code
+        string Name
+        int EstimatedMinutes
+        bool IsQrEnabled
+    }
+    TOUR_POI_LINK {
+        int TourId FK
+        guid PoiId FK
+        int SortOrder
+    }
+    AUDIO_GUIDE {
+        guid Id PK
+        guid PoiId FK
+        string LanguageCode
+        string SourceType
+        string Script
+        string FilePath
+    }
+    QR_CODE_ITEM {
+        guid Id PK
+        string Code
+        string TargetType
+        string TargetId
+    }
+    LISTENING_HISTORY {
+        guid Id PK
+        guid PoiId FK
+        string UserCode
+        string TriggerType
+        int ListenSeconds
+        bool Completed
+    }
+    ACTIVE_DEVICE_SESSION {
+        string SessionKey PK
+        string DeviceId
+        string ClientInstanceId
+        datetime LastSeenAtUtc
+    }
+    MOVEMENT_LOG {
+        guid Id PK
+        string DeviceId
+        double Latitude
+        double Longitude
+        datetime RecordedAtUtc
+    }
+    AUDIT_LOG {
+        guid Id PK
+        string Username
+        string Action
+        string EntityName
+        string EntityId
+    }
+    OFFLINE_POI_CACHE {
+        guid Id PK
+        json NarrationTranslationsJson
+        datetime LastSyncedAtUtc
+    }
+    WEB_ADMIN_ACCOUNT ||--o{ POI : owns_logic
+    POI ||--o{ AUDIO_GUIDE : has
+    POI ||--o{ LISTENING_HISTORY : records
+    TOUR ||--o{ TOUR_POI_LINK : contains
+    POI ||--o{ TOUR_POI_LINK : appears_in
+    QR_CODE_ITEM }o--|| POI : target_poi
+    QR_CODE_ITEM }o--|| TOUR : target_tour
+    ACTIVE_DEVICE_SESSION ||--o{ MOVEMENT_LOG : emits</div><h2 id="4.4.-thiết-kế-api">4.4. Thiết kế API</h2><div class="caption table">Bảng 14. API Matrix rút gọn theo route thật</div><div class="table-wrap"><table><thead><tr><th>Nhóm</th><th>Endpoint</th><th>Method</th><th>Quyền</th><th>Controller</th><th>Repository/service</th><th>Mục đích</th></tr></thead><tbody><tr><td>POI public</td><td>`/api/pois`, `/api/pois/{id}`, `/api/pois/by-qr?code=`</td><td>GET</td><td>Public</td><td>VKFoodAPI.Controllers.PoisController</td><td>PoiRepository</td><td>Đọc POI active/non-deleted cho app/web.</td></tr><tr><td>POI admin</td><td>`/api/pois`, `/api/pois/{id}`</td><td>POST/PUT/DELETE</td><td>X-Admin-Api-Key</td><td>PoisController</td><td>PoiRepository + AuditLogRepository</td><td>Tạo, sửa, soft delete POI và ghi audit.</td></tr><tr><td>Tour public</td><td>`/api/tours`, `/api/tours/{id}`</td><td>GET</td><td>Public</td><td>ToursController</td><td>TourRepository</td><td>Đọc tour active cho app và QR.</td></tr><tr><td>Tour admin</td><td>`/api/tours`, `/api/tours/{id}`</td><td>POST/PUT/DELETE</td><td>X-Admin-Api-Key</td><td>ToursController</td><td>TourRepository + AuditLogRepository</td><td>CRUD tour; delete là soft delete và tắt QR.</td></tr><tr><td>Audio guide</td><td>`/api/audioguides`, `/api/audioguides/{id}`</td><td>GET/POST/PUT/DELETE</td><td>X-Admin-Api-Key</td><td>AudioGuidesController</td><td>AudioGuideRepository</td><td>Quản lý TTS/file audio. Route thật là `api/[controller]` nên client dùng `api/audioguides`.</td></tr><tr><td>QR item API</td><td>`/api/qr-codes`, `/api/qr-codes/{id}`</td><td>GET/POST/PUT/DELETE</td><td>X-Admin-Api-Key</td><td>QrCodesController</td><td>QrCodeRepository</td><td>CRUD QR item ở API; UI WebAdmin QR độc lập chưa có.</td></tr><tr><td>QR resolve</td><td>`/api/resolve-qr?code=...`</td><td>GET</td><td>Public</td><td>ResolveQrController</td><td>QrCodeRepository + PoiRepository + TourRepository</td><td>Resolve deep link/path/code sang POI/Tour.</td></tr><tr><td>Listening history</td><td>`/api/analytics/listening-history`, alias `/api/narration-histories`</td><td>GET/POST/PUT/DELETE</td><td>Public query scoped</td><td>ListeningHistoryController</td><td>ListeningHistoryRepository</td><td>Ghi begin/complete, ranking, xóa history.</td></tr><tr><td>Active devices</td><td>`/api/analytics/active-devices`, alias `/api/device-presence`</td><td>GET/POST</td><td>Stats/heartbeat public; raw admin</td><td>ActiveDevicesController</td><td>ActiveDeviceRepository + MovementLogRepository</td><td>Heartbeat/disconnect, active stats, ghi movement log từ tọa độ hợp lệ.</td></tr><tr><td>Movement logs</td><td>`/api/movement-logs`</td><td>GET/POST</td><td>Public trong code hiện tại</td><td>MovementLogsController</td><td>MovementLogRepository</td><td>Lưu và truy vấn log di chuyển theo device/user/time.</td></tr><tr><td>App user public sync</td><td>`/api/users/profile-sync`, `/api/app-users/sync`</td><td>POST</td><td>AllowAnonymous</td><td>UserManagementController</td><td>UserManagementRepository</td><td>App đồng bộ hồ sơ người dùng/guest.</td></tr><tr><td>Admin user profile</td><td>`/api/admin/users`, `/api/admin/users/search`, `/api/admin/users/{id}`</td><td>GET/POST</td><td>X-Admin-Api-Key</td><td>UserManagementController</td><td>UserManagementRepository</td><td>WebAdmin quản lý/xem app user profile.</td></tr><tr><td>Audit logs</td><td>`/api/audit-logs`</td><td>GET/POST</td><td>X-Admin-Api-Key</td><td>AuditLogsController</td><td>AuditLogRepository</td><td>Lưu/truy vấn audit log.</td></tr></tbody></table></div><h2 id="4.5.-thiết-kế-app-maui">4.5. Thiết kế App MAUI</h2><p><code>MainViewModel</code> là trung tâm điều phối app: load POI/tour, trạng thái map, GPS, geofence, tour, narration, history, offline package và audio settings. Các service được inject trong <code>MauiProgram.cs</code>.</p><div class="caption table">Bảng 15. Thành phần thiết kế App MAUI</div><div class="table-wrap"><table><thead><tr><th>Thành phần</th><th>Vai trò</th></tr></thead><tbody><tr><td>MainViewModel</td><td>Điều phối UI, tour, POI, narration, history và map state.</td></tr><tr><td>LocationService</td><td>Xin quyền và lấy/cập nhật vị trí thiết bị.</td></tr><tr><td>GeofenceEngine</td><td>Tính khoảng cách và xác định POI nằm trong bán kính kích hoạt.</td></tr><tr><td>PoiAutoNarrationDecisionService</td><td>Chọn candidate theo priority, distance, debounce, cooldown và trạng thái đang phát.</td></tr><tr><td>NarrationService</td><td>Phát TTS hoặc file audio; chính sách cancel/replace playback.</td></tr><tr><td>QrScannerPage/QrResolveService/QrDeepLinkBroker</td><td>Quét/resolve QR và mở POI/Tour/deep link.</td></tr><tr><td>PoiOfflineStore</td><td>SQLite `poi_cache` và `sync_metadata` cho offline snapshot.</td></tr><tr><td>AudioAssetCacheService</td><td>Cache file audio remote/package/local vào app data.</td></tr><tr><td>ActiveDeviceTracker</td><td>Heartbeat 8 giây, gửi device/session/location nếu có.</td></tr></tbody></table></div><h2 id="4.6.-thiết-kế-webadmin">4.6. Thiết kế WebAdmin</h2><div class="caption table">Bảng 16. Thành phần thiết kế WebAdmin</div><div class="table-wrap"><table><thead><tr><th>Controller/Service</th><th>Chức năng</th></tr></thead><tbody><tr><td>AccountController</td><td>Login/logout cookie, redirect theo role.</td></tr><tr><td>HomeController + DashboardService</td><td>Dashboard, active device JSON/SSE, usage snapshot.</td></tr><tr><td>PoisController + PoiAdminService</td><td>Quản lý POI, create/edit/approve/delete.</td></tr><tr><td>ToursController + TourAdminService</td><td>Quản lý tour và danh sách POI trong tour.</td></tr><tr><td>AudioGuidesController + AudioGuideAdminService</td><td>Quản lý audio/TTS cho POI.</td></tr><tr><td>QrCodesController + qr-device-profile.js</td><td>Tạo/in/tải QR public động cho POI/Tour, public scan và mô phỏng cấu hình thiết bị mạnh/yếu cho offline/minimal mode.</td></tr><tr><td>OwnerController</td><td>Owner portal, POI owner, history liên quan, đăng ký POI mới.</td></tr><tr><td>AdminUsersController</td><td>Quản lý tài khoản WebAdmin lưu `web-admin-users.json`.</td></tr><tr><td>SystemAdminController</td><td>Quản lý app user/profile qua UserManagementApiClient.</td></tr><tr><td>MapPoisController</td><td>Quản lý POI trên bản đồ và analytics map.</td></tr><tr><td>UsageLogsController</td><td>Xem listening history/usage logs.</td></tr><tr><td>TranslationsController + TtsTranslationService</td><td>Quản lý script ngôn ngữ `vi/en/zh/ja/de`.</td></tr></tbody></table></div><h2 id="4.7.-thiết-kế-sequence-diagram">4.7. Thiết kế Sequence Diagram</h2><div class="caption figure">Hình 4. WEB-01. Đăng nhập, phân quyền và đăng xuất</div><div class="mermaid">sequenceDiagram
+    actor U as Admin/Owner
+    participant C as AccountController
+    participant A as WebAdminAuthService
+    participant S as WebAdminAccountStore
+    participant Cookie as CookieAuth
+    U-&gt;&gt;C: GET /Account/Login
+    U-&gt;&gt;C: POST username/password
+    C-&gt;&gt;A: ValidateCredentials()
+    A-&gt;&gt;S: GetAll()
+    alt hợp lệ
+        C-&gt;&gt;Cookie: SignInAsync(claims Role/Owner)
+        C--&gt;&gt;U: Redirect Home hoặc Owner
+    else sai thông tin
+        C--&gt;&gt;U: View Login + error
+    end
+    U-&gt;&gt;C: POST /Account/Logout
+    C-&gt;&gt;Cookie: SignOutAsync()</div><div class="caption figure">Hình 5. WEB-02. Dashboard tổng quan và realtime active devices</div><div class="mermaid">sequenceDiagram
+    actor Admin
+    participant H as HomeController
+    participant D as DashboardService
+    participant P as PoiApiClient
+    participant T as TourApiClient
+    participant A as AudioGuideApiClient
+    participant L as ListeningHistoryApiClient
+    participant Dev as ActiveDeviceApiClient
+    Admin-&gt;&gt;H: GET /
+    H-&gt;&gt;D: LoadAsync()
+    par load shared data
+        D-&gt;&gt;P: GET api/pois
+        D-&gt;&gt;T: GET api/tours
+        D-&gt;&gt;A: GET api/audioguides
+        D-&gt;&gt;L: GET api/analytics/listening-history
+        D-&gt;&gt;Dev: GET api/analytics/active-devices
+    end
+    D--&gt;&gt;H: DashboardViewModel
+    H--&gt;&gt;Admin: Dashboard.cshtml
+    loop SSE 1s
+        Admin-&gt;&gt;H: GET ActiveDeviceEvents
+        H-&gt;&gt;D: GetActiveDeviceStatsAsync()
+        H--&gt;&gt;Admin: event active-devices
+    end</div><div class="caption figure">Hình 6. WEB-03. Admin quản lý POI</div><div class="mermaid">sequenceDiagram
+    actor Admin
+    participant WC as CTest.WebAdmin.PoisController
+    participant S as PoiAdminService
+    participant V as PoiValidationService
+    participant C as PoiApiClient
+    participant API as VKFoodAPI.PoisController
+    participant R as PoiRepository
+    Admin-&gt;&gt;WC: Create/Edit/Delete/Approve
+    WC-&gt;&gt;S: Load snapshot / save request
+    S-&gt;&gt;V: ValidateCreate/ValidateUpdate
+    alt valid
+        S-&gt;&gt;C: POST/PUT/DELETE api/pois
+        C-&gt;&gt;API: X-Admin-Api-Key
+        API-&gt;&gt;R: Create/Update/Delete
+        API--&gt;&gt;C: DTO/NoContent
+        WC--&gt;&gt;Admin: Redirect + TempData
+    else invalid/API error
+        WC--&gt;&gt;Admin: form error
+    end</div><div class="caption figure">Hình 7. WEB-04. Quản lý Audio Guide/TTS</div><div class="mermaid">sequenceDiagram
+    actor Admin
+    participant C as AudioGuidesController
+    participant S as AudioGuideAdminService
+    participant V as AudioGuideValidationService
+    participant Client as AudioGuideApiClient
+    participant API as AudioGuidesController(API)
+    participant R as AudioGuideRepository
+    participant P as PoiRepository
+    Admin-&gt;&gt;C: POST Save TTS/File
+    C-&gt;&gt;S: LoadManagementPageAsync()
+    C-&gt;&gt;V: Validate(SourceType)
+    alt valid
+        S-&gt;&gt;Client: POST/PUT api/audioguides
+        Client-&gt;&gt;API: X-Admin-Api-Key
+        API-&gt;&gt;R: Create/Update
+        R-&gt;&gt;P: ApplyPublishedAudioGuides()
+        API--&gt;&gt;Client: AudioGuideDto
+    else missing Script/FilePath
+        C--&gt;&gt;Admin: validation error
+    end</div><div class="caption figure">Hình 8. WEB-05. Quản lý Tour</div><div class="mermaid">sequenceDiagram
+    actor Admin
+    participant C as ToursController(Web)
+    participant S as TourAdminService
+    participant Client as TourApiClient
+    participant API as ToursController(API)
+    participant R as TourRepository
+    Admin-&gt;&gt;C: Create/Edit Tour
+    C-&gt;&gt;S: PopulateEditorReferencesAsync()
+    C-&gt;&gt;C: Validate SelectedPoiIds
+    alt hợp lệ
+        S-&gt;&gt;Client: POST/PUT api/tours
+        Client-&gt;&gt;API: X-Admin-Api-Key
+        API-&gt;&gt;R: Create/Update(TourDto.PoiIds)
+        R--&gt;&gt;API: saved tour
+    else không có POI hoặc trùng POI
+        C--&gt;&gt;Admin: Editor + ModelState
+    end</div><div class="caption figure">Hình 9. WEB-06. Quản lý QR public cho POI/Tour</div><div class="mermaid">sequenceDiagram
+    actor Admin
+    participant C as QrCodesController(Web)
+    participant P as PoiApiClient
+    participant T as TourApiClient
+    participant Q as QRCoder
+    Admin-&gt;&gt;C: GET /QrCodes
+    par load targets
+        C-&gt;&gt;P: GET api/pois
+        C-&gt;&gt;T: GET api/tours
+    end
+    C--&gt;&gt;Admin: Manage list POI/Tour QR
+    Admin-&gt;&gt;C: GET /qr/image/{type}/{id}
+    C-&gt;&gt;C: ResolveTargetAsync()
+    C-&gt;&gt;Q: CreateQrCode(public URL)
+    C--&gt;&gt;Admin: image/svg+xml</div><div class="caption figure">Hình 10. WEB-07. Public QR scan, mô phỏng device profile và ghi analytics</div><div class="mermaid">sequenceDiagram
+    actor Visitor
+    participant C as QrCodesController.Scan
+    participant View as Scan.cshtml
+    participant Device as qr-device-profile.js
+    participant L as ListeningHistoryApiClient
+    participant D as ActiveDeviceApiClient
+    participant API as VKFoodAPI
+    Visitor-&gt;&gt;C: GET /qr/{targetType}/{targetId}
+    C-&gt;&gt;C: BuildScanViewModel()
+    C--&gt;&gt;Visitor: Public scan page + QR payload + app deep link
+    View-&gt;&gt;Device: resolveQrDeviceProfile()
+    alt profile = 0 thiết bị mạnh
+        Device-&gt;&gt;Device: cacheQrPayloadForOffline(POI/Tour + related POIs/audio/text)
+        Device--&gt;&gt;View: offline đầy đủ
+    else profile = 1 thiết bị yếu
+        Device--&gt;&gt;View: tải tối thiểu, dùng dữ liệu hiện có
+    end
+    Visitor-&gt;&gt;View: Play narration
+    View-&gt;&gt;C: POST /qr/analytics/listening-history
+    C-&gt;&gt;L: POST api/analytics/listening-history
+    L-&gt;&gt;API: create history
+    View-&gt;&gt;C: POST /qr/analytics/active-devices/heartbeat
+    C-&gt;&gt;D: POST api/analytics/active-devices/heartbeat</div><div class="caption figure">Hình 11. WEB-08. Map Analytics</div><div class="mermaid">sequenceDiagram
+    actor Admin
+    participant C as MapPoisController
+    participant S as PoiAdminService
+    participant L as ListeningHistoryService
+    participant D as ActiveDeviceApiClient
+    Admin-&gt;&gt;C: GET /MapPois
+    C-&gt;&gt;S: LoadMapManagementPageAsync()
+    C-&gt;&gt;L: Load usage/listening metrics
+    C-&gt;&gt;D: GetStatsAsync()
+    alt analytics API lỗi
+        C--&gt;&gt;Admin: POI map + AnalyticsLoadErrorMessage
+    else thành công
+        C--&gt;&gt;Admin: POI map, route points, top listening
+    end</div><div class="caption figure">Hình 12. WEB-09. Owner Portal đăng ký POI</div><div class="mermaid">sequenceDiagram
+    actor Owner
+    participant C as OwnerController
+    participant Current as IWebAdminCurrentUser
+    participant S as PoiAdminService
+    participant V as PoiValidationService
+    participant L as ListeningHistoryService
+    Owner-&gt;&gt;C: GET /Owner
+    C-&gt;&gt;S: LoadManagementPageAsync()
+    C-&gt;&gt;L: LoadPageForPoisAsync(owner POIs)
+    C--&gt;&gt;Owner: POI + usage + registration form
+    Owner-&gt;&gt;C: POST Register
+    C-&gt;&gt;Current: OwnerCode/OwnerEmail
+    C-&gt;&gt;V: ValidateCreate()
+    C-&gt;&gt;S: CreateAsync(IsActive=false)
+    C--&gt;&gt;Owner: POI chờ duyệt</div><div class="caption figure">Hình 13. WEB-10A. AdminUsersController quản lý tài khoản WebAdmin</div><div class="mermaid">sequenceDiagram
+    actor Admin
+    participant C as AdminUsersController
+    participant S as WebAdminAccountStore
+    Admin-&gt;&gt;C: GET /AdminUsers
+    C-&gt;&gt;S: GetAll()
+    C--&gt;&gt;Admin: List Admin/PoiOwner
+    Admin-&gt;&gt;C: POST SaveAccount
+    C-&gt;&gt;S: Upsert(hash password)
+    alt xóa account
+        Admin-&gt;&gt;C: POST DeleteAccount
+        C-&gt;&gt;S: Delete()
+        S--&gt;&gt;C: false nếu current/last admin
+    end</div><div class="caption figure">Hình 14. WEB-10B. SystemAdminController quản lý App User/Profile</div><div class="mermaid">sequenceDiagram
+    actor Admin
+    participant C as SystemAdminController
+    participant Client as UserManagementApiClient
+    participant API as UserManagementController
+    participant R as UserManagementRepository
+    Admin-&gt;&gt;C: GET /SystemAdmin?keyword=
+    C-&gt;&gt;Client: GET api/admin/users/search
+    Client-&gt;&gt;API: X-Admin-Api-Key
+    API-&gt;&gt;R: SearchUsers()
+    Admin-&gt;&gt;C: POST SaveAppUser
+    C-&gt;&gt;Client: POST api/admin/users/profile-sync
+    API-&gt;&gt;R: UpsertProfile()</div><div class="caption figure">Hình 15. WEB-11. Translation scripts</div><div class="mermaid">sequenceDiagram
+    actor Admin
+    participant C as TranslationsController
+    participant T as TtsTranslationService
+    participant P as PoiApiClient
+    participant API as PoisController(API)
+    Admin-&gt;&gt;C: GET /Translations
+    C-&gt;&gt;P: GET api/pois/{poiId}
+    C--&gt;&gt;Admin: Editors vi/en/zh/ja/de
+    Admin-&gt;&gt;C: POST Generate
+    C-&gt;&gt;T: GenerateSuggestedScripts(en,zh,ja,de)
+    C-&gt;&gt;P: PUT api/pois/{id}
+    Admin-&gt;&gt;C: POST Save(language)
+    C-&gt;&gt;P: PUT api/pois/{id}</div><div class="caption figure">Hình 16. APP-01. Mở app, chọn ngôn ngữ và Guest Mode</div><div class="mermaid">sequenceDiagram
+    actor Guest
+    participant AuthPage as AuthPageViewModel
+    participant Settings as AudioSettingsService
+    participant Auth as AuthService
+    participant App as AppShell/MainPage
+    Guest-&gt;&gt;AuthPage: chọn vi/en/zh/ja/de
+    AuthPage-&gt;&gt;Settings: SaveGuestLanguagePreference()
+    Guest-&gt;&gt;AuthPage: Enter app
+    AuthPage-&gt;&gt;Auth: ContinueAsGuestAsync()
+    Auth--&gt;&gt;AuthPage: guest session
+    AuthPage--&gt;&gt;App: open main interface</div><div class="caption figure">Hình 17. APP-02. Load POI/Tour từ API, fallback offline/cache/seed</div><div class="mermaid">sequenceDiagram
+    participant VM as MainViewModel
+    participant PR as PoiRepository(App)
+    participant PP as PoiProvider
+    participant TR as TourRepository(App)
+    participant Store as PoiOfflineStore(SQLite)
+    participant API as VKFoodAPI
+    VM-&gt;&gt;PR: GetPoisAsync()
+    PR-&gt;&gt;PP: GetPoisAsync()
+    alt API OK
+        PP-&gt;&gt;API: GET api/pois
+        PP-&gt;&gt;Store: ReplacePoisAsync(snapshot)
+    else API lỗi
+        PP-&gt;&gt;Store: GetPoisAsync()
+        alt SQLite có dữ liệu
+            Store--&gt;&gt;PP: OfflineSnapshot
+        else không có
+            PP--&gt;&gt;VM: CachedSnapshot hoặc Seed
+        end
+    end
+    VM-&gt;&gt;TR: GetToursAsync()</div><div class="caption figure">Hình 18. APP-03. GPS/geofence auto narration</div><div class="mermaid">sequenceDiagram
+    participant Loc as LocationService
+    participant VM as MainViewModel
+    participant Geo as GeofenceEngine
+    participant Decision as PoiAutoNarrationDecisionService
+    participant Narr as NarrationService
+    Loc--&gt;&gt;VM: LocationUpdated
+    VM-&gt;&gt;Geo: Evaluate(location, pois)
+    VM-&gt;&gt;Decision: CreateCandidates + Decide
+    alt ShouldNarrate
+        VM-&gt;&gt;Narr: NarrateAsync(poi, language, mode)
+    else debounce/cooldown/current playing
+        VM--&gt;&gt;VM: update map only
+    end</div><div class="caption figure">Hình 19. APP-04. Nghe POI thủ công</div><div class="mermaid">sequenceDiagram
+    actor User
+    participant VM as MainViewModel
+    participant H as ListeningHistorySyncService
+    participant N as NarrationService
+    User-&gt;&gt;VM: Tap Listen
+    VM-&gt;&gt;H: BeginAsync(poi, language, mode, auto=false)
+    VM-&gt;&gt;N: NarrateAsync()
+    alt phát xong
+        VM-&gt;&gt;H: CompleteAsync(completed=true)
+    else lỗi/cancel
+        VM-&gt;&gt;H: CompleteAsync(errorMessage)
+    end</div><div class="caption figure">Hình 20. APP-05. Chọn tour và bản đồ chỉ hiện POI thuộc tour</div><div class="mermaid">sequenceDiagram
+    actor User
+    participant VM as MainViewModel
+    participant N as NarrationService
+    User-&gt;&gt;VM: ActivateTourAsync(tourId)
+    VM-&gt;&gt;VM: _activeTourId, _activeTourStopIndex=0
+    VM-&gt;&gt;VM: RefreshTourState/VisibleMapPoiStatuses
+    VM-&gt;&gt;N: SpeakAsync(tour intro)
+    VM--&gt;&gt;User: Current stop, next stop, route points</div><div class="caption figure">Hình 21. APP-06. Quét QR mở POI/Tour</div><div class="mermaid">sequenceDiagram
+    actor User
+    participant Page as QrScannerPage
+    participant Resolve as QrResolveService
+    participant API as ResolveQrController
+    participant VM as MainViewModel
+    User-&gt;&gt;Page: Scan camera hoặc nhập mã
+    Page-&gt;&gt;Resolve: ResolveAsync(code)
+    Resolve-&gt;&gt;API: GET api/resolve-qr?code=
+    alt TargetType=tour
+        Page-&gt;&gt;VM: OpenTourFromQrAsync(tourId)
+    else TargetType=poi
+        Page-&gt;&gt;VM: OpenPoiFromQrAsync(poiId)
+    end</div><div class="caption figure">Hình 22. APP-07. Listening history begin/complete/delete</div><div class="mermaid">sequenceDiagram
+    participant VM as MainViewModel
+    participant H as ListeningHistorySyncService
+    participant API as ListeningHistoryController
+    VM-&gt;&gt;H: BeginAsync()
+    H-&gt;&gt;API: POST api/analytics/listening-history
+    API--&gt;&gt;H: historyId
+    VM-&gt;&gt;H: CompleteAsync(historyId)
+    H-&gt;&gt;API: PUT api/analytics/listening-history/{id}
+    VM-&gt;&gt;H: GetCurrentUserHistoryAsync()
+    H-&gt;&gt;API: GET history + ranking
+    VM-&gt;&gt;H: DeleteAsync/DeleteCurrentUserHistoryAsync()</div><div class="caption figure">Hình 23. APP-08. Active device heartbeat và movement log</div><div class="mermaid">sequenceDiagram
+    participant App as MainViewModel/App
+    participant Tracker as ActiveDeviceTracker
+    participant Loc as LocationService
+    participant API as ActiveDevicesController
+    participant Move as MovementLogRepository
+    App-&gt;&gt;Tracker: StartAsync()
+    loop mỗi 8 giây
+        Tracker-&gt;&gt;Loc: Get cached/current location nếu được
+        Tracker-&gt;&gt;API: POST api/analytics/active-devices/heartbeat
+        API-&gt;&gt;Move: Create movement log nếu tọa độ hợp lệ
+    end
+    App-&gt;&gt;Tracker: StopAsync()
+    Tracker-&gt;&gt;API: POST disconnect</div><div class="caption figure">Hình 24. APP-09. Offline cache/audio cache</div><div class="mermaid">sequenceDiagram
+    actor User
+    participant VM as MainViewModel
+    participant Store as PoiOfflineStore
+    participant Map as MapOfflineTileService
+    participant Audio as AudioAssetCacheService
+    User-&gt;&gt;VM: DownloadOfflinePackageAsync
+    VM-&gt;&gt;Store: ReplacePoisAsync()
+    VM-&gt;&gt;Map: PrefetchAsync()
+    VM-&gt;&gt;Audio: PrefetchAsync(pois)
+    alt API mất kết nối
+        VM-&gt;&gt;Store: GetPoisAsync()
+        VM--&gt;&gt;User: OfflineSnapshotNotice
+    end</div><div class="caption figure">Hình 25. APP-10. Auth/Profile sync</div><div class="mermaid">sequenceDiagram
+    actor User
+    participant Auth as AuthService
+    participant VM as MainViewModel
+    participant Sync as UserProfileSyncService
+    participant API as UserManagementController
+    User-&gt;&gt;Auth: Register/SignIn/Guest
+    Auth--&gt;&gt;VM: SessionChanged
+    VM-&gt;&gt;Sync: SyncCurrentUserAsync(preferredLanguage)
+    Sync-&gt;&gt;API: POST /api/users/profile-sync hoặc /api/app-users/sync
+    API--&gt;&gt;Sync: AdminUserDetailDto</div><h1 id="chương-5.-triển-khai-hệ-thống">CHƯƠNG 5. TRIỂN KHAI HỆ THỐNG</h1><h2 id="5.1.-cấu-trúc-source-code">5.1. Cấu trúc source code</h2><div class="caption table">Bảng 17. Cấu trúc source code</div><div class="table-wrap"><table><thead><tr><th>Project</th><th>Vai trò</th><th>Thành phần chính</th><th>Ghi chú</th></tr></thead><tbody><tr><td>VKFoodAPI</td><td>Backend API</td><td>Controllers, Services/Repositories, Security, App_Data</td><td>ASP.NET Core Web API, JSON repository.</td></tr><tr><td>CTest.WebAdmin</td><td>WebAdmin MVC</td><td>Controllers, Services, Views, Security, App_Data/web-admin-users.json</td><td>Cookie auth, typed API clients, QRCoder.</td></tr><tr><td>VinhKhanhGuide.App</td><td>Mobile app</td><td>ViewModels, Services, Views, Resources, Platforms/Android</td><td>.NET MAUI Android, Mapsui, ZXing, TTS.</td></tr><tr><td>VinhKhanhGuide.Core</td><td>DTO/model/shared logic</td><td>Contracts, Models, Interfaces, Mappings, Seed, Services</td><td>Dùng chung cho App, WebAdmin, API.</td></tr><tr><td>VinhKhanhGuide.Core.Tests</td><td>Kiểm thử unit/integration nhẹ</td><td>PoiAutoNarrationDecisionServiceTests, ApiRepositoryFlowTests</td><td>Đối chiếu core logic và repository flow.</td></tr></tbody></table></div><h2 id="5.2.-triển-khai-backend-api">5.2. Triển khai Backend API</h2><p>Trong source code, backend được triển khai chủ yếu tại <code>VKFoodAPI/Controllers</code> và <code>VKFoodAPI/Services</code>. Mỗi nhóm dữ liệu có repository JSON riêng, ví dụ <code>PoiRepository</code>, <code>TourRepository</code>, <code>AudioGuideRepository</code>, <code>ListeningHistoryRepository</code>, <code>ActiveDeviceRepository</code>, <code>MovementLogRepository</code>, <code>UserManagementRepository</code> và <code>AuditLogRepository</code>.</p><ul><li>Public endpoint đọc dữ liệu: `GET /api/pois`, `GET /api/tours`, `GET /api/resolve-qr?code=...`.</li><li>Admin endpoint dùng `AdminApiKeyDefaults.PolicyName` và header `X-Admin-Api-Key`.</li><li>Audit log được ghi khi tạo/sửa/xóa POI, Tour và QR item.</li><li>Hosted service `ActiveDevicePruningService` dọn active device quá hạn; `DataRepairWarmupService` khởi động/sửa dữ liệu cần thiết.</li><li>Listening history và active devices là telemetry phục vụ dashboard, usage logs và map analytics.</li></ul><h2 id="5.3.-triển-khai-webadmin">5.3. Triển khai WebAdmin</h2><p>WebAdmin dùng Cookie Authentication trong <code>Program.cs</code>, tài khoản lưu tại <code>CTest.WebAdmin/App_Data/web-admin-users.json</code>. Controller WebAdmin không ghi trực tiếp POI/tour/audio vào file mà đi qua typed API clients, nhờ đó WebAdmin và app dùng chung API contract.</p><ul><li>Dashboard: `HomeController` + `DashboardService` gọi song song các API client và có SSE `ActiveDeviceEvents`.</li><li>POI: `PoisController`, `PoiAdminService`, `PoiValidationService`, `PoiImageStorageService`.</li><li>Tour: `ToursController`, `TourAdminService`, validate selected POI và thứ tự stop.</li><li>Audio/TTS: `AudioGuidesController`, `AudioGuideAdminService`, `AudioGuideValidationService`.</li><li>QR: `QrCodesController` tạo QR public động cho POI/Tour, không phải CRUD UI độc lập cho `qr-codes.json`; public QR nhúng `qr-device-profile.js` để mô phỏng `0 = mạnh`, `1 = yếu`.</li><li>Owner Portal: `OwnerController` lọc owner metadata và tạo POI pending.</li><li>User/Admin management: `AdminUsersController` quản lý WebAdmin account; `SystemAdminController` quản lý app user/profile qua API.</li></ul><h2 id="5.4.-triển-khai-app-maui">5.4. Triển khai App MAUI</h2><p>Trong app, <code>MainViewModel</code> điều phối hầu hết workflow. Khi khởi tạo, app tải POI/tour từ API, cập nhật danh sách bản đồ, phục hồi offline status và xử lý quyền vị trí. Khi vị trí thay đổi, app đánh giá geofence rồi quyết định có phát thuyết minh hay không.</p><ul><li>Auth/guest mode: `AuthPageViewModel` và `AuthService` tạo session guest hoặc local user.</li><li>Map/GPS/geofence: `LocationService`, `GeofenceEngine`, `PoiAutoNarrationDecisionService`.</li><li>TTS/audio: `NarrationService` chọn TextToSpeech hoặc Android MediaPlayer theo playback mode.</li><li>QR: `QrScannerPage`, `QrResolveService`, `QrDeepLinkBroker`.</li><li>Tour: `TourProvider`, `TourRepository`, `MainViewModel.ActivateTourAsync` và các method active tour.</li><li>Offline/history/heartbeat: `PoiOfflineStore`, `AudioAssetCacheService`, `ListeningHistorySyncService`, `ActiveDeviceTracker`.</li></ul><h2 id="5.5.-một-số-đoạn-xử-lý-tiêu-biểu">5.5. Một số đoạn xử lý tiêu biểu</h2><div class="caption table">Bảng 18. Các luồng xử lý tiêu biểu</div><div class="table-wrap"><table><thead><tr><th>Luồng</th><th>Class/method liên quan</th><th>Cách xử lý</th><th>Lý do thiết kế</th></tr></thead><tbody><tr><td>Lấy danh sách POI</td><td>App gọi `MainViewModel.RefreshPoisIfChangedAsync`, sau đó `PoiRepository.GetPoisAsync` và `PoiProvider.GetPoisAsync`.</td><td>API thành công thì map DTO sang domain, cache vào SQLite; API lỗi thì đọc SQLite, cached snapshot hoặc seed.</td><td>Thiết kế này giúp app vẫn dùng được khi mất mạng hoặc backend tạm dừng.</td></tr><tr><td>Auto narration</td><td>`ApplyLocationSnapshotAsync` nhận location, `GeofenceEngine.Evaluate` tính khoảng cách, `PoiAutoNarrationDecisionService.Decide` chọn POI.</td><td>Nếu `ShouldNarrate=true`, `NarratePoiAsync` gọi `NarrationService` và đồng bộ history.</td><td>Tách decision service giúp logic priority/cooldown/debounce có thể test độc lập.</td></tr><tr><td>Chọn tour</td><td>`ActivateTourAsync` đặt `_activeTourId`, `_activeTourStopIndex=0`, refresh tour state và phát tour intro.</td><td>Map chỉ hiện POI thuộc `TourDto.PoiIds`; khi phát xong stop hợp lệ, `TryAdvanceActiveTourAfterNarration` chuyển chặng.</td><td>Thiết kế lưu `PoiIds` có thứ tự đủ đơn giản cho JSON repository.</td></tr><tr><td>QR resolve/deep link</td><td>`QrScannerPage` dùng ZXing hoặc input thủ công, gọi `QrResolveService.ResolveAsync` tới `/api/resolve-qr?code=...`.</td><td>Resolve API hỗ trợ deep link, path `/qr/{type}/{id}`, QR item code, POI code và tour code.</td><td>Một endpoint resolve chung giảm logic lặp giữa app và web public.</td></tr><tr><td>Mô phỏng cấu hình QR Web</td><td>`Scan.cshtml` truyền QR payload sang `qr-device-profile.js`, sau đó gọi `resolveQrDeviceProfile()`.</td><td>Code dùng `const profile = Math.random() &lt; 0.5 ? 0 : 1;` và kiểm tra `if (profile === 0)`. Profile `0` là thiết bị mạnh: cache payload POI/Tour, POI liên quan và asset audio nếu có. Profile `1` là thiết bị yếu: không prefetch toàn bộ, chỉ dùng dữ liệu đang mở và fallback text/TTS.</td><td>Đáp ứng yêu cầu demo của giảng viên nhưng ghi rõ đây là mô phỏng, chưa phải đo cấu hình thật.</td></tr><tr><td>Ghi listening history</td><td>`NarratePoiAsync` tạo optimistic history, gọi `BeginAsync`; sau khi phát, gọi `CompleteAsync` với listen seconds và trạng thái completed/error.</td><td>Web QR ghi history qua proxy MVC `/qr/analytics/listening-history`.</td><td>History snapshot lưu cả thông tin POI để dashboard không phụ thuộc hoàn toàn vào POI hiện tại.</td></tr><tr><td>Dashboard active devices</td><td>`ActiveDeviceTracker` gửi heartbeat 8 giây; API cập nhật session và ghi movement log nếu tọa độ hợp lệ.</td><td>`DashboardService.GetActiveDeviceStatsAsync` lấy stats; `HomeController.ActiveDeviceEvents` đẩy SSE khi payload thay đổi.</td><td>Thiết kế này phù hợp demo realtime nhẹ mà không cần SignalR.</td></tr><tr><td>Owner đăng ký POI</td><td>`OwnerController.Register` ép `IsActive=false`, owner code/email từ claims rồi gọi `PoiAdminService.CreateAsync`.</td><td>Admin sau đó duyệt bằng `PoisController.Approve`.</td><td>Luồng này giữ quyền publish POI ở Admin, hạn chế owner tự đưa nội dung lên app.</td></tr></tbody></table></div><h1 id="chương-6.-kiểm-thử-và-đánh-giá">CHƯƠNG 6. KIỂM THỬ VÀ ĐÁNH GIÁ</h1><h2 id="6.1.-môi-trường-kiểm-thử">6.1. Môi trường kiểm thử</h2><ul><li>Hệ điều hành phát triển: macOS/Windows tùy máy sinh viên; source hiện ở workspace `/Users/nhatminh/Documents/C-test-`.</li><li>SDK/framework: .NET 8, ASP.NET Core Web API/MVC, .NET MAUI Android.</li><li>Thiết bị kiểm thử app: Android Emulator hoặc thiết bị Android thật; app target `net8.0-android`.</li><li>API/WebAdmin chạy local qua `CTest.WebAdmin` hoặc chạy riêng `VKFoodAPI` + `CTest.WebAdmin`.</li><li>Dữ liệu mẫu: JSON trong `VKFoodAPI/App_Data` với POI, tour, audio, QR, history, active devices, movement logs và user profiles.</li></ul><h2 id="6.2.-test-case-chức-năng">6.2. Test case chức năng</h2><div class="caption table">Bảng 19. Test case chức năng</div><div class="table-wrap"><table><thead><tr><th>Mã test</th><th>Chức năng</th><th>Bước kiểm thử</th><th>Dữ liệu đầu vào</th><th>Kết quả mong đợi</th><th>Kết quả thực tế</th><th>Trạng thái</th></tr></thead><tbody><tr><td>TC-01</td><td>Login Admin</td><td>Mở `/Account/Login`, nhập `user/12345678`.</td><td>user/12345678</td><td>Vào Dashboard.</td><td>Đạt theo cấu hình demo.</td><td>Pass</td></tr><tr><td>TC-02</td><td>Login Owner</td><td>Đăng nhập `owner/12345678`.</td><td>owner/12345678</td><td>Vào Owner Portal, không vào AdminOnly.</td><td>Đạt theo role PoiOwner.</td><td>Pass</td></tr><tr><td>TC-03</td><td>Admin tạo POI</td><td>Mở `/Pois/Create`, nhập thông tin hợp lệ.</td><td>Code mới, tọa độ hợp lệ.</td><td>POI lưu vào API/JSON.</td><td>Đạt theo PoiRepository.Create.</td><td>Pass</td></tr><tr><td>TC-04</td><td>Admin sửa POI</td><td>Mở edit POI, đổi tên/bán kính.</td><td>POI id có sẵn.</td><td>API update và UpdatedAtUtc đổi.</td><td>Đạt theo PoiRepository.Update.</td><td>Pass</td></tr><tr><td>TC-05</td><td>Admin xóa POI</td><td>Bấm Delete POI.</td><td>POI id có sẵn.</td><td>Soft delete, IsActive=false, IsDeleted=true.</td><td>Đạt theo PoiRepository.Delete.</td><td>Pass</td></tr><tr><td>TC-06</td><td>Owner đăng ký POI</td><td>Owner điền form Register.</td><td>Tên, code, tọa độ, owner metadata.</td><td>POI tạo `IsActive=false`.</td><td>Đạt theo OwnerController.Register.</td><td>Pass</td></tr><tr><td>TC-07</td><td>Admin duyệt POI</td><td>Admin lọc pending và approve.</td><td>POI pending.</td><td>POI active xuất hiện cho app.</td><td>Đạt theo PoiAdminService.ApproveAsync.</td><td>Pass</td></tr><tr><td>TC-08</td><td>Tạo tour</td><td>Admin tạo tour với &gt;=1 POI.</td><td>Tên, code, EstimatedMinutes, POI ids.</td><td>Tour lưu `tours.json`.</td><td>Đạt theo ToursController/TourRepository.</td><td>Pass</td></tr><tr><td>TC-09</td><td>App load POI</td><td>Mở app, InitializeAsync.</td><td>API online.</td><td>Tải 11 POI active.</td><td>Đạt theo dữ liệu hiện tại.</td><td>Pass</td></tr><tr><td>TC-10</td><td>App chọn tour</td><td>Chọn tour trong app.</td><td>Tour active id 1/2.</td><td>Bản đồ chỉ hiện stop trong tour và phát intro.</td><td>Đạt theo MainViewModel.ActivateTourAsync.</td><td>Pass</td></tr><tr><td>TC-11</td><td>Auto geofence</td><td>Giả lập vị trí trong bán kính POI.</td><td>Location gần POI.</td><td>Tự phát nếu không cooldown/debounce.</td><td>Đạt theo decision service.</td><td>Pass</td></tr><tr><td>TC-12</td><td>Nghe thủ công</td><td>Bấm nghe ở POI detail.</td><td>Selected POI.</td><td>Phát TTS/audio và ghi history.</td><td>Đạt theo NarratePoiAsync.</td><td>Pass</td></tr><tr><td>TC-13</td><td>App quét QR</td><td>Scan hoặc nhập mã QR/URL.</td><td>POI/Tour code hợp lệ.</td><td>Mở POI/Tour tương ứng.</td><td>Đạt theo QrResolveService.</td><td>Pass</td></tr><tr><td>TC-14</td><td>Public QR web nghe nội dung</td><td>Mở `/qr/poi/{id}` hoặc `/qr/tour/{id}`.</td><td>Target active.</td><td>Hiển thị trang scan, nghe và ghi analytics.</td><td>Đạt theo QrCodesController.Scan.</td><td>Pass</td></tr><tr><td>TC-15</td><td>Public QR mô phỏng mạnh/yếu</td><td>Mở `/qr/{type}/{id}?deviceProfile=strong`, `/qr/{type}/{id}?deviceProfile=weak` và không truyền query.</td><td>Target active.</td><td>Strong hiển thị `Cấu hình thiết bị: Mạnh - chế độ offline đầy đủ` và console `profile=0`; weak hiển thị `Cấu hình thiết bị: Yếu - chế độ tải tối thiểu` và console `profile=1`; mặc định random 0/1.</td><td>Đạt theo qr-device-profile.js.</td><td>Pass</td></tr><tr><td>TC-16</td><td>Dashboard active devices/history</td><td>Mở Dashboard khi app/web gửi heartbeat/history.</td><td>Heartbeat/history JSON.</td><td>Hiển thị active count, recent logs, top POI.</td><td>Đạt theo DashboardService.</td><td>Pass</td></tr></tbody></table></div><h2 id="6.3.-đánh-giá-kết-quả">6.3. Đánh giá kết quả</h2><ul><li>Hệ thống đã có đầy đủ ba phần App/Web/API và dùng chung DTO trong Core.</li><li>App đáp ứng các luồng chính: chọn ngôn ngữ, guest mode, map/POI, tour, QR, GPS/geofence, nghe thủ công, history, offline cache và heartbeat.</li><li>WebAdmin đáp ứng quản trị nội dung, dashboard, tour, audio/TTS, translation, QR public, owner portal, WebAdmin account và app user/profile.</li><li>Backend API có repository JSON, audit log, telemetry và API key cho nhóm quản trị.</li><li>Mức độ đáp ứng yêu cầu ban đầu tốt cho phạm vi đồ án/demo; các điểm production được đưa vào hạn chế/hướng phát triển.</li></ul><h2 id="6.4.-hạn-chế-hiện-tại">6.4. Hạn chế hiện tại</h2><ul><li>JSON repository phù hợp demo/học thuật nhưng chưa thay thế database production có transaction, migration, index và concurrency control.</li><li>GPS/geofence phụ thuộc quyền thiết bị, độ chính xác GPS và môi trường thực tế; cần kiểm thử ngoài hiện trường.</li><li>WebAdmin QR hiện tạo QR public động cho POI/Tour; API có `QrCodeRepository` và `/api/qr-codes`, nhưng UI CRUD QR item độc lập là hướng mở rộng.</li><li>Audio playback chưa có `NarrationQueueService`; chính sách hiện tại là cancel/replace playback kết hợp debounce/cooldown.</li><li>Ngôn ngữ chọn đã theo `vi/en/zh/ja/de`, nhưng dữ liệu JSON còn key cũ `ko/fr` và cần rà soát lại toàn bộ nội dung bản dịch/UI trước khi triển khai thật.</li><li>App auth hiện là local Preferences + profile sync, chưa có server-side auth chuẩn như JWT/OAuth.</li><li>App hiện tập trung Android; iOS mới là hướng mở rộng nếu cần đa nền tảng đầy đủ.</li></ul><h1 id="chương-7.-kết-luận-và-hướng-phát-triển">CHƯƠNG 7. KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN</h1><h2 id="7.1.-kết-luận">7.1. Kết luận</h2><p>Đồ án đã xây dựng được hệ thống thuyết minh tự động đa ngôn ngữ cho ẩm thực Vĩnh Khánh với ba thành phần hoạt động liên kết: App MAUI cho khách tham quan, WebAdmin MVC cho quản trị/chủ quán và Backend API ASP.NET Core dùng JSON repository.</p><p>Giá trị chính của hệ thống là đưa nội dung thuyết minh đến đúng ngữ cảnh: khách có thể nghe theo vị trí GPS, theo tour, theo POI chọn thủ công hoặc theo QR tại quán. Đồng thời, admin có công cụ quản trị nội dung, theo dõi usage/active devices và hỗ trợ owner gửi thông tin POI.</p><h2 id="7.2.-hướng-phát-triển">7.2. Hướng phát triển</h2><ul><li>Chuyển JSON repository sang SQL Server/PostgreSQL, bổ sung migration, transaction và index.</li><li>Bổ sung màn CRUD QR item độc lập trong WebAdmin nếu cần quản lý chiến dịch QR riêng.</li><li>Hoàn thiện audio queue, priority queue hoặc playlist khi nhiều narration liên tiếp.</li><li>Tối ưu offline map và đồng bộ gói dữ liệu theo khu vực.</li><li>Tích hợp cloud TTS tự nhiên hơn, caching file audio theo từng ngôn ngữ.</li><li>Bổ sung heatmap/báo cáo nâng cao từ movement logs và listening history.</li><li>Triển khai cloud với HTTPS/domain ổn định, secret management và logging tập trung.</li><li>Phân quyền chi tiết hơn cho owner theo từng POI/action.</li><li>Mở rộng app iOS nếu phạm vi đồ án hoặc sản phẩm yêu cầu.</li></ul><h1 id="phụ-lục">PHỤ LỤC</h1><h2 id="phụ-lục-a.-api-matrix-đầy-đủ">Phụ lục A. API Matrix đầy đủ</h2><p>Bảng API Matrix đầy đủ đã trình bày ở Chương 4. Khi nộp/demo, cần đặc biệt lưu ý route audio guide thật là <code>api/audioguides</code>, không phải <code>api/audio-guides</code>; route resolve QR thật là <code>GET /api/resolve-qr?code=...</code>.</p><h2 id="phụ-lục-b.-danh-sách-fileclass-quan-trọng">Phụ lục B. Danh sách file/class quan trọng</h2><div class="caption table">Bảng 20. File/class quan trọng</div><div class="table-wrap"><table><thead><tr><th>Nhóm</th><th>File/class</th><th>Ý nghĩa</th></tr></thead><tbody><tr><td>Auth Web</td><td>CTest.WebAdmin/Controllers/AccountController.cs; Security/WebAdminSecurity.cs</td><td>Cookie auth, role redirect, claims owner.</td></tr><tr><td>Dashboard</td><td>HomeController.cs; DashboardService.cs</td><td>Dashboard, SSE active devices, usage snapshot.</td></tr><tr><td>POI Admin/Owner</td><td>PoisController.cs; OwnerController.cs; PoiAdminService.cs</td><td>Admin CRUD/approve và owner registration.</td></tr><tr><td>Tour</td><td>ToursController.cs; TourAdminService.cs; TourRepository.cs</td><td>Tour CRUD, SelectedPoiIds/PoiIds, soft delete.</td></tr><tr><td>Audio/TTS</td><td>AudioGuidesController.cs; AudioGuideRepository.cs; NarrationService.cs</td><td>TTS/file validation, sync script/audio path vào POI, playback.</td></tr><tr><td>QR</td><td>QrCodesController.cs; Scan.cshtml; qr-device-profile.js; ResolveQrController.cs; QrScannerPage.xaml.cs; QrDeepLinkBroker.cs</td><td>Public QR, mô phỏng mạnh/yếu, resolve, camera/manual scan, deep link.</td></tr><tr><td>GPS/Geofence</td><td>LocationService.cs; GeofenceEngine.cs; PoiAutoNarrationDecisionService.cs</td><td>Permission fallback, radius, priority, cooldown/debounce.</td></tr><tr><td>History/Analytics</td><td>ListeningHistorySyncService.cs; ListeningHistoryController.cs; ActiveDevicesController.cs</td><td>Begin/complete, ranking, heartbeat, movement log.</td></tr><tr><td>Offline</td><td>PoiOfflineStore.cs; MapOfflineTileService.cs; AudioAssetCacheService.cs</td><td>SQLite POI cache, tile cache, audio cache.</td></tr></tbody></table></div><h2 id="phụ-lục-c.-dữ-liệu-mẫu-poitour">Phụ lục C. Dữ liệu mẫu POI/Tour</h2><div class="caption table">Bảng 21. POI active trong `pois.json`</div><div class="table-wrap"><table><thead><tr><th>STT</th><th>Tên POI</th><th>Code</th><th>Bán kính</th><th>Priority</th></tr></thead><tbody><tr><td>1</td><td>Ốc Oanh</td><td>VK-FOOD-01</td><td>48</td><td>10</td></tr><tr><td>2</td><td>Ốc Thảo</td><td>VK-FOOD-02</td><td>52</td><td>9</td></tr><tr><td>3</td><td>Ốc Vũ</td><td>VK-FOOD-03</td><td>46</td><td>9</td></tr><tr><td>4</td><td>Ốc Sáu Nở</td><td>VK-FOOD-04</td><td>44</td><td>8</td></tr><tr><td>5</td><td>Bé Ốc</td><td>VK-FOOD-05</td><td>42</td><td>7</td></tr><tr><td>6</td><td>Ốc Ty</td><td>VK-FOOD-06</td><td>43</td><td>8</td></tr><tr><td>7</td><td>Ốc Hoa Kiều</td><td>VK-FOOD-07</td><td>45</td><td>7</td></tr><tr><td>8</td><td>Ớt Xiêm Quán</td><td>VK-FOOD-08</td><td>58</td><td>8</td></tr><tr><td>9</td><td>Chilli - Lẩu nướng</td><td>VK-FOOD-09</td><td>56</td><td>8</td></tr><tr><td>10</td><td>Thế Giới Bò - Nướng &amp; Lẩu</td><td>VK-FOOD-10</td><td>62</td><td>7</td></tr><tr><td>11</td><td>Ốc Phát</td><td>VK-FOOD-11</td><td>50</td><td>9</td></tr></tbody></table></div><div class="caption table">Bảng 22. Tour active trong `tours.json`</div><div class="table-wrap"><table><thead><tr><th>Id</th><th>Code</th><th>Tên tour</th><th>Số POI</th><th>QR</th></tr></thead><tbody><tr><td>1</td><td>VK-TOUR-STARTER</td><td>Tour làm quen Vĩnh Khánh</td><td>3</td><td>Bật</td></tr><tr><td>2</td><td>VK-TOUR-SEAFOOD-NIGHT</td><td>Tour hải sản buổi tối</td><td>3</td><td>Bật</td></tr></tbody></table></div><h2 id="phụ-lục-d.-hướng-dẫn-chạy-demo">Phụ lục D. Hướng dẫn chạy demo</h2><pre><code># Chạy WebAdmin, đồng thời host API /api/* trong cùng app demo
+dotnet run --project CTest.WebAdmin/CTest.WebAdmin.csproj --launch-profile http
+
+# Hoặc chạy API riêng nếu cần
+dotnet run --project VKFoodAPI/VKFoodAPI.csproj
+
+# Kiểm thử solution/core test
+dotnet test VinhKhanhGuide.Core.Tests/VinhKhanhGuide.Core.Tests.csproj --no-restore
+
+# Build APK Android với API public/local phù hợp
+dotnet publish VinhKhanhGuide.App/VinhKhanhGuide.App.csproj -c Release -f net8.0-android -p:ApiBaseUrl=https://&lt;domain-api&gt;/</code></pre><ul><li>Tài khoản demo WebAdmin: Admin `user/12345678`, Owner `owner/12345678`.</li><li>Không dùng `localhost` trong APK release; emulator có thể dùng `10.0.2.2` hoặc domain HTTPS public.</li><li>Khi in/chia sẻ QR, cấu hình `QrCode:PublicBaseUrl` và `QrCode:MobileApiBaseUrl` bằng domain truy cập được từ điện thoại.</li></ul><h2 id="phụ-lục-e.-checklist-đối-chiếu-prd---code">Phụ lục E. Checklist đối chiếu PRD - Code</h2><div class="caption table">Bảng 23. Checklist đối chiếu PRD - Code</div><div class="table-wrap"><table><thead><tr><th>Hạng mục</th><th>Kết quả đối chiếu</th></tr></thead><tbody><tr><td>Số POI active</td><td>`VKFoodAPI/App_Data/pois.json` hiện có 11 POI active/non-deleted.</td></tr><tr><td>Tour WebAdmin</td><td>Có `CTest.WebAdmin/Controllers/ToursController.cs` và `TourAdminService.cs`, WebAdmin đã quản lý tour.</td></tr><tr><td>QR WebAdmin</td><td>WebAdmin tạo/in/tải QR public động từ POI/Tour; API có `/api/qr-codes`, nhưng UI CRUD QR item độc lập chưa có.</td></tr><tr><td>QR DeviceCapabilitySimulation</td><td>`qr-device-profile.js` mô phỏng random `0/1`: `0 = thiết bị mạnh` cache offline đầy đủ, `1 = thiết bị yếu` tải tối thiểu; hỗ trợ `?deviceProfile=strong|weak|random` để demo.</td></tr><tr><td>AdminUsers/SystemAdmin</td><td>WebAdmin account management thuộc `AdminUsersController`; App user/profile management thuộc `SystemAdminController` + `UserManagementApiClient`.</td></tr><tr><td>API routes</td><td>Audio guide dùng `api/audioguides`; QR resolve dùng `GET /api/resolve-qr?code=...`; listening history dùng `/api/analytics/listening-history`.</td></tr><tr><td>Language support</td><td>UI chọn ngôn ngữ app/web dùng `vi/en/zh/ja/de`; dữ liệu hiện có keys `de, en, fr, ja, ko, vi, zh` nên cần migrate/rà soát legacy `ko/fr`.</td></tr><tr><td>Audio playback policy</td><td>Không có queue service phức tạp; `NarrationService` cancel/replace playback, decision service dùng debounce/cooldown.</td></tr><tr><td>Offline cache</td><td>App có SQLite `PoiOfflineStore`, audio cache, map tile cache và fallback seed.</td></tr><tr><td>Analytics</td><td>Có listening history, active device heartbeat, movement logs, dashboard và map analytics.</td></tr></tbody></table></div>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, securityLevel: "loose", theme: "default" });
+</script>
+</body>
+</html>

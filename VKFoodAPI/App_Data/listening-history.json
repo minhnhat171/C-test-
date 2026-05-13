@@ -146,7 +146,7 @@
   },
   {
     "Id": "33333333-3333-3333-3333-333333333306",
-    "PoiId": "11111111-1111-1111-1111-111111111107",
+
     "PoiCode": "VK-FOOD-11",
     "PoiName": "Ốc Phát",
     "PoiAddress": "567 Vĩnh Khánh, P. Khánh Hội, Q.4",
@@ -175,7 +175,7 @@
   },
   {
     "Id": "33333333-3333-3333-3333-333333333307",
-    "PoiId": "11111111-1111-1111-1111-111111111107",
+
     "PoiCode": "VK-FOOD-11",
     "PoiName": "Ốc Phát",
     "PoiAddress": "567 Vĩnh Khánh, P. Khánh Hội, Q.4",
@@ -349,7 +349,7 @@
   },
   {
     "Id": "f28af855-7c4b-4b18-aed3-f063de0e1538",
-    "PoiId": "11111111-1111-1111-1111-111111111107",
+
     "PoiCode": "VK-FOOD-11",
     "PoiName": "Ốc Phát",
     "PoiAddress": "567 Vĩnh Khánh, P. Khánh Hội, Q.4",
@@ -436,7 +436,7 @@
   },
   {
     "Id": "31a54f09-f37f-4ad4-9c2b-0a6d24197ea8",
-    "PoiId": "11111111-1111-1111-1111-111111111107",
+
     "PoiCode": "VK-FOOD123",
     "PoiName": "Ốc Phát",
     "PoiAddress": "534 Vĩnh Khánh, P. Khánh Hội, Q.4",
@@ -457,7 +457,7 @@
     "AutoTriggered": false,
     "StartedAtUtc": "2026-04-26T17:14:54.2813874+00:00",
     "ReceivedAtUtc": "2026-04-26T17:14:56.0891007+00:00",
-    "TtsQueuePosition": 5,
+
     "CompletedAtUtc": "2026-04-26T17:14:58.74848+00:00",
     "ListenSeconds": 7,
     "Completed": true,

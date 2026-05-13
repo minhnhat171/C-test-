@@ -88,6 +88,17 @@ internal static class AudioGuideAdminMappings
             return "zh";
         }
 
+        if (normalized.StartsWith("ja", StringComparison.Ordinal))
+        {
+            return "ja";
+        }
+
+        if (normalized.StartsWith("de", StringComparison.Ordinal))
+        {
+            return "de";
+        }
+
+        // Preserve legacy data keys if old JSON/audio records still contain them.
         if (normalized.StartsWith("ko", StringComparison.Ordinal))
         {
             return "ko";
@@ -127,8 +138,10 @@ internal static class AudioGuideAdminMappings
             "vi" => "Tiếng Việt",
             "en" => "Tiếng Anh",
             "zh" => "Tiếng Trung",
-            "ko" => "Tiếng Hàn",
-            "fr" => "Tiếng Pháp",
+            "ja" => "Tiếng Nhật",
+            "de" => "Tiếng Đức",
+            "ko" => "Legacy: Tiếng Hàn",
+            "fr" => "Legacy: Tiếng Pháp",
             _ => "Khác"
         };
     }

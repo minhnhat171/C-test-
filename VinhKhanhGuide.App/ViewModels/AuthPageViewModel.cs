@@ -36,8 +36,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
         new() { Code = "vi", Label = "Tiếng Việt", FlagEmoji = "🇻🇳", Description = "Phù hợp cho khách nội địa và giọng đọc tiếng Việt." },
         new() { Code = "en", Label = "English", FlagEmoji = "🇺🇸", Description = "Good for international visitors who want English narration." },
         new() { Code = "zh", Label = "中文", FlagEmoji = "🇨🇳", Description = "适合希望使用中文界面和中文讲解的游客。" },
-        new() { Code = "ko", Label = "한국어", FlagEmoji = "🇰🇷", Description = "한국어 화면과 음성 안내를 원하는 방문객에게 적합합니다." },
-        new() { Code = "fr", Label = "Français", FlagEmoji = "🇫🇷", Description = "Adapté aux visiteurs qui souhaitent une interface et une narration en français." }
+        new() { Code = "ja", Label = "日本語", FlagEmoji = "🇯🇵", Description = "日本語の案内と音声ガイドを希望する来訪者向けです。" },
+        new() { Code = "de", Label = "Deutsch", FlagEmoji = "🇩🇪", Description = "Geeignet für Gäste, die deutsche Hinweise und Erzählungen wünschen." }
     ];
 
     public bool IsBusy
@@ -61,8 +61,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => "Enter the food street",
         "zh" => "进入美食街导览",
-        "ko" => "음식 거리 가이드 입장",
-        "fr" => "Entrer dans le guide",
+        "ja" => "グルメ通りガイドへ",
+        "de" => "Zum Food-Street-Guide",
         _ => "Vào nhanh phố ẩm thực"
     };
 
@@ -70,8 +70,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => "Visitors can pick their language before entering the main interface. Narration will follow this choice automatically.",
         "zh" => "游客可以先选择语言，再进入主界面。语音讲解会自动跟随这个选择。",
-        "ko" => "방문객은 메인 화면에 들어가기 전에 언어를 먼저 고를 수 있고, 음성 안내도 그 선택을 따라갑니다.",
-        "fr" => "Les visiteurs peuvent choisir leur langue avant d'entrer dans l'interface principale. La narration suivra automatiquement ce choix.",
+        "ja" => "来訪者はメイン画面に入る前に言語を選べます。音声ガイドもこの選択に合わせます。",
+        "de" => "Besucher wählen vor dem Start ihre Sprache. Die Erzählung folgt dieser Auswahl automatisch.",
         _ => "Du khách có thể chọn ngôn ngữ phù hợp trước khi vào app. Phần thuyết minh sẽ đổi theo lựa chọn này."
     };
 
@@ -79,8 +79,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => "The app still runs in visitor mode, with no sign-in or registration required.",
         "zh" => "App 会以游客模式运行，不需要登录或注册。",
-        "ko" => "앱은 방문객 모드로 동작하므로 로그인이나 회원가입이 필요하지 않습니다.",
-        "fr" => "L'application fonctionne en mode visiteur, sans connexion ni inscription.",
+        "ja" => "アプリはゲストモードで動作し、ログインや登録は不要です。",
+        "de" => "Die App läuft im Besuchermodus, ohne Anmeldung oder Registrierung.",
         _ => "App vẫn chạy ở chế độ khách tham quan, không cần đăng nhập hoặc đăng ký."
     };
 
@@ -88,8 +88,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => "Pick a language once and the guide will speak in that language.",
         "zh" => "选择一次语言，导览就会用该语言讲解。",
-        "ko" => "언어를 먼저 고르면 안내 음성이 그 언어로 재생됩니다.",
-        "fr" => "Choisissez la langue une fois, puis le guide parlera dans cette langue.",
+        "ja" => "一度言語を選ぶと、ガイドはその言語で案内します。",
+        "de" => "Wählen Sie einmal eine Sprache, dann spricht der Guide in dieser Sprache.",
         _ => "Chọn ngôn ngữ một lần để app và thuyết minh đổi theo."
     };
 
@@ -97,8 +97,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => "You can start with a tour, a nearby place, or a QR code.",
         "zh" => "您可以从路线、附近店铺或二维码开始。",
-        "ko" => "투어, 가까운 매장, QR 코드 중 원하는 방식으로 시작할 수 있습니다.",
-        "fr" => "Vous pouvez commencer par un parcours, un lieu proche ou un QR code.",
+        "ja" => "ツアー、近くのお店、QRコードから開始できます。",
+        "de" => "Sie können mit einer Tour, einem nahegelegenen Ort oder einem QR-Code starten.",
         _ => "Bạn có thể bắt đầu bằng tour, quán gần bạn hoặc mã QR."
     };
 
@@ -106,8 +106,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => "Choose language",
         "zh" => "选择语言",
-        "ko" => "언어 선택",
-        "fr" => "Choisir la langue",
+        "ja" => "言語を選択",
+        "de" => "Sprache wählen",
         _ => "Chọn ngôn ngữ"
     };
 
@@ -115,8 +115,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => "Explore the app",
         "zh" => "开始探索",
-        "ko" => "앱 둘러보기",
-        "fr" => "Découvrir l'app",
+        "ja" => "アプリを探索",
+        "de" => "App erkunden",
         _ => "Khám phá app"
     };
 
@@ -124,8 +124,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => "Tap to listen",
         "zh" => "点击收听",
-        "ko" => "터치해 듣기",
-        "fr" => "Touchez pour écouter",
+        "ja" => "タップして聞く",
+        "de" => "Zum Anhören tippen",
         _ => "Bấm để nghe"
     };
 
@@ -133,8 +133,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => "Select language",
         "zh" => "选择语言",
-        "ko" => "언어 선택",
-        "fr" => "Choisir la langue",
+        "ja" => "言語を選択",
+        "de" => "Sprache wählen",
         _ => "Chọn ngôn ngữ"
     };
 
@@ -142,8 +142,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => "Explore the food street",
         "zh" => "探索美食街",
-        "ko" => "음식 거리를 둘러보기",
-        "fr" => "Explorer la rue gastronomique",
+        "ja" => "グルメ通りを探索",
+        "de" => "Food Street erkunden",
         _ => "Khám phá phố ẩm thực"
     };
 
@@ -151,8 +151,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => "Where are you from?",
         "zh" => "您来自哪里？",
-        "ko" => "어느 나라에서 오셨나요?",
-        "fr" => "D'où venez-vous ?",
+        "ja" => "どちらから来ましたか？",
+        "de" => "Woher kommen Sie?",
         _ => "Bạn đến từ đâu?"
     };
 
@@ -160,8 +160,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => "The interface and narration will switch together.",
         "zh" => "界面与语音讲解会一起切换。",
-        "ko" => "화면과 음성 안내가 함께 바뀝니다.",
-        "fr" => "L'interface et la narration changeront ensemble.",
+        "ja" => "画面表示と音声ガイドが一緒に切り替わります。",
+        "de" => "Oberfläche und Erzählung wechseln gemeinsam.",
         _ => "Giao diện và thuyết minh sẽ đổi cùng lúc."
     };
 
@@ -211,8 +211,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => $"{GetSelectedLanguageDescription(SelectedLanguage)} Narration will also switch to {SelectedLanguageDisplayName}.",
         "zh" => $"{GetSelectedLanguageDescription(SelectedLanguage)} 讲解也会同步切换为 {SelectedLanguageDisplayName}。",
-        "ko" => $"{GetSelectedLanguageDescription(SelectedLanguage)} 음성 안내도 {SelectedLanguageDisplayName}(으)로 함께 바뀝니다.",
-        "fr" => $"{GetSelectedLanguageDescription(SelectedLanguage)} La narration passera aussi en {SelectedLanguageDisplayName}.",
+        "ja" => $"{GetSelectedLanguageDescription(SelectedLanguage)} 音声ガイドも {SelectedLanguageDisplayName} に切り替わります。",
+        "de" => $"{GetSelectedLanguageDescription(SelectedLanguage)} Die Erzählung wechselt ebenfalls zu {SelectedLanguageDisplayName}.",
         _ => $"{GetSelectedLanguageDescription(SelectedLanguage)} Phần thuyết minh cũng sẽ tự đổi theo {SelectedLanguageDisplayName}."
     };
 
@@ -304,8 +304,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
     {
         "en" => "English",
         "zh" => "中文",
-        "ko" => "한국어",
-        "fr" => "Français",
+        "ja" => "日本語",
+        "de" => "Deutsch",
         _ => "Tiếng Việt"
     };
 
@@ -318,8 +318,8 @@ public class AuthPageViewModel : INotifyPropertyChanged
            {
                "en" => "The app will prioritize narration in your selected language.",
                "zh" => "应用会优先使用你所选择的语言进行讲解。",
-               "ko" => "앱은 선택한 언어에 맞춰 음성 안내를 제공합니다.",
-               "fr" => "L'application donnera la priorité à la narration dans la langue choisie.",
+               "ja" => "アプリは選択した言語の音声ガイドを優先します。",
+               "de" => "Die App priorisiert die Erzählung in der gewählten Sprache.",
                _ => "App sẽ ưu tiên phần thuyết minh đúng với ngôn ngữ đã chọn."
            };
     }
