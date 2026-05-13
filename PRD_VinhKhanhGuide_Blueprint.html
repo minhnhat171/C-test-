@@ -956,9 +956,9 @@ flowchart LR
             <td>UC-08</td>
             <td><b>App/Web quét QR</b><br>Actor: Guest, Public QR Visitor</td>
             <td>Mục tiêu: mở nhanh POI/Tour từ mã QR.<br>Tiền điều kiện: target POI/Tour tồn tại, tour QR enabled nếu là tour.</td>
-            <td>WebAdmin tạo public URL động <code>/qr/{targetType}/{targetId}</code>; public web render payload QR rồi chạy mô phỏng <code>DeviceCapabilitySimulation</code>; app scan camera/manual gọi <code>/api/qr/resolve/{code}</code> hoặc xử lý deep link; điều hướng tới POI/Tour tương ứng.</td>
+            <td>WebAdmin tạo public URL động <code>/qr/{targetType}/{targetId}</code>; public web render payload QR rồi chạy mô phỏng <code>DeviceCapabilitySimulation</code>; QR web gửi active-device heartbeat để dashboard thấy thiết bị truy cập/đang hoạt động; app scan camera/manual gọi <code>/api/qr/resolve/{code}</code> hoặc xử lý deep link; điều hướng tới POI/Tour tương ứng.</td>
             <td>Target không tồn tại trả 404/not resolved; camera thiếu quyền hiển thị nhánh nhập mã thủ công; public web offline thì thiết bị mạnh đọc cache nếu có, thiết bị yếu chỉ dùng dữ liệu hiện tại và thông báo phù hợp; API QR item repository tồn tại nhưng WebAdmin chưa có CRUD độc lập.</td>
-            <td>Người dùng mở đúng POI/Tour, thấy trạng thái <code>0 = thiết bị mạnh</code> hoặc <code>1 = thiết bị yếu</code> và có thể autoplay.<br><code>QrCodesController</code>, <code>Scan.cshtml</code>, <code>qr-device-profile.js</code>, <code>ResolveQrController</code>, <code>QrScannerPage</code>, <code>QrDeepLinkBroker</code>.</td>
+            <td>Người dùng mở đúng POI/Tour, thấy trạng thái <code>0 = thiết bị mạnh</code> hoặc <code>1 = thiết bị yếu</code>, dashboard tăng thiết bị QR Web đang active và có thể autoplay.<br><code>QrCodesController</code>, <code>Scan.cshtml</code>, <code>qr-device-profile.js</code>, <code>ResolveQrController</code>, <code>QrScannerPage</code>, <code>QrDeepLinkBroker</code>.</td>
           </tr>
           <tr>
             <td>UC-09</td>
@@ -972,7 +972,7 @@ flowchart LR
             <td>UC-10</td>
             <td><b>Dashboard analytics</b><br>Actor: Admin</td>
             <td>Mục tiêu: xem tình trạng hệ thống, lượt nghe và thiết bị active.<br>Tiền điều kiện: Admin đăng nhập; API telemetry đang nhận heartbeat/history.</td>
-            <td>Dashboard gọi song song POI/tour/audio/history/active device; SSE stream cập nhật active devices; movement log phục vụ bản đồ tuyến di chuyển.</td>
+            <td>Dashboard gọi song song POI/tour/audio/history/active device; SSE stream cập nhật active devices từ app và QR Web public scan; movement log phục vụ bản đồ tuyến di chuyển.</td>
             <td>API lỗi hiển thị trạng thái không tải được; heartbeat có toạ độ 0,0 hoặc ngoài range không ghi movement log.</td>
             <td>Admin xem realtime count, ranking, route points.<br><code>HomeController</code>, <code>DashboardService</code>, <code>ActiveDevicesController</code>, <code>MovementLogsController</code>.</td>
           </tr>
@@ -1367,6 +1367,7 @@ sequenceDiagram
   participant HistClient as ListeningHistoryApiClient
   participant DevClient as ActiveDeviceApiClient
   participant API as VKFoodAPI
+  participant Dashboard as Admin Dashboard
 
   Visitor->>Browser: Quét QR ngoài thực tế
   Browser->>Ctrl: GET /qr/{targetType}/{targetId}
@@ -1401,6 +1402,8 @@ sequenceDiagram
   Ctrl->>DevClient: HeartbeatAsync(request)
   DevClient->>API: POST /api/analytics/active-devices/heartbeat
   API-->>DevClient: ActiveDeviceStatsDto
+  Dashboard->>API: GET/SSE active devices
+  API-->>Dashboard: Hiển thị QR Web visitor trong thiết bị đang hoạt động
 
   Visitor->>Browser: Bấm nghe trên web
   Browser->>Ctrl: POST /qr/analytics/listening-history
@@ -1417,7 +1420,7 @@ sequenceDiagram
         </div>
         <div class="detail-grid">
           <div class="detail-item"><b>Thành phần chính</b><span><code>QrCodesController.Scan</code>, <code>BuildScanViewModel</code>, <code>Scan.cshtml</code>, <code>qr-device-profile.js</code>, public analytics proxy endpoints.</span></div>
-          <div class="detail-item"><b>Khớp code</b><span>Public scan không cần login. Web random đúng kiểu <code>const profile = Math.random() &lt; 0.5 ? 0 : 1;</code> và kiểm tra <code>if (profile === 0)</code>. Có thể ép demo bằng <code>?deviceProfile=strong</code>, <code>?deviceProfile=weak</code> hoặc <code>?deviceProfile=random</code>.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Public scan không cần login. Web random đúng kiểu <code>const profile = Math.random() &lt; 0.5 ? 0 : 1;</code> và kiểm tra <code>if (profile === 0)</code>. Có thể ép demo bằng <code>?deviceProfile=strong</code>, <code>?deviceProfile=weak</code> hoặc <code>?deviceProfile=random</code>. Heartbeat QR Web cập nhật dashboard như thiết bị truy cập/đang hoạt động; dashboard không cần hiển thị mạnh/yếu.</span></div>
           <div class="detail-item"><b>Nhánh bắt buộc</b><span><code>0 = thiết bị mạnh</code>: cache payload QR, POI/Tour, POI liên quan và audio nếu có để ưu tiên offline. <code>1 = thiết bị yếu</code>: không prefetch toàn bộ, chỉ dùng dữ liệu hiện tại và fallback text/Web Speech; offline/mất mạng hiển thị thông báo, không crash trang. Đây là mô phỏng theo yêu cầu giảng viên, chưa phải đo cấu hình thật.</span></div>
         </div>
       </div>

@@ -405,10 +405,12 @@
     <script src="@Url.Content("~/js/qr-device-profile.js")"></script>
     <script>
         (() => {
-            window.VinhKhanhQrDeviceProfile?.initialize(window.VinhKhanhQrPayload);
+            const qrContext = window.VinhKhanhQrPayload || {};
+            window.VinhKhanhQrDeviceProfile?.initialize(qrContext);
 
             const appLaunchUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AppLaunchUrl));
             const heartbeatUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("WebHeartbeat", "QrCodes")));
+            const disconnectUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("WebDisconnect", "QrCodes")));
             const openAppBtn = document.getElementById("openAppBtn");
             const openStatus = document.getElementById("openStatus");
             const deviceStorageKey = "vinhkhanh.qr.deviceId.v1";
@@ -418,6 +420,7 @@
             const clientInstanceId = `${Date.now().toString(16)}-${createId()}`;
             let lastLocation = null;
             let heartbeatTimer = 0;
+            let disconnected = false;
 
             const getOrCreateDeviceId = () => {
                 try {
@@ -434,6 +437,38 @@
                 }
             };
 
+            const resolveBrowserName = () => {
+                const userAgent = navigator.userAgent || "";
+
+                if (userAgent.includes("Edg/")) {
+                    return "Microsoft Edge";
+                }
+
+                if (userAgent.includes("OPR/") || userAgent.includes("Opera")) {
+                    return "Opera";
+                }
+
+                if (userAgent.includes("Chrome/") && !userAgent.includes("Chromium")) {
+                    return "Chrome";
+                }
+
+                if (userAgent.includes("Firefox/")) {
+                    return "Firefox";
+                }
+
+                if (userAgent.includes("Safari/") && !userAgent.includes("Chrome/")) {
+                    return "Safari";
+                }
+
+                return "Trình duyệt";
+            };
+
+            const buildDeviceModelLabel = () => {
+                const platform = navigator.platform || "Web";
+                const targetLabel = qrContext.targetKindLabel || qrContext.targetType || "QR";
+                return `${resolveBrowserName()} trên ${platform} - ${targetLabel}: ${qrContext.targetName || qrContext.targetCode || qrContext.targetId || "Đang mở QR"}`;
+            };
+
             const buildHeartbeatPayload = () => {
                 const payload = {
                     deviceId: getOrCreateDeviceId(),
@@ -441,9 +476,13 @@
                     userCode: "qr-web",
                     userDisplayName: "Khách quét QR",
                     userEmail: "",
-                    devicePlatform: navigator.platform || "Web",
-                    deviceModel: navigator.userAgent || "Trình duyệt",
-                    appVersion: "web-qr",
+                    devicePlatform: "QR Web",
+                    deviceModel: buildDeviceModelLabel(),
+                    appVersion: `web-qr/${qrContext.targetType || "poi"}`,
+                    accessChannel: "qr-web",
+                    currentTargetType: qrContext.targetType || "",
+                    currentTargetId: qrContext.targetId || "",
+                    currentTargetName: qrContext.targetName || "",
                     sentAtUtc: new Date().toISOString()
                 };
 
@@ -456,6 +495,12 @@
 
                 return payload;
             };
+
+            const buildDisconnectPayload = () => ({
+                deviceId: getOrCreateDeviceId(),
+                clientInstanceId,
+                disconnectedAtUtc: new Date().toISOString()
+            });
 
             const postJson = (url, payload, keepalive = false) => {
                 if (!url) {
@@ -471,7 +516,30 @@
                 }).catch(() => {});
             };
 
-            const sendHeartbeat = () => postJson(heartbeatUrl, buildHeartbeatPayload());
+            const stopHeartbeat = () => {
+                if (heartbeatTimer) {
+                    window.clearInterval(heartbeatTimer);
+                    heartbeatTimer = 0;
+                }
+            };
+
+            const sendHeartbeat = () => {
+                if (disconnected) {
+                    return Promise.resolve();
+                }
+
+                return postJson(heartbeatUrl, buildHeartbeatPayload());
+            };
+
+            const sendDisconnect = () => {
+                if (disconnected) {
+                    return Promise.resolve();
+                }
+
+                disconnected = true;
+                stopHeartbeat();
+                return postJson(disconnectUrl, buildDisconnectPayload(), true);
+            };
 
             const captureLocation = () => {
                 if (!("geolocation" in navigator)) {
@@ -497,6 +565,11 @@
             };
 
             const startHeartbeat = () => {
+                if (heartbeatTimer) {
+                    return;
+                }
+
+                disconnected = false;
                 void sendHeartbeat();
                 captureLocation();
 
@@ -506,6 +579,19 @@
                     }
                 }, 8000);
             };
+
+            window.addEventListener("pagehide", () => {
+                void sendDisconnect();
+            });
+
+            window.addEventListener("beforeunload", () => {
+                void sendDisconnect();
+            });
+
+            window.addEventListener("pageshow", () => {
+                disconnected = false;
+                startHeartbeat();
+            });
 
             if (!openAppBtn || !appLaunchUrl) {
                 startHeartbeat();

@@ -10,6 +10,10 @@ public sealed class ActiveDeviceHeartbeatRequest
     public string DevicePlatform { get; set; } = string.Empty;
     public string DeviceModel { get; set; } = string.Empty;
     public string AppVersion { get; set; } = string.Empty;
+    public string AccessChannel { get; set; } = string.Empty;
+    public string CurrentTargetType { get; set; } = string.Empty;
+    public string CurrentTargetId { get; set; } = string.Empty;
+    public string CurrentTargetName { get; set; } = string.Empty;
     public DateTimeOffset SentAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
@@ -35,6 +39,10 @@ public sealed class ActiveDeviceSessionDto
     public string DevicePlatform { get; set; } = string.Empty;
     public string DeviceModel { get; set; } = string.Empty;
     public string AppVersion { get; set; } = string.Empty;
+    public string AccessChannel { get; set; } = string.Empty;
+    public string CurrentTargetType { get; set; } = string.Empty;
+    public string CurrentTargetId { get; set; } = string.Empty;
+    public string CurrentTargetName { get; set; } = string.Empty;
     public DateTimeOffset ConnectedAtUtc { get; set; }
     public DateTimeOffset LastSeenAtUtc { get; set; }
     public int SecondsSinceLastSeen { get; set; }
@@ -57,6 +65,10 @@ public sealed class ActiveDeviceSessionDto
             DevicePlatform = DevicePlatform,
             DeviceModel = DeviceModel,
             AppVersion = AppVersion,
+            AccessChannel = AccessChannel,
+            CurrentTargetType = CurrentTargetType,
+            CurrentTargetId = CurrentTargetId,
+            CurrentTargetName = CurrentTargetName,
             ConnectedAtUtc = ConnectedAtUtc,
             LastSeenAtUtc = LastSeenAtUtc,
             SecondsSinceLastSeen = SecondsSinceLastSeen,

@@ -121,6 +121,13 @@
         font-size: 0.86rem;
     }
 
+    .device-access {
+        margin-top: 0.32rem;
+        color: #0f766e;
+        font-size: 0.86rem;
+        font-weight: 800;
+    }
+
     .device-signal {
         display: grid;
         justify-items: end;
@@ -351,11 +358,22 @@
                         var platform = string.IsNullOrWhiteSpace(item.DevicePlatform) ? "App" : item.DevicePlatform;
                         var deviceModel = string.IsNullOrWhiteSpace(item.DeviceModel) ? platform : $"{platform} - {item.DeviceModel}";
                         var signalText = item.SecondsSinceLastSeen <= 30 ? "Online" : "Mất tín hiệu";
+                        var isQrWebDevice = string.Equals(item.AccessChannel, "qr-web", StringComparison.OrdinalIgnoreCase);
+                        var targetTypeLabel = string.Equals(item.CurrentTargetType, "tour", StringComparison.OrdinalIgnoreCase)
+                            ? "Tour"
+                            : "POI";
+                        var targetName = string.IsNullOrWhiteSpace(item.CurrentTargetName)
+                            ? item.CurrentTargetId
+                            : item.CurrentTargetName;
 
                         <div class="device-row">
                             <div>
                                 <div class="device-name">@deviceName</div>
                                 <div class="device-meta">@deviceModel</div>
+                                @if (isQrWebDevice && !string.IsNullOrWhiteSpace(targetName))
+                                {
+                                    <div class="device-access">Đang truy cập QR @targetTypeLabel: @targetName</div>
+                                }
                                 <div class="device-meta">Device #@shortDeviceId · Instance #@shortInstanceId</div>
                                 @if (item.Latitude.HasValue && item.Longitude.HasValue)
                                 {
@@ -535,6 +553,23 @@
                 Number.isFinite(Number(device?.latitude)) &&
                 Number.isFinite(Number(device?.longitude));
 
+            const buildAccessText = (device) => {
+                if (String(device?.accessChannel || "").toLowerCase() !== "qr-web") {
+                    return "";
+                }
+
+                const targetName = device?.currentTargetName || device?.currentTargetId || "";
+                if (!targetName) {
+                    return "Đang truy cập QR Web";
+                }
+
+                const targetType = String(device?.currentTargetType || "").toLowerCase() === "tour"
+                    ? "Tour"
+                    : "POI";
+
+                return `Đang truy cập QR ${targetType}: ${targetName}`;
+            };
+
             const renderDevices = (devices) => {
                 if (!listEl) {
                     return;
@@ -554,12 +589,17 @@
                     const location = hasLocation(device)
                         ? `<div class="device-meta">${escapeHtml(formatCoordinate(device.latitude))}, ${escapeHtml(formatCoordinate(device.longitude))}</div>`
                         : "";
+                    const accessText = buildAccessText(device);
+                    const accessLine = accessText
+                        ? `<div class="device-access">${escapeHtml(accessText)}</div>`
+                        : "";
 
                     return `
                         <div class="device-row">
                             <div>
                                 <div class="device-name">${escapeHtml(name)}</div>
                                 <div class="device-meta">${escapeHtml(model)}</div>
+                                ${accessLine}
                                 <div class="device-meta">Device #${escapeHtml(shortId(device.deviceId))} · Instance #${escapeHtml(shortId(device.clientInstanceId))}</div>
                                 ${location}
                             </div>

@@ -119,6 +119,10 @@ public class ActiveDeviceRepository
             device.DevicePlatform = request.DevicePlatform?.Trim() ?? string.Empty;
             device.DeviceModel = request.DeviceModel?.Trim() ?? string.Empty;
             device.AppVersion = request.AppVersion?.Trim() ?? string.Empty;
+            device.AccessChannel = request.AccessChannel?.Trim() ?? string.Empty;
+            device.CurrentTargetType = request.CurrentTargetType?.Trim() ?? string.Empty;
+            device.CurrentTargetId = request.CurrentTargetId?.Trim() ?? string.Empty;
+            device.CurrentTargetName = request.CurrentTargetName?.Trim() ?? string.Empty;
             device.LastSeenAtUtc = nowUtc;
             device.IsActive = true;
             device.SecondsSinceLastSeen = 0;
@@ -319,6 +323,10 @@ public class ActiveDeviceRepository
         normalized.DevicePlatform ??= string.Empty;
         normalized.DeviceModel ??= string.Empty;
         normalized.AppVersion ??= string.Empty;
+        normalized.AccessChannel ??= string.Empty;
+        normalized.CurrentTargetType ??= string.Empty;
+        normalized.CurrentTargetId ??= string.Empty;
+        normalized.CurrentTargetName ??= string.Empty;
         normalized.ConnectedAtUtc = normalized.ConnectedAtUtc == default
             ? normalized.LastSeenAtUtc
             : normalized.ConnectedAtUtc;
