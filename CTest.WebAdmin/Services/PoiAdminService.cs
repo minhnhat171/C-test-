@@ -312,6 +312,35 @@ public class PoiAdminService
             .ToList();
 
         vm.ActiveDeviceStats = activeDevices.Clone();
+        var routePoints = activeDevices.RoutePoints
+            .Where(point => HasValidLocation(point.Latitude, point.Longitude))
+            .OrderBy(point => point.RecordedAtUtc)
+            .ToList();
+        var locatedDevices = activeDevices.Devices
+            .Where(device => HasValidLocation(device.Latitude, device.Longitude))
+            .ToList();
+        vm.Routes = BuildMapRoutes(routePoints)
+            .OrderByDescending(route => route.EndedAtUtc)
+            .ThenByDescending(route => route.PointCount)
+            .Take(12)
+            .ToList();
+        vm.HeatmapPoints = BuildHeatmapPoints(routePoints, locatedDevices, maxHeatPoints: 300);
+        vm.AnalyzedMovementPointCount = routePoints.Count;
+        vm.AnonymousRouteCount = vm.Routes.Count;
+        vm.AnonymousVisitorCount = routePoints.Count > 0
+            ? routePoints
+                .Select(point => point.AnonymousRouteId)
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count()
+            : locatedDevices.Count;
+        vm.LatestMovementAtUtc = routePoints.Count > 0
+            ? routePoints.Max(point => (DateTimeOffset?)point.RecordedAtUtc)
+            : locatedDevices
+                .Select(device => (DateTimeOffset?)(device.LocationTimestampUtc ?? device.LastSeenAtUtc))
+                .DefaultIfEmpty(null)
+                .Max();
+        vm.AnalyticsWindowLabel = BuildAnalyticsWindowLabel(routePoints.Count, locatedDevices.Count);
         vm.TotalListenSessions = orderedHistory.Count;
         vm.AverageListenSeconds = orderedHistory.Count == 0
             ? 0
@@ -334,6 +363,163 @@ public class PoiAdminService
             .Take(5)
             .ToList();
     }
+
+    private static List<MapRouteViewModel> BuildMapRoutes(IReadOnlyList<ActiveDeviceRoutePointDto> routePoints)
+    {
+        var routes = new List<MapRouteViewModel>();
+        var routeIndex = 1;
+
+        foreach (var group in routePoints
+                     .Where(point => !string.IsNullOrWhiteSpace(point.AnonymousRouteId))
+                     .GroupBy(point => point.AnonymousRouteId, StringComparer.OrdinalIgnoreCase))
+        {
+            var points = group
+                .OrderBy(point => point.RecordedAtUtc)
+                .ToList();
+
+            if (points.Count < 2)
+            {
+                continue;
+            }
+
+            var totalDistanceMeters = 0d;
+            for (var index = 1; index < points.Count; index++)
+            {
+                totalDistanceMeters += CalculateDistanceMeters(
+                    points[index - 1].Latitude,
+                    points[index - 1].Longitude,
+                    points[index].Latitude,
+                    points[index].Longitude);
+            }
+
+            var firstPoint = points[0];
+            var lastPoint = points[^1];
+            routes.Add(new MapRouteViewModel
+            {
+                RouteId = group.Key,
+                RouteLabel = $"Thiết bị {routeIndex}",
+                PointCount = points.Count,
+                StartedAtUtc = firstPoint.RecordedAtUtc,
+                EndedAtUtc = lastPoint.RecordedAtUtc,
+                DurationMinutes = Math.Max((lastPoint.RecordedAtUtc - firstPoint.RecordedAtUtc).TotalMinutes, 0),
+                ApproxDistanceMeters = totalDistanceMeters,
+                Points = points
+                    .Select(point => new MapGeoPointViewModel
+                    {
+                        Latitude = point.Latitude,
+                        Longitude = point.Longitude,
+                        RecordedAtUtc = point.RecordedAtUtc,
+                        AccuracyMeters = point.AccuracyMeters
+                    })
+                    .ToList()
+            });
+
+            routeIndex += 1;
+        }
+
+        return routes;
+    }
+
+    private static List<MapHeatPointViewModel> BuildHeatmapPoints(
+        IReadOnlyList<ActiveDeviceRoutePointDto> routePoints,
+        IReadOnlyList<ActiveDeviceSessionDto> locatedDevices,
+        int maxHeatPoints)
+    {
+        var samples = routePoints.Count > 0
+            ? routePoints.Select(point => new
+            {
+                point.Latitude,
+                point.Longitude
+            })
+            : locatedDevices.Select(device => new
+            {
+                Latitude = device.Latitude!.Value,
+                Longitude = device.Longitude!.Value
+            });
+
+        var buckets = samples
+            .GroupBy(point => new
+            {
+                Latitude = Math.Round(point.Latitude, 4),
+                Longitude = Math.Round(point.Longitude, 4)
+            })
+            .Select(group => new
+            {
+                Latitude = group.Average(point => point.Latitude),
+                Longitude = group.Average(point => point.Longitude),
+                Count = group.Count()
+            })
+            .OrderByDescending(point => point.Count)
+            .Take(Math.Clamp(maxHeatPoints, 50, 500))
+            .ToList();
+
+        var maxCount = buckets.Count == 0 ? 1 : buckets.Max(point => point.Count);
+
+        return buckets
+            .Select(point => new MapHeatPointViewModel
+            {
+                Latitude = point.Latitude,
+                Longitude = point.Longitude,
+                Count = point.Count,
+                Weight = maxCount <= 0
+                    ? 0
+                    : (double)point.Count / maxCount
+            })
+            .ToList();
+    }
+
+    private static string BuildAnalyticsWindowLabel(int routePointCount, int locatedDeviceCount)
+    {
+        if (routePointCount > 0)
+        {
+            return $"Phân tích {routePointCount:N0} điểm tuyến trong 12 giờ gần nhất.";
+        }
+
+        if (locatedDeviceCount > 0)
+        {
+            return $"Dùng {locatedDeviceCount:N0} vị trí online hiện tại để vẽ heatmap.";
+        }
+
+        return "Chưa có dữ liệu di chuyển.";
+    }
+
+    private static bool HasValidLocation(double? latitude, double? longitude)
+    {
+        return latitude.HasValue &&
+               longitude.HasValue &&
+               HasValidLocation(latitude.Value, longitude.Value);
+    }
+
+    private static bool HasValidLocation(double latitude, double longitude)
+    {
+        return latitude is >= -90 and <= 90 &&
+               longitude is >= -180 and <= 180 &&
+               (Math.Abs(latitude) > 0.000001 || Math.Abs(longitude) > 0.000001);
+    }
+
+    private static double CalculateDistanceMeters(
+        double latitude1,
+        double longitude1,
+        double latitude2,
+        double longitude2)
+    {
+        const double earthRadiusMeters = 6371000;
+        var latitudeDelta = DegreesToRadians(latitude2 - latitude1);
+        var longitudeDelta = DegreesToRadians(longitude2 - longitude1);
+        var startLatitude = DegreesToRadians(latitude1);
+        var endLatitude = DegreesToRadians(latitude2);
+
+        var a =
+            Math.Sin(latitudeDelta / 2) * Math.Sin(latitudeDelta / 2) +
+            Math.Cos(startLatitude) * Math.Cos(endLatitude) *
+            Math.Sin(longitudeDelta / 2) * Math.Sin(longitudeDelta / 2);
+
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return earthRadiusMeters * c;
+    }
+
+    private static double DegreesToRadians(double value)
+        => value * Math.PI / 180.0;
 
     private IReadOnlyList<PoiDto> FilterPoisForCurrentUser(IReadOnlyList<PoiDto> pois)
     {

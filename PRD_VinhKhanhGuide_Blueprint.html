@@ -956,9 +956,9 @@ flowchart LR
             <td>UC-08</td>
             <td><b>App/Web quét QR</b><br>Actor: Guest, Public QR Visitor</td>
             <td>Mục tiêu: mở nhanh POI/Tour từ mã QR.<br>Tiền điều kiện: target POI/Tour tồn tại, tour QR enabled nếu là tour.</td>
-            <td>WebAdmin tạo public URL động <code>/qr/{targetType}/{targetId}</code>; app scan camera/manual gọi <code>/api/qr/resolve/{code}</code> hoặc xử lý deep link; điều hướng tới POI/Tour tương ứng.</td>
-            <td>Target không tồn tại trả 404/not resolved; camera thiếu quyền hiển thị nhánh nhập mã thủ công; API QR item repository tồn tại nhưng WebAdmin chưa có CRUD độc lập.</td>
-            <td>Người dùng mở đúng POI/Tour và có thể autoplay.<br><code>QrCodesController</code>, <code>ResolveQrController</code>, <code>QrScannerPage</code>, <code>QrDeepLinkBroker</code>.</td>
+            <td>WebAdmin tạo public URL động <code>/qr/{targetType}/{targetId}</code>; public web render payload QR rồi chạy mô phỏng <code>DeviceCapabilitySimulation</code>; app scan camera/manual gọi <code>/api/qr/resolve/{code}</code> hoặc xử lý deep link; điều hướng tới POI/Tour tương ứng.</td>
+            <td>Target không tồn tại trả 404/not resolved; camera thiếu quyền hiển thị nhánh nhập mã thủ công; public web offline thì thiết bị mạnh đọc cache nếu có, thiết bị yếu chỉ dùng dữ liệu hiện tại và thông báo phù hợp; API QR item repository tồn tại nhưng WebAdmin chưa có CRUD độc lập.</td>
+            <td>Người dùng mở đúng POI/Tour, thấy trạng thái <code>0 = thiết bị mạnh</code> hoặc <code>1 = thiết bị yếu</code> và có thể autoplay.<br><code>QrCodesController</code>, <code>Scan.cshtml</code>, <code>qr-device-profile.js</code>, <code>ResolveQrController</code>, <code>QrScannerPage</code>, <code>QrDeepLinkBroker</code>.</td>
           </tr>
           <tr>
             <td>UC-09</td>
@@ -1352,7 +1352,7 @@ sequenceDiagram
       </div>
 
       <div class="sequence-block" id="web-07">
-        <h3>WEB-07. QR public scan, nghe trên web và ghi analytics</h3>
+        <h3>WEB-07. QR public scan, mô phỏng cấu hình thiết bị và ghi analytics</h3>
         <div class="diagram-shell">
           <div class="mermaid">
 sequenceDiagram
@@ -1362,7 +1362,8 @@ sequenceDiagram
   participant Ctrl as Web QrCodesController
   participant PoiClient as PoiApiClient
   participant TourClient as TourApiClient
-  participant ScanView as Scan.cshtml + narration-player.js
+  participant ScanView as Scan.cshtml
+  participant DeviceProfile as qr-device-profile.js
   participant HistClient as ListeningHistoryApiClient
   participant DevClient as ActiveDeviceApiClient
   participant API as VKFoodAPI
@@ -1378,7 +1379,23 @@ sequenceDiagram
     Ctrl->>PoiClient: GET /api/pois/{guid}
     Ctrl->>Ctrl: BuildPoiTarget + narration languages
   end
-  Ctrl-->>Browser: Render Scan View
+  Ctrl-->>Browser: Render Scan View + QR payload
+  Browser->>ScanView: Load public QR page
+  ScanView->>DeviceProfile: resolveQrDeviceProfile()
+  DeviceProfile->>DeviceProfile: const profile = Math.random() &lt; 0.5 ? 0 : 1
+  alt profile = 0: thiết bị mạnh
+    DeviceProfile-->>ScanView: Hiển thị mạnh - offline đầy đủ
+    DeviceProfile->>DeviceProfile: cacheQrPayloadForOffline(context)
+    DeviceProfile->>DeviceProfile: writeQrPayloadToCache(POI/Tour + related POIs + narration/audio)
+    opt có audio URL hợp lệ
+      DeviceProfile->>DeviceProfile: Cache API lưu audio asset
+    end
+  else profile = 1: thiết bị yếu
+    DeviceProfile-->>ScanView: Hiển thị yếu - tải tối thiểu
+    DeviceProfile->>DeviceProfile: Không prefetch toàn bộ POI/audio
+    DeviceProfile->>DeviceProfile: Chỉ dùng dữ liệu hiện tại, fallback text/Web Speech
+  end
+  ScanView-->>Browser: Cập nhật panel DeviceCapabilitySimulation
   Browser->>ScanView: Tự mở app bằng deeplink nếu có
   Browser->>Ctrl: POST /qr/analytics/active-devices/heartbeat
   Ctrl->>DevClient: HeartbeatAsync(request)
@@ -1391,7 +1408,7 @@ sequenceDiagram
   HistClient->>API: POST /api/analytics/listening-history
   API-->>HistClient: ListeningHistoryEntryDto(id)
   Ctrl-->>Browser: { id }
-  ScanView->>ScanView: Web Speech / audio playback
+  ScanView->>ScanView: Web Speech / audio playback nếu có
   Browser->>Ctrl: PUT /qr/analytics/listening-history/{id}
   Ctrl->>HistClient: UpdateAsync(completed, seconds)
   HistClient->>API: PUT /api/analytics/listening-history/{id}
@@ -1399,9 +1416,9 @@ sequenceDiagram
           </div>
         </div>
         <div class="detail-grid">
-          <div class="detail-item"><b>Thành phần chính</b><span><code>QrCodesController.Scan</code>, <code>BuildScanViewModel</code>, public analytics proxy endpoints.</span></div>
-          <div class="detail-item"><b>Khớp code</b><span>Public scan không cần login. Web ghi history qua proxy MVC để dùng cùng <code>ListeningHistoryApiClient</code> với Dashboard.</span></div>
-          <div class="detail-item"><b>Nhánh bắt buộc</b><span>Target lỗi trả 404; API mất kết nối trả 503, không render sai nội dung.</span></div>
+          <div class="detail-item"><b>Thành phần chính</b><span><code>QrCodesController.Scan</code>, <code>BuildScanViewModel</code>, <code>Scan.cshtml</code>, <code>qr-device-profile.js</code>, public analytics proxy endpoints.</span></div>
+          <div class="detail-item"><b>Khớp code</b><span>Public scan không cần login. Web random đúng kiểu <code>const profile = Math.random() &lt; 0.5 ? 0 : 1;</code> và kiểm tra <code>if (profile === 0)</code>. Có thể ép demo bằng <code>?deviceProfile=strong</code>, <code>?deviceProfile=weak</code> hoặc <code>?deviceProfile=random</code>.</span></div>
+          <div class="detail-item"><b>Nhánh bắt buộc</b><span><code>0 = thiết bị mạnh</code>: cache payload QR, POI/Tour, POI liên quan và audio nếu có để ưu tiên offline. <code>1 = thiết bị yếu</code>: không prefetch toàn bộ, chỉ dùng dữ liệu hiện tại và fallback text/Web Speech; offline/mất mạng hiển thị thông báo, không crash trang. Đây là mô phỏng theo yêu cầu giảng viên, chưa phải đo cấu hình thật.</span></div>
         </div>
       </div>
 
@@ -2372,7 +2389,7 @@ sequenceDiagram
           <tr><td>POI Admin/Owner</td><td><code>PoisController.cs</code>, <code>OwnerController.cs</code>, <code>PoiAdminService.cs</code></td><td>AdminOnly vs OwnerArea, CanManage, pending approval.</td></tr>
           <tr><td>Tour</td><td><code>ToursController.cs</code>, <code>TourAdminService.cs</code>, <code>TourRepository.cs</code></td><td>SelectedPoiIds, duplicate validation, soft delete.</td></tr>
           <tr><td>Audio/TTS</td><td><code>AudioGuidesController.cs</code>, <code>AudioGuideRepository.cs</code>, <code>NarrationService.cs</code></td><td>tts/file validation, sync script/audio path into POI.</td></tr>
-          <tr><td>QR</td><td><code>QrCodesController.cs</code>, <code>ResolveQrController.cs</code>, <code>QrScannerPage.xaml.cs</code>, <code>QrDeepLinkBroker.cs</code></td><td>Public scan, deep link, camera/manual, POI/tour branch.</td></tr>
+          <tr><td>QR</td><td><code>QrCodesController.cs</code>, <code>Scan.cshtml</code>, <code>qr-device-profile.js</code>, <code>ResolveQrController.cs</code>, <code>QrScannerPage.xaml.cs</code>, <code>QrDeepLinkBroker.cs</code></td><td>Public scan, mô phỏng mạnh/yếu, deep link, camera/manual, POI/tour branch.</td></tr>
           <tr><td>GPS/Geofence</td><td><code>LocationService.cs</code>, <code>GeofenceEngine.cs</code>, <code>PoiAutoNarrationDecisionService.cs</code></td><td>Permission fallback, distance/radius, priority/cooldown/debounce.</td></tr>
           <tr><td>History/Analytics</td><td><code>ListeningHistorySyncService.cs</code>, <code>ListeningHistoryController.cs</code>, <code>ActiveDevicesController.cs</code></td><td>Begin/complete, ranking, heartbeat, movement log.</td></tr>
           <tr><td>WebAdmin accounts</td><td><code>AdminUsersController.cs</code>, <code>WebAdminAccountStore.cs</code>, <code>Views/AdminUsers/Index.cshtml</code></td><td>Admin/owner list, create/edit/reset password, delete guard for current user and last admin.</td></tr>

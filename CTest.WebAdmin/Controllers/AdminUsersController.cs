@@ -1,76 +1,153 @@
 using CTest.WebAdmin.Models;
 using CTest.WebAdmin.Security;
+using CTest.WebAdmin.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VinhKhanhGuide.Core.Contracts;
 
 namespace CTest.WebAdmin.Controllers;
 
 [Authorize(Policy = WebAdminPolicies.AdminOnly)]
 public sealed class AdminUsersController : Controller
 {
-    private readonly IWebAdminAccountStore _accountStore;
+    private const string DefaultResetPassword = "123456";
 
-    public AdminUsersController(IWebAdminAccountStore accountStore)
+    private readonly IWebAdminAccountStore _accountStore;
+    private readonly PoiApiClient _poiApiClient;
+
+    public AdminUsersController(
+        IWebAdminAccountStore accountStore,
+        PoiApiClient poiApiClient)
     {
         _accountStore = accountStore;
+        _poiApiClient = poiApiClient;
     }
 
     [HttpGet]
-    public IActionResult Index(string? editAdmin = null)
+    public async Task<IActionResult> Index(
+        string? query = null,
+        string? role = null,
+        string? status = null,
+        CancellationToken cancellationToken = default)
     {
-        return View(BuildModel(editAdmin));
+        var model = await BuildIndexModelAsync(query, role, status, cancellationToken);
+        return View(model);
+    }
+
+    [HttpGet]
+    public IActionResult Create()
+    {
+        return View(new AdminUserFormViewModel());
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult SaveAccount(AdminUsersViewModel model)
+    public IActionResult Create(AdminUserFormViewModel model)
     {
-        var form = model.AccountForm;
-        if (!string.Equals(form.Password, form.ConfirmPassword, StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(model.Password))
         {
-            ModelState.AddModelError(
-                $"{nameof(AdminUsersViewModel.AccountForm)}.{nameof(WebAdminAccountFormViewModel.ConfirmPassword)}",
-                "Mật khẩu xác nhận không khớp.");
+            ModelState.AddModelError(nameof(model.Password), "Vui lòng nhập mật khẩu cho tài khoản mới.");
         }
 
         if (!ModelState.IsValid)
         {
-            var invalidModel = BuildModel(null);
-            invalidModel.AccountForm = form;
-            return View("Index", invalidModel);
+            return View(model);
         }
 
         try
         {
-            _accountStore.Upsert(
-                new WebAdminAuthUserOptions
-                {
-                    Username = form.Username,
-                    DisplayName = form.DisplayName,
-                    Role = form.Role,
-                    OwnerCode = form.OwnerCode,
-                    OwnerEmail = form.OwnerEmail
-                },
-                form.OriginalUsername,
-                form.Password);
-
-            TempData["AdminUsersMessage"] = form.IsEditMode
-                ? "Đã cập nhật tài khoản quản trị."
-                : "Đã tạo tài khoản quản trị.";
+            _accountStore.Upsert(ToAccountOptions(model), null, model.Password);
+            TempData["AdminUsersMessage"] = "Đã tạo tài khoản mới.";
             return RedirectToAction(nameof(Index));
         }
         catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            var invalidModel = BuildModel(null);
-            invalidModel.AccountForm = form;
-            return View("Index", invalidModel);
+            return View(model);
+        }
+    }
+
+    [HttpGet]
+    public IActionResult Edit(string username)
+    {
+        var account = _accountStore.GetByUsername(username);
+        if (account is null)
+        {
+            return NotFound();
+        }
+
+        return View(ToForm(account));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult Edit(string username, AdminUserFormViewModel model)
+    {
+        if (!string.Equals(username, model.OriginalUsername, StringComparison.OrdinalIgnoreCase))
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        try
+        {
+            _accountStore.Upsert(ToAccountOptions(model), model.OriginalUsername, model.Password);
+            TempData["AdminUsersMessage"] = "Đã cập nhật tài khoản.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            return View(model);
         }
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult DeleteAccount(string username)
+    public IActionResult ResetPassword(string username)
+    {
+        try
+        {
+            var ok = _accountStore.ResetPassword(username, DefaultResetPassword);
+            TempData[ok ? "AdminUsersMessage" : "AdminUsersError"] = ok
+                ? $"Đã reset mật khẩu về {DefaultResetPassword}."
+                : "Không tìm thấy tài khoản để reset mật khẩu.";
+        }
+        catch (ArgumentException ex)
+        {
+            TempData["AdminUsersError"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Delete(string username, CancellationToken cancellationToken = default)
+    {
+        var account = _accountStore.GetByUsername(username);
+        if (account is null)
+        {
+            return NotFound();
+        }
+
+        var (ownedPoiCounts, _) = await LoadOwnedPoiCountsAsync([account], cancellationToken);
+        return View(new AdminUserDeleteViewModel
+        {
+            Username = account.Username,
+            DisplayName = account.DisplayName,
+            RoleLabel = RoleLabel(account.Role),
+            IsActive = account.IsActive,
+            OwnedPoiCount = ownedPoiCounts.GetValueOrDefault(account.Username)
+        });
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public IActionResult DeleteConfirmed(string username)
     {
         if (string.Equals(username, User.Identity?.Name, StringComparison.OrdinalIgnoreCase))
         {
@@ -78,47 +155,204 @@ public sealed class AdminUsersController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var existedBeforeDelete = _accountStore.GetByUsername(username) is not null;
         var deleted = _accountStore.Delete(username);
         TempData[deleted ? "AdminUsersMessage" : "AdminUsersError"] = deleted
-            ? "Đã xóa tài khoản quản trị."
-            : existedBeforeDelete ? "Không thể xóa admin cuối cùng." : "Không tìm thấy tài khoản.";
+            ? "Đã xóa tài khoản."
+            : "Không thể xóa tài khoản. Cần giữ ít nhất một tài khoản Admin.";
 
         return RedirectToAction(nameof(Index));
     }
 
-    private AdminUsersViewModel BuildModel(string? editAdmin)
+    private async Task<AdminUserIndexViewModel> BuildIndexModelAsync(
+        string? query,
+        string? role,
+        string? status,
+        CancellationToken cancellationToken)
     {
-        var model = new AdminUsersViewModel
+        var normalizedQuery = NormalizeLookup(query);
+        var normalizedRole = NormalizeRoleFilter(role);
+        var normalizedStatus = NormalizeStatus(status);
+        var accounts = _accountStore.GetAll();
+        var (ownedPoiCounts, loadWarning) = await LoadOwnedPoiCountsAsync(accounts, cancellationToken);
+
+        var filtered = accounts.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(normalizedQuery))
         {
-            WebAdminAccounts = _accountStore.GetAll()
-                .Select(user => new WebAdminAccountViewModel
+            filtered = filtered.Where(account =>
+                NormalizeLookup(account.Username).Contains(normalizedQuery, StringComparison.Ordinal) ||
+                NormalizeLookup(account.DisplayName).Contains(normalizedQuery, StringComparison.Ordinal) ||
+                NormalizeLookup(account.OwnerCode).Contains(normalizedQuery, StringComparison.Ordinal) ||
+                NormalizeLookup(account.OwnerEmail).Contains(normalizedQuery, StringComparison.Ordinal));
+        }
+
+        if (!string.IsNullOrWhiteSpace(normalizedRole))
+        {
+            filtered = filtered.Where(account =>
+                string.Equals(NormalizeRole(account.Role), normalizedRole, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (normalizedStatus == "active")
+        {
+            filtered = filtered.Where(account => account.IsActive);
+        }
+        else if (normalizedStatus == "locked")
+        {
+            filtered = filtered.Where(account => !account.IsActive);
+        }
+
+        return new AdminUserIndexViewModel
+        {
+            Query = query?.Trim() ?? string.Empty,
+            Role = normalizedRole,
+            Status = normalizedStatus,
+            TotalCount = accounts.Count,
+            ActiveCount = accounts.Count(account => account.IsActive),
+            LockedCount = accounts.Count(account => !account.IsActive),
+            AdminCount = accounts.Count(account =>
+                string.Equals(NormalizeRole(account.Role), WebAdminRoles.Admin, StringComparison.OrdinalIgnoreCase)),
+            OwnerCount = accounts.Count(account =>
+                string.Equals(NormalizeRole(account.Role), WebAdminRoles.PoiOwner, StringComparison.OrdinalIgnoreCase)),
+            LoadWarningMessage = loadWarning,
+            Items = filtered
+                .OrderByDescending(account => account.IsActive)
+                .ThenBy(account => string.Equals(NormalizeRole(account.Role), WebAdminRoles.Admin, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+                .ThenBy(account => account.Username)
+                .Select(account => new AdminUserListItemViewModel
                 {
-                    Username = user.Username,
-                    DisplayName = user.DisplayName,
-                    Role = user.Role,
-                    OwnerCode = user.OwnerCode,
-                    OwnerEmail = user.OwnerEmail
+                    Username = account.Username,
+                    DisplayName = account.DisplayName,
+                    Role = NormalizeRole(account.Role),
+                    RoleLabel = RoleLabel(account.Role),
+                    OwnerCode = account.OwnerCode,
+                    OwnerEmail = account.OwnerEmail,
+                    IsActive = account.IsActive,
+                    CreatedAtUtc = account.CreatedAtUtc,
+                    LastLoginAtUtc = account.LastLoginAtUtc,
+                    OwnedPoiCount = ownedPoiCounts.GetValueOrDefault(account.Username)
                 })
                 .ToList()
         };
+    }
 
-        var accountToEdit = _accountStore.GetByUsername(editAdmin);
-        if (accountToEdit is null)
+    private async Task<(Dictionary<string, int> Counts, string Warning)> LoadOwnedPoiCountsAsync(
+        IReadOnlyList<WebAdminAuthUserOptions> accounts,
+        CancellationToken cancellationToken)
+    {
+        var counts = accounts.ToDictionary(
+            account => account.Username,
+            _ => 0,
+            StringComparer.OrdinalIgnoreCase);
+
+        if (!accounts.Any(account =>
+                string.Equals(NormalizeRole(account.Role), WebAdminRoles.PoiOwner, StringComparison.OrdinalIgnoreCase)))
         {
-            return model;
+            return (counts, string.Empty);
         }
 
-        model.AccountForm = new WebAdminAccountFormViewModel
+        List<PoiDto> pois;
+        try
         {
-            OriginalUsername = accountToEdit.Username,
-            Username = accountToEdit.Username,
-            DisplayName = accountToEdit.DisplayName,
-            Role = accountToEdit.Role,
-            OwnerCode = accountToEdit.OwnerCode,
-            OwnerEmail = accountToEdit.OwnerEmail
-        };
+            pois = await _poiApiClient.GetPoisAsync(cancellationToken);
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException ||
+            ex is InvalidOperationException ||
+            ex is TaskCanceledException)
+        {
+            return (counts, "Không tải được số POI sở hữu từ VKFoodAPI.");
+        }
 
-        return model;
+        foreach (var account in accounts)
+        {
+            if (!string.Equals(NormalizeRole(account.Role), WebAdminRoles.PoiOwner, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var ownerCode = NormalizeLookup(string.IsNullOrWhiteSpace(account.OwnerCode)
+                ? account.Username
+                : account.OwnerCode);
+            var ownerEmail = NormalizeLookup(account.OwnerEmail);
+
+            counts[account.Username] = pois.Count(poi =>
+                (!string.IsNullOrWhiteSpace(ownerCode) &&
+                 string.Equals(NormalizeLookup(poi.OwnerUserCode), ownerCode, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(ownerEmail) &&
+                 string.Equals(NormalizeLookup(poi.OwnerEmail), ownerEmail, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        return (counts, string.Empty);
+    }
+
+    private static AdminUserFormViewModel ToForm(WebAdminAuthUserOptions account)
+    {
+        return new AdminUserFormViewModel
+        {
+            OriginalUsername = account.Username,
+            Username = account.Username,
+            DisplayName = account.DisplayName,
+            Role = NormalizeRole(account.Role),
+            OwnerCode = account.OwnerCode,
+            OwnerEmail = account.OwnerEmail,
+            IsActive = account.IsActive,
+            CreatedAtUtc = account.CreatedAtUtc,
+            LastLoginAtUtc = account.LastLoginAtUtc
+        };
+    }
+
+    private static WebAdminAuthUserOptions ToAccountOptions(AdminUserFormViewModel model)
+    {
+        return new WebAdminAuthUserOptions
+        {
+            Username = model.Username,
+            DisplayName = model.DisplayName,
+            Role = NormalizeRole(model.Role),
+            OwnerCode = model.OwnerCode,
+            OwnerEmail = model.OwnerEmail,
+            IsActive = model.IsActive,
+            CreatedAtUtc = model.CreatedAtUtc ?? DateTimeOffset.UtcNow,
+            LastLoginAtUtc = model.LastLoginAtUtc
+        };
+    }
+
+    private static string RoleLabel(string? role)
+    {
+        return string.Equals(NormalizeRole(role), WebAdminRoles.Admin, StringComparison.OrdinalIgnoreCase)
+            ? "Admin"
+            : "Chủ cửa hàng";
+    }
+
+    private static string NormalizeRoleFilter(string? role)
+    {
+        var normalized = NormalizeRole(role);
+        return string.IsNullOrWhiteSpace(role) ? string.Empty : normalized;
+    }
+
+    private static string NormalizeRole(string? role)
+    {
+        return role?.Trim().ToLowerInvariant() switch
+        {
+            "admin" => WebAdminRoles.Admin,
+            "restaurantowner" => WebAdminRoles.PoiOwner,
+            "poi_owner" => WebAdminRoles.PoiOwner,
+            "poiowner" => WebAdminRoles.PoiOwner,
+            "owner" => WebAdminRoles.PoiOwner,
+            _ => WebAdminRoles.PoiOwner
+        };
+    }
+
+    private static string NormalizeStatus(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "active" => "active",
+            "locked" => "locked",
+            _ => string.Empty
+        };
+    }
+
+    private static string NormalizeLookup(string? value)
+    {
+        return value?.Trim().ToLowerInvariant() ?? string.Empty;
     }
 }

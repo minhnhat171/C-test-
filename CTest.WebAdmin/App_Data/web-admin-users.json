@@ -6,7 +6,10 @@
     "DisplayName": "Admin",
     "Role": "Admin",
     "OwnerCode": "",
-    "OwnerEmail": ""
+    "OwnerEmail": "",
+    "IsActive": true,
+    "CreatedAtUtc": "2026-04-28T15:47:18.7190226+00:00",
+    "LastLoginAtUtc": "2026-04-28T15:47:55.4771942+00:00"
   },
   {
     "Username": "owner",
@@ -15,6 +18,9 @@
     "DisplayName": "Chủ nhà hàng",
     "Role": "PoiOwner",
     "OwnerCode": "owner",
-    "OwnerEmail": "owner@local.vinhkhanh"
+    "OwnerEmail": "owner@local.vinhkhanh",
+    "IsActive": true,
+    "CreatedAtUtc": "2026-04-28T15:47:18.719812+00:00",
+    "LastLoginAtUtc": null
   }
 ]

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using VinhKhanhGuide.Core.Contracts;
+using VinhKhanhGuide.Core.Mappings;
 using VKFoodAPI.Services;
 using Xunit;
 
@@ -129,6 +130,63 @@ public class ApiRepositoryFlowTests
         Assert.True(qrRepository.Delete(qr.Id));
         Assert.True(tourRepository.Delete(tour.Id));
         Assert.True(poiRepository.Delete(poi.Id));
+    }
+
+    [Fact]
+    public void AudioGuideRepository_PublishedFileGuides_AreSyncedByLanguage()
+    {
+        using var scope = TestEnvironmentScope.Create();
+        var poiRepository = new PoiRepository(scope.Environment);
+        var audioRepository = new AudioGuideRepository(scope.Environment, poiRepository);
+
+        var poi = poiRepository.Create(new PoiDto
+        {
+            Code = "TEST-POI-AUDIO-01",
+            Name = "QuÃ¡n audio Ä‘a ngÃ´n ngá»¯",
+            Category = "áº¨m thá»±c",
+            Address = "456 VÄ©nh KhÃ¡nh",
+            Description = "Dá»¯ liá»‡u audio file",
+            NarrationText = "Ná»™i dung tiáº¿ng Viá»‡t",
+            NarrationTranslations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["vi"] = "Ná»™i dung tiáº¿ng Viá»‡t",
+                ["en"] = "English narration"
+            },
+            Latitude = 10.761,
+            Longitude = 106.702,
+            TriggerRadiusMeters = 50,
+            CooldownMinutes = 5,
+            Priority = 1,
+            IsActive = true
+        });
+
+        audioRepository.Create(new AudioGuideDto
+        {
+            PoiId = poi.Id,
+            LanguageCode = "vi",
+            VoiceType = "female",
+            SourceType = "file",
+            FilePath = "audio/test-vi.mp3",
+            IsPublished = true
+        });
+        audioRepository.Create(new AudioGuideDto
+        {
+            PoiId = poi.Id,
+            LanguageCode = "en",
+            VoiceType = "female",
+            SourceType = "file",
+            FilePath = "audio/test-en.mp3",
+            IsPublished = true
+        });
+
+        var syncedPoi = Assert.IsType<PoiDto>(poiRepository.GetById(poi.Id));
+        Assert.Equal("audio/test-vi.mp3", syncedPoi.AudioAssetPath);
+        Assert.Equal("audio/test-vi.mp3", syncedPoi.AudioAssetPaths["vi"]);
+        Assert.Equal("audio/test-en.mp3", syncedPoi.AudioAssetPaths["en"]);
+
+        var domainPoi = syncedPoi.ToDomain();
+        Assert.Equal("audio/test-en.mp3", domainPoi.GetAudioAssetPath("en"));
+        Assert.Equal(string.Empty, domainPoi.GetAudioAssetPath("fr"));
     }
 
     private sealed class TestEnvironmentScope : IDisposable

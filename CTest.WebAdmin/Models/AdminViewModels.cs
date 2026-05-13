@@ -93,11 +93,47 @@ public class MapPoiManagementViewModel
     public Guid SelectedPoiId { get; set; }
     public PoiEditorViewModel Editor { get; set; } = new();
     public ActiveDeviceStatsDto ActiveDeviceStats { get; set; } = new();
+    public List<MapRouteViewModel> Routes { get; set; } = new();
+    public List<MapHeatPointViewModel> HeatmapPoints { get; set; } = new();
     public List<PoiListeningRankingItemViewModel> TopListeningPois { get; set; } = new();
     public int TotalListenSessions { get; set; }
     public double AverageListenSeconds { get; set; }
+    public int AnalyzedMovementPointCount { get; set; }
+    public int AnonymousRouteCount { get; set; }
+    public int AnonymousVisitorCount { get; set; }
+    public DateTimeOffset? LatestMovementAtUtc { get; set; }
+    public string AnalyticsWindowLabel { get; set; } = string.Empty;
 
     public bool HasSelection => Editor.Id != Guid.Empty;
+    public bool HasMapData => Pois.Count > 0 || Routes.Count > 0 || HeatmapPoints.Count > 0;
+}
+
+public class MapRouteViewModel
+{
+    public string RouteId { get; set; } = string.Empty;
+    public string RouteLabel { get; set; } = string.Empty;
+    public int PointCount { get; set; }
+    public DateTimeOffset StartedAtUtc { get; set; }
+    public DateTimeOffset EndedAtUtc { get; set; }
+    public double DurationMinutes { get; set; }
+    public double ApproxDistanceMeters { get; set; }
+    public List<MapGeoPointViewModel> Points { get; set; } = new();
+}
+
+public class MapGeoPointViewModel
+{
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public DateTimeOffset RecordedAtUtc { get; set; }
+    public double? AccuracyMeters { get; set; }
+}
+
+public class MapHeatPointViewModel
+{
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public int Count { get; set; }
+    public double Weight { get; set; }
 }
 
 public class OwnerPortalViewModel

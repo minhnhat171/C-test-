@@ -163,6 +163,6 @@ public sealed class PoiAutoNarrationDecisionService : IAutoPoiSelectionService
     private static bool HasNarrationContent(POI poi, string? languageCode)
     {
         return !string.IsNullOrWhiteSpace(poi.GetNarrationText(languageCode)) ||
-               !string.IsNullOrWhiteSpace(poi.AudioAssetPath);
+               !string.IsNullOrWhiteSpace(poi.GetAudioAssetPath(languageCode));
     }
 }

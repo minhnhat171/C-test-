@@ -34,7 +34,7 @@ public class NarrationService : INarrationService
             text,
             languageCode,
             playbackMode,
-            poi.AudioAssetPath,
+            poi.GetAudioAssetPath(languageCode),
             cancellationToken);
     }
 

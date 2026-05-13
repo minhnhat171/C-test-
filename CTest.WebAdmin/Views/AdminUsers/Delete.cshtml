@@ -1,0 +1,48 @@
+@model AdminUserDeleteViewModel
+@{
+    ViewData["Title"] = "Xóa tài khoản";
+}
+
+<link rel="stylesheet" href="~/css/admin-users.css" asp-append-version="true" />
+
+<div class="admin-users-page">
+    <section class="account-page-header">
+        <div>
+            <p class="account-kicker mb-1">Quản lý tài khoản</p>
+            <h2>Xóa tài khoản</h2>
+            <p class="mb-0 mt-2">Xác nhận xóa tài khoản khỏi danh sách đăng nhập WebAdmin.</p>
+        </div>
+    </section>
+
+    <section class="account-card">
+        <div class="account-card__header">
+            <div>
+                <h2>@Model.Username</h2>
+                <div class="account-meta">@Model.DisplayName</div>
+            </div>
+            <span class="account-pill @(Model.IsActive ? "account-pill--active" : "account-pill--locked")">
+                @(Model.IsActive ? "Đang hoạt động" : "Đang khóa")
+            </span>
+        </div>
+        <div class="account-card__body">
+            <div class="account-summary mb-3">
+                <div class="account-summary-row">
+                    <span>Vai trò</span>
+                    <strong>@Model.RoleLabel</strong>
+                </div>
+                <div class="account-summary-row">
+                    <span>POI sở hữu</span>
+                    <strong>@Model.OwnedPoiCount</strong>
+                </div>
+            </div>
+
+            <form asp-action="Delete" asp-route-username="@Model.Username" method="post">
+                @Html.AntiForgeryToken()
+                <div class="account-actions">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+                    <button type="submit" class="btn btn-danger">Xóa tài khoản</button>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>

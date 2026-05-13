@@ -12,7 +12,7 @@ namespace VinhKhanhGuide.App.Services;
 public sealed class PoiOfflineStore : IPoiOfflineStore
 {
     private const string PoiDatabaseFileName = "vinhkhanh_guide.db";
-    private const int DatabaseVersion = 2;
+    private const int DatabaseVersion = 3;
     private const string PoiTable = "poi_cache";
     private const string MetadataTable = "sync_metadata";
     private const string LastSyncKey = "poi_last_sync_utc";
@@ -197,6 +197,10 @@ public sealed class PoiOfflineStore : IPoiOfflineStore
         values.Put("narration_text", poi.NarrationText);
         values.Put("map_link", poi.MapLink);
         values.Put("audio_asset_path", poi.AudioAssetPath);
+        values.Put(
+            "audio_asset_paths_json",
+            JsonSerializer.Serialize(
+                poi.AudioAssetPaths ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)));
         values.Put("priority", poi.Priority);
         values.Put("latitude", poi.Latitude);
         values.Put("longitude", poi.Longitude);
@@ -226,6 +230,9 @@ public sealed class PoiOfflineStore : IPoiOfflineStore
             NarrationText = cursor.GetString(cursor.GetColumnIndexOrThrow("narration_text")) ?? string.Empty,
             MapLink = cursor.GetString(cursor.GetColumnIndexOrThrow("map_link")) ?? string.Empty,
             AudioAssetPath = cursor.GetString(cursor.GetColumnIndexOrThrow("audio_asset_path")) ?? string.Empty,
+            AudioAssetPaths = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                cursor.GetString(cursor.GetColumnIndexOrThrow("audio_asset_paths_json")) ?? "{}")
+                ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
             Priority = cursor.GetInt(cursor.GetColumnIndexOrThrow("priority")),
             Latitude = cursor.GetDouble(cursor.GetColumnIndexOrThrow("latitude")),
             Longitude = cursor.GetDouble(cursor.GetColumnIndexOrThrow("longitude")),
@@ -261,6 +268,7 @@ public sealed class PoiOfflineStore : IPoiOfflineStore
                     narration_text TEXT NOT NULL,
                     map_link TEXT NOT NULL,
                     audio_asset_path TEXT NOT NULL,
+                    audio_asset_paths_json TEXT NOT NULL,
                     priority INTEGER NOT NULL,
                     latitude REAL NOT NULL,
                     longitude REAL NOT NULL,
