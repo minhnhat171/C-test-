@@ -187,7 +187,7 @@ public class DashboardService
             TotalAudioGuides = audioGuides.Count,
             MappedPoiCount = pois.Count(HasMapData),
             TotalQrCodes = pois.Count(poi => poi.IsActive && !string.IsNullOrWhiteSpace(poi.Code)),
-            TodayListenCount = localizedHistory.Count(x => x.LocalStartedAt.Date == today),
+            TodayListenCount = localizedHistory.Count (x => x.LocalStartedAt.Date == today)  ,
             TotalTours = totalTours,
             TotalUsageLogs = totalUsageLogs,
             MostPlayedPoi = topPois.FirstOrDefault()?.Name ?? "Chưa có dữ liệu",

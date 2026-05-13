@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using CTest.WebAdmin.Models;
 using CTest.WebAdmin.Security;
 using CTest.WebAdmin.Services;
@@ -10,7 +11,7 @@ using VKFoodAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var poiApiBaseUrl = builder.Configuration["PoiApi:BaseUrl"];
-var adminApiKey = builder.Configuration["AdminApi:ApiKey"];
+var adminApiKey = ResolveAdminApiKey();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -132,4 +133,17 @@ void ConfigureSharedApiClient(HttpClient client)
     {
         client.DefaultRequestHeaders.TryAddWithoutValidation("X-Admin-Api-Key", adminApiKey);
     }
+}
+
+string ResolveAdminApiKey()
+{
+    var configuredKey = builder.Configuration["AdminApi:ApiKey"];
+    if (!string.IsNullOrWhiteSpace(configuredKey))
+    {
+        return configuredKey;
+    }
+
+    var generatedKey = $"internal-{Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant()}";
+    builder.Configuration["AdminApi:ApiKey"] = generatedKey;
+    return generatedKey;
 }

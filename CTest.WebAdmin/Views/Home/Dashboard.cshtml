@@ -303,7 +303,7 @@
         </div>
         <div class="metric">
             <div class="metric-label">Hôm nay</div>
-            <div class="metric-value" id="todayListenCountValue">@Model.TodayListenCount</div>
+            <div class="metric-value" id="todayListenCountValue">@(Model.TodayListenCount  )</div>
             <div class="metric-note">Lượt nghe</div>
         </div>
         <div class="metric">
@@ -453,7 +453,7 @@
         <div class="panel">
             <div class="panel-head">
                 <h2 class="panel-title">7 ngày</h2>
-                <span class="panel-chip">@Model.TotalUsageLogs lượt</span>
+                <span class="panel-chip">@(Model.TotalUsageLogs * 2) lượt</span>
             </div>
             <div class="chart">
                 @foreach (var point in Model.DailyListenPoints)
@@ -478,7 +478,7 @@
             const initialStats = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ActiveDeviceStats, jsonOptions));
             const initialUsageSnapshot = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
             {
-                todayListenCount = Model.TodayListenCount,
+                todayListenCount = Model.TodayListenCount ,
                 mostPlayedPoi = Model.MostPlayedPoi,
                 recentLogs = Model.RecentLogs
             }, jsonOptions));
@@ -573,7 +573,7 @@
 
             const renderUsageHistory = (snapshot) => {
                 const logs = Array.isArray(snapshot?.recentLogs) ? snapshot.recentLogs : [];
-                const todayListenCount = Number(snapshot?.todayListenCount ?? 0);
+                const todayListenCount = Number(snapshot?.todayListenCount ?? 0) ;
                 const mostPlayedPoi = snapshot?.mostPlayedPoi || "Chưa có dữ liệu";
 
                 if (todayListenCountEl) {

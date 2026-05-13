@@ -1,5 +1,16 @@
 [
   {
+    "Id": "25fd5470-0257-42dd-8e92-5e15196aa979",
+    "UserId": "",
+    "Username": "WebAdmin",
+    "Action": "update",
+    "EntityName": "POI",
+    "EntityId": "11111111-1111-1111-1111-111111111107",
+    "Description": "update POI VK-FOOD-07 - Ốc Phát",
+    "IpAddress": "::1",
+    "CreatedAtUtc": "2026-04-29T00:37:52.067899+00:00"
+  },
+  {
     "Id": "83a34d91-8d8e-4821-af13-a7daf0f91c1d",
     "UserId": "",
     "Username": "WebAdmin",
@@ -9,5 +20,16 @@
     "Description": "update POI VK-FOOD-01 - Ốc Oanh",
     "IpAddress": "::1",
     "CreatedAtUtc": "2026-04-27T04:16:49.5897973+00:00"
+  },
+  {
+    "Id": "16fd8d66-d1b3-4aa6-be37-f892c9759deb",
+    "UserId": "",
+    "Username": "WebAdmin",
+    "Action": "delete",
+    "EntityName": "POI",
+    "EntityId": "11111111-1111-1111-1111-111111111107",
+    "Description": "delete POI VK-FOOD-07 - Ốc Phát",
+    "IpAddress": "::1",
+    "CreatedAtUtc": "2026-05-06T00:41:52.8584296+00:00"
   }
 ]
