@@ -1386,7 +1386,6 @@ sequenceDiagram
   DeviceProfile->>DeviceProfile: Gọi phương thức normalizeContext(context)
   DeviceProfile->>DeviceProfile: Gọi phương thức resolveQrDeviceProfile()
   DeviceProfile->>DeviceProfile: const profile = Math.random() &lt; 0.5 ? 0 : 1
-  Note over DeviceProfile,ScanView: Random chỉ sinh một lần khi load trang. Hai nhánh alt/else là loại trừ, không chạy tuần tự và không chuyển từ mạnh sang yếu.
   alt profile === 0: random ra 0, chỉ chạy nhánh thiết bị mạnh
     DeviceProfile->>DeviceProfile: Gọi phương thức applyStrongDeviceMode(context)
     DeviceProfile-->>ScanView: Gọi phương thức setProfileState(profile, message) để hiển thị mạnh - offline đầy đủ
