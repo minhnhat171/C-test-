@@ -164,8 +164,8 @@ public class NarrationService : INarrationService
             "en" => ["en-US", "en-GB", "en-AU", "en-CA"],
             "vi" => ["vi-VN"],
             "zh" => ["zh-CN", "zh-TW", "zh-HK"],
-            "ko" => ["ko-KR"],
-            "fr" => ["fr-FR", "fr-CA"],
+            "ja" => ["ja-JP"],
+            "de" => ["de-DE"],
             _ => [normalizedLanguage]
         };
     }

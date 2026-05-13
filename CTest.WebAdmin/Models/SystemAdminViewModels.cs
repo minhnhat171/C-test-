@@ -4,12 +4,16 @@ namespace CTest.WebAdmin.Models;
 
 public sealed class SystemAdminViewModel
 {
-    public List<WebAdminAccountViewModel> WebAdminAccounts { get; set; } = [];
-    public WebAdminAccountFormViewModel AccountForm { get; set; } = new();
     public List<AdminUserSummaryDto> AppUsers { get; set; } = [];
     public AppUserFormViewModel AppUserForm { get; set; } = new();
     public string AppUserKeyword { get; set; } = string.Empty;
     public string AppUserLoadErrorMessage { get; set; } = string.Empty;
+}
+
+public sealed class AdminUsersViewModel
+{
+    public List<WebAdminAccountViewModel> WebAdminAccounts { get; set; } = [];
+    public WebAdminAccountFormViewModel AccountForm { get; set; } = new();
 }
 
 public sealed class WebAdminAccountViewModel

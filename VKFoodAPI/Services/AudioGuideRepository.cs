@@ -342,6 +342,17 @@ public class AudioGuideRepository
             return "zh";
         }
 
+        if (normalized.StartsWith("ja", StringComparison.Ordinal))
+        {
+            return "ja";
+        }
+
+        if (normalized.StartsWith("de", StringComparison.Ordinal))
+        {
+            return "de";
+        }
+
+        // Preserve legacy audio-guide records if old data still contains them.
         if (normalized.StartsWith("ko", StringComparison.Ordinal))
         {
             return "ko";

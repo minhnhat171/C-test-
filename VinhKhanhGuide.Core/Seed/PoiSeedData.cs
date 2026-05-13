@@ -187,7 +187,25 @@ public static class PoiSeedData
                 longitude: 106.7012784,
                 radiusMeters: 62,
                 priority: 7,
-                viNarration: "Bạn đang ở gần quán Thế Giới Bò - Nướng và Lẩu. Đây là điểm đổi vị hấp dẫn với sườn bò nướng, bò cuộn nấm và lẩu bò.")
+                viNarration: "Bạn đang ở gần quán Thế Giới Bò - Nướng và Lẩu. Đây là điểm đổi vị hấp dẫn với sườn bò nướng, bò cuộn nấm và lẩu bò."),
+
+            CreatePoi(
+                id: new Guid("11111111-1111-1111-1111-111111111111"),
+                code: "VK-FOOD-11",
+                name: "Ốc Phát",
+                imageSource: "ocphat.png",
+                address: "361 - 363 Vĩnh Khánh, P. Khánh Hội, Q.4",
+                description: "Ốc Phát là quán ốc bình dân nằm trên trục Vĩnh Khánh, phù hợp cho nhóm bạn muốn ăn hải sản nhiều món trong không khí phố đêm.",
+                specialDish: "Nghêu hấp Thái, ốc móng tay xào rau muống, sò huyết rang me, càng ghẹ rang muối",
+                priceRange: "90.000d - 280.000d",
+                openingHours: "16:00 - 23:30",
+                firstDishSuggestion: "Nghêu hấp Thái",
+                featuredCategories: ["oc", "cua"],
+                latitude: 10.7615700,
+                longitude: 106.7025200,
+                radiusMeters: 50,
+                priority: 9,
+                viNarration: "Bạn đang ở gần quán Ốc Phát trên phố ẩm thực Vĩnh Khánh. Quán phục vụ theo phong cách bình dân, hợp cho nhóm bạn và gia đình muốn gọi nhiều món hải sản nóng hổi. Hãy thử nghêu hấp Thái, ốc móng tay xào rau muống, sò huyết rang me hoặc càng ghẹ rang muối.")
         ];
     }
 
@@ -250,9 +268,9 @@ public static class PoiSeedData
         {
             ["vi"] = viNarration,
             ["en"] = $"You are near {name}. Address: {address}. Signature dishes: {specialDish}.",
-            ["zh"] = $"????? {name}???:{address}?????:{specialDish}?",
-            ["ko"] = $"지금 {name} 근처에 있습니다. 주소는 {address}이며 추천 메뉴는 {specialDish} 입니다.",
-            ["fr"] = $"Vous êtes près de {name}. Adresse : {address}. Spécialités : {specialDish}."
+            ["zh"] = $"您现在在 {name} 附近。地址：{address}。招牌菜：{specialDish}。",
+            ["ja"] = $"現在、{name} の近くにいます。住所：{address}。名物料理：{specialDish}。",
+            ["de"] = $"Sie befinden sich in der Nähe von {name}. Adresse: {address}. Spezialitäten: {specialDish}."
         };
     }
 }

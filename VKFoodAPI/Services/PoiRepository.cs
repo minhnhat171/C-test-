@@ -7,7 +7,7 @@ namespace VKFoodAPI.Services;
 
 public class PoiRepository
 {
-    private static readonly string[] SupportedNarrationLanguages = ["vi", "en", "zh", "ko", "fr"];
+    private static readonly string[] SupportedNarrationLanguages = ["vi", "en", "zh", "ja", "de"];
 
     private readonly object _syncRoot = new();
     private readonly JsonSerializerOptions _jsonOptions = new()
@@ -544,6 +544,17 @@ public class PoiRepository
             return "zh";
         }
 
+        if (normalized.StartsWith("ja", StringComparison.Ordinal))
+        {
+            return "ja";
+        }
+
+        if (normalized.StartsWith("de", StringComparison.Ordinal))
+        {
+            return "de";
+        }
+
+        // Keep legacy keys readable if old JSON still contains Korean/French translations.
         if (normalized.StartsWith("ko", StringComparison.Ordinal))
         {
             return "ko";
@@ -574,6 +585,14 @@ public class PoiRepository
                 $"您现在在{name}附近。",
                 string.IsNullOrWhiteSpace(description) ? $"地址：{address}。" : description,
                 string.IsNullOrWhiteSpace(specialDish) ? string.Empty : $"推荐菜品：{specialDish}。"),
+            "ja" => JoinSentences(
+                $"現在、{name} の近くにいます。",
+                string.IsNullOrWhiteSpace(description) ? $"住所：{address}。" : description,
+                string.IsNullOrWhiteSpace(specialDish) ? string.Empty : $"おすすめ料理：{specialDish}。"),
+            "de" => JoinSentences(
+                $"Sie befinden sich in der Nähe von {name}.",
+                string.IsNullOrWhiteSpace(description) ? $"Adresse: {address}." : description,
+                string.IsNullOrWhiteSpace(specialDish) ? string.Empty : $"Empfohlene Gerichte: {specialDish}."),
             "ko" => JoinSentences(
                 $"지금 {name} 근처에 있습니다.",
                 string.IsNullOrWhiteSpace(description) ? $"주소는 {address}입니다." : description,

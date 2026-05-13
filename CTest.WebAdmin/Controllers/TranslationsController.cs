@@ -88,13 +88,13 @@ public class TranslationsController : Controller
 
             poi.NarrationTranslations ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var generated in _ttsTranslationService.GenerateDemoScripts(poi, ["en", "zh", "ja", "de"]))
+            foreach (var generated in _ttsTranslationService.GenerateSuggestedScripts(poi, ["en", "zh", "ja", "de"]))
             {
                 poi.NarrationTranslations[generated.Key] = generated.Value;
             }
 
             await _poiApiClient.UpdatePoiAsync(poi.Id, poi, cancellationToken);
-            TempData["TranslationMessage"] = "Đã tạo bản dịch demo cho EN/ZH/JA/DE.";
+            TempData["TranslationMessage"] = "Đã tạo kịch bản gợi ý cho EN/ZH/JA/DE.";
         }
         catch (HttpRequestException)
         {

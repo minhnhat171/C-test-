@@ -5,6 +5,28 @@
         ? Model.Description
         : Model.NarrationText;
     var hasAppLaunchUrl = !string.IsNullOrWhiteSpace(Model.AppLaunchUrl);
+    var qrPayloadJson = System.Text.Json.JsonSerializer.Serialize(
+        new
+        {
+            targetType = Model.TargetType,
+            targetId = Model.TargetId,
+            targetCode = Model.TargetCode,
+            targetName = Model.TargetName,
+            targetKindLabel = Model.TargetKindLabel,
+            description = Model.Description,
+            narrationText,
+            audioAssetPath = Model.AudioAssetPath,
+            narrationByLanguage = Model.NarrationByLanguage,
+            mapLink = Model.MapLink,
+            specialDish = Model.SpecialDish,
+            publicUrl = Model.PublicUrl,
+            appLaunchUrl = Model.AppLaunchUrl,
+            estimatedDurationLabel = Model.EstimatedDurationLabel,
+            tourStops = Model.TourStops,
+            relatedPois = Model.RelatedPois,
+            generatedAtUtc = System.DateTimeOffset.UtcNow
+        },
+        new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -130,6 +152,58 @@
             gap: 12px;
         }
 
+        .device-profile-panel {
+            display: grid;
+            gap: 10px;
+            background: #f8fbff;
+            border-color: rgba(37, 99, 235, 0.18);
+        }
+
+        .device-profile-panel[data-profile-value="0"] {
+            background: #f3fcf6;
+            border-color: rgba(22, 163, 74, 0.24);
+        }
+
+        .device-profile-panel[data-profile-value="1"] {
+            background: #fff8f1;
+            border-color: rgba(234, 88, 12, 0.24);
+        }
+
+        .device-profile-title {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 800;
+            line-height: 1.4;
+        }
+
+        .device-profile-copy {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.65;
+            font-size: 0.95rem;
+        }
+
+        .device-profile-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .device-profile-chip {
+            display: inline-flex;
+            align-items: center;
+            min-height: 36px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            color: var(--ink);
+            font-size: 0.88rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
         .scan-stop-list {
             margin: 0;
             padding-left: 1.2rem;
@@ -247,6 +321,19 @@
                     </p>
                 </section>
 
+                <section class="scan-panel device-profile-panel" id="qrDeviceProfilePanel">
+                    <p class="scan-panel-label">DeviceCapabilitySimulation</p>
+                    <p class="device-profile-title" id="qrDeviceProfileLabel">Đang kiểm tra cấu hình thiết bị...</p>
+                    <p class="device-profile-copy" id="qrDeviceProfileMode">0 = thiết bị mạnh, 1 = thiết bị yếu. Đây là mô phỏng theo yêu cầu giảng viên, chưa phải đo cấu hình thật.</p>
+                    <p class="device-profile-copy" id="qrDeviceProfileStatus">Đang chuẩn bị dữ liệu QR.</p>
+                    <p class="device-profile-copy" id="qrDeviceProfileNetwork">Đang kiểm tra trạng thái mạng.</p>
+                    <div class="device-profile-links" aria-label="Kiểm thử cấu hình thiết bị">
+                        <a class="device-profile-chip" data-device-profile-link="random" href="?deviceProfile=random">Random</a>
+                        <a class="device-profile-chip" data-device-profile-link="strong" href="?deviceProfile=strong">Mạnh</a>
+                        <a class="device-profile-chip" data-device-profile-link="weak" href="?deviceProfile=weak">Yếu</a>
+                    </div>
+                </section>
+
                 <section class="scan-panel">
                     <p class="scan-panel-label">Nội dung thuyết minh</p>
                     <p class="scan-text">@narrationText</p>
@@ -313,7 +400,13 @@
     </main>
 
     <script>
+        window.VinhKhanhQrPayload = @Html.Raw(qrPayloadJson);
+    </script>
+    <script src="@Url.Content("~/js/qr-device-profile.js")"></script>
+    <script>
         (() => {
+            window.VinhKhanhQrDeviceProfile?.initialize(window.VinhKhanhQrPayload);
+
             const appLaunchUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AppLaunchUrl));
             const heartbeatUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("WebHeartbeat", "QrCodes")));
             const openAppBtn = document.getElementById("openAppBtn");

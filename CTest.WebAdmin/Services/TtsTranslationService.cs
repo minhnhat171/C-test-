@@ -4,7 +4,7 @@ namespace CTest.WebAdmin.Services;
 
 public sealed class TtsTranslationService
 {
-    public IReadOnlyDictionary<string, string> GenerateDemoScripts(
+    public IReadOnlyDictionary<string, string> GenerateSuggestedScripts(
         PoiDto poi,
         IEnumerable<string> languageCodes)
     {
@@ -18,13 +18,13 @@ public sealed class TtsTranslationService
                      .Where(code => !string.IsNullOrWhiteSpace(code))
                      .Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            result[languageCode] = BuildDemoScript(languageCode, poi, sourceText);
+            result[languageCode] = BuildSuggestedScript(languageCode, poi, sourceText);
         }
 
         return result;
     }
 
-    private static string BuildDemoScript(string languageCode, PoiDto poi, string sourceText)
+    private static string BuildSuggestedScript(string languageCode, PoiDto poi, string sourceText)
     {
         var title = string.IsNullOrWhiteSpace(poi.Name) ? poi.Code : poi.Name;
         var summary = string.IsNullOrWhiteSpace(sourceText)

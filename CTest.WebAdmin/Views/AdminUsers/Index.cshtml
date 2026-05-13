@@ -1,0 +1,271 @@
+@model AdminUsersViewModel
+@{
+    ViewData["Title"] = "Tài khoản WebAdmin";
+}
+
+<style>
+    .admin-users-page {
+        --line: rgba(148, 163, 184, 0.22);
+        --muted: #64748b;
+        color: #0f172a;
+    }
+
+    .admin-users-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 380px;
+        gap: 1rem;
+    }
+
+    .admin-users-panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+        overflow: hidden;
+    }
+
+    .admin-users-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .admin-users-title h2 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .admin-users-panel-body {
+        padding: 1rem;
+    }
+
+    .admin-users-table {
+        margin: 0;
+        --bs-table-bg: transparent;
+    }
+
+    .admin-users-table thead th {
+        padding: 0.85rem 1rem;
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: #f8fafc;
+        border-bottom-width: 0;
+        white-space: nowrap;
+    }
+
+    .admin-users-table tbody td {
+        padding: 0.9rem 1rem;
+        border-color: rgba(148, 163, 184, 0.14);
+        vertical-align: middle;
+    }
+
+    .role-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.32rem 0.72rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .role-chip.admin {
+        background: #e0f2fe;
+        color: #075985;
+    }
+
+    .role-chip.owner {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .admin-users-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.45rem;
+    }
+
+    .admin-users-form-grid {
+        display: grid;
+        gap: 0.8rem;
+    }
+
+    .form-control,
+    .form-select {
+        border-color: rgba(148, 163, 184, 0.28);
+        border-radius: 8px;
+        min-height: 44px;
+    }
+
+    .form-label {
+        font-weight: 700;
+        font-size: 0.86rem;
+    }
+
+    @@media (max-width: 1199.98px) {
+        .admin-users-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .admin-users-actions {
+            justify-content: flex-start;
+        }
+    }
+</style>
+
+<div class="admin-users-page">
+    @if (TempData["AdminUsersMessage"] is string message)
+    {
+        <div class="alert alert-success border-0 shadow-sm">@message</div>
+    }
+
+    @if (TempData["AdminUsersError"] is string error)
+    {
+        <div class="alert alert-danger border-0 shadow-sm">@error</div>
+    }
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger border-0 shadow-sm" asp-validation-summary="All"></div>
+    }
+
+    <div class="admin-users-grid">
+        <div class="admin-users-panel">
+            <div class="admin-users-title">
+                <h2>Admin và chủ cửa hàng</h2>
+                <span class="text-muted small">@Model.WebAdminAccounts.Count tài khoản</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table admin-users-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Tài khoản</th>
+                            <th>Vai trò</th>
+                            <th>Owner code</th>
+                            <th>Email</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.WebAdminAccounts)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@item.DisplayName</div>
+                                <div class="text-muted small">@item.Username</div>
+                            </td>
+                            <td>
+                                <span class="role-chip @(item.IsAdmin ? "admin" : "owner")">@item.RoleLabel</span>
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(item.OwnerCode) ? "-" : item.OwnerCode)</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.OwnerEmail) ? "-" : item.OwnerEmail)</td>
+                            <td>
+                                <div class="admin-users-actions">
+                                    <a asp-action="Index"
+                                       asp-route-editAdmin="@item.Username"
+                                       class="btn btn-outline-primary btn-sm">Sửa</a>
+                                    <form asp-action="DeleteAccount"
+                                          method="post"
+                                          onsubmit="return confirm('Xóa tài khoản này?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="username" value="@item.Username" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Xóa</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="admin-users-panel">
+            <div class="admin-users-title">
+                <h2>@(Model.AccountForm.IsEditMode ? "Sửa tài khoản" : "Thêm tài khoản")</h2>
+                @if (Model.AccountForm.IsEditMode)
+                {
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Hủy</a>
+                }
+            </div>
+            <div class="admin-users-panel-body">
+                <form asp-action="SaveAccount" method="post" class="admin-users-form-grid">
+                    @Html.AntiForgeryToken()
+                    <input asp-for="AccountForm.OriginalUsername" type="hidden" />
+
+                    <div>
+                        <label asp-for="AccountForm.Username" class="form-label">Tên đăng nhập</label>
+                        <input asp-for="AccountForm.Username" class="form-control" autocomplete="off" />
+                    </div>
+
+                    <div>
+                        <label asp-for="AccountForm.DisplayName" class="form-label">Tên hiển thị</label>
+                        <input asp-for="AccountForm.DisplayName" class="form-control" />
+                    </div>
+
+                    <div>
+                        <label asp-for="AccountForm.Role" class="form-label">Vai trò</label>
+                        <select asp-for="AccountForm.Role" class="form-select" id="adminRoleSelect">
+                            <option value="Admin">Admin</option>
+                            <option value="PoiOwner">Chủ cửa hàng</option>
+                        </select>
+                    </div>
+
+                    <div class="owner-field">
+                        <label asp-for="AccountForm.OwnerCode" class="form-label">Owner code</label>
+                        <input asp-for="AccountForm.OwnerCode" class="form-control" />
+                    </div>
+
+                    <div class="owner-field">
+                        <label asp-for="AccountForm.OwnerEmail" class="form-label">Email chủ cửa hàng</label>
+                        <input asp-for="AccountForm.OwnerEmail" class="form-control" type="email" />
+                    </div>
+
+                    <div>
+                        <label asp-for="AccountForm.Password" class="form-label">
+                            @(Model.AccountForm.IsEditMode ? "Mật khẩu mới / reset" : "Mật khẩu")
+                        </label>
+                        <input asp-for="AccountForm.Password" class="form-control" type="password" autocomplete="new-password" />
+                    </div>
+
+                    <div>
+                        <label asp-for="AccountForm.ConfirmPassword" class="form-label">Xác nhận mật khẩu</label>
+                        <input asp-for="AccountForm.ConfirmPassword" class="form-control" type="password" autocomplete="new-password" />
+                    </div>
+
+                    <button type="submit" class="btn btn-dark w-100">
+                        @(Model.AccountForm.IsEditMode ? "Lưu / reset mật khẩu" : "Tạo tài khoản")
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const roleSelect = document.getElementById("adminRoleSelect");
+            const ownerFields = Array.from(document.querySelectorAll(".owner-field"));
+
+            const updateOwnerFields = () => {
+                const isOwner = roleSelect?.value === "PoiOwner";
+                ownerFields.forEach((field) => {
+                    field.classList.toggle("d-none", !isOwner);
+                });
+            };
+
+            roleSelect?.addEventListener("change", updateOwnerFields);
+            updateOwnerFields();
+        })();
+    </script>
+}

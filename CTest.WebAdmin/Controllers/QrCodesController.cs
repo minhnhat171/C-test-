@@ -16,7 +16,7 @@ namespace CTest.WebAdmin.Controllers;
 [Authorize(Policy = WebAdminPolicies.AdminOnly)]
 public class QrCodesController : Controller
 {
-    private static readonly string[] SupportedNarrationLanguages = ["vi", "en", "zh", "ko", "fr"];
+    private static readonly string[] SupportedNarrationLanguages = ["vi", "en", "zh", "ja", "de"];
     private readonly PoiApiClient _poiApiClient;
     private readonly TourApiClient _tourApiClient;
     private readonly ListeningHistoryApiClient _listeningHistoryApiClient;
@@ -373,19 +373,15 @@ public class QrCodesController : Controller
             AppLaunchUrl = appLaunchUrl,
             AutoOpenApp = !string.IsNullOrWhiteSpace(appLaunchUrl),
             EstimatedDurationLabel = target.EstimatedDurationLabel,
-            TourStops = target.TourStops
+            TourStops = target.TourStops,
+            RelatedPois = target.RelatedPois
         };
     }
 
     private QrTargetDescriptor BuildPoiTarget(PoiDto poi)
     {
         var targetId = poi.Id.ToString();
-        var domainPoi = poi.ToDomain();
-        var narrationByLanguage = BuildPoiNarrationByLanguage(domainPoi);
-        var primaryNarration = narrationByLanguage.TryGetValue("vi", out var vietnameseNarration) &&
-                               !string.IsNullOrWhiteSpace(vietnameseNarration)
-            ? vietnameseNarration
-            : domainPoi.GetNarrationText();
+        var cacheItem = BuildPoiCacheItem(poi);
 
         return new QrTargetDescriptor
         {
@@ -400,15 +396,16 @@ public class QrCodesController : Controller
             Address = poi.Address,
             ActivationType = GetPoiActivationType(poi),
             Status = poi.IsActive ? "Sẵn sàng" : "Tạm khóa",
-            NarrationText = string.IsNullOrWhiteSpace(primaryNarration) ? poi.Description : primaryNarration,
-            AudioAssetPath = ResolvePublicAudioPath(poi.AudioAssetPath),
-            NarrationByLanguage = narrationByLanguage,
+            NarrationText = cacheItem.NarrationText,
+            AudioAssetPath = cacheItem.AudioAssetPath,
+            NarrationByLanguage = cacheItem.NarrationByLanguage,
             MapLink = poi.MapLink,
             SpecialDish = poi.SpecialDish,
             DetailUrl = Url.Action("Details", "Pois", new { id = poi.Id }) ?? string.Empty,
             DetailActionLabel = "Xem POI",
             RouteSummary = BuildPoiRouteSummary(poi),
             EstimatedDurationLabel = $"Bán kính kích hoạt {poi.TriggerRadiusMeters:0.#} m",
+            RelatedPois = new[] { cacheItem },
             SortOrder = 0
         };
     }
@@ -418,6 +415,7 @@ public class QrCodesController : Controller
         IReadOnlyDictionary<Guid, PoiDto> poiLookup)
     {
         var tourStops = ResolveTourStops(tour.PoiIds, poiLookup);
+        var relatedPois = ResolveTourRelatedPois(tour.PoiIds, poiLookup);
         var targetId = tour.Id.ToString(CultureInfo.InvariantCulture);
         var narrationText = BuildTourNarration(tour, tourStops);
         var routeSummary = tourStops.Count == 0
@@ -445,7 +443,32 @@ public class QrCodesController : Controller
             RouteSummary = routeSummary,
             EstimatedDurationLabel = $"{tour.EstimatedMinutes} phút",
             TourStops = tourStops,
+            RelatedPois = relatedPois,
             SortOrder = 1
+        };
+    }
+
+    private QrScanPoiCacheItemViewModel BuildPoiCacheItem(PoiDto poi)
+    {
+        var domainPoi = poi.ToDomain();
+        var narrationByLanguage = BuildPoiNarrationByLanguage(domainPoi);
+        var primaryNarration = ResolvePrimaryNarration(domainPoi, narrationByLanguage);
+
+        return new QrScanPoiCacheItemViewModel
+        {
+            Id = poi.Id.ToString(),
+            Code = string.IsNullOrWhiteSpace(poi.Code)
+                ? $"POI-{poi.Id.ToString("N")[..8].ToUpperInvariant()}"
+                : poi.Code,
+            Name = poi.Name,
+            Description = poi.Description,
+            Address = poi.Address,
+            SpecialDish = poi.SpecialDish,
+            ImageSource = poi.ImageSource,
+            NarrationText = string.IsNullOrWhiteSpace(primaryNarration) ? poi.Description : primaryNarration,
+            AudioAssetPath = ResolvePublicAudioPath(poi.AudioAssetPath),
+            NarrationByLanguage = narrationByLanguage,
+            MapLink = poi.MapLink
         };
     }
 
@@ -478,6 +501,18 @@ public class QrCodesController : Controller
             .ToList();
     }
 
+    private IReadOnlyList<QrScanPoiCacheItemViewModel> ResolveTourRelatedPois(
+        IEnumerable<Guid> poiIds,
+        IReadOnlyDictionary<Guid, PoiDto> poiLookup)
+    {
+        return poiIds
+            .Where(poiId => poiId != Guid.Empty)
+            .Select(poiId => poiLookup.TryGetValue(poiId, out var poi) ? poi : null)
+            .Where(poi => poi is not null)
+            .Select(poi => BuildPoiCacheItem(poi!))
+            .ToList();
+    }
+
     private static string BuildTourNarration(TourDto tour, IReadOnlyList<string> tourStops)
     {
         var stopSummary = tourStops.Count == 0
@@ -502,6 +537,16 @@ public class QrCodesController : Controller
         }
 
         return result;
+    }
+
+    private static string ResolvePrimaryNarration(
+        VinhKhanhGuide.Core.Models.POI poi,
+        IReadOnlyDictionary<string, string> narrationByLanguage)
+    {
+        return narrationByLanguage.TryGetValue("vi", out var vietnameseNarration) &&
+               !string.IsNullOrWhiteSpace(vietnameseNarration)
+            ? vietnameseNarration
+            : poi.GetNarrationText();
     }
 
     private static Dictionary<string, string> BuildFlatNarrationByLanguage(string narrationText)
@@ -673,6 +718,8 @@ public class QrCodesController : Controller
         public string RouteSummary { get; init; } = string.Empty;
         public string EstimatedDurationLabel { get; init; } = string.Empty;
         public IReadOnlyList<string> TourStops { get; init; } = Array.Empty<string>();
+        public IReadOnlyList<QrScanPoiCacheItemViewModel> RelatedPois { get; init; } =
+            Array.Empty<QrScanPoiCacheItemViewModel>();
         public int SortOrder { get; init; }
     }
 }

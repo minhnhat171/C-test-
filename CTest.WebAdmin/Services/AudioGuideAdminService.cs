@@ -11,9 +11,9 @@ public class AudioGuideAdminService
     [
         ("vi", "Tiếng Việt"),
         ("en", "Tiếng Anh"),
-        ("zh", "Tieng Trung"),
-        ("ko", "Tieng Han"),
-        ("fr", "Tieng Phap")
+        ("zh", "Tiếng Trung"),
+        ("ja", "Tiếng Nhật"),
+        ("de", "Tiếng Đức")
     ];
 
     private readonly AudioGuideApiClient _audioGuideApiClient;
