@@ -1364,7 +1364,6 @@ sequenceDiagram
   participant TourClient as TourApiClient
   participant ScanView as Scan.cshtml
   participant DeviceProfile as qr-device-profile.js
-  participant HistClient as ListeningHistoryApiClient
   participant DevClient as ActiveDeviceApiClient
   participant API as VKFoodAPI
   participant Dashboard as Admin Dashboard
@@ -1386,43 +1385,42 @@ sequenceDiagram
   DeviceProfile->>DeviceProfile: Gọi phương thức normalizeContext(context)
   DeviceProfile->>DeviceProfile: Gọi phương thức resolveQrDeviceProfile()
   DeviceProfile->>DeviceProfile: const profile = Math.random() &lt; 0.5 ? 0 : 1
-  alt profile === 0: random ra 0, chỉ chạy nhánh thiết bị mạnh
+  alt profile === 0
     DeviceProfile->>DeviceProfile: Gọi phương thức applyStrongDeviceMode(context)
-    DeviceProfile-->>ScanView: Gọi phương thức setProfileState(profile, message) để hiển thị mạnh - offline đầy đủ
     DeviceProfile->>DeviceProfile: Gọi phương thức cacheQrPayloadForOffline(context)
     DeviceProfile->>DeviceProfile: Gọi phương thức writeQrPayloadToCache(key, data)
     opt có audio URL hợp lệ
       DeviceProfile->>DeviceProfile: Gọi phương thức cacheOfflineAssets(urls)
     end
-    DeviceProfile->>DeviceProfile: Gọi phương thức applyNetworkNotice(context)
-  else profile === 1: random ra 1, chỉ chạy nhánh thiết bị yếu
+    DeviceProfile->>DeviceProfile: Gọi phương thức setProfileState(profile, message)
+    DeviceProfile-->>ScanView: Cập nhật label mạnh trên panel
+  else profile === 1
     DeviceProfile->>DeviceProfile: Gọi phương thức applyWeakDeviceMode(context)
     DeviceProfile->>DeviceProfile: Gọi phương thức readQrPayloadFromCache(key) nếu offline/cache tồn tại
-    DeviceProfile-->>ScanView: Gọi phương thức setProfileState(profile, message) để hiển thị yếu - tải tối thiểu
     DeviceProfile->>DeviceProfile: applyWeakDeviceMode không prefetch toàn bộ POI/audio
-    DeviceProfile->>DeviceProfile: Gọi phương thức applyNetworkNotice(context)
+    DeviceProfile->>DeviceProfile: Gọi phương thức setProfileState(profile, message)
+    DeviceProfile-->>ScanView: Cập nhật label yếu trên panel
   end
+  DeviceProfile->>DeviceProfile: Gọi phương thức applyNetworkNotice(context)
+  DeviceProfile-->>ScanView: Cập nhật trạng thái mạng/offline cache
   ScanView-->>Browser: Cập nhật panel DeviceCapabilitySimulation
   Browser->>ScanView: Tự mở app bằng deeplink nếu có
   ScanView->>ScanView: Gọi phương thức buildHeartbeatPayload()
-  Browser->>Ctrl: POST /qr/analytics/active-devices/heartbeat
+  ScanView->>Ctrl: POST /qr/analytics/active-devices/heartbeat
   Ctrl->>DevClient: Gọi phương thức HeartbeatAsync(request)
   DevClient->>API: POST /api/analytics/active-devices/heartbeat
-  API-->>DevClient: ActiveDeviceStatsDto
+  API-->>DevClient: Trả về ActiveDeviceStatsDto
+  DevClient-->>Ctrl: Trả về ActiveDeviceStatsDto
+  Ctrl-->>ScanView: 204 NoContent
   Dashboard->>API: GET/SSE active devices
-  API-->>Dashboard: Hiển thị QR Web visitor trong thiết bị đang hoạt động
+  API-->>Dashboard: ActiveDeviceStatsDto có QR Web visitor
 
-  Visitor->>Browser: Bấm nghe trên web
-  Browser->>Ctrl: POST /qr/analytics/listening-history
-  Ctrl->>HistClient: CreateAsync(request)
-  HistClient->>API: POST /api/analytics/listening-history
-  API-->>HistClient: ListeningHistoryEntryDto(id)
-  Ctrl-->>Browser: { id }
-  ScanView->>ScanView: Web Speech / audio playback nếu có
-  Browser->>Ctrl: PUT /qr/analytics/listening-history/{id}
-  Ctrl->>HistClient: UpdateAsync(completed, seconds)
-  HistClient->>API: PUT /api/analytics/listening-history/{id}
-  Browser->>Ctrl: POST /qr/analytics/active-devices/disconnect
+  opt người dùng rời trang QR
+    ScanView->>ScanView: Gọi phương thức buildDisconnectPayload()
+    ScanView->>Ctrl: POST /qr/analytics/active-devices/disconnect
+    Ctrl->>DevClient: Gọi phương thức DisconnectAsync(request)
+    DevClient->>API: POST /api/analytics/active-devices/disconnect
+  end
           </div>
         </div>
         <div class="detail-grid">
